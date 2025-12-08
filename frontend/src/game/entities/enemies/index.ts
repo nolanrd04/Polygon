@@ -1,0 +1,8 @@
+export { Enemy } from './Enemy'
+export { Triangle } from './Triangle'
+export { Square } from './Square'
+export { Pentagon } from './Pentagon'
+export { Hexagon } from './Hexagon'
+export { Dasher } from './Dasher'
+export { Shooter } from './Shooter'
+export { Exploder } from './Exploder'

@@ -1,0 +1,104 @@
+{
+  "upgrades": [
+    {
+      "id": "vampirism_1",
+      "name": "Vampirism",
+      "description": "Heal for 2% of damage dealt",
+      "rarity": "rare",
+      "type": "effect",
+      "effect": "lifesteal",
+      "effectValue": 0.02,
+      "stackable": false,
+      "maxStacks": 1,
+      "cost": 10,
+      "tier": 1,
+      "upgradesTo": "vampirism_2"
+    },
+    {
+      "id": "vampirism_2",
+      "name": "Vampirism",
+      "description": "Heal for 5% of damage dealt",
+      "rarity": "epic",
+      "type": "effect",
+      "effect": "lifesteal",
+      "effectValue": 0.05,
+      "stackable": false,
+      "maxStacks": 1,
+      "cost": 20,
+      "tier": 2,
+      "upgradesTo": "vampirism_3"
+    },
+    {
+      "id": "vampirism_3",
+      "name": "Vampirism",
+      "description": "Heal for 12% of damage dealt",
+      "rarity": "legendary",
+      "type": "effect",
+      "effect": "lifesteal",
+      "effectValue": 0.12,
+      "stackable": false,
+      "maxStacks": 1,
+      "cost": 40,
+      "tier": 3
+    },
+    {
+      "id": "regeneration",
+      "name": "Auto Repair",
+      "description": "Regenerate 1 HP/sec",
+      "rarity": "epic",
+      "type": "effect",
+      "effect": "regen",
+      "effectValue": 1,
+      "stackable": true,
+      "maxStacks": 3,
+      "cost": 20
+    },
+    {
+      "id": "armor",
+      "name": "Hardened Shell",
+      "description": "Reduce incoming damage by 2",
+      "rarity": "uncommon",
+      "type": "effect",
+      "effect": "armor",
+      "effectValue": 2,
+      "stackable": true,
+      "maxStacks": 5,
+      "cost": 6
+    },
+    {
+      "id": "thorns",
+      "name": "Thorns",
+      "description": "Reflect 10% of damage taken",
+      "rarity": "epic",
+      "type": "effect",
+      "effect": "thorns",
+      "effectValue": 0.1,
+      "stackable": true,
+      "maxStacks": 3,
+      "cost": 20
+    },
+    {
+      "id": "explosion_on_kill",
+      "name": "Chain Reaction",
+      "description": "Enemies explode on death",
+      "rarity": "epic",
+      "type": "effect",
+      "effect": "explode_on_kill",
+      "effectValue": 20,
+      "stackable": false,
+      "cost": 20
+    },
+    {
+      "id": "multishot_1",
+      "name": "Double Tap",
+      "description": "Fire +1 additional projectile",
+      "rarity": "legendary",
+      "type": "effect",
+      "effect": "multishot",
+      "effectValue": 1,
+      "stackable": true,
+      "maxStacks": 2,
+      "cost": 40
+    }
+  ]
+}

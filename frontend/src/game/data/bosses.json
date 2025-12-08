@@ -1,0 +1,99 @@
+{
+  "bosses": [
+    {
+      "id": "boss_octagon",
+      "name": "The Octagon",
+      "description": "A massive eight-sided menace",
+      "sides": 8,
+      "health": 500,
+      "speed": 30,
+      "damage": 30,
+      "color": 16711680,
+      "radius": 60,
+      "scoreValue": 500,
+      "waveAppearance": 10,
+      "phases": [
+        {
+          "healthThreshold": 1.0,
+          "attacks": ["charge", "spawn_minions"],
+          "speed": 30
+        },
+        {
+          "healthThreshold": 0.5,
+          "attacks": ["charge", "spawn_minions", "bullet_spray"],
+          "speed": 40
+        },
+        {
+          "healthThreshold": 0.25,
+          "attacks": ["charge", "spawn_minions", "bullet_spray", "rage"],
+          "speed": 60
+        }
+      ]
+    },
+    {
+      "id": "boss_decagon",
+      "name": "Deca-Core",
+      "description": "Ten-sided terror with rotating shields",
+      "sides": 10,
+      "health": 1000,
+      "speed": 25,
+      "damage": 40,
+      "color": 8388863,
+      "radius": 80,
+      "scoreValue": 1000,
+      "waveAppearance": 20,
+      "phases": [
+        {
+          "healthThreshold": 1.0,
+          "attacks": ["shield_rotate", "laser_beam"],
+          "speed": 25
+        },
+        {
+          "healthThreshold": 0.6,
+          "attacks": ["shield_rotate", "laser_beam", "summon_guardians"],
+          "speed": 35
+        },
+        {
+          "healthThreshold": 0.3,
+          "attacks": ["shield_rotate", "laser_beam", "summon_guardians", "overdrive"],
+          "speed": 50
+        }
+      ]
+    },
+    {
+      "id": "boss_dodecagon",
+      "name": "The Twelve",
+      "description": "Twelve vertices of destruction",
+      "sides": 12,
+      "health": 2000,
+      "speed": 20,
+      "damage": 50,
+      "color": 16776960,
+      "radius": 100,
+      "scoreValue": 2000,
+      "waveAppearance": 30,
+      "phases": [
+        {
+          "healthThreshold": 1.0,
+          "attacks": ["orbital_lasers", "minion_wave"],
+          "speed": 20
+        },
+        {
+          "healthThreshold": 0.7,
+          "attacks": ["orbital_lasers", "minion_wave", "teleport"],
+          "speed": 30
+        },
+        {
+          "healthThreshold": 0.4,
+          "attacks": ["orbital_lasers", "minion_wave", "teleport", "death_spiral"],
+          "speed": 40
+        },
+        {
+          "healthThreshold": 0.15,
+          "attacks": ["orbital_lasers", "minion_wave", "teleport", "death_spiral", "final_form"],
+          "speed": 60
+        }
+      ]
+    }
+  ]
+}

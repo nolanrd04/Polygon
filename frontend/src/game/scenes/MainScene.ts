@@ -1,0 +1,279 @@
+import Phaser from 'phaser'
+import { Player } from '../entities/Player'
+import { EnemyManager } from '../systems/EnemyManager'
+import { WaveManager } from '../systems/WaveManager'
+import { CollisionManager } from '../systems/CollisionManager'
+import { MapManager } from '../systems/MapManager'
+import { EventBus } from '../core/EventBus'
+import { GameManager } from '../core/GameManager'
+import { GAME_WIDTH, GAME_HEIGHT } from '../core/GameConfig'
+import { AttackType } from '../data/attackTypes'
+import { UpgradeSystem, UpgradeEffectSystem, registerEffectHandlers, type UpgradeDefinition } from '../systems/upgrades'
+
+// Import all upgrade JSONs
+import statUpgrades from '../data/upgrades/stat_upgrades.json'
+import effectUpgrades from '../data/upgrades/effect_upgrades.json'
+import variantUpgrades from '../data/upgrades/variant_upgrades.json'
+import visualUpgrades from '../data/upgrades/visual_upgrades.json'
+import abilityUpgrades from '../data/upgrades/ability_upgrades.json'
+
+export class MainScene extends Phaser.Scene {
+  player!: Player
+  enemyManager!: EnemyManager
+  waveManager!: WaveManager
+  collisionManager!: CollisionManager
+  mapManager!: MapManager
+
+  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
+  private wasdKeys!: Record<string, Phaser.Input.Keyboard.Key>
+  private debugGraphics!: Phaser.GameObjects.Graphics
+  private showCollisionBoxes: boolean = false
+
+  constructor() {
+    super({ key: 'MainScene' })
+  }
+
+  create(): void {
+    // Register effect handlers (once at game start)
+    registerEffectHandlers()
+
+    // Initialize debug graphics
+    this.debugGraphics = this.add.graphics()
+    this.debugGraphics.setDepth(1000) // Render on top
+
+    // Initialize map
+    this.mapManager = new MapManager(this)
+    this.mapManager.generateMap()
+
+    // Get selected attack from sessionStorage (set by AttackSelectPage)
+    const selectedAttack = (sessionStorage.getItem('selectedAttack') as AttackType) || 'bullet'
+
+    // Initialize player at center with selected attack
+    this.player = new Player(this, GAME_WIDTH / 2, GAME_HEIGHT / 2, selectedAttack)
+
+    // Initialize managers
+    this.enemyManager = new EnemyManager(this)
+    this.waveManager = new WaveManager(this, this.enemyManager)
+    this.collisionManager = new CollisionManager(
+      this,
+      this.player,
+      this.enemyManager
+    )
+
+    // Set up input
+    this.cursors = this.input.keyboard!.createCursorKeys()
+    this.wasdKeys = {
+      W: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+      A: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+      S: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S),
+      D: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D)
+    }
+
+    // Pause on ESC
+    this.input.keyboard!.on('keydown-ESC', () => {
+      const state = GameManager.getState()
+      if (state.isPaused) {
+        GameManager.resume()
+      } else {
+        GameManager.pause()
+      }
+    })
+
+    // Shield ability on E
+    this.input.keyboard!.on('keydown-E', () => {
+      this.player.activateShield()
+    })
+
+    // Listen for events
+    EventBus.on('game-pause', () => this.scene.pause())
+    EventBus.on('game-resume', () => this.scene.resume())
+    EventBus.on('start-next-wave', () => this.waveManager.startNextWave())
+    EventBus.on('upgrade-selected', (upgradeId) => {
+      this.applyUpgrade(upgradeId)
+    })
+    EventBus.on('toggle-collision-boxes' as any, (show: boolean) => {
+      this.showCollisionBoxes = show
+    })
+
+    // Clear projectiles at end of wave
+    this.events.on('clear-projectiles', () => {
+      this.player.clearProjectiles()
+    })
+
+    // Handle explosion damage
+    this.events.on('explosion-damage', (data: { x: number; y: number; radius: number; damage: number }) => {
+      const enemies = this.enemyManager.getEnemies()
+      for (const enemy of enemies) {
+        const dist = Phaser.Math.Distance.Between(data.x, data.y, enemy.x, enemy.y)
+        if (dist <= data.radius) {
+          enemy.takeDamage(data.damage)
+        }
+      }
+    })
+
+    // Start first wave after short delay
+    this.time.delayedCall(1000, () => {
+      this.waveManager.startNextWave()
+    })
+  }
+
+  update(_time: number, delta: number): void {
+    if (GameManager.getState().isPaused) return
+
+    // Update effect system (for regeneration, etc.)
+    UpgradeEffectSystem.onUpdate(delta)
+
+    // Handle movement input
+    let velocityX = 0
+    let velocityY = 0
+
+    if (this.cursors.left.isDown || this.wasdKeys.A.isDown) {
+      velocityX = -1
+    } else if (this.cursors.right.isDown || this.wasdKeys.D.isDown) {
+      velocityX = 1
+    }
+
+    if (this.cursors.up.isDown || this.wasdKeys.W.isDown) {
+      velocityY = -1
+    } else if (this.cursors.down.isDown || this.wasdKeys.S.isDown) {
+      velocityY = 1
+    }
+
+    this.player.move(velocityX, velocityY)
+
+    // Update player rotation to face mouse
+    const pointer = this.input.activePointer
+    this.player.rotateTowards(pointer.worldX, pointer.worldY)
+
+    // Handle shooting
+    if (this.input.activePointer.isDown) {
+      this.player.shoot(pointer.worldX, pointer.worldY)
+    }
+
+    // Update player (for attack animations like spinner/flamer)
+    this.player.update()
+
+    // Update managers
+    this.enemyManager.update(this.player.x, this.player.y)
+
+    // Check wave completion
+    if (this.waveManager.isWaveComplete()) {
+      this.waveManager.completeWave()
+    }
+
+    // Draw collision boxes if enabled
+    if (this.showCollisionBoxes) {
+      this.drawCollisionBoxes()
+    }
+  }
+
+  private drawCollisionBoxes(): void {
+    this.debugGraphics.clear()
+    this.debugGraphics.lineStyle(2, 0x00ff00, 1)
+
+    // Draw player collision box
+    const playerBody = this.player.body
+    this.debugGraphics.strokeCircle(
+      this.player.x,
+      this.player.y,
+      this.player.getRadius()
+    )
+
+    // Draw enemy collision boxes
+    const enemies = this.enemyManager.getEnemies()
+    this.debugGraphics.lineStyle(2, 0xff0000, 1)
+    for (const enemy of enemies) {
+      if (!enemy.isDestroyed) {
+        const container = enemy.getContainer()
+        const body = container.body as Phaser.Physics.Arcade.Body
+        if (body) {
+          this.debugGraphics.strokeCircle(
+            container.x,
+            container.y,
+            body.radius
+          )
+        }
+      }
+    }
+
+    // Draw projectile collision boxes
+    this.debugGraphics.lineStyle(2, 0x00ffff, 1)
+    const projectiles = this.player.getProjectiles()
+    for (const projectile of projectiles) {
+      if (!projectile.isDestroyed) {
+        const container = projectile.getContainer()
+        const body = container.body as Phaser.Physics.Arcade.Body
+        if (body) {
+          this.debugGraphics.strokeCircle(
+            container.x,
+            container.y,
+            body.radius
+          )
+        }
+      }
+    }
+  }
+
+  private applyUpgrade(upgradeId: string): boolean {
+    // Combine all upgrade sources
+    const allUpgrades = [
+      ...statUpgrades.upgrades,
+      ...effectUpgrades.upgrades,
+      ...variantUpgrades.upgrades,
+      ...visualUpgrades.upgrades,
+      ...abilityUpgrades.upgrades
+    ] as UpgradeDefinition[]
+
+    // Find the upgrade
+    const upgrade = allUpgrades.find(u => u.id === upgradeId)
+
+    if (!upgrade) {
+      console.error(`Upgrade not found: ${upgradeId}`)
+      return false
+    }
+
+    // Check if player can afford it
+    const stats = GameManager.getPlayerStats()
+    const cost = upgrade.cost || 0
+
+    if (stats.points < cost) {
+      console.warn(`Not enough points for ${upgrade.name}. Need ${cost}, have ${stats.points}`)
+      return false
+    }
+
+    // Apply the upgrade
+    const success = UpgradeSystem.applyUpgrade(upgrade)
+
+    if (success) {
+      console.log(`Applied upgrade: ${upgrade.name}`)
+
+      // Deduct points
+      if (cost > 0) {
+        GameManager.addPoints(-cost)
+      }
+
+      // Apply player stat changes immediately
+      if (upgrade.type === 'stat_modifier' && upgrade.target === 'player') {
+        if (upgrade.stat === 'maxHealth' && upgrade.value) {
+          GameManager.updatePlayerStats({
+            maxHealth: stats.maxHealth + upgrade.value,
+            health: stats.health + upgrade.value // Also heal
+          })
+        } else if (upgrade.stat === 'speed' && upgrade.value) {
+          GameManager.updatePlayerStats({
+            speed: stats.speed + upgrade.value
+          })
+        } else if (upgrade.stat === 'polygonSides' && upgrade.value) {
+          GameManager.updatePlayerStats({
+            polygonSides: stats.polygonSides + upgrade.value
+          })
+          this.player.updatePolygon()
+        }
+      }
+      return true
+    } else {
+      console.warn(`Could not apply upgrade: ${upgrade.name}`)
+      return false
+    }
+  }
+}

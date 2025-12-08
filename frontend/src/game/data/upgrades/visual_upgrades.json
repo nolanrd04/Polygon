@@ -1,0 +1,28 @@
+{
+  "upgrades": [
+    {
+      "id": "player_glow",
+      "name": "Radiant Core",
+      "description": "Player emits a glowing aura",
+      "rarity": "uncommon",
+      "type": "visual_effect",
+      "target": "player",
+      "effect": "glow",
+      "color": 65535,
+      "intensity": 0.5,
+      "stackable": false,
+      "cost": 0
+    },
+    {
+      "id": "projectile_trail",
+      "name": "Particle Trail",
+      "description": "Projectiles leave trails",
+      "rarity": "common",
+      "type": "visual_effect",
+      "target": "bullet",
+      "effect": "trail",
+      "stackable": false,
+      "cost": 0
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "upgrades": [
+    {
+      "id": "homing_bullets",
+      "name": "Homing Bullets",
+      "description": "Bullets track nearest enemy",
+      "rarity": "epic",
+      "type": "variant",
+      "target": "bullet",
+      "attackType": "bullet",
+      "variantClass": "HomingBullet",
+      "replaces": ["explosive_bullets", "heavy_bullets"],
+      "stackable": false,
+      "cost": 20
+    },
+    {
+      "id": "explosive_bullets",
+      "name": "Explosive Bullets",
+      "description": "Bullets explode on impact",
+      "rarity": "epic",
+      "type": "variant",
+      "target": "bullet",
+      "attackType": "bullet",
+      "variantClass": "ExplosiveBullet",
+      "replaces": ["homing_bullets", "heavy_bullets"],
+      "stackable": false,
+      "cost": 20
+    },
+    {
+      "id": "heavy_bullets",
+      "name": "Heavy Bullets",
+      "description": "Slower, more damage, more pierce",
+      "rarity": "rare",
+      "type": "variant",
+      "target": "bullet",
+      "attackType": "bullet",
+      "variantClass": "HeavyBullet",
+      "replaces": ["homing_bullets", "explosive_bullets"],
+      "stackable": false,
+      "cost": 20
+    }
+  ]
+}

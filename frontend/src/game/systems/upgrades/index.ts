@@ -1,0 +1,6 @@
+export { UpgradeSystem } from './UpgradeSystem'
+export { UpgradeEffectSystem } from './UpgradeEffectSystem'
+export { UpgradeModifierSystem } from './UpgradeModifierSystem'
+export { registerEffectHandlers } from './EffectHandlers'
+export type { UpgradeDefinition } from './UpgradeSystem'
+export type { EffectHandler } from './UpgradeEffectSystem'
