@@ -9,7 +9,7 @@
       "target": "bullet",
       "attackType": "bullet",
       "variantClass": "HomingBullet",
-      "replaces": ["explosive_bullets", "heavy_bullets"],
+      "replaces": "explosive_bullets",
       "stackable": false,
       "cost": 20
     },
@@ -22,20 +22,7 @@
       "target": "bullet",
       "attackType": "bullet",
       "variantClass": "ExplosiveBullet",
-      "replaces": ["homing_bullets", "heavy_bullets"],
-      "stackable": false,
-      "cost": 20
-    },
-    {
-      "id": "heavy_bullets",
-      "name": "Heavy Bullets",
-      "description": "Slower, more damage, more pierce",
-      "rarity": "rare",
-      "type": "variant",
-      "target": "bullet",
-      "attackType": "bullet",
-      "variantClass": "HeavyBullet",
-      "replaces": ["homing_bullets", "explosive_bullets"],
+      "replaces": "homing_bullets",
       "stackable": false,
       "cost": 20
     }

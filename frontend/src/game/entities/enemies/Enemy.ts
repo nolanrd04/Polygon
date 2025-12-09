@@ -22,6 +22,7 @@ export abstract class Enemy {
   radius: number = 20
   color: number = 0xff0000
   scoreChance: number = 0.5  // Chance to drop score on death (0 to 1)
+  speedCap: number = 2  // Maximum speed multiplier (default 2x)
 
   // ============ RUNTIME STATE ============
   protected scene!: Phaser.Scene

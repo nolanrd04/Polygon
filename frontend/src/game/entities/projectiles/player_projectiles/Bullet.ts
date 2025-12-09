@@ -141,6 +141,7 @@ export class ExplosiveBullet extends Projectile {
     this.color = 0xff4400
   }
 
+
   Draw(): void {
     // Pulsing effect
     this.graphics.fillStyle(this.color, 1)
@@ -148,6 +149,11 @@ export class ExplosiveBullet extends Projectile {
 
     this.graphics.fillStyle(0xffff00, 0.5)
     this.graphics.fillCircle(0, 0, this.size * 0.5)
+  }
+
+  OnHitNPC(_enemy: any): boolean {
+    this.OnKill()
+    return true
   }
 
   OnKill(): void {

@@ -27,7 +27,7 @@ export class WaveManager {
     this.enemyManager.scaleEnemyStats(this.currentWave - 1)
 
     // Determine if this is a boss wave
-    if (this.currentWave % 10 === 0) {
+    if (this.currentWave % 10  === 0) {
       this.startBossWave()
     } else {
       this.startNormalWave()
@@ -58,11 +58,11 @@ export class WaveManager {
   }
 
   private calculateEnemyCount(): number {
-    return Math.floor(5 + this.currentWave * 2 + Math.pow(this.currentWave, 1.2))
+    return Math.floor(40 + this.currentWave * 2 + Math.pow(this.currentWave, 1.2))
   }
 
   private spawnEnemiesGradually(): void {
-    const spawnDelay = Math.max(200, 1000 - this.currentWave * 50)
+    const spawnDelay = Math.max(25, Math.min(500, 1000 - this.currentWave * 50))
 
     const spawnTimer = this.scene.time.addEvent({
       delay: spawnDelay,
@@ -83,9 +83,9 @@ export class WaveManager {
   private getAvailableEnemyTypes(): string[] {
     const types: string[] = ['triangle']
 
-    if (this.currentWave >= 3) types.push('square')
-    if (this.currentWave >= 6) types.push('pentagon')
-    if (this.currentWave >= 10) types.push('hexagon')
+    if (this.currentWave >= 4) types.push('square')
+    if (this.currentWave >= 7) types.push('pentagon')
+    if (this.currentWave >= 11) types.push('hexagon')
 
     return types
   }

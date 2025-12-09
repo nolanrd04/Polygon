@@ -111,9 +111,12 @@ export class MainScene extends Phaser.Scene {
       }
     })
 
-    // Start first wave after short delay
-    this.time.delayedCall(1000, () => {
-      this.waveManager.startNextWave()
+    // Start with initial upgrade phase
+    this.time.delayedCall(500, () => {
+      // Give player starting points for initial upgrades
+      GameManager.addPoints(50)
+      // Show upgrade modal before wave 1
+      EventBus.emit('show-upgrades')
     })
   }
 

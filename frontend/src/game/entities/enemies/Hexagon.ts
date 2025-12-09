@@ -10,13 +10,14 @@ export class Hexagon extends Enemy {
   private shieldDuration: number = 2000
 
   SetDefaults(): void {
-    this.health = 120
-    this.speed = 40
-    this.damage = 20
+    this.health = 1000
+    this.speed = 60
+    this.damage = 100
     this.sides = 6
     this.radius = 30
     this.color = 0xff00ff
-    this.scoreChance = 0.25
+    this.scoreChance = 1.0
+    this.speedCap = 1.3  // Very low cap (tank, shouldn't be fast)
   }
 
   AI(_playerX: number, _playerY: number): void {

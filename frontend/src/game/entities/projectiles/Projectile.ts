@@ -70,6 +70,8 @@ export abstract class Projectile {
   /** Current rotation angle in radians (0 = pointing right) */
   rotation: number = 0
 
+  isFriendly: boolean = true // Whether this projectile was fired by the player
+
   // ============================================================
   // INTERNAL - Don't modify these directly
   // ============================================================

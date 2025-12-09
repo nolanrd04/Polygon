@@ -5,12 +5,13 @@ import { Enemy } from './Enemy'
  */
 export class Square extends Enemy {
   SetDefaults(): void {
-    this.health = 50
-    this.speed = 60
-    this.damage = 10
+    this.health = 175
+    this.speed = 100
+    this.damage = 75
     this.sides = 4
     this.radius = 20
     this.color = 0x33ff33
-    this.scoreChance = 0.15
+    this.scoreChance = 0.75
+    this.speedCap = 2.25  // Normal cap (2x)
   }
 }

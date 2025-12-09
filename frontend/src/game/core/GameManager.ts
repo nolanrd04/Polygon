@@ -160,7 +160,7 @@ class GameManagerClass {
     const baseBonus = 10
     // const waveMultiplier = Math.exp((this.state.wave - 1) / 16)
     // const score = Math.floor(baseBonus * waveMultiplier)
-    const score = Math.floor(baseBonus + (this.state.wave) * 3)
+    const score = Math.min(60, Math.floor(baseBonus + (this.state.wave) * 2))
 
     this.addPoints(score)
     EventBus.emit('wave-complete', {

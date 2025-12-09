@@ -5,13 +5,14 @@ import { Enemy } from './Enemy'
  */
 export class Pentagon extends Enemy {
   SetDefaults(): void {
-    this.health = 75
-    this.speed = 50
-    this.damage = 12
+    this.health = 400
+    this.speed = 75
+    this.damage = 80
     this.sides = 5
     this.radius = 20
     this.color = 0xff44ff
-    this.scoreChance = 0.2
+    this.scoreChance = 0.9
+    this.speedCap = 2.5  // Higher cap (dangerous)
   }
 
   OnDeath(): void {

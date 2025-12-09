@@ -33,6 +33,9 @@ export class EnemyManager {
   constructor(scene: Phaser.Scene) {
     this.scene = scene
     this.enemyGroup = scene.add.group()
+
+    // Enable enemy-to-enemy collision (prevents overlapping)
+    this.scene.physics.add.collider(this.enemyGroup, this.enemyGroup)
   }
 
   /**
@@ -58,6 +61,7 @@ export class EnemyManager {
     // Apply wave scaling
     enemy.health *= this.waveMultiplier
     enemy.damage *= this.waveMultiplier
+    enemy.speed *= this.getSpeedMultiplier(this.currentWave, enemy.speedCap)
     enemy.maxHealth = enemy.health  // Update maxHealth to match scaled health
     // console.log(`Spawning enemy ${typeId} at (${x}, ${y}) with health ${enemy.health.toFixed(2)}`)
 
@@ -163,7 +167,16 @@ export class EnemyManager {
    * Increases gradually but exponentially with each wave
    */
   scaleEnemyStats(wave: number): void {
-    this.waveMultiplier = Math.exp(wave / 8)
+    this.waveMultiplier = Math.exp(wave / 6)
+  }
+
+  /**
+   * Get the speed multiplier for the current wave.
+   * Respects each enemy's individual speedCap.
+   */
+  private getSpeedMultiplier(wave: number, speedCap: number): number {
+    const speedMult = 1 + (wave * 0.1) // +10% speed per wave
+    return Math.min(speedCap, speedMult)
   }
 
   /**
