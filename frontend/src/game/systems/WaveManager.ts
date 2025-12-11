@@ -92,7 +92,7 @@ export class WaveManager {
   }
 
   private spawnEnemiesGradually(): void {
-    const spawnDelay = Math.max(50, Math.min(500, 1200 - this.currentWave * 50))
+    const spawnDelay = Math.max(50, Math.min(500, 1800 - this.currentWave * 50))
 
     const spawnTimer = this.scene.time.addEvent({
       delay: spawnDelay,

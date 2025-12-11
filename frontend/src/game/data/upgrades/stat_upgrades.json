@@ -245,12 +245,12 @@
     {
       "id": "player_health_1",
       "name": "Reinforced Core",
-      "description": "+5 max health",
+      "description": "+10 max health",
       "rarity": "common",
       "type": "stat_modifier",
       "target": "player",
       "stat": "maxHealth",
-      "value": 5,
+      "value": 10,
       "stackable": true,
       "maxStacks": 20,
       "cost": 2
@@ -258,12 +258,12 @@
     {
       "id": "player_health_2",
       "name": "Reinforced Core",
-      "description": "+15 max health",
+      "description": "+30 max health",
       "rarity": "uncommon",
       "type": "stat_modifier",
       "target": "player",
       "stat": "maxHealth",
-      "value": 15,
+      "value": 30,
       "stackable": true,
       "maxStacks": 15,
       "cost": 6
@@ -271,12 +271,12 @@
     {
       "id": "player_health_3",
       "name": "Reinforced Core",
-      "description": "+30 max health",
+      "description": "+60 max health",
       "rarity": "rare",
       "type": "stat_modifier",
       "target": "player",
       "stat": "maxHealth",
-      "value": 30,
+      "value": 60,
       "stackable": true,
       "maxStacks": 10,
       "cost": 10
@@ -284,12 +284,12 @@
     {
       "id": "player_health_4",
       "name": "Reinforced Core",
-      "description": "+65 max health",
+      "description": "+130 max health",
       "rarity": "epic",
       "type": "stat_modifier",
       "target": "player",
       "stat": "maxHealth",
-      "value": 65,
+      "value": 130,
       "stackable": true,
       "maxStacks": 8,
       "cost": 20
@@ -297,12 +297,12 @@
     {
       "id": "player_health_5",
       "name": "Reinforced Core",
-      "description": "+150 max health",
+      "description": "+300 max health",
       "rarity": "legendary",
       "type": "stat_modifier",
       "target": "player",
       "stat": "maxHealth",
-      "value": 150,
+      "value": 300,
       "stackable": true,
       "maxStacks": 5,
       "cost": 40
