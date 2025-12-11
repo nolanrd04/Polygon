@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { UpgradeSystem, type UpgradeDefinition } from '../game/systems/upgrades'
+import { type UpgradeDefinition, UpgradeSystem } from '../game/systems/upgrades'
 import { EventBus } from '../game/core/EventBus'
 import statUpgrades from '../game/data/upgrades/stat_upgrades.json'
 import effectUpgrades from '../game/data/upgrades/effect_upgrades.json'
@@ -16,6 +16,7 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
   const [isOpen, setIsOpen] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<'stat' | 'effect' | 'variant' | 'visual' | 'ability'>('stat')
   const [waveInput, setWaveInput] = useState('1')
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const allUpgrades = {
     stat: statUpgrades.upgrades,
@@ -26,17 +27,18 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
   }
 
   const handleApplyUpgrade = (upgrade: UpgradeDefinition) => {
-    const success = UpgradeSystem.applyUpgrade(upgrade)
-    if (success) {
-      console.log('✅ Applied:', upgrade.name)
-    } else {
-      console.warn('❌ Failed to apply:', upgrade.name)
-    }
+    // Emit dev-only event that bypasses point cost
+    EventBus.emit('dev-apply-upgrade', upgrade.id)
+    console.log('✅ Applied (FREE):', upgrade.name)
+
+    // Force re-render to show updated stack count
+    setTimeout(() => setRefreshKey(prev => prev + 1), 100)
   }
 
   const handleReset = () => {
     UpgradeSystem.reset()
     console.log('🔄 Reset all upgrades')
+    setRefreshKey(prev => prev + 1)
   }
 
   const handleSetWave = () => {
@@ -130,7 +132,7 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
       </div>
 
       {/* Upgrade List */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+      <div key={refreshKey} className="flex-1 overflow-y-auto p-2 space-y-1">
         {allUpgrades[selectedCategory].map((upgrade) => {
           const applied = UpgradeSystem.getAppliedUpgrades().some(u => u.id === upgrade.id)
           const stackCount = UpgradeSystem.getStackCount(upgrade.id)

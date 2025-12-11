@@ -114,6 +114,7 @@ export class CollisionManager {
     if (now - this.lastPlayerDamageTime < this.playerDamageCooldown) return
 
     // Damage player
+    console.log(`Enemy projectile hitting player with damage: ${projectile.damage}`)
     this.player.takeDamage(Math.ceil(projectile.damage))
     this.lastPlayerDamageTime = now
 

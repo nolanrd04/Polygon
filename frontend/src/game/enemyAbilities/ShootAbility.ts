@@ -44,12 +44,13 @@ export class ShootAbility extends Ability {
     this.markUsed()
 
     // Emit event for ProjectileManager to create enemy projectile
+    // Use enemy's damage property for scaling, not the fixed config damage
     EventBus.emit('enemy-shoot', {
       x: this.enemy.x,
       y: this.enemy.y,
       targetX: playerX,
       targetY: playerY,
-      damage: config.projectileDamage,
+      damage: this.enemy.damage,
       speed: config.projectileSpeed,
       color: this.enemy.color
     })

@@ -9,7 +9,7 @@ export class Shooter extends Enemy {
   SetDefaults(): void {
     this.health = 65
     this.speed = 50
-    this.damage = 35
+    this.damage = 20
     this.sides = 3
     this.radius = 15
     this.color = 0x4287f5
@@ -51,6 +51,9 @@ export class Shooter extends Enemy {
         // Create and spawn projectile using centralized method
         const projectile = new Bullet()
         projectile.SetDefaults()
+        // Scale damage based on enemy's damage stat
+        projectile.damage = this.damage
+        console.log(`Shooter spawning projectile with damage: ${projectile.damage} (enemy damage: ${this.damage})`)
 
         const scene = this.scene as any
         scene.spawnProjectile(projectile, this.x, this.y, _playerX, _playerY, 'enemy', this.id)

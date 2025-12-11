@@ -92,6 +92,9 @@ export class MainScene extends Phaser.Scene {
     EventBus.on('upgrade-selected', (upgradeId) => {
       this.applyUpgrade(upgradeId)
     })
+    EventBus.on('dev-apply-upgrade', (upgradeId) => {
+      this.applyUpgrade(upgradeId, true) // Skip cost check for dev tools
+    })
     EventBus.on('toggle-collision-boxes' as any, (show: boolean) => {
       this.showCollisionBoxes = show
     })
@@ -258,7 +261,7 @@ export class MainScene extends Phaser.Scene {
     }
   }
 
-  private applyUpgrade(upgradeId: string): boolean {
+  private applyUpgrade(upgradeId: string, skipCost: boolean = false): boolean {
     // Combine all upgrade sources
     const allUpgrades = [
       ...statUpgrades.upgrades,
@@ -276,11 +279,11 @@ export class MainScene extends Phaser.Scene {
       return false
     }
 
-    // Check if player can afford it
+    // Check if player can afford it (skip for dev tools)
     const stats = GameManager.getPlayerStats()
     const cost = upgrade.cost || 0
 
-    if (stats.points < cost) {
+    if (!skipCost && stats.points < cost) {
       console.warn(`Not enough points for ${upgrade.name}. Need ${cost}, have ${stats.points}`)
       return false
     }
@@ -289,10 +292,10 @@ export class MainScene extends Phaser.Scene {
     const success = UpgradeSystem.applyUpgrade(upgrade)
 
     if (success) {
-      console.log(`Applied upgrade: ${upgrade.name}`)
+      console.log(`Applied upgrade: ${upgrade.name}${skipCost ? ' (DEV - FREE)' : ''}`)
 
-      // Deduct points
-      if (cost > 0) {
+      // Deduct points (skip for dev tools)
+      if (!skipCost && cost > 0) {
         GameManager.addPoints(-cost)
       }
 
