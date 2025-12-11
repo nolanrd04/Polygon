@@ -64,9 +64,9 @@ export const DEV_SETTINGS = {
 }
 
 export const RARITY_WEIGHTS: Record<string, number> = {
-  common: 0.4,
+  common: 0.435,
   uncommon: 0.3,
   rare: 0.15,
-  epic: 0.1,
-  legendary: 0.05
+  epic: 0.075,
+  legendary: 0.04
 }
