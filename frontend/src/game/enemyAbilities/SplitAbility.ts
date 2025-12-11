@@ -30,18 +30,21 @@ export class SplitAbility extends Ability {
     const config = this.config as SplitConfig
 
     // Don't split if enemy is already too small
-    if (this.enemy.config.radius < 10) return
+    if (this.enemy.radius < 10) return
 
     const childConfig = {
-      ...this.enemy.config,
-      health: Math.floor(this.enemy.config.health * config.childHealthPercent),
-      radius: Math.floor(this.enemy.config.radius * config.childSizePercent),
-      scoreValue: Math.floor(this.enemy.config.scoreValue * 0.5)
+      health: Math.floor(this.enemy.health * config.childHealthPercent),
+      radius: Math.floor(this.enemy.radius * config.childSizePercent),
+      speed: this.enemy.speed,
+      damage: this.enemy.damage,
+      sides: this.enemy.sides,
+      color: this.enemy.color,
+      scoreChance: this.enemy.scoreChance
     }
 
     // Spawn children in a spread pattern
     const angleStep = (Math.PI * 2) / config.splitCount
-    const spawnDistance = this.enemy.config.radius + childConfig.radius + 5
+    const spawnDistance = this.enemy.radius + childConfig.radius + 5
 
     for (let i = 0; i < config.splitCount; i++) {
       const angle = angleStep * i + Math.random() * 0.5

@@ -34,10 +34,8 @@ export class DashAbility extends Ability {
         this.isDashing = false
       } else {
         // Continue dash
-        this.enemy.body.setVelocity(
-          Math.cos(this.dashAngle) * config.dashSpeed,
-          Math.sin(this.dashAngle) * config.dashSpeed
-        )
+        this.enemy.velocityX = Math.cos(this.dashAngle) * config.dashSpeed
+        this.enemy.velocityY = Math.sin(this.dashAngle) * config.dashSpeed
         return
       }
     }

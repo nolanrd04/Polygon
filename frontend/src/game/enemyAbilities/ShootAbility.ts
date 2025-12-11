@@ -51,12 +51,12 @@ export class ShootAbility extends Ability {
       targetY: playerY,
       damage: config.projectileDamage,
       speed: config.projectileSpeed,
-      color: this.enemy.config.color
+      color: this.enemy.color
     })
 
     // Visual feedback - muzzle flash
     const graphics = this.scene.add.graphics()
-    graphics.fillStyle(this.enemy.config.color, 0.8)
+    graphics.fillStyle(this.enemy.color, 0.8)
 
     const angle = Phaser.Math.Angle.Between(
       this.enemy.x,
@@ -64,8 +64,8 @@ export class ShootAbility extends Ability {
       playerX,
       playerY
     )
-    const flashX = this.enemy.x + Math.cos(angle) * this.enemy.config.radius
-    const flashY = this.enemy.y + Math.sin(angle) * this.enemy.config.radius
+    const flashX = this.enemy.x + Math.cos(angle) * this.enemy.radius
+    const flashY = this.enemy.y + Math.sin(angle) * this.enemy.radius
 
     graphics.fillCircle(flashX, flashY, 8)
 

@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { Player } from '../Player'
+// import { Player } from '../Player'
 import { GameManager } from '../../core/GameManager'
 
 /**

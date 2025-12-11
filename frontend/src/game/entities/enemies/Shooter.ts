@@ -22,7 +22,7 @@ export class Shooter extends Enemy {
     super.Draw()
 
     // Add a "head" indicator (front vertex marker) so player knows which way it faces
-    const angleStep = (Math.PI * 2) / this.sides
+    // const _angleStep = (Math.PI * 2) / this.sides
     const angle = -Math.PI / 2 // First vertex (top)
     const headX = Math.cos(angle) * this.radius
     const headY = Math.sin(angle) * this.radius

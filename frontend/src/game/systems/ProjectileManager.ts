@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
-import { Projectile } from '../entities/projectiles/Projectile'
-import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../core/GameConfig'
+// import { Projectile } from '../entities/projectiles/Projectile'
+import { COLORS } from '../core/GameConfig'
 
 export class ProjectileManager {
   private scene: Phaser.Scene

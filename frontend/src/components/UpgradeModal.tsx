@@ -199,7 +199,7 @@ export default function UpgradeModal({ onStartWave, playerPoints, selectedAttack
     setSelectedIndices([...selectedIndices, index])
   }
 
-  const isUpgradeDisabled = (upgrade: Upgrade, index: number): boolean => {
+  const isUpgradeDisabled = (upgrade: Upgrade, _index: number): boolean => {
     const stats = GameManager.getPlayerStats()
 
     // Can't afford

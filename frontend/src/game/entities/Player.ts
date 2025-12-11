@@ -226,7 +226,7 @@ export class Player extends Phaser.GameObjects.Container {
    * @param targetX X position to shoot towards
    * @param targetY Y position to shoot towards
    */
-  shoot(targetX: number, targetY: number): void {
+  shoot(_targetX: number, _targetY: number): void {
     const now = this.scene.time.now
     if (now - this.lastFireTime < this.getCooldown()) return
 

@@ -176,13 +176,13 @@ class GameManagerClass {
    * Check if a number is prime
    * Used to determine if current wave number qualifies for score bonus
    */
-  private isPrimeNumber(num: number): boolean {
-    if (num < 2) return false
-    for (let i = 2; i <= Math.sqrt(num); i++) {
-      if (num % i === 0) return false
-    }
-    return true
-  }
+  // private _isPrimeNumber(num: number): boolean {
+  //   if (num < 2) return false
+  //   for (let i = 2; i <= Math.sqrt(num); i++) {
+  //     if (num % i === 0) return false
+  //   }
+  //   return true
+  // }
 
   /**
    * Apply an upgrade to the player

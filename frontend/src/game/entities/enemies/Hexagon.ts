@@ -36,7 +36,7 @@ export class Hexagon extends Enemy {
     }
   }
 
-  OnHit(damage: number, _source: any): boolean {
+  OnHit(_damage: number, _source: any): boolean {
     if (this.shielded) {
       // Blocked by shield
       return false
