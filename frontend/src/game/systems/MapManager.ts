@@ -7,6 +7,7 @@ interface Obstacle {
   radius: number
   sides: number
   color: number
+  hitboxSize?: number  // Optional, defaults to 1.0
 }
 
 export class MapManager {
@@ -48,12 +49,14 @@ export class MapManager {
       )
 
       if (attempts < 50) {
+        const sides = Math.floor(random() * 4) + 3
         const obstacle: Obstacle = {
           x,
           y,
           radius: config.obstacleSize * (0.5 + random() * 0.5),
-          sides: Math.floor(random() * 4) + 3,
-          color: config.obstacleColor
+          sides,
+          color: config.obstacleColor,
+          hitboxSize: this.calculateHitboxSize(sides)
         }
 
         this.obstacleData.push(obstacle)
@@ -145,9 +148,16 @@ export class MapManager {
     this.obstacles.add(graphics)
 
     // Add physics body for collision
-    const body = this.scene.add.circle(obstacle.x, obstacle.y, obstacle.radius)
+    const hitboxSize = obstacle.hitboxSize || 1.0
+    const hitboxRadius = obstacle.radius * hitboxSize
+    const body = this.scene.add.circle(obstacle.x, obstacle.y, hitboxRadius)
     body.setVisible(false)
     this.scene.physics.add.existing(body, true) // Static body
+
+    // Ensure the physics body is set as a circle with correct radius
+    const physicsBody = body.body as Phaser.Physics.Arcade.Body
+    physicsBody.setCircle(hitboxRadius)
+
     this.obstacles.add(body)
   }
 
@@ -201,5 +211,23 @@ export class MapManager {
 
   setSeed(seed: number): void {
     this.seed = seed
+  }
+
+  /**
+   * Calculate hitbox size based on number of sides.
+   * Triangles (3 sides) get 0.8, scaling up to 1.0 for 8-sided polygons.
+   */
+  private calculateHitboxSize(sides: number): number {
+    const minSides = 3
+    const maxSides = 8
+    const minHitbox = 0.65
+    const maxHitbox = 1.0
+
+    // Clamp sides to range
+    const clampedSides = Math.max(minSides, Math.min(maxSides, sides))
+
+    // Linear interpolation from 0.8 to 1.0
+    const t = (clampedSides - minSides) / (maxSides - minSides)
+    return minHitbox + t * (maxHitbox - minHitbox)
   }
 }

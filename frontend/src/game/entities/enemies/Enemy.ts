@@ -24,6 +24,7 @@ export abstract class Enemy {
   scoreChance: number = 0.5  // Chance to drop score on death (0 to 1)
   speedCap: number = 2  // Maximum speed multiplier (default 2x)
   scale: number = 1.0  // Visual scale multiplier (0.8 = 80%, 1.0 = 100%, 1.2 = 120%)
+  hitboxSize: number = 1.0  // Collision radius multiplier relative to visual radius (0.8 = 80%, 1.0 = 100%)
 
   // ============ RUNTIME STATE ============
   protected scene!: Phaser.Scene
@@ -241,8 +242,9 @@ export abstract class Enemy {
     this.container.setScale(this.scale)
 
     this.body = this.container.body as Phaser.Physics.Arcade.Body
-    this.body.setCircle(this.radius * this.scale)
-    this.body.setOffset(-this.radius * this.scale, -this.radius * this.scale)
+    const hitboxRadius = this.radius * this.scale * this.hitboxSize
+    this.body.setCircle(hitboxRadius)
+    this.body.setOffset(-hitboxRadius, -hitboxRadius)
 
     this.Draw()
     this.drawHealthBar()

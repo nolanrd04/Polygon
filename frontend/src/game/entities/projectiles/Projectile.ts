@@ -53,6 +53,11 @@ export abstract class Projectile {
    *  Default 500ms balances DPS while preventing instant re-hits. */
   hitEnemyCooldown: number = 500
 
+  /** Whether this projectile can cut through terrain/obstacles.
+   *  When true, hitting terrain counts as a pierce hit but doesn't destroy the projectile.
+   *  When false (default), the projectile ignores terrain collision. */
+  canCutTiles: boolean = false
+
   // ============================================================
   // POSITION & MOVEMENT - Updated automatically each frame
   // You can read these in AI() or modify velocity to change direction

@@ -58,7 +58,8 @@ export class MainScene extends Phaser.Scene {
     this.collisionManager = new CollisionManager(
       this,
       this.player,
-      this.enemyManager
+      this.enemyManager,
+      this.mapManager.getObstacles() // Pass obstacles for collision detection
     )
 
     // Set up input
@@ -219,11 +220,11 @@ export class MainScene extends Phaser.Scene {
     this.debugGraphics.lineStyle(2, 0x00ff00, 1)
 
     // Draw player collision box
-    // const playerBody = this.player.body
+    const playerBody = this.player.body as Phaser.Physics.Arcade.Body
     this.debugGraphics.strokeCircle(
       this.player.x,
       this.player.y,
-      this.player.getRadius()
+      playerBody.radius
     )
 
     // Draw enemy collision boxes
@@ -259,6 +260,22 @@ export class MainScene extends Phaser.Scene {
         }
       }
     }
+
+    // Draw obstacle collision boxes
+    this.debugGraphics.lineStyle(2, 0xffff00, 1) // Yellow for obstacles
+    const obstacles = this.mapManager.getObstacles()
+    obstacles.getChildren().forEach((obj: any) => {
+      if (obj.body && obj.visible === false) { // Only draw invisible physics bodies
+        const circle = obj as Phaser.GameObjects.Arc
+        const body = obj.body as Phaser.Physics.Arcade.Body
+        // Use the circle's position (center) and the body's actual radius
+        this.debugGraphics.strokeCircle(
+          circle.x,
+          circle.y,
+          body.radius
+        )
+      }
+    })
   }
 
   private applyUpgrade(upgradeId: string, skipCost: boolean = false): boolean {

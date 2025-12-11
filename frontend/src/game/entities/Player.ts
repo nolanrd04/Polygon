@@ -27,6 +27,24 @@ export class Player extends Phaser.GameObjects.Container {
   /** The type of projectile this player shoots */
   attackType: AttackType
 
+  /**
+   * Collision radius multiplier relative to visual radius.
+   * Scales from 0.65 (3 sides) to 1.0 (8+ sides)
+   */
+  get hitboxSize(): number {
+    const minSides = 3
+    const maxSides = 8
+    const minHitbox = 0.65
+    const maxHitbox = 1.0
+
+    // Clamp sides to range
+    const clampedSides = Math.max(minSides, Math.min(maxSides, this.sides))
+
+    // Linear interpolation from 0.65 to 1.0
+    const t = (clampedSides - minSides) / (maxSides - minSides)
+    return minHitbox + t * (maxHitbox - minHitbox)
+  }
+
   // ============================================================
   // POSITION & MOVEMENT - Updated automatically each frame
   // ============================================================
@@ -86,8 +104,9 @@ export class Player extends Phaser.GameObjects.Container {
     scene.physics.add.existing(this)
 
     this.body = this.body as Phaser.Physics.Arcade.Body
-    this.body.setCircle(this.radius)
-    this.body.setOffset(-this.radius, -this.radius)
+    const hitboxRadius = this.radius * this.hitboxSize
+    this.body.setCircle(hitboxRadius)
+    this.body.setOffset(-hitboxRadius, -hitboxRadius)
     this.body.setCollideWorldBounds(true)
 
     this.Draw()
@@ -547,5 +566,10 @@ export class Player extends Phaser.GameObjects.Container {
    */
   updatePolygon(): void {
     this.Draw()
+
+    // Update physics body hitbox to match new hitboxSize (which scales with sides)
+    const hitboxRadius = this.radius * this.hitboxSize
+    this.body.setCircle(hitboxRadius)
+    this.body.setOffset(-hitboxRadius, -hitboxRadius)
   }
 }

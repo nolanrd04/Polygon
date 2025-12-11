@@ -9,17 +9,20 @@ export class CollisionManager {
   private scene: Phaser.Scene
   private player: Player
   private enemyManager: EnemyManager
+  private obstacles: Phaser.GameObjects.Group | null = null
   private lastPlayerDamageTime: number = 0
   private playerDamageCooldown: number = 500 // milliseconds
 
   constructor(
     scene: Phaser.Scene,
     player: Player,
-    enemyManager: EnemyManager
+    enemyManager: EnemyManager,
+    obstacles?: Phaser.GameObjects.Group
   ) {
     this.scene = scene
     this.player = player
     this.enemyManager = enemyManager
+    this.obstacles = obstacles || null
 
     this.setupCollisions()
   }
@@ -45,6 +48,29 @@ export class CollisionManager {
       this.enemyManager.getGroup(),
       this.handlePlayerEnemyCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback
     )
+
+    // Setup obstacle collisions if obstacles exist
+    if (this.obstacles) {
+      // Player vs Obstacles
+      this.scene.physics.add.collider(this.player, this.obstacles)
+
+      // Player Projectiles vs Obstacles
+      this.scene.physics.add.overlap(
+        this.player.getProjectileGroup(),
+        this.obstacles,
+        this.handleProjectileObstacleCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback
+      )
+
+      // Enemy Projectiles vs Obstacles
+      this.scene.physics.add.overlap(
+        this.enemyManager.getEnemyProjectileGroup(),
+        this.obstacles,
+        this.handleProjectileObstacleCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback
+      )
+
+      // Enemies vs Obstacles
+      this.scene.physics.add.collider(this.enemyManager.getGroup(), this.obstacles)
+    }
   }
 
   private handleProjectileEnemyCollision(
@@ -173,5 +199,26 @@ export class CollisionManager {
       Math.cos(angle) * pushForce,
       Math.sin(angle) * pushForce
     )
+  }
+
+  private handleProjectileObstacleCollision(
+    projectileContainer: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    _obstacle: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody
+  ): void {
+    const container = projectileContainer as Phaser.GameObjects.Container
+    const projectile = container.getData('projectileInstance')
+
+    if (!projectile || projectile.isDestroyed) return
+
+    // If projectile can't cut tiles, ignore the collision
+    if (!projectile.canCutTiles) return
+
+    // Count this terrain hit for pierce
+    projectile.currentPierceCount++
+
+    // Destroy projectile if it exceeded its pierce limit
+    if (projectile.currentPierceCount > projectile.pierce) {
+      projectile._destroy()
+    }
   }
 }

@@ -13,5 +13,6 @@ export class Triangle extends Enemy {
     this.color = 0xff3333
     this.scoreChance = 0.3
     this.speedCap = 2.5  // Capped at 1.5x (already fast)
+    this.hitboxSize = 0.8  // Smaller hitbox for triangles (easier to dodge)
   }
 }
