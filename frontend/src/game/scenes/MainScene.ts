@@ -103,6 +103,22 @@ export class MainScene extends Phaser.Scene {
       this.enemyManager.clear()
       this.waveManager.setWave(wave)
     })
+    EventBus.on('player-death', () => {
+      // Display death message
+      const deathText = this.add.text(
+        20,
+        GAME_HEIGHT - 20,
+        'YOU DIED\nHealth reached 0',
+        {
+          fontSize: '24px',
+          color: '#ffffff',
+          align: 'left',
+          fontStyle: 'bold'
+        }
+      )
+      deathText.setOrigin(0, 1) // Anchor from bottom-left corner
+      deathText.setDepth(10000) // Render on top of everything
+    })
 
     // Clear projectiles at end of wave
     this.events.on('clear-projectiles', () => {

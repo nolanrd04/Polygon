@@ -101,7 +101,7 @@ export abstract class Projectile {
   protected body!: Phaser.Physics.Arcade.Body
 
   /** How many enemies this projectile has already pierced through */
-  private currentPierceCount: number = 0
+  currentPierceCount: number = 0
 
   /** Map of enemy IDs to timestamp of last hit (for cooldown-based re-hitting) */
   private enemyHitTimestamps: Map<number, number> = new Map()

@@ -55,17 +55,19 @@ export class CollisionManager {
       this.scene.physics.add.collider(this.player, this.obstacles)
 
       // Player Projectiles vs Obstacles
-      this.scene.physics.add.overlap(
+      this.scene.physics.add.collider(
         this.player.getProjectileGroup(),
         this.obstacles,
-        this.handleProjectileObstacleCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback
+        this.handleProjectileObstacleCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
+        this.processProjectileObstacleCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback
       )
 
       // Enemy Projectiles vs Obstacles
-      this.scene.physics.add.overlap(
+      this.scene.physics.add.collider(
         this.enemyManager.getEnemyProjectileGroup(),
         this.obstacles,
-        this.handleProjectileObstacleCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback
+        this.handleProjectileObstacleCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
+        this.processProjectileObstacleCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback
       )
 
       // Enemies vs Obstacles
@@ -201,24 +203,46 @@ export class CollisionManager {
     )
   }
 
-  private handleProjectileObstacleCollision(
+  /**
+   * ProcessCallback: Determines if collision should happen.
+   * Return true to block projectile, false to let it pass through.
+   */
+  private processProjectileObstacleCollision(
     projectileContainer: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody,
     _obstacle: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody
-  ): void {
+  ): boolean {
     const container = projectileContainer as Phaser.GameObjects.Container
-    const projectile = container.getData('projectileInstance')
 
-    if (!projectile || projectile.isDestroyed) return
-
-    // If projectile can't cut tiles, ignore the collision
-    if (!projectile.canCutTiles) return
-
-    // Count this terrain hit for pierce
-    projectile.currentPierceCount++
-
-    // Destroy projectile if it exceeded its pierce limit
-    if (projectile.currentPierceCount > projectile.pierce) {
-      projectile._destroy()
+    // Find the projectile instance by matching container (same approach as enemy collision)
+    let projectile = this.player.getProjectiles().find(p => p.getContainer() === container)
+    if (!projectile) {
+      projectile = this.enemyManager.getProjectiles().find(p => p.getContainer() === container)
     }
+
+    if (!projectile || projectile.isDestroyed) return false
+
+    // If projectile can cut tiles, let it pass through but count pierce
+    if (projectile.canCutTiles) {
+      projectile.currentPierceCount++
+      if (projectile.currentPierceCount > projectile.pierce) {
+        projectile._destroy()
+      }
+      return false // Don't block - let it pass through
+    }
+
+    // Can't cut tiles - destroy immediately to prevent pass-through
+    projectile._destroy()
+    return false // Return false to prevent collision response since projectile is destroyed
+  }
+
+  /**
+   * CollisionCallback: Called when collision actually happens (processCallback returned true).
+   * Not used anymore since we destroy in processCallback.
+   */
+  private handleProjectileObstacleCollision(
+    _projectileContainer: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    _obstacle: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody
+  ): void {
+    // Not needed - destruction handled in processCallback
   }
 }
