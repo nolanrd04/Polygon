@@ -6,6 +6,7 @@ export interface PlayerStatsPayload {
   points: number
   polygonSides: number
   unlockedAttacks: string[]
+  kills: number
 }
 
 export interface GameEvents {
@@ -22,6 +23,7 @@ export interface GameEvents {
   'enemy-explode': { x: number; y: number; radius: number; damage: number }
   'enemy-split': { x: number; y: number; config: unknown; velocityAngle: number }
   'enemy-shoot': { x: number; y: number; targetX: number; targetY: number; damage: number; speed: number; color: number }
+  'thorns-reflect': { damage: number }
 }
 
 type EventCallback<T = void> = T extends void ? () => void : (data: T) => void

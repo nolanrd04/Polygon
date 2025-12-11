@@ -216,7 +216,7 @@ export class MainScene extends Phaser.Scene {
     this.debugGraphics.lineStyle(2, 0x00ff00, 1)
 
     // Draw player collision box
-    const playerBody = this.player.body
+    // const playerBody = this.player.body
     this.debugGraphics.strokeCircle(
       this.player.x,
       this.player.y,

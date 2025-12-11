@@ -45,7 +45,7 @@ export class HeavyBullet extends Projectile {
  */
 export class HomingBullet extends Projectile {
   private turnSpeed: number = 0.08 // Increased from 0.05 for better tracking
-  private lastTargetId: number = -1
+  // private _lastTargetId: number = -1
   private canHome: boolean = true
   private homeDelay: number = 125 // Delay before homing re-activates after hit (milliseconds)
 

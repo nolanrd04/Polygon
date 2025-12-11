@@ -3,7 +3,7 @@ import { Enemy } from '../entities/enemies/Enemy'
 
 export interface AbilityConfig {
   cooldown: number
-  [key: string]: number | string | boolean
+  [key: string]: number | string | boolean | undefined
 }
 
 export abstract class Ability {

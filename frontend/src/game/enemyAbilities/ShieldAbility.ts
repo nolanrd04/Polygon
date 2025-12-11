@@ -66,7 +66,7 @@ export class ShieldAbility extends Ability {
 
     this.graphics.clear()
 
-    const radius = this.enemy.config.radius + 10
+    const radius = this.enemy.radius + 10
 
     // Shield bubble
     this.graphics.lineStyle(3, 0x00ffff, 0.8)
