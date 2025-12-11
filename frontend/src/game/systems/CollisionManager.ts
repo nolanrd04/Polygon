@@ -121,6 +121,19 @@ export class CollisionManager {
 
     // Record hit (handles pierce logic and may destroy projectile)
     projectile._recordHit(enemy.id, enemy)
+    // Apply knockback to enemy
+    if (projectile.knockback > 0) {
+      const angle = Phaser.Math.Angle.Between(
+        projectile.positionX,
+        projectile.positionY,
+        enemy.x,
+        enemy.y
+      )
+      enemy.applyKnockback(
+        Math.cos(angle) * projectile.knockback,
+        Math.sin(angle) * projectile.knockback
+      )
+    }
   }
 
   private handleEnemyProjectilePlayerCollision(

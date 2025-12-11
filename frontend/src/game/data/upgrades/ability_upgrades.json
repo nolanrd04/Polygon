@@ -19,16 +19,6 @@
       "effect": "shield",
       "stackable": false,
       "cost": 10
-    },
-    {
-      "id": "time_slow",
-      "name": "Time Dilation",
-      "description": "Press Q to slow time",
-      "rarity": "legendary",
-      "type": "ability",
-      "effect": "time_slow",
-      "stackable": false,
-      "cost": 40
     }
   ]
 }

@@ -13,6 +13,7 @@ export class Bullet extends Projectile {
     this.pierce = 0
     this.color = COLORS.bullet
     this.timeLeft = 3000 // milliseconds
+    this.knockback = 15 // Push enemies back on hit
   }
 }
 
@@ -51,12 +52,13 @@ export class HomingBullet extends Projectile {
 
   SetDefaults(): void {
     this.damage = 10
-    this.damageMultiplier = 0.5
+    this.damageMultiplier = 0.75
     this.speed = 300 // Increased from 250 for less circling
     this.size = 6
     this.pierce = 0
     this.color = 0x00ff00
     this.timeLeft = 3000 // Despawn after 3 seconds
+    this.knockback = 1 // Push enemies back on hit
   }
 
   AI(): void {
@@ -141,6 +143,7 @@ export class ExplosiveBullet extends Projectile {
     this.size = 7
     this.pierce = 0
     this.color = 0xff4400
+    this.knockback = 150
   }
 
 
@@ -154,8 +157,10 @@ export class ExplosiveBullet extends Projectile {
   }
 
   OnHitNPC(_enemy: any): boolean {
+    // Trigger explosion on hit - returns false to prevent normal collision damage
+    // (explosion damage is handled separately)
     this.OnKill()
-    return true
+    return false // Don't apply normal bullet damage since explosion handles it
   }
 
   OnKill(): void {
@@ -177,7 +182,7 @@ export class ExplosiveBullet extends Projectile {
       x: this.positionX,
       y: this.positionY,
       radius: this.explosionRadius,
-      damage: this.damage * 0.5 // 50% of projectile damage
+      damage: this.damage // Use full projectile damage for explosion
     })
   }
 }

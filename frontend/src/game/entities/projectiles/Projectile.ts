@@ -84,6 +84,12 @@ export abstract class Projectile {
   /** ID of the entity that fired this (player or enemy id) */
   ownerId: number = 0
 
+  /** force of knockback applied on hit (negative speed) */
+  // 25 is low
+  // 50 is medium
+  // 100 is high
+  knockback: number = 0
+
   // ============================================================
   // INTERNAL - Don't modify these directly
   // ============================================================
@@ -291,13 +297,13 @@ export abstract class Projectile {
   _recordHit(enemyId: number, enemy: any): boolean {
     if (!this._canHitEnemy(enemyId)) return true
 
+    // Track when we hit this enemy (before calling OnHitNPC)
+    const isFirstHit = !this.enemyHitTimestamps.has(enemyId)
+    this.enemyHitTimestamps.set(enemyId, this.scene.time.now)
+
     const shouldDamage = this.OnHitNPC(enemy)
 
-    if (shouldDamage) {
-      // Track when we hit this enemy
-      const isFirstHit = !this.enemyHitTimestamps.has(enemyId)
-      this.enemyHitTimestamps.set(enemyId, this.scene.time.now)
-
+    if (shouldDamage || isFirstHit) {
       // Only increment pierce count on first hit of each unique enemy
       if (isFirstHit) {
         this.currentPierceCount++

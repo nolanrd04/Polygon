@@ -43,6 +43,7 @@ export abstract class Enemy {
   private _isDestroyed: boolean = false
   private _id: number = 0
   isBoss: boolean = false
+  private knockbackEndTime: number = 0 // When knockback effect expires
 
   // ============ LIFECYCLE HOOKS (override these) ============
 
@@ -177,6 +178,16 @@ export abstract class Enemy {
   }
 
   /**
+   * Apply knockback to this enemy.
+   */
+  applyKnockback(velocityX: number, velocityY: number): void {
+    this.velocityX = velocityX
+    this.velocityY = velocityY
+    // Prevent AI from immediately overwriting knockback velocity for 100ms
+    this.knockbackEndTime = this.scene.time.now + 100
+  }
+
+  /**
    * Deal damage to this enemy.
    * Returns true if the enemy died.
    */
@@ -259,7 +270,8 @@ export abstract class Enemy {
     this.x = this.container.x
     this.y = this.container.y
 
-    if (this.PreAI()) {
+    // Only run AI if not in knockback state
+    if (this.PreAI() && this.scene.time.now >= this.knockbackEndTime) {
       // Default movement towards player
       this.moveTowards(playerX, playerY)
 
