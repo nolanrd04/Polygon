@@ -30,6 +30,9 @@ const ATTACK_SELECTED_COLORS: Record<AttackType, string> = {
 export default function AttackSelectPage() {
   const navigate = useNavigate()
   const [selectedAttack, setSelectedAttack] = useState<AttackType>('bullet')
+  
+  // Only bullet is implemented for now
+  const implementedAttacks: Set<AttackType> = new Set(['bullet'])
 
   const attacks = Object.entries(ATTACK_INFO) as [AttackType, typeof ATTACK_INFO[AttackType]][]
 
@@ -47,26 +50,38 @@ export default function AttackSelectPage() {
       <p className="text-gray-400 mb-8">Choose your starting attack type</p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8 px-4 max-w-6xl">
-        {attacks.map(([type, info]) => (
-          <button
-            key={type}
-            onClick={() => setSelectedAttack(type)}
-            className={`p-6 rounded-lg border-2 transition-all flex flex-col items-center text-center ${
-              selectedAttack === type
-                ? ATTACK_SELECTED_COLORS[type]
-                : `border-gray-700 ${ATTACK_COLORS[type]}`
-            }`}
-          >
-            <div className="mb-3">{ATTACK_ICONS[type]}</div>
-            <h3 className="text-xl font-bold text-white mb-2">{info.name}</h3>
-            <p className="text-gray-400 text-sm">{info.description}</p>
-            {selectedAttack === type && (
-              <div className="mt-3 text-polygon-primary font-bold text-sm">
-                SELECTED
-              </div>
-            )}
-          </button>
-        ))}
+        {attacks.map(([type, info]) => {
+          const isImplemented = implementedAttacks.has(type)
+          
+          return (
+            <button
+              key={type}
+              onClick={() => isImplemented && setSelectedAttack(type)}
+              disabled={!isImplemented}
+              className={`p-6 rounded-lg border-2 transition-all flex flex-col items-center text-center relative ${
+                isImplemented
+                  ? selectedAttack === type
+                    ? ATTACK_SELECTED_COLORS[type]
+                    : `border-gray-700 ${ATTACK_COLORS[type]}`
+                  : 'border-gray-600 bg-gray-900/50 text-gray-600 cursor-not-allowed opacity-60'
+              }`}
+            >
+              <div className="mb-3">{ATTACK_ICONS[type]}</div>
+              <h3 className="text-xl font-bold text-white mb-2">{info.name}</h3>
+              <p className="text-gray-400 text-sm">{info.description}</p>
+              {isImplemented && selectedAttack === type && (
+                <div className="mt-3 text-polygon-primary font-bold text-sm">
+                  SELECTED
+                </div>
+              )}
+              {!isImplemented && (
+                <div className="mt-3 text-gray-500 font-bold text-sm">
+                  COMING SOON
+                </div>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       <div className="flex gap-4">
