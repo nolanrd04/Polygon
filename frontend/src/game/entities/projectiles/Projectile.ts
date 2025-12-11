@@ -297,21 +297,17 @@ export abstract class Projectile {
   _recordHit(enemyId: number, enemy: any): boolean {
     if (!this._canHitEnemy(enemyId)) return true
 
-    // Track when we hit this enemy (before calling OnHitNPC)
+    // Track when we hit this enemy
     const isFirstHit = !this.enemyHitTimestamps.has(enemyId)
     this.enemyHitTimestamps.set(enemyId, this.scene.time.now)
 
-    const shouldDamage = this.OnHitNPC(enemy)
+    // Only increment pierce count on first hit of each unique enemy
+    if (isFirstHit) {
+      this.currentPierceCount++
 
-    if (shouldDamage || isFirstHit) {
-      // Only increment pierce count on first hit of each unique enemy
-      if (isFirstHit) {
-        this.currentPierceCount++
-
-        if (this.currentPierceCount > this.pierce) {
-          this._destroy()
-          return false
-        }
+      if (this.currentPierceCount > this.pierce) {
+        this._destroy()
+        return false
       }
     }
     return true

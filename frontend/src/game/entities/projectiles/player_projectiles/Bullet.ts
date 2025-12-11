@@ -13,7 +13,7 @@ export class Bullet extends Projectile {
     this.pierce = 0
     this.color = COLORS.bullet
     this.timeLeft = 3000 // milliseconds
-    this.knockback = 15 // Push enemies back on hit
+    this.knockback = 7 // Push enemies back on hit
   }
 }
 
@@ -143,7 +143,7 @@ export class ExplosiveBullet extends Projectile {
     this.size = 7
     this.pierce = 0
     this.color = 0xff4400
-    this.knockback = 150
+    this.knockback = 75
   }
 
 
@@ -182,7 +182,7 @@ export class ExplosiveBullet extends Projectile {
       x: this.positionX,
       y: this.positionY,
       radius: this.explosionRadius,
-      damage: this.damage // Use full projectile damage for explosion
+      damage: this.damage * 0.5 // Use half projectile damage for explosion
     })
   }
 }

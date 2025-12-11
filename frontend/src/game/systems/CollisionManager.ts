@@ -97,14 +97,20 @@ export class CollisionManager {
     // Trigger onHit effects (lifesteal, etc.)
     UpgradeEffectSystem.onProjectileHit(projectile, enemy)
 
+    // Check if projectile wants to handle damage (e.g., ExplosiveBullet returns false to handle via explosion)
+    const shouldApplyCollisionDamage = projectile.OnHitNPC(enemy)
+
     // Apply damage modifiers and round up to nearest whole number
     const baseDamage = projectile.damage
     const modifiedDamage = UpgradeModifierSystem.applyModifiers('bullet', 'damage', baseDamage)
     const multipliedDamage = modifiedDamage * projectile.damageMultiplier
     const finalDamage = Math.ceil(multipliedDamage)
 
-    // Deal damage and record hit
-    const killed = enemy.takeDamage(finalDamage)
+    // Deal damage if projectile allows it
+    let killed = false
+    if (shouldApplyCollisionDamage) {
+      killed = enemy.takeDamage(finalDamage)
+    }
 
     if (killed) {
       // Increment kill counter
@@ -123,6 +129,8 @@ export class CollisionManager {
     projectile._recordHit(enemy.id, enemy)
     // Apply knockback to enemy
     if (projectile.knockback > 0) {
+      const baseKnockback = projectile.knockback
+      const modifiedKnockback = UpgradeModifierSystem.applyModifiers('attack', 'knockback', baseKnockback)
       const angle = Phaser.Math.Angle.Between(
         projectile.positionX,
         projectile.positionY,
@@ -130,8 +138,8 @@ export class CollisionManager {
         enemy.y
       )
       enemy.applyKnockback(
-        Math.cos(angle) * projectile.knockback,
-        Math.sin(angle) * projectile.knockback
+        Math.cos(angle) * modifiedKnockback,
+        Math.sin(angle) * modifiedKnockback
       )
     }
   }
