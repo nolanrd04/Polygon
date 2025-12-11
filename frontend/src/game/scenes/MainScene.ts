@@ -176,6 +176,8 @@ export class MainScene extends Phaser.Scene {
     // Draw collision boxes if enabled
     if (this.showCollisionBoxes) {
       this.drawCollisionBoxes()
+    } else {
+      this.debugGraphics.clear()
     }
   }
 
