@@ -5,7 +5,7 @@ import { Enemy } from './Enemy'
  */
 export class Triangle extends Enemy {
   SetDefaults(): void {
-    this.health = 100
+    this.health = 70
     this.speed = 100
     this.damage = 35
     this.sides = 3

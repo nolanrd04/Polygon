@@ -10,7 +10,7 @@ export class Hexagon extends Enemy {
   private shieldDuration: number = 2000
 
   SetDefaults(): void {
-    this.health = 1000
+    this.health = 575
     this.speed = 52
     this.damage = 100
     this.sides = 6

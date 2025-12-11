@@ -7,7 +7,7 @@ export class Shooter extends Enemy {
   private fireCooldown: number = 1000 // milliseconds
 
   SetDefaults(): void {
-    this.health = 65
+    this.health = 45
     this.speed = 50
     this.damage = 20
     this.sides = 3

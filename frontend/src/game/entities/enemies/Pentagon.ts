@@ -5,7 +5,7 @@ import { Enemy } from './Enemy'
  */
 export class Pentagon extends Enemy {
   SetDefaults(): void {
-    this.health = 400
+    this.health = 250
     this.speed = 63
     this.damage = 80
     this.sides = 5
