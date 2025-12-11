@@ -25,11 +25,18 @@ export class CollisionManager {
   }
 
   private setupCollisions(): void {
-    // Projectile vs Enemy - use player's projectile group
+    // Player Projectile vs Enemy
     this.scene.physics.add.overlap(
       this.player.getProjectileGroup(),
       this.enemyManager.getGroup(),
       this.handleProjectileEnemyCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback
+    )
+
+    // Enemy Projectile vs Player
+    this.scene.physics.add.overlap(
+      this.enemyManager.getEnemyProjectileGroup(),
+      this.player,
+      this.handleEnemyProjectilePlayerCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback
     )
 
     // Player vs Enemy
@@ -65,12 +72,16 @@ export class CollisionManager {
     // Apply damage modifiers and round up to nearest whole number
     const baseDamage = projectile.damage
     const modifiedDamage = UpgradeModifierSystem.applyModifiers('bullet', 'damage', baseDamage)
-    const finalDamage = Math.ceil(modifiedDamage)
+    const multipliedDamage = modifiedDamage * projectile.damageMultiplier
+    const finalDamage = Math.ceil(multipliedDamage)
 
     // Deal damage and record hit
     const killed = enemy.takeDamage(finalDamage)
 
     if (killed) {
+      // Increment kill counter
+      GameManager.addKill()
+
       // Award 1 point based on scoreChance (0 to 1)
       if (Math.random() < enemy.scoreChance) {
         GameManager.addPoints(1)
@@ -82,6 +93,46 @@ export class CollisionManager {
 
     // Record hit (handles pierce logic and may destroy projectile)
     projectile._recordHit(enemy.id, enemy)
+  }
+
+  private handleEnemyProjectilePlayerCollision(
+    projectileContainer: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    _playerObj: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody
+  ): void {
+    // Get the actual Projectile instance from the container
+    const projContainer = projectileContainer as Phaser.GameObjects.Container
+
+    if (!projContainer.active) return
+
+    // Find the projectile instance that owns this container
+    const projectile = this.enemyManager.getProjectiles().find(p => p.getContainer() === projContainer)
+
+    if (!projectile || projectile.isDestroyed) return
+
+    // Check damage cooldown
+    const now = this.scene.time.now
+    if (now - this.lastPlayerDamageTime < this.playerDamageCooldown) return
+
+    // Damage player
+    this.player.takeDamage(Math.ceil(projectile.damage))
+    this.lastPlayerDamageTime = now
+
+    // Destroy the projectile
+    projectile._destroy()
+
+    // Push player away
+    const angle = Phaser.Math.Angle.Between(
+      projectile.positionX,
+      projectile.positionY,
+      this.player.x,
+      this.player.y
+    )
+
+    const pushForce = 150
+    this.player.body.setVelocity(
+      Math.cos(angle) * pushForce,
+      Math.sin(angle) * pushForce
+    )
   }
 
   private handlePlayerEnemyCollision(
@@ -98,8 +149,15 @@ export class CollisionManager {
     if (now - this.lastPlayerDamageTime < this.playerDamageCooldown) return
 
     // Damage player (round up to nearest whole number)
-    this.player.takeDamage(Math.ceil(enemy.damage))
+    const damageAmount = Math.ceil(enemy.damage)
+    this.player.takeDamage(damageAmount)
     this.lastPlayerDamageTime = now
+
+    // Handle thorns - damage the enemy that hit the player
+    if (UpgradeEffectSystem.hasEffect('thorns')) {
+      const thornsDamage = damageAmount * UpgradeEffectSystem.getEffectValue('thorns')
+      enemy.takeDamage(thornsDamage)
+    }
 
     // Push player away
     const angle = Phaser.Math.Angle.Between(

@@ -11,12 +11,12 @@ export class Hexagon extends Enemy {
 
   SetDefaults(): void {
     this.health = 1000
-    this.speed = 60
+    this.speed = 52
     this.damage = 100
     this.sides = 6
     this.radius = 30
     this.color = 0xff00ff
-    this.scoreChance = 1.0
+    this.scoreChance = .6
     this.speedCap = 1.3  // Very low cap (tank, shouldn't be fast)
   }
 

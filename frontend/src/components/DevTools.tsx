@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { UpgradeSystem, type UpgradeDefinition } from '../game/systems/upgrades'
+import { EventBus } from '../game/core/EventBus'
 import statUpgrades from '../game/data/upgrades/stat_upgrades.json'
 import effectUpgrades from '../game/data/upgrades/effect_upgrades.json'
 import variantUpgrades from '../game/data/upgrades/variant_upgrades.json'
@@ -14,6 +15,7 @@ interface DevToolsProps {
 export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }: DevToolsProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<'stat' | 'effect' | 'variant' | 'visual' | 'ability'>('stat')
+  const [waveInput, setWaveInput] = useState('1')
 
   const allUpgrades = {
     stat: statUpgrades.upgrades,
@@ -35,6 +37,16 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
   const handleReset = () => {
     UpgradeSystem.reset()
     console.log('🔄 Reset all upgrades')
+  }
+
+  const handleSetWave = () => {
+    const wave = parseInt(waveInput)
+    if (!isNaN(wave) && wave >= 1) {
+      EventBus.emit('set-wave' as any, wave)
+      console.log(`🌊 Set wave to ${wave}`)
+    } else {
+      console.warn('❌ Invalid wave number')
+    }
   }
 
   if (!isOpen) {
@@ -80,6 +92,24 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
         >
           Reset All Upgrades
         </button>
+
+        {/* Wave Setter */}
+        <div className="flex gap-2">
+          <input
+            type="number"
+            min="1"
+            value={waveInput}
+            onChange={(e) => setWaveInput(e.target.value)}
+            placeholder="Wave"
+            className="flex-1 px-3 py-2 bg-gray-800 text-white rounded font-mono text-sm border border-gray-600 focus:border-purple-500 focus:outline-none"
+          />
+          <button
+            onClick={handleSetWave}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-mono text-sm"
+          >
+            Set Wave
+          </button>
+        </div>
       </div>
 
       {/* Category Tabs */}

@@ -10,6 +10,7 @@ export interface PlayerStats {
   maxHealth: number // Maximum health capacity
   speed: number // Movement speed in pixels per second
   points: number // Score/currency earned from killing enemies
+  kills: number // Total enemies killed
   polygonSides: number // Number of sides on player's polygon shape (affects max unlocked attacks)
   unlockedAttacks: string[] // Attack types the player has unlocked
 }
@@ -48,6 +49,7 @@ class GameManagerClass {
       maxHealth: 100,
       speed: 200,
       points: 0,
+      kills: 0,
       polygonSides: 3,
       unlockedAttacks: ['bullet']
     },
@@ -160,7 +162,7 @@ class GameManagerClass {
     const baseBonus = 10
     // const waveMultiplier = Math.exp((this.state.wave - 1) / 16)
     // const score = Math.floor(baseBonus * waveMultiplier)
-    const score = Math.min(60, Math.floor(baseBonus + (this.state.wave) * 2))
+    const score = Math.min(50, Math.floor(baseBonus + (this.state.wave) * 2))
 
     this.addPoints(score)
     EventBus.emit('wave-complete', {
@@ -236,6 +238,7 @@ class GameManagerClass {
         maxHealth: 100,
         speed: 200,
         points: 0,
+        kills: 0,
         polygonSides: 3,
         unlockedAttacks: ['bullet']
       },
@@ -245,6 +248,18 @@ class GameManagerClass {
     // Clear entity tracking
     this.projectiles.clear()
     this.nextProjectileId = 1
+  }
+
+  /**
+   * Increment kill counter
+   * Called when an enemy is killed by the player
+   */
+  addKill(): void {
+    this.state.playerStats = {
+      ...this.state.playerStats,
+      kills: this.state.playerStats.kills + 1
+    }
+    EventBus.emit('player-stats-update', this.state.playerStats)
   }
 
   // ============================================================

@@ -56,14 +56,28 @@
     {
       "id": "armor",
       "name": "Hardened Shell",
-      "description": "Reduce incoming damage by 2",
-      "rarity": "uncommon",
+      "description": "Reduce incoming damage by 2.5%",
+      "rarity": "rare",
       "type": "effect",
       "effect": "armor",
-      "effectValue": 2,
+      "effectValue": 0.025,
+      "multipler": true,
       "stackable": true,
       "maxStacks": 5,
-      "cost": 6
+      "cost": 10
+    },
+    {
+      "id": "armor_2",
+      "name": "Hardened Shell",
+      "description": "Reduce incoming damage by 6%",
+      "rarity": "epic",
+      "type": "effect",
+      "effect": "armor",
+      "effectValue": 0.06,
+      "multipler": true,
+      "stackable": true,
+      "maxStacks": 5,
+      "cost": 20
     },
     {
       "id": "thorns",

@@ -47,7 +47,7 @@ const rarityTextColors = {
 
 export default function UpgradeModal({ onStartWave, playerPoints, selectedAttack = 'bullet' }: UpgradeModalProps) {
   const [options, setOptions] = useState<Upgrade[]>([])
-  const [selectedUpgrades, setSelectedUpgrades] = useState<string[]>([])
+  const [selectedIndices, setSelectedIndices] = useState<number[]>([])  // Track by index, not ID
   const [rerollCost] = useState(1)
 
   const generateOptions = () => {
@@ -65,9 +65,9 @@ export default function UpgradeModal({ onStartWave, playerPoints, selectedAttack
     // Filter upgrades based on selected attack type and availability
     const filteredUpgrades = allUpgrades.filter(upgrade => {
       // Filter by attack type
-      //if (upgrade.attackType && upgrade.attackType !== selectedAttack) {
-        //return false
-      //}
+      if (upgrade.attackType && upgrade.attackType !== selectedAttack) {
+        return false
+      }
 
       // Check if non-stackable upgrade is already applied
       if (!upgrade.stackable) {
@@ -140,20 +140,36 @@ export default function UpgradeModal({ onStartWave, playerPoints, selectedAttack
     // Generate 3 unique upgrades using weighted rarity selection
     const selected: Upgrade[] = []
     let attempts = 0
-    const maxAttempts = 50
+    const maxAttempts = 100
 
     while (selected.length < 3 && attempts < maxAttempts) {
       const rarity = pickRarity()
       const upgrade = pickUpgradeFromRarity(rarity)
       
-      if (upgrade && !selected.find(u => u.id === upgrade.id)) {
-        selected.push(upgrade)
+      if (upgrade) {
+        // Check if stackable upgrade has reached max stacks
+        if (upgrade.stackable && upgrade.maxStacks) {
+          const stackCount = UpgradeSystem.getStackCount(upgrade.id)
+          if (stackCount >= upgrade.maxStacks) {
+            attempts++
+            continue // Skip this upgrade if max stacks reached
+          }
+        }
+        
+        // Check if upgrade is already in current selection
+        const alreadyInSelection = selected.some(u => u.id === upgrade.id)
+        
+        // Allow duplicates only for stackable upgrades
+        if (!alreadyInSelection || upgrade.stackable) {
+          selected.push(upgrade)
+        }
       }
       
       attempts++
     }
 
-    setOptions(selected)
+    // Ensure exactly 3 upgrades
+    setOptions(selected.length > 3 ? selected.slice(0, 3) : selected)
   }
 
   useEffect(() => {
@@ -163,12 +179,13 @@ export default function UpgradeModal({ onStartWave, playerPoints, selectedAttack
   const handleReroll = () => {
     if (playerPoints >= rerollCost) {
       GameManager.addPoints(-rerollCost)
-      setSelectedUpgrades([])  // Reset selected upgrades for new roll
+      setSelectedIndices([])  // Reset selected indices for new roll
+      setOptions([])  // Clear old options to prevent sticking
       generateOptions()
     }
   }
 
-  const handleUpgradeClick = (upgrade: Upgrade) => {
+  const handleUpgradeClick = (upgrade: Upgrade, index: number) => {
     // Check if can afford
     const stats = GameManager.getPlayerStats()
     if (stats.points < upgrade.cost) {
@@ -178,11 +195,11 @@ export default function UpgradeModal({ onStartWave, playerPoints, selectedAttack
     // Try to apply the upgrade
     EventBus.emit('upgrade-selected', upgrade.id)
 
-    // Add to selected list for tracking
-    setSelectedUpgrades([...selectedUpgrades, upgrade.id])
+    // Add index to selected list (not ID, to allow buying same upgrade twice)
+    setSelectedIndices([...selectedIndices, index])
   }
 
-  const isUpgradeDisabled = (upgrade: Upgrade): boolean => {
+  const isUpgradeDisabled = (upgrade: Upgrade, index: number): boolean => {
     const stats = GameManager.getPlayerStats()
 
     // Can't afford
@@ -191,8 +208,8 @@ export default function UpgradeModal({ onStartWave, playerPoints, selectedAttack
     }
 
     // Check if any selected upgrade conflicts with this one
-    for (const selectedId of selectedUpgrades) {
-      const selectedUpgrade = options.find(u => u.id === selectedId)
+    for (const selectedIndex of selectedIndices) {
+      const selectedUpgrade = options[selectedIndex]
       if (selectedUpgrade?.replaces?.includes(upgrade.id)) {
         return true
       }
@@ -201,8 +218,10 @@ export default function UpgradeModal({ onStartWave, playerPoints, selectedAttack
     // Check if this upgrade conflicts with any selected upgrade
     if (upgrade.replaces) {
       for (const replacedId of upgrade.replaces) {
-        if (selectedUpgrades.includes(replacedId)) {
-          return true
+        for (const selectedIndex of selectedIndices) {
+          if (options[selectedIndex]?.id === replacedId) {
+            return true
+          }
         }
       }
     }
@@ -221,17 +240,17 @@ export default function UpgradeModal({ onStartWave, playerPoints, selectedAttack
       </h2>
 
       <div className="flex gap-6 mb-8">
-        {options.map((upgrade) => {
-          const isDisabled = isUpgradeDisabled(upgrade)
-          // Mark as purchased if selected (both stackable and non-stackable)
-          const isPurchased = selectedUpgrades.includes(upgrade.id)
+        {options.map((upgrade, index) => {
+          const isDisabled = isUpgradeDisabled(upgrade, index)
+          // Mark as purchased if THIS SPECIFIC INDEX was selected
+          const isPurchased = selectedIndices.includes(index)
           const stats = GameManager.getPlayerStats()
           const canAfford = stats.points >= upgrade.cost
 
           return (
             <button
-              key={upgrade.id}
-              onClick={() => !isDisabled && !isPurchased && handleUpgradeClick(upgrade)}
+              key={`${upgrade.id}-${index}`}
+              onClick={() => !isDisabled && !isPurchased && handleUpgradeClick(upgrade, index)}
               disabled={isDisabled || isPurchased}
               className={`w-64 p-6 rounded-lg border-2 ${rarityColors[upgrade.rarity]} ${
                 isPurchased ? 'bg-green-900/50 border-green-500' : ''
@@ -285,9 +304,9 @@ export default function UpgradeModal({ onStartWave, playerPoints, selectedAttack
         Your Points: {playerPoints.toLocaleString()}
       </p>
 
-      {selectedUpgrades.length > 0 && (
+      {selectedIndices.length > 0 && (
         <p className="text-green-400 text-sm mt-1">
-          {selectedUpgrades.length} upgrade{selectedUpgrades.length > 1 ? 's' : ''} purchased
+          {selectedIndices.length} upgrade{selectedIndices.length > 1 ? 's' : ''} purchased
         </p>
       )}
     </div>

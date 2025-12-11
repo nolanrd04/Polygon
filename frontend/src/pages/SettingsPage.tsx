@@ -7,6 +7,8 @@ interface Settings {
   fullscreen: boolean
   showFPS: boolean
   screenShake: boolean
+  showEnemyHealthBar: boolean
+  showEnemyHealthNumber: boolean
 }
 
 export default function SettingsPage() {
@@ -18,7 +20,9 @@ export default function SettingsPage() {
       sfxVolume: 80,
       fullscreen: false,
       showFPS: false,
-      screenShake: true
+      screenShake: true,
+      showEnemyHealthBar: true,
+      showEnemyHealthNumber: true
     }
   })
 
@@ -104,6 +108,38 @@ export default function SettingsPage() {
             <div
               className={`w-5 h-5 bg-white rounded-full transition-transform ${
                 settings.screenShake ? 'translate-x-6' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+        </div>
+
+        <div className="flex justify-between items-center py-2 border-t border-gray-700">
+          <span className="text-gray-300">Enemy Health Bars</span>
+          <button
+            onClick={() => updateSetting('showEnemyHealthBar', !settings.showEnemyHealthBar)}
+            className={`w-12 h-6 rounded-full transition-colors ${
+              settings.showEnemyHealthBar ? 'bg-polygon-primary' : 'bg-gray-600'
+            }`}
+          >
+            <div
+              className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                settings.showEnemyHealthBar ? 'translate-x-6' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+        </div>
+
+        <div className="flex justify-between items-center py-2 border-t border-gray-700">
+          <span className="text-gray-300">Enemy Health Numbers</span>
+          <button
+            onClick={() => updateSetting('showEnemyHealthNumber', !settings.showEnemyHealthNumber)}
+            className={`w-12 h-6 rounded-full transition-colors ${
+              settings.showEnemyHealthNumber ? 'bg-polygon-primary' : 'bg-gray-600'
+            }`}
+          >
+            <div
+              className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                settings.showEnemyHealthNumber ? 'translate-x-6' : 'translate-x-0.5'
               }`}
             />
           </button>

@@ -15,7 +15,7 @@ export default function GamePage() {
   const [showUpgrades, setShowUpgrades] = useState(false)
   const [showWaveComplete, setShowWaveComplete] = useState(false)
   const [waveData, setWaveData] = useState({ wave: 0, score: 0, isPrime: false })
-  const [playerStats, setPlayerStats] = useState({ health: 100, maxHealth: 100, points: 0 })
+  const [playerStats, setPlayerStats] = useState({ health: 100, maxHealth: 100, points: 0, kills: 0 })
   const [selectedAttack, setSelectedAttack] = useState('bullet')
   const [showCollisionBoxes, setShowCollisionBoxes] = useState(false)
 
@@ -32,6 +32,11 @@ export default function GamePage() {
     }
 
     // Listen for game events
+    EventBus.on('wave-start', (wave: number) => {
+      // Update wave number immediately when wave starts
+      setWaveData(prev => ({ ...prev, wave }))
+    })
+
     EventBus.on('wave-complete', (data) => {
       setWaveData(data)
       setShowWaveComplete(true)
@@ -77,6 +82,7 @@ export default function GamePage() {
         health={playerStats.health}
         maxHealth={playerStats.maxHealth}
         points={playerStats.points}
+        kills={playerStats.kills}
         wave={waveData.wave}
       />
 

@@ -1,5 +1,9 @@
-1. implement flame, laser, spinner, and zapper.
-2. add upgrades for projectiles
-3. improve terrain
-4. add logic for destroying projectiles on terrain collision
-5. improve waves/enemy spawns
+1. Add fixed progression for first 30 waves
+2. Add new enemies to add difficulty
+3. implement flame, laser, spinner, and zapper.
+4. add upgrades for projectiles
+5. improve terrain
+6. add logic for destroying projectiles on terrain collision
+7. improve waves/enemy spawns
+8. Add difficulties
+9. Add leaderboard

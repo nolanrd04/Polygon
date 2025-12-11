@@ -39,9 +39,28 @@ export const COLORS = {
   flamer: 0xff6600
 }
 
+// Helper function to get settings from localStorage
+function getSettingsFromStorage() {
+  const saved = localStorage.getItem('gameSettings')
+  if (saved) {
+    try {
+      return JSON.parse(saved)
+    } catch {
+      return null
+    }
+  }
+  return null
+}
+
 export const DEV_SETTINGS = {
-  showEnemyHealthBar: true,
-  showEnemyHealthNumber: true
+  get showEnemyHealthBar(): boolean {
+    const settings = getSettingsFromStorage()
+    return settings?.showEnemyHealthBar ?? true
+  },
+  get showEnemyHealthNumber(): boolean {
+    const settings = getSettingsFromStorage()
+    return settings?.showEnemyHealthNumber ?? true
+  }
 }
 
 export const RARITY_WEIGHTS: Record<string, number> = {

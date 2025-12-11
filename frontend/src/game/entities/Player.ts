@@ -268,20 +268,20 @@ export class Player extends Phaser.GameObjects.Container {
    * Spawn a single projectile with upgrade modifiers applied.
    */
   private spawnProjectile(startX: number, startY: number, targetX: number, targetY: number): void {
-    let projectile: Projectile
-
     // Determine projectile class based on attack type and active variant
+    let ProjectileClass: new () => Projectile
+
     switch (this.attackType) {
       case 'bullet':
-        projectile = this.createBulletVariant()
+        ProjectileClass = this.getBulletVariantClass()
         break
 
       case 'laser':
-        projectile = new Laser()
+        ProjectileClass = Laser
         break
 
       case 'zapper':
-        projectile = new Zapper()
+        ProjectileClass = Zapper
         break
 
       case 'flamer':
@@ -291,59 +291,81 @@ export class Player extends Phaser.GameObjects.Container {
           this.activeFlame.getContainer().y = startY
           return
         }
-        projectile = new Flame()
-        this.activeFlame = projectile as Flame
-        break
+        ProjectileClass = Flame
+        const flameProjectile = this.NewProjectile(ProjectileClass, startX, startY, targetX, targetY)
+        this.activeFlame = flameProjectile as Flame
+        return
 
       case 'spinner':
         // Spinner is a one-shot AOE - only one can exist at a time
         if (this.activeSpinner && !this.activeSpinner.isDestroyed) {
           return
         }
-        projectile = new Spinner()
-        projectile.pierce = this.sides
-        this.activeSpinner = projectile as Spinner
-        break
+        ProjectileClass = Spinner
+        const spinnerProjectile = this.NewProjectile(ProjectileClass, startX, startY, targetX, targetY)
+        ;(spinnerProjectile as Spinner).pierce = this.sides
+        this.activeSpinner = spinnerProjectile as Spinner
+        return
 
       default:
-        projectile = new Bullet()
+        ProjectileClass = Bullet
     }
+
+    this.NewProjectile(ProjectileClass, startX, startY, targetX, targetY)
+  }
+
+  /**
+   * Create and spawn a projectile with all necessary setup.
+   * @param ProjectileClass The projectile constructor to instantiate
+   * @param startX Spawn X position
+   * @param startY Spawn Y position
+   * @param targetX Target X position
+   * @param targetY Target Y position
+   * @returns The created projectile instance
+   */
+  private NewProjectile(
+    ProjectileClass: new () => Projectile,
+    startX: number,
+    startY: number,
+    targetX: number,
+    targetY: number
+  ): Projectile {
+    // Create instance
+    const projectile = new ProjectileClass()
 
     // Set default stats
     projectile.SetDefaults()
 
-    // Apply upgrade modifiers
+    // Apply upgrade modifiers (player-specific)
     this.applyUpgradeModifiers(projectile)
 
-    // Assign unique ID from GameManager
-    projectile.id = GameManager.generateProjectileId()
+    // Use centralized spawn method with owner='player'
+    const scene = this.scene as any
+    scene.spawnProjectile(projectile, startX, startY, targetX, targetY, 'player', 0)
 
-    // Spawn the projectile
-    const container = projectile._spawn(this.scene, startX, startY, targetX, targetY)
-
-    // Register with GameManager for tracking
-    GameManager.addProjectile(projectile)
-
+    // Add to player's tracking
     this.projectiles.push(projectile)
-    this.projectileGroup.add(container)
+
     console.log('Projectile damage after modifiers:', projectile.damage)
+
+    return projectile
   }
 
   /**
-   * Create the appropriate bullet variant based on active upgrades.
+   * Get the appropriate bullet variant class based on active upgrades.
    */
-  private createBulletVariant(): Projectile {
+  private getBulletVariantClass(): new () => Projectile {
     const variant = UpgradeSystem.getVariant('bullet')
 
     switch (variant) {
       case 'HomingBullet':
-        return new HomingBullet()
+        return HomingBullet
       case 'ExplosiveBullet':
-        return new ExplosiveBullet()
+        return ExplosiveBullet
       case 'HeavyBullet':
-        return new HeavyBullet()
+        return HeavyBullet
       default:
-        return new Bullet()
+        return Bullet
     }
   }
 

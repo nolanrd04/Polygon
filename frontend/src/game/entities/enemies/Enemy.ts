@@ -23,6 +23,7 @@ export abstract class Enemy {
   color: number = 0xff0000
   scoreChance: number = 0.5  // Chance to drop score on death (0 to 1)
   speedCap: number = 2  // Maximum speed multiplier (default 2x)
+  scale: number = 1.0  // Visual scale multiplier (0.8 = 80%, 1.0 = 100%, 1.2 = 120%)
 
   // ============ RUNTIME STATE ============
   protected scene!: Phaser.Scene
@@ -158,13 +159,20 @@ export abstract class Enemy {
   // ============ PUBLIC METHODS ============
 
   /**
-   * Move towards a target position.
+   * Move towards a target position with smooth interpolation.
    */
   moveTowards(targetX: number, targetY: number): void {
     const angle = Phaser.Math.Angle.Between(this.x, this.y, targetX, targetY)
-    this.velocityX = Math.cos(angle) * this.speed
-    this.velocityY = Math.sin(angle) * this.speed
-    this.rotation = angle + Math.PI / 2
+    const targetVelX = Math.cos(angle) * this.speed
+    const targetVelY = Math.sin(angle) * this.speed
+
+    // Lerp velocity for smooth movement (0.15 = smoothing factor)
+    const smoothing = 0.15
+    this.velocityX = Phaser.Math.Linear(this.velocityX, targetVelX, smoothing)
+    this.velocityY = Phaser.Math.Linear(this.velocityY, targetVelY, smoothing)
+
+    // Lerp rotation for smooth turning
+    this.rotation = Phaser.Math.Angle.RotateTo(this.rotation, angle + Math.PI / 2, 0.1)
   }
 
   /**
@@ -229,9 +237,12 @@ export abstract class Enemy {
     scene.add.existing(this.container)
     scene.physics.add.existing(this.container)
 
+    // Apply scale to container
+    this.container.setScale(this.scale)
+
     this.body = this.container.body as Phaser.Physics.Arcade.Body
-    this.body.setCircle(this.radius)
-    this.body.setOffset(-this.radius, -this.radius)
+    this.body.setCircle(this.radius * this.scale)
+    this.body.setOffset(-this.radius * this.scale, -this.radius * this.scale)
 
     this.Draw()
     this.drawHealthBar()

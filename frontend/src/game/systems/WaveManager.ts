@@ -3,6 +3,11 @@ import { EnemyManager } from './EnemyManager'
 import { GameManager } from '../core/GameManager'
 import { EventBus } from '../core/EventBus'
 
+type EnemySpawnWeight = {
+  type: string
+  weight: number
+}
+
 export class WaveManager {
   private scene: Phaser.Scene
   private enemyManager: EnemyManager
@@ -58,18 +63,43 @@ export class WaveManager {
   }
 
   private calculateEnemyCount(): number {
-    return Math.floor(40 + this.currentWave * 2 + Math.pow(this.currentWave, 1.2))
+    const spawnCount = 30
+    if (this.currentWave == 1 || this.currentWave == 3)
+    {
+      return spawnCount
+    }
+    else if (this.currentWave == 2)
+    {
+      return spawnCount + 5
+    }
+    else if (this.currentWave == 4 || this.currentWave == 5)
+    {
+      return spawnCount + 10
+    }
+    else if (this.currentWave == 6)
+    {
+      return spawnCount + 20
+    }
+    else if (this.currentWave == 7)
+    {
+      return spawnCount + 15
+    }
+
+    else 
+    {
+      return Math.floor(45 + this.currentWave * 2 + Math.pow(this.currentWave, 1.2))
+    }
   }
 
   private spawnEnemiesGradually(): void {
-    const spawnDelay = Math.max(25, Math.min(500, 1000 - this.currentWave * 50))
+    const spawnDelay = Math.max(50, Math.min(500, 1200 - this.currentWave * 50))
 
     const spawnTimer = this.scene.time.addEvent({
       delay: spawnDelay,
       callback: () => {
         if (this.enemiesSpawned < this.totalEnemiesToSpawn) {
-          const types = this.getAvailableEnemyTypes()
-          const typeId = types[Math.floor(Math.random() * types.length)]
+          const weights = this.getEnemySpawnWeights()
+          const typeId = this.selectWeightedRandom(weights)
           this.enemyManager.spawnEnemy(typeId)
           this.enemiesSpawned++
         } else {
@@ -80,14 +110,65 @@ export class WaveManager {
     })
   }
 
-  private getAvailableEnemyTypes(): string[] {
-    const types: string[] = ['triangle']
+  /**
+   * Define spawn weights for each wave.
+   * Higher weight = more likely to spawn.
+   * Customize these values to control enemy proportions!
+   */
+  private getEnemySpawnWeights(): EnemySpawnWeight[] {
+    const weights: EnemySpawnWeight[] = []
 
-    if (this.currentWave >= 4) types.push('square')
-    if (this.currentWave >= 7) types.push('pentagon')
-    if (this.currentWave >= 11) types.push('hexagon')
+    // Wave 1-2: Only triangles
+    if (this.currentWave < 3) {
+      weights.push({ type: 'triangle', weight: 100 })
+    }
+    // Wave 3-4: Mostly triangles, some squares
+    else if (this.currentWave < 5) {
+      weights.push({ type: 'triangle', weight: 70 })
+      weights.push({ type: 'square', weight: 30 })
+    }
+    // Wave 5-6: Add shooters (rare)
+    else if (this.currentWave < 7) {
+      weights.push({ type: 'triangle', weight: 60 })
+      weights.push({ type: 'square', weight: 30 })
+      weights.push({ type: 'shooter', weight: 10 })
+    }
+    // Wave 7-10: Add pentagons, more shooters
+    else if (this.currentWave < 11) {
+      weights.push({ type: 'triangle', weight: 40 })
+      weights.push({ type: 'square', weight: 25 })
+      weights.push({ type: 'shooter', weight: 20 })
+      weights.push({ type: 'pentagon', weight: 15 })
+    }
+    // Wave 11+: Full variety with hexagons
+    else {
+      weights.push({ type: 'triangle', weight: 30 })
+      weights.push({ type: 'square', weight: 20 })
+      weights.push({ type: 'shooter', weight: 25 })
+      weights.push({ type: 'pentagon', weight: 15 })
+      weights.push({ type: 'hexagon', weight: 10 })
+    }
 
-    return types
+    return weights
+  }
+
+  /**
+   * Select a random enemy type based on weights.
+   * Higher weight = higher chance of being selected.
+   */
+  private selectWeightedRandom(weights: EnemySpawnWeight[]): string {
+    const totalWeight = weights.reduce((sum, w) => sum + w.weight, 0)
+    let random = Math.random() * totalWeight
+
+    for (const entry of weights) {
+      random -= entry.weight
+      if (random <= 0) {
+        return entry.type
+      }
+    }
+
+    // Fallback (should never happen)
+    return weights[0].type
   }
 
   private spawnBoss(): void {
@@ -138,5 +219,18 @@ export class WaveManager {
 
   isBossWave(): boolean {
     return this.currentWave % 10 === 0
+  }
+
+  setWave(wave: number): void {
+    this.currentWave = wave - 1
+    this.waveActive = false
+    this.enemiesSpawned = 0
+    this.totalEnemiesToSpawn = 0
+
+    // Sync GameManager's wave counter
+    GameManager.setWave(wave)
+
+    // Emit wave-start event to update UI
+    EventBus.emit('wave-start', wave)
   }
 }

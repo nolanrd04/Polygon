@@ -1,31 +1,19 @@
 import Phaser from 'phaser'
-import { Enemy } from '../entities/enemies/Enemy'
-import { Triangle } from '../entities/enemies/Triangle'
-import { Square } from '../entities/enemies/Square'
-import { Pentagon } from '../entities/enemies/Pentagon'
-import { Hexagon } from '../entities/enemies/Hexagon'
+import { getEnemyRegistry } from '../entities/enemies'
+import type { Enemy } from '../entities/enemies/Enemy'
+import { Projectile } from '../entities/projectiles/Projectile'
 import { GAME_WIDTH, GAME_HEIGHT } from '../core/GameConfig'
 
-// Registry of all enemy types
-const EnemyRegistry: Record<string, new () => Enemy> = {
-  triangle: Triangle,
-  square: Square,
-  pentagon: Pentagon,
-  hexagon: Hexagon,
-}
-
-/**
- * Register a new enemy type.
- * Call this to add custom enemies to the game.
- */
-export function registerEnemy(id: string, enemyClass: new () => Enemy): void {
-  EnemyRegistry[id] = enemyClass
-}
+// Get the registry from the centralized enemies/index.ts
+// Now to add a new enemy, just edit enemies/index.ts!
+const EnemyRegistry = getEnemyRegistry()
 
 export class EnemyManager {
   private scene: Phaser.Scene
   private enemies: Enemy[] = []
   private enemyGroup: Phaser.GameObjects.Group
+  private projectiles: Projectile[] = []
+  private enemyProjectileGroup: Phaser.GameObjects.Group
   private nextId: number = 1
   private currentWave: number = 0
   private waveMultiplier: number = 1
@@ -33,6 +21,7 @@ export class EnemyManager {
   constructor(scene: Phaser.Scene) {
     this.scene = scene
     this.enemyGroup = scene.add.group()
+    this.enemyProjectileGroup = scene.add.group()
 
     // Enable enemy-to-enemy collision (prevents overlapping)
     this.scene.physics.add.collider(this.enemyGroup, this.enemyGroup)
@@ -120,9 +109,10 @@ export class EnemyManager {
   }
 
   /**
-   * Update all enemies.
+   * Update all enemies and enemy projectiles.
    */
   update(playerX: number, playerY: number): void {
+    // Update enemies
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i]
 
@@ -130,6 +120,18 @@ export class EnemyManager {
         this.enemies.splice(i, 1)
       } else {
         enemy._update(playerX, playerY)
+      }
+    }
+
+    // Update enemy projectiles
+    for (let i = this.projectiles.length - 1; i >= 0; i--) {
+      const proj = this.projectiles[i]
+
+      if (proj.isDestroyed || proj._isOutOfBounds(GAME_WIDTH, GAME_HEIGHT)) {
+        if (!proj.isDestroyed) proj._destroy()
+        this.projectiles.splice(i, 1)
+      } else {
+        proj._update()
       }
     }
   }
@@ -158,6 +160,12 @@ export class EnemyManager {
     }
     this.enemies = []
     this.enemyGroup.clear(true, true)
+
+    for (const proj of this.projectiles) {
+      proj._destroy()
+    }
+    this.projectiles = []
+    this.enemyProjectileGroup.clear(true, true)
   }
 
   /**
@@ -184,5 +192,28 @@ export class EnemyManager {
    */
   getWaveMultiplier(): number {
     return this.waveMultiplier
+  }
+
+  /**
+   * Add an enemy projectile to the manager.
+   * Called by Enemy.newProjectile() when spawning projectiles.
+   */
+  addProjectile(projectile: Projectile, container: Phaser.GameObjects.Container): void {
+    this.projectiles.push(projectile)
+    this.enemyProjectileGroup.add(container)
+  }
+
+  /**
+   * Get the enemy projectile group for collision detection.
+   */
+  getEnemyProjectileGroup(): Phaser.GameObjects.Group {
+    return this.enemyProjectileGroup
+  }
+
+  /**
+   * Get all active enemy projectiles.
+   */
+  getProjectiles(): Projectile[] {
+    return this.projectiles
   }
 }

@@ -3,7 +3,7 @@
     {
       "id": "homing_bullets",
       "name": "Homing Bullets",
-      "description": "Bullets track nearest enemy",
+      "description": "Bullets track nearest enemy with reduced damage.",
       "rarity": "epic",
       "type": "variant",
       "target": "bullet",

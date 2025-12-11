@@ -21,6 +21,9 @@ export abstract class Projectile {
   /** How much damage this projectile deals when it hits an enemy */
   damage: number = 10
 
+  /** Multiplier applied to damage at collision time (useful for variants that deal reduced damage) */
+  damageMultiplier: number = 1
+
   /** How fast the projectile travels (pixels per second) */
   speed: number = 400
 
@@ -70,7 +73,11 @@ export abstract class Projectile {
   /** Current rotation angle in radians (0 = pointing right) */
   rotation: number = 0
 
-  isFriendly: boolean = true // Whether this projectile was fired by the player
+  /** Who fired this projectile: 'player' or 'enemy' */
+  owner: 'player' | 'enemy' = 'player'
+
+  /** ID of the entity that fired this (player or enemy id) */
+  ownerId: number = 0
 
   // ============================================================
   // INTERNAL - Don't modify these directly

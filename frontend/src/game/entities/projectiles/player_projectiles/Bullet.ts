@@ -50,7 +50,8 @@ export class HomingBullet extends Projectile {
   private homeDelay: number = 125 // Delay before homing re-activates after hit (milliseconds)
 
   SetDefaults(): void {
-    this.damage = 15
+    this.damage = 10
+    this.damageMultiplier = 0.5
     this.speed = 300 // Increased from 250 for less circling
     this.size = 6
     this.pierce = 0
@@ -107,6 +108,7 @@ export class HomingBullet extends Projectile {
     // Disable homing temporarily after hitting to prevent sticking
     this.canHome = false
     this.homeDelay = this.scene.time.now + 500 // Re-enable homing after 500ms
+    this.damage *= .5
     return true
   }
 

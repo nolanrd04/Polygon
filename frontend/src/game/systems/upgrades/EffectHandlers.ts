@@ -1,5 +1,6 @@
 import { UpgradeEffectSystem } from './UpgradeEffectSystem'
 import { GameManager } from '../../core/GameManager'
+import { EventBus } from '../../core/EventBus'
 
 /**
  * Register all effect handlers.
@@ -34,7 +35,7 @@ export function registerEffectHandlers(): void {
   UpgradeEffectSystem.registerEffect('armor', {
     onDamage: (amount: number) => {
       const reduction = UpgradeEffectSystem.getEffectValue('armor')
-      return Math.max(1, amount - reduction) // Always deal at least 1 damage
+      return Math.max(1, amount * (1 - reduction)) // Always deal at least 1 damage
     }
   })
 
@@ -46,9 +47,9 @@ export function registerEffectHandlers(): void {
       const percent = UpgradeEffectSystem.getEffectValue('thorns')
       const reflectAmount = amount * percent
 
-      // TODO: Apply reflected damage to nearby enemies
-      // This would require passing the enemy reference or using an event
-      console.log(`Reflected ${reflectAmount} damage`)
+      // Emit event to apply reflected damage to nearby enemies
+      // The scene will handle finding and damaging nearby enemies
+      EventBus.emit('thorns-reflect', { damage: reflectAmount })
 
       return amount // Thorns doesn't reduce incoming damage
     }

@@ -8,6 +8,7 @@ import { EventBus } from '../core/EventBus'
 import { GameManager } from '../core/GameManager'
 import { GAME_WIDTH, GAME_HEIGHT } from '../core/GameConfig'
 import { AttackType } from '../data/attackTypes'
+import { Projectile } from '../entities/projectiles/Projectile'
 import { UpgradeSystem, UpgradeEffectSystem, registerEffectHandlers, type UpgradeDefinition } from '../systems/upgrades'
 
 // Import all upgrade JSONs
@@ -94,6 +95,10 @@ export class MainScene extends Phaser.Scene {
     EventBus.on('toggle-collision-boxes' as any, (show: boolean) => {
       this.showCollisionBoxes = show
     })
+    EventBus.on('set-wave' as any, (wave: number) => {
+      this.enemyManager.clear()
+      this.waveManager.setWave(wave)
+    })
 
     // Clear projectiles at end of wave
     this.events.on('clear-projectiles', () => {
@@ -114,7 +119,7 @@ export class MainScene extends Phaser.Scene {
     // Start with initial upgrade phase
     this.time.delayedCall(500, () => {
       // Give player starting points for initial upgrades
-      GameManager.addPoints(50)
+      GameManager.addPoints(70)
       // Show upgrade modal before wave 1
       EventBus.emit('show-upgrades')
     })
@@ -168,6 +173,42 @@ export class MainScene extends Phaser.Scene {
     if (this.showCollisionBoxes) {
       this.drawCollisionBoxes()
     }
+  }
+
+  /**
+   * Centralized projectile spawning method.
+   * Can be called by both Player and Enemy to spawn projectiles.
+   */
+  spawnProjectile(
+    projectile: Projectile,
+    startX: number,
+    startY: number,
+    targetX: number,
+    targetY: number,
+    owner: 'player' | 'enemy',
+    ownerId: number
+  ): Projectile {
+    // Set ownership
+    projectile.owner = owner
+    projectile.ownerId = ownerId
+
+    // Assign unique ID from GameManager
+    projectile.id = GameManager.generateProjectileId()
+
+    // Spawn the projectile
+    const container = projectile._spawn(this, startX, startY, targetX, targetY)
+
+    // Register with GameManager for tracking
+    GameManager.addProjectile(projectile)
+
+    // Add to the appropriate group based on owner
+    if (owner === 'player') {
+      this.player.getProjectileGroup().add(container)
+    } else {
+      this.enemyManager.addProjectile(projectile, container)
+    }
+
+    return projectile
   }
 
   private drawCollisionBoxes(): void {

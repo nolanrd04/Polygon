@@ -187,8 +187,23 @@
     {
       "id": "bullet_size_1",
       "name": "Heavy Rounds",
-      "description": "+25% bullet size",
+      "description": "+10% bullet size",
       "rarity": "uncommon",
+      "type": "stat_modifier",
+      "target": "bullet",
+      "attackType": "bullet",
+      "stat": "size",
+      "value": 0.10,
+      "isMultiplier": true,
+      "stackable": true,
+      "maxStacks": 3,
+      "cost": 6
+    },
+    {
+      "id": "bullet_size_2",
+      "name": "Heavy Rounds",
+      "description": "+25% bullet size",
+      "rarity": "rare",
       "type": "stat_modifier",
       "target": "bullet",
       "attackType": "bullet",
@@ -198,21 +213,6 @@
       "stackable": true,
       "maxStacks": 2,
       "cost": 10
-    },
-    {
-      "id": "bullet_size_2",
-      "name": "Heavy Rounds",
-      "description": "+60% bullet size",
-      "rarity": "uncommon",
-      "type": "stat_modifier",
-      "target": "bullet",
-      "attackType": "bullet",
-      "stat": "size",
-      "value": 0.6,
-      "isMultiplier": true,
-      "stackable": true,
-      "maxStacks": 2,
-      "cost": 20
     },
     {
       "id": "laser_damage_1",
@@ -310,12 +310,12 @@
     {
       "id": "player_speed_1",
       "name": "Thruster Boost",
-      "description": "+20 movement speed",
+      "description": "+10 movement speed",
       "rarity": "uncommon",
       "type": "stat_modifier",
       "target": "player",
       "stat": "speed",
-      "value": 20,
+      "value": 10,
       "stackable": true,
       "maxStacks": 10,
       "cost": 6

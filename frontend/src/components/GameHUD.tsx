@@ -2,10 +2,11 @@ interface GameHUDProps {
   health: number
   maxHealth: number
   points: number
+  kills: number
   wave: number
 }
 
-export default function GameHUD({ health, maxHealth, points, wave }: GameHUDProps) {
+export default function GameHUD({ health, maxHealth, points, kills, wave }: GameHUDProps) {
   const healthPercent = (health / maxHealth) * 100
 
   return (
@@ -20,7 +21,7 @@ export default function GameHUD({ health, maxHealth, points, wave }: GameHUDProp
               style={{ width: `${healthPercent}%` }}
             />
           </div>
-          <div className="text-xs text-gray-500">{health} / {maxHealth}</div>
+          <div className="text-xs text-gray-500">{Math.round(health)} / {Math.round(maxHealth)}</div>
         </div>
 
         {/* Wave & Points */}
@@ -30,6 +31,9 @@ export default function GameHUD({ health, maxHealth, points, wave }: GameHUDProp
           </div>
           <div className="text-polygon-warning text-lg">
             {points.toLocaleString()} PTS
+          </div>
+          <div className="text-gray-400 text-sm">
+            {kills.toLocaleString()} KILLS
           </div>
         </div>
       </div>
