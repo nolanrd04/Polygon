@@ -109,10 +109,25 @@
       "rarity": "legendary",
       "type": "effect",
       "effect": "multishot",
+      "attackType": "bullet",
       "effectValue": 1,
       "stackable": true,
       "maxStacks": 2,
       "cost": 40
+    },
+    {
+      "id": "ricochet",
+      "name": "Ricochet Rounds",
+      "description": "Projectiles bounce off surfaces",
+      "rarity": "epic",
+      "type": "effect",
+      "effect": "ricochet",
+      "effectValue": 1,
+      "stackable": true,
+      "maxStacks": 2,
+      "cost": 20,
+      "dependentOn": ["bullet_pierce_1"],
+      "dependencyCount": 1
     }
   ]
 }

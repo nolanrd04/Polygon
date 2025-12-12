@@ -30,10 +30,10 @@ export abstract class Projectile {
   /** The radius of the projectile in pixels (affects hitbox and visuals) */
   size: number = 5
 
-  /** How many UNIQUE enemies this projectile can pass through before being destroyed.
-   *  0 = destroys on first hit, 1 = passes through 1 unique enemy, etc.
+  /** How many UNIQUE enemies this projectile can collide with before being destroyed.
+   *  1 = destroys on first collision, 2 = passes through 1 unique enemy before being destroyed, etc.
    *  Note: Projectiles can hit the same enemy multiple times if hitEnemyCooldown allows it. */
-  pierce: number = 0
+  pierce: number = 1
 
   /** The color of the projectile (hex value, e.g. 0xff0000 for red) */
   color: number = 0x00ffff
@@ -202,6 +202,20 @@ export abstract class Projectile {
   }
 
   /**
+   * Called when this projectile collides with an obstacle.
+   * Use for special obstacle interaction effects.
+   *
+   * Example (ice projectile that freezes terrain):
+   * ```
+   * OnObstacleCollide() {
+   *   // Create ice effect at collision point
+   *   this.scene.events.emit('freeze-terrain', this.positionX, this.positionY)
+   * }
+   * ```
+   */
+  OnObstacleCollide(): void {}
+
+  /**
    * Called when projectile is destroyed (hit something, timed out, or left screen).
    * Use for death effects like explosions or particles.
    *
@@ -305,7 +319,7 @@ export abstract class Projectile {
     if (isFirstHit) {
       this.currentPierceCount++
 
-      if (this.currentPierceCount > this.pierce) {
+      if (this.currentPierceCount >= this.pierce) {
         this._destroy()
         return false
       }

@@ -63,7 +63,7 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
   }
 
   return (
-    <div className="fixed bottom-4 right-4 w-96 bg-gray-900 border-2 border-purple-500 rounded-lg shadow-2xl z-50 max-h-96 overflow-hidden flex flex-col">
+    <div className="fixed bottom-4 right-4 w-96 bg-gray-900 border-2 border-purple-500 rounded-lg shadow-2xl z-50 max-h-screen overflow-hidden flex flex-col">
       {/* Header */}
       <div className="bg-purple-600 p-3 flex justify-between items-center">
         <h3 className="font-mono font-bold text-white">DEV TOOLS</h3>

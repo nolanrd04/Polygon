@@ -1,19 +1,45 @@
 import { Projectile } from '../Projectile'
 import { COLORS } from '../../../core/GameConfig'
+import { UpgradeEffectSystem } from '../../../systems/upgrades'
 
 /**
  * Standard bullet projectile.
  * Fast, small, deals moderate damage.
  */
 export class Bullet extends Projectile {
+  private oldVelocityX: number = 0
+  private oldVelocityY: number = 0
+
   SetDefaults(): void {
     this.damage = 10
     this.speed = 400
     this.size = 5
-    this.pierce = 0
+    this.pierce = 1
     this.color = COLORS.bullet
     this.timeLeft = 3000 // milliseconds
     this.knockback = 7 // Push enemies back on hit
+  }
+
+  AI(): void {
+    // Store velocity before collision detection
+    this.oldVelocityX = this.velocityX
+    this.oldVelocityY = this.velocityY
+  }
+
+  OnObstacleCollide(): void {
+    if (UpgradeEffectSystem.hasEffect('ricochet') && !this.canCutTiles) {
+      this.currentPierceCount++
+      
+      // Simple bounce: reverse velocity on both axes
+      // The physics engine will handle the actual bouncing
+      this.velocityX = -this.velocityX
+      this.velocityY = -this.velocityY
+      
+      // Stop if we've bounced too many times
+      if (this.currentPierceCount >= this.pierce) {
+        this._destroy()
+      }
+    }
   }
 }
 
@@ -50,6 +76,10 @@ export class HomingBullet extends Projectile {
   private canHome: boolean = true
   private homeDelay: number = 125 // Delay before homing re-activates after hit (milliseconds)
 
+  // for ricochet detection
+  private oldVelocityX: number = 0
+  private oldVelocityY: number = 0
+
   SetDefaults(): void {
     this.damage = 10
     this.damageMultiplier = 0.75
@@ -62,6 +92,10 @@ export class HomingBullet extends Projectile {
   }
 
   AI(): void {
+    // Store velocity before collision detection
+    this.oldVelocityX = this.velocityX
+    this.oldVelocityY = this.velocityY
+
     // Check if homing cooldown has expired
     if (!this.canHome && this.scene.time.now >= this.homeDelay) {
       this.canHome = true
@@ -106,6 +140,28 @@ export class HomingBullet extends Projectile {
     }
   }
 
+  OnObstacleCollide(): void {
+    if (UpgradeEffectSystem.hasAbility('ricochet') && !this.canCutTiles) {
+      // Detect which axis was hit by comparing velocity change
+      const epsilon = 0.001
+      
+      // If X velocity changed, we hit a vertical wall - reverse X
+      if (Math.abs(this.velocityX - this.oldVelocityX) > epsilon) {
+        this.velocityX = -this.oldVelocityX
+      }
+      
+      // If Y velocity changed, we hit a horizontal surface - reverse Y
+      if (Math.abs(this.velocityY - this.oldVelocityY) > epsilon) {
+        this.velocityY = -this.oldVelocityY
+      }
+      
+      // Stop if we've hit too many times
+      if (this.currentPierceCount >= this.pierce) {
+        this._destroy()
+      }
+    }
+  }
+
   OnHitNPC(_enemy: any): boolean {
     // Disable homing temporarily after hitting to prevent sticking
     this.canHome = false
@@ -136,14 +192,22 @@ export class HomingBullet extends Projectile {
  */
 export class ExplosiveBullet extends Projectile {
   private explosionRadius: number = 50
+  private oldVelocityX: number = 0
+  private oldVelocityY: number = 0
 
   SetDefaults(): void {
     this.damage = 20
     this.speed = 350
     this.size = 7
-    this.pierce = 0
+    this.pierce = 1
     this.color = 0xff4400
     this.knockback = 75
+  }
+
+  AI(): void {
+    // Store velocity before collision detection
+    this.oldVelocityX = this.velocityX
+    this.oldVelocityY = this.velocityY
   }
 
 
@@ -160,6 +224,26 @@ export class ExplosiveBullet extends Projectile {
     // Trigger explosion on hit - returns false to prevent normal collision damage
     // (explosion damage is handled separately)
     this.OnKill()
+
+    if (UpgradeEffectSystem.hasAbility('ricochet') && !this.canCutTiles) {
+      // Detect which axis was hit by comparing velocity change
+      const epsilon = 0.001
+      
+      // If X velocity changed, we hit a vertical wall - reverse X
+      if (Math.abs(this.velocityX - this.oldVelocityX) > epsilon) {
+        this.velocityX = -this.oldVelocityX
+      }
+      
+      // If Y velocity changed, we hit a horizontal surface - reverse Y
+      if (Math.abs(this.velocityY - this.oldVelocityY) > epsilon) {
+        this.velocityY = -this.oldVelocityY
+      }
+      
+      // Stop if we've hit too many times
+      if (this.currentPierceCount >= this.pierce) {
+        this._destroy()
+      }
+    }
     return false // Don't apply normal bullet damage since explosion handles it
   }
 

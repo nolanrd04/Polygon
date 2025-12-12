@@ -34,6 +34,10 @@ export interface UpgradeDefinition {
   tier?: number
   upgradesTo?: string // ID of next tier upgrade
 
+  // Dependencies
+  dependentOn?: string[] // IDs of upgrades that must be owned
+  dependencyCount?: number // How many of the dependent upgrades must be owned (default: 1)
+
   // Cost
   cost?: number
 }
@@ -98,6 +102,11 @@ class UpgradeSystemClass {
    * Check if an upgrade can be applied.
    */
   canApply(upgrade: UpgradeDefinition): boolean {
+    // Check dependencies
+    if (!this.canMeetDependencies(upgrade)) {
+      return false
+    }
+
     // Check stack limit
     if (upgrade.stackable && upgrade.maxStacks) {
       const currentStacks = this.stackCounts.get(upgrade.id) || 0
@@ -112,6 +121,25 @@ class UpgradeSystemClass {
     }
 
     return true
+  }
+
+  /**
+   * Check if an upgrade's dependencies are met.
+   */
+  private canMeetDependencies(upgrade: UpgradeDefinition): boolean {
+    if (!upgrade.dependentOn || upgrade.dependentOn.length === 0) {
+      return true
+    }
+
+    const required = upgrade.dependencyCount || 1
+    let dependencyCount = 0
+
+    for (const dependentId of upgrade.dependentOn) {
+      const stacks = this.stackCounts.get(dependentId) || 0
+      dependencyCount += stacks
+    }
+
+    return dependencyCount >= required
   }
 
   /**

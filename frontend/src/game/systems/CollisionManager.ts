@@ -242,16 +242,24 @@ export class CollisionManager {
 
     if (!projectile || projectile.isDestroyed) return false
 
+    // Trigger obstacle collision callback
+    projectile.OnObstacleCollide()
+
     // If projectile can cut tiles, let it pass through but count pierce
     if (projectile.canCutTiles) {
       projectile.currentPierceCount++
-      if (projectile.currentPierceCount > projectile.pierce) {
+      if (projectile.currentPierceCount >= projectile.pierce) {
         projectile._destroy()
       }
       return false // Don't block - let it pass through
     }
 
-    // Can't cut tiles - destroy immediately to prevent pass-through
+    // If ricochet is active, don't destroy - let it bounce
+    if (UpgradeEffectSystem.hasEffect('ricochet')) {
+      return false // Let the projectile bounce back
+    }
+
+    // Can't cut tiles and no ricochet - destroy immediately to prevent pass-through
     projectile._destroy()
     return false // Return false to prevent collision response since projectile is destroyed
   }
