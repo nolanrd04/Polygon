@@ -2,12 +2,14 @@ import { Enemy } from './Enemy'
 
 /**
  * Hexagon enemy - tanky boss-like enemy with shield ability.
+ * Has a health-based shield that blocks damage until depleted.
  */
 export class Hexagon extends Enemy {
   private shielded: boolean = false
-  private shieldTimer: number = 0
-  private shieldCooldown: number = 5000
-  private shieldDuration: number = 2000
+  private shieldHealth: number = 0
+  private maxShieldHealth: number = 0
+  private shieldRechargeDelay: number = 3000 // Time before shield can recharge after breaking
+  private lastShieldBreakTime: number = 0
 
   SetDefaults(): void {
     this.health = 575
@@ -20,28 +22,48 @@ export class Hexagon extends Enemy {
     this.speedCap = 1.3  // Very low cap (tank, shouldn't be fast)
   }
 
+  PreAI(): boolean {
+    // Activate shield on first update
+    if (!this.shielded && this.shieldHealth === 0) {
+      this.activateShield()
+    }
+    return true
+  }
+
   AI(_playerX: number, _playerY: number): void {
     const now = this.scene.time.now
 
-    // Activate shield periodically
-    if (!this.shielded && now - this.shieldTimer > this.shieldCooldown) {
-      this.shielded = true
-      this.shieldTimer = now
-      this._drawShielded()
-
-      this.scene.time.delayedCall(this.shieldDuration, () => {
-        this.shielded = false
-        this.Draw()
-      })
+    // Try to recharge shield if it's broken and cooldown has passed
+    if (!this.shielded && this.shieldHealth === 0 && now - this.lastShieldBreakTime > this.shieldRechargeDelay) {
+      this.activateShield()
     }
   }
 
   OnHit(_damage: number, _source: any): boolean {
     if (this.shielded) {
-      // Blocked by shield
-      return false
+      // Shield absorbs the damage
+      this.shieldHealth -= _damage
+      
+      if (this.shieldHealth <= 0) {
+        // Shield is broken
+        this.shielded = false
+        this.lastShieldBreakTime = this.scene.time.now
+        this.Draw() // Return to normal appearance
+      } else {
+        // Shield is still active, redraw it
+        this._drawShielded()
+      }
+      
+      return false // Don't damage the hexagon
     }
-    return true
+    return true // Normal damage
+  }
+
+  private activateShield(): void {
+    this.shielded = true
+    this.maxShieldHealth = this.health * 0.65
+    this.shieldHealth = this.maxShieldHealth
+    this._drawShielded()
   }
 
   private _drawShielded(): void {
