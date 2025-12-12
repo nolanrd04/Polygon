@@ -3,7 +3,6 @@
 3. implement flame, laser, spinner, and zapper.
 4. add upgrades for projectiles
 5. improve terrain
-6. add logic for destroying projectiles on terrain collision
 7. improve waves/enemy spawns
 8. Add difficulties
 9. Add leaderboard
