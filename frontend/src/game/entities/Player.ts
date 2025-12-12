@@ -55,6 +55,16 @@ export class Player extends Phaser.GameObjects.Container {
   /** Current Y position on screen (pixels from top edge) */
   positionY: number = 0
 
+  /** old position and velocity values */
+  oldPositionX: number = 0
+  oldPositionY: number = 0
+  oldVelocityX: number = 0
+  oldVelocityY: number = 0
+
+  /* old position tracking frequency */
+  oldTrackingInterval: number = 30 // frames
+  oldTrackingCounter: number = 0
+
   // ============================================================
   // INTERNAL - Used by the game engine
   // ============================================================

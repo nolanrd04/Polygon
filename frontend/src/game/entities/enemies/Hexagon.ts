@@ -8,7 +8,7 @@ export class Hexagon extends Enemy {
   private shielded: boolean = false
   private shieldHealth: number = 0
   private maxShieldHealth: number = 0
-  private shieldRechargeDelay: number = 3000 // Time before shield can recharge after breaking
+  private shieldRechargeDelay: number = 5000 // Time before shield can recharge after breaking
   private lastShieldBreakTime: number = 0
 
   SetDefaults(): void {
@@ -24,17 +24,25 @@ export class Hexagon extends Enemy {
 
   PreAI(): boolean {
     // Activate shield on first update
-    if (!this.shielded && this.shieldHealth === 0) {
+    if (!this.shielded && this.shieldHealth <= 0) {
       this.activateShield()
     }
     return true
+  }
+
+  applyKnockback(velocityX: number, velocityY: number): void {
+    // Shield blocks knockback
+    if (this.shielded) {
+      return
+    }
+    super.applyKnockback(velocityX, velocityY)
   }
 
   AI(_playerX: number, _playerY: number): void {
     const now = this.scene.time.now
 
     // Try to recharge shield if it's broken and cooldown has passed
-    if (!this.shielded && this.shieldHealth === 0 && now - this.lastShieldBreakTime > this.shieldRechargeDelay) {
+    if (!this.shielded && this.shieldHealth <= 0 && now - this.lastShieldBreakTime > this.shieldRechargeDelay) {
       this.activateShield()
     }
   }

@@ -25,6 +25,7 @@ export abstract class Enemy {
   speedCap: number = 2  // Maximum speed multiplier (default 2x)
   scale: number = 1.0  // Visual scale multiplier (0.8 = 80%, 1.0 = 100%, 1.2 = 120%)
   hitboxSize: number = 1.0  // Collision radius multiplier relative to visual radius (0.8 = 80%, 1.0 = 100%)
+  knockbackResistance: number = 0  // Knockback resistance (0 = none, 1 = immune)
 
   // ============ RUNTIME STATE ============
   protected scene!: Phaser.Scene
@@ -36,6 +37,20 @@ export abstract class Enemy {
 
   x: number = 0
   y: number = 0
+  
+
+  /** old position and velocity history arrays */
+  doOldPositionTracking: boolean = false
+  doOldVelocityTracking: boolean = false
+
+  oldPositionX: number[] = []
+  oldPositionY: number[] = []
+  oldVelocityX: number[] = []
+  oldVelocityY: number[] = []
+
+  /* old position tracking frequency */
+  oldTrackingInterval: number = 30 // frames
+  oldTrackingCounter: number = 0
   velocityX: number = 0
   velocityY: number = 0
   rotation: number = 0
@@ -181,8 +196,10 @@ export abstract class Enemy {
    * Apply knockback to this enemy.
    */
   applyKnockback(velocityX: number, velocityY: number): void {
-    this.velocityX = velocityX
-    this.velocityY = velocityY
+    // Apply knockback resistance
+    const knockbackMultiplier = 1 - this.knockbackResistance
+    this.velocityX = velocityX * knockbackMultiplier
+    this.velocityY = velocityY * knockbackMultiplier
     // Prevent AI from immediately overwriting knockback velocity for 100ms
     this.knockbackEndTime = this.scene.time.now + 100
   }
@@ -221,6 +238,18 @@ export abstract class Enemy {
     this.y = y
     this._id = id
     this.maxHealth = this.health  // Set maxHealth AFTER all stat modifications
+
+    // Initialize old position/velocity arrays
+    if (this.doOldPositionTracking)
+    {
+      this.oldPositionX = new Array(this.oldTrackingInterval).fill(x)
+      this.oldPositionY = new Array(this.oldTrackingInterval).fill(y)
+    }
+    if (this.doOldVelocityTracking)
+    {
+      this.oldVelocityX = new Array(this.oldTrackingInterval).fill(0)
+      this.oldVelocityY = new Array(this.oldTrackingInterval).fill(0)
+    }
 
     this.container = scene.add.container(x, y)
     this.container.setData('isEnemy', true)
@@ -269,6 +298,30 @@ export abstract class Enemy {
 
     this.x = this.container.x
     this.y = this.container.y
+
+    if (this.doOldPositionTracking || this.doOldVelocityTracking)
+    {
+      this.oldTrackingCounter++
+      if (this.doOldPositionTracking)
+      {
+        this.oldPositionX.shift()
+        this.oldPositionX.push(this.x)
+      
+        this.oldPositionY.shift()
+        this.oldPositionY.push(this.y)
+      }
+
+      if (this.doOldVelocityTracking)
+      {
+        this.oldVelocityX.shift()
+        this.oldVelocityX.push(this.velocityX)
+
+        this.oldVelocityY.shift()
+        this.oldVelocityY.push(this.velocityY)
+      }
+      
+      this.oldTrackingCounter = 0
+    }
 
     // Only run AI if not in knockback state
     if (this.PreAI() && this.scene.time.now >= this.knockbackEndTime) {

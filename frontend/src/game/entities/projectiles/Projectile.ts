@@ -75,6 +75,16 @@ export abstract class Projectile {
   /** Current vertical speed (pixels per second, positive = down) */
   velocityY: number = 0
 
+  /** old position and velocity values */
+  oldPositionX: number = 0
+  oldPositionY: number = 0
+  oldVelocityX: number = 0
+  oldVelocityY: number = 0
+
+  /* old position tracking frequency */
+  oldTrackingInterval: number = 30 // frames
+  oldTrackingCounter: number = 0
+
   /** Current rotation angle in radians (0 = pointing right) */
   rotation: number = 0
 
