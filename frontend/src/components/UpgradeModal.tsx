@@ -21,6 +21,11 @@ interface Upgrade {
   stackable?: boolean
   maxStacks?: number
   replaces?: string[]
+  type?: string
+  target?: string
+  variantClass?: string
+  dependentOn?: string[]
+  dependencyCount?: number
 }
 
 interface UpgradeModalProps {
@@ -153,6 +158,32 @@ export default function UpgradeModal({ onStartWave, playerPoints, selectedAttack
           if (stackCount >= upgrade.maxStacks) {
             attempts++
             continue // Skip this upgrade if max stacks reached
+          }
+        }
+
+        // Check if upgrade dependencies are met
+        if (upgrade.dependentOn && upgrade.dependentOn.length > 0) {
+          const required = upgrade.dependencyCount || 1
+          let dependencyCount = 0
+          
+          for (const dependentId of upgrade.dependentOn) {
+            const applied = appliedUpgrades.find(u => u.id === dependentId)
+            if (applied) {
+              // For variants, check if it's still active
+              if (applied.type === 'variant') {
+                const activeVariant = UpgradeSystem.getVariant(applied.target!)
+                if (activeVariant === applied.variantClass) {
+                  dependencyCount++
+                }
+              } else {
+                dependencyCount++
+              }
+            }
+          }
+          
+          if (dependencyCount < required) {
+            attempts++
+            continue // Skip this upgrade if dependencies not met
           }
         }
         

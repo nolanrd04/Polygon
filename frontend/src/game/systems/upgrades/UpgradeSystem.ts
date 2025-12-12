@@ -135,11 +135,33 @@ class UpgradeSystemClass {
     let dependencyCount = 0
 
     for (const dependentId of upgrade.dependentOn) {
-      const stacks = this.stackCounts.get(dependentId) || 0
-      dependencyCount += stacks
+      // Check if this upgrade has been obtained
+      if (this.hasUpgrade(dependentId)) {
+        const stacks = this.stackCounts.get(dependentId) || 0
+        dependencyCount += stacks > 0 ? 1 : 0 // Count as 1 even if multiple stacks
+      }
     }
 
     return dependencyCount >= required
+  }
+
+  /**
+   * Check if a specific upgrade has been obtained.
+   * For variants, checks if it's the currently active variant.
+   * For other upgrades, checks if it's in the applied list.
+   */
+  private hasUpgrade(upgradeId: string): boolean {
+    // First check appliedUpgrades
+    if (this.appliedUpgrades.has(upgradeId)) {
+      const upgrade = this.appliedUpgrades.get(upgradeId)!
+      // For variants, only count if it's still the active variant
+      if (upgrade.type === 'variant') {
+        return this.activeVariants.get(upgrade.target!) === upgrade.variantClass
+      }
+      // For other types, it's applied if it's in the map
+      return true
+    }
+    return false
   }
 
   /**

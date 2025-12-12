@@ -159,10 +159,10 @@ class GameManagerClass {
   completeWave(): void {
     this.state.isWaveActive = false
     // Base wave bonus of 10, scaled exponentially: 10 * e^(wave/8)
-    const baseBonus = 10
+    const baseBonus = 15
     // const waveMultiplier = Math.exp((this.state.wave - 1) / 16)
     // const score = Math.floor(baseBonus * waveMultiplier)
-    const score = Math.min(50, Math.floor(baseBonus + (this.state.wave) * 2))
+    const score = Math.min(55, Math.floor(baseBonus + (this.state.wave) * 2))
 
     this.addPoints(score)
     EventBus.emit('wave-complete', {
