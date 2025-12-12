@@ -379,6 +379,23 @@
       "stackable": true,
       "maxStacks": 9,
       "cost": 35
+    },
+    {
+      "id": "explosion_radius",
+      "name": "Blast Radius",
+      "description": "+5 explosion radius",
+      "rarity": "uncommon",
+      "type": "stat_modifier",
+      "target": "bullet",
+      "attackType": "bullet",
+      "stat": "explosionRadius",
+      "value": 5,
+      "stackable": true,
+      "maxStacks": 5,
+      "cost": 6,
+      "dependentOn": ["explosive_bullets"],
+      "dependencyCount": 1
+
     }
   ]
 }

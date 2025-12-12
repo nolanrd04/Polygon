@@ -1,14 +1,12 @@
 import { Projectile } from '../Projectile'
 import { COLORS } from '../../../core/GameConfig'
-import { UpgradeEffectSystem } from '../../../systems/upgrades'
+import { UpgradeEffectSystem, UpgradeModifierSystem } from '../../../systems/upgrades'
 
 /**
  * Standard bullet projectile.
  * Fast, small, deals moderate damage.
  */
 export class Bullet extends Projectile {
-  private oldVelocityX: number = 0
-  private oldVelocityY: number = 0
 
   SetDefaults(): void {
     this.damage = 10
@@ -18,12 +16,6 @@ export class Bullet extends Projectile {
     this.color = COLORS.bullet
     this.timeLeft = 3000 // milliseconds
     this.knockback = 7 // Push enemies back on hit
-  }
-
-  AI(): void {
-    // Store velocity before collision detection
-    this.oldVelocityX = this.velocityX
-    this.oldVelocityY = this.velocityY
   }
 
   OnObstacleCollide(): void {
@@ -77,8 +69,6 @@ export class HomingBullet extends Projectile {
   private homeDelay: number = 125 // Delay before homing re-activates after hit (milliseconds)
 
   // for ricochet detection
-  private oldVelocityX: number = 0
-  private oldVelocityY: number = 0
 
   SetDefaults(): void {
     this.damage = 10
@@ -92,9 +82,6 @@ export class HomingBullet extends Projectile {
   }
 
   AI(): void {
-    // Store velocity before collision detection
-    this.oldVelocityX = this.velocityX
-    this.oldVelocityY = this.velocityY
 
     // Check if homing cooldown has expired
     if (!this.canHome && this.scene.time.now >= this.homeDelay) {
@@ -141,21 +128,15 @@ export class HomingBullet extends Projectile {
   }
 
   OnObstacleCollide(): void {
-    if (UpgradeEffectSystem.hasAbility('ricochet') && !this.canCutTiles) {
-      // Detect which axis was hit by comparing velocity change
-      const epsilon = 0.001
+    if (UpgradeEffectSystem.hasEffect('ricochet') && !this.canCutTiles) {
+      this.currentPierceCount++
       
-      // If X velocity changed, we hit a vertical wall - reverse X
-      if (Math.abs(this.velocityX - this.oldVelocityX) > epsilon) {
-        this.velocityX = -this.oldVelocityX
-      }
+      // Simple bounce: reverse velocity on both axes
+      // The physics engine will handle the actual bouncing
+      this.velocityX = -this.velocityX
+      this.velocityY = -this.velocityY
       
-      // If Y velocity changed, we hit a horizontal surface - reverse Y
-      if (Math.abs(this.velocityY - this.oldVelocityY) > epsilon) {
-        this.velocityY = -this.oldVelocityY
-      }
-      
-      // Stop if we've hit too many times
+      // Stop if we've bounced too many times
       if (this.currentPierceCount >= this.pierce) {
         this._destroy()
       }
@@ -192,8 +173,6 @@ export class HomingBullet extends Projectile {
  */
 export class ExplosiveBullet extends Projectile {
   private explosionRadius: number = 50
-  private oldVelocityX: number = 0
-  private oldVelocityY: number = 0
 
   SetDefaults(): void {
     this.damage = 20
@@ -202,12 +181,8 @@ export class ExplosiveBullet extends Projectile {
     this.pierce = 1
     this.color = 0xff4400
     this.knockback = 75
-  }
 
-  AI(): void {
-    // Store velocity before collision detection
-    this.oldVelocityX = this.velocityX
-    this.oldVelocityY = this.velocityY
+    this.explosionRadius = UpgradeModifierSystem.applyModifiers('bullet', 'explosionRadius', this.explosionRadius)
   }
 
 
@@ -220,34 +195,41 @@ export class ExplosiveBullet extends Projectile {
     this.graphics.fillCircle(0, 0, this.size * 0.5)
   }
 
-  OnHitNPC(_enemy: any): boolean {
-    // Trigger explosion on hit - returns false to prevent normal collision damage
-    // (explosion damage is handled separately)
-    this.OnKill()
-
-    if (UpgradeEffectSystem.hasAbility('ricochet') && !this.canCutTiles) {
-      // Detect which axis was hit by comparing velocity change
-      const epsilon = 0.001
+  OnObstacleCollide(): void {
+    if (UpgradeEffectSystem.hasEffect('ricochet') && !this.canCutTiles) {
+      this.currentPierceCount++
       
-      // If X velocity changed, we hit a vertical wall - reverse X
-      if (Math.abs(this.velocityX - this.oldVelocityX) > epsilon) {
-        this.velocityX = -this.oldVelocityX
-      }
+      // Simple bounce: reverse velocity on both axes
+      // The physics engine will handle the actual bouncing
+      this.velocityX = -this.velocityX
+      this.velocityY = -this.velocityY
       
-      // If Y velocity changed, we hit a horizontal surface - reverse Y
-      if (Math.abs(this.velocityY - this.oldVelocityY) > epsilon) {
-        this.velocityY = -this.oldVelocityY
-      }
+      this.DoExplosionDamage()
       
-      // Stop if we've hit too many times
+      // Stop if we've bounced too many times
       if (this.currentPierceCount >= this.pierce) {
         this._destroy()
       }
     }
+  }
+
+  OnHitNPC(_enemy: any): boolean {
+    // Trigger explosion on hit - returns false to prevent normal collision damage
+    // (explosion damage is handled separately)
+    this.OnKill()
     return false // Don't apply normal bullet damage since explosion handles it
   }
 
   OnKill(): void {
+    this.DoExplosionDamage()
+  }
+
+  // class specific explosion damage logic
+  DoExplosionDamage(): void {
+    // Apply damage modifiers to get the actual damage value
+    const modifiedDamage = UpgradeModifierSystem.applyModifiers('bullet', 'damage', this.damage)
+    const explosionDamage = modifiedDamage * 0.5
+
     // Create explosion visual
     const explosion = this.scene.add.graphics()
     explosion.fillStyle(this.color, 0.6)
@@ -266,7 +248,8 @@ export class ExplosiveBullet extends Projectile {
       x: this.positionX,
       y: this.positionY,
       radius: this.explosionRadius,
-      damage: this.damage * 0.5 // Use half projectile damage for explosion
+      damage: explosionDamage
     })
   }
+
 }

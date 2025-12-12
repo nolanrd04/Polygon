@@ -118,7 +118,7 @@
     {
       "id": "ricochet",
       "name": "Ricochet Rounds",
-      "description": "Projectiles bounce off surfaces",
+      "description": "Projectiles bounce off surfaces.",
       "rarity": "epic",
       "type": "effect",
       "effect": "ricochet",
