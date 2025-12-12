@@ -6,3 +6,5 @@
 7. improve waves/enemy spawns
 8. Add difficulties
 9. Add leaderboard
+
+testing github on discord.

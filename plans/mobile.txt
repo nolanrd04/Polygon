@@ -1,0 +1,24 @@
+What Needs to Change
+
+  Currently, the game uses desktop-only controls (frontend/src/game/scenes/MainScene.ts):
+  - Movement: WASD/Arrow keys (lines 158-168)
+  - Aiming: Mouse position (line 174)
+  - Shooting: Mouse click (lines 177-179)
+  - Abilities: E key for shield (lines 84-87)
+
+  Required Changes for Mobile
+
+  1. Touch Movement Controls
+    - Add a virtual joystick or directional buttons
+    - Detect touch input instead of keyboard
+  2. Touch Aiming & Shooting
+    - Option A: Auto-aim at nearest enemy
+    - Option B: Shoot in the direction you're moving
+    - Option C: Add a second virtual joystick for aiming
+    - Option D: Tap anywhere to aim and shoot
+  3. Touch Ability Buttons
+    - Add on-screen buttons for shield (E key) and pause (ESC)
+  4. Additional Mobile Optimizations
+    - Prevent default touch behaviors (zoom, scroll)
+    - Adjust UI scaling for smaller screens
+    - Consider performance optimizations for mobile devices
