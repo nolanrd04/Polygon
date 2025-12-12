@@ -294,7 +294,7 @@ export abstract class Projectile {
   }
 
   /** @internal Records a hit on an enemy, returns false if projectile should be destroyed */
-  _recordHit(enemyId: number, enemy: any): boolean {
+  _recordHit(enemyId: number): boolean {
     if (!this._canHitEnemy(enemyId)) return true
 
     // Track when we hit this enemy
