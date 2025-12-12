@@ -1,0 +1,1 @@
+change all collision systems to match the hitbox of the shape of the entity. All shapes are fixed polygons, or just default to a circle like for projectiles.

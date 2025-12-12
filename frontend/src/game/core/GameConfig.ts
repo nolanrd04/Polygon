@@ -64,17 +64,19 @@ export const DEV_SETTINGS = {
 }
 
 export const RARITY_WEIGHTS: Record<string, number> = {
-  /*
+  
   common: 0.435,
   uncommon: 0.3,
   rare: 0.15,
   epic: 0.075,
   legendary: 0.04
-  */
+  
 
+  /*
   common: 0.2,
   uncommon: 0.2,
   rare: 0.2,
   epic: 0.2,
   legendary: 0.2
+  */
 }
