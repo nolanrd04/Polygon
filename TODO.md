@@ -6,3 +6,7 @@
 7. improve waves/enemy spawns
 8. Add difficulties
 9. Add leaderboard
+11. fix thorns
+12. explosive bullets do only 10 damage to the first enemy, then 20 on the second
+13. outlines for obstacles
+14. right click breaks things

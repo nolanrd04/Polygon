@@ -48,9 +48,10 @@ export abstract class Enemy {
   oldVelocityX: number[] = []
   oldVelocityY: number[] = []
 
-  /* old position tracking frequency */
-  oldTrackingInterval: number = 30 // frames
-  oldTrackingCounter: number = 0
+  /* old position tracking: count and interval */
+  oldTrackingCounter: number = 10 // number of positions to store
+  oldTrackingInterval: number = 500 // milliseconds between recordings
+  oldTrackingLastTime: number = 0
   velocityX: number = 0
   velocityY: number = 0
   rotation: number = 0
@@ -238,17 +239,18 @@ export abstract class Enemy {
     this.y = y
     this._id = id
     this.maxHealth = this.health  // Set maxHealth AFTER all stat modifications
+    this.oldTrackingLastTime = scene.time.now
 
     // Initialize old position/velocity arrays
     if (this.doOldPositionTracking)
     {
-      this.oldPositionX = new Array(this.oldTrackingInterval).fill(x)
-      this.oldPositionY = new Array(this.oldTrackingInterval).fill(y)
+      this.oldPositionX = new Array(this.oldTrackingCounter).fill(x)
+      this.oldPositionY = new Array(this.oldTrackingCounter).fill(y)
     }
     if (this.doOldVelocityTracking)
     {
-      this.oldVelocityX = new Array(this.oldTrackingInterval).fill(0)
-      this.oldVelocityY = new Array(this.oldTrackingInterval).fill(0)
+      this.oldVelocityX = new Array(this.oldTrackingCounter).fill(0)
+      this.oldVelocityY = new Array(this.oldTrackingCounter).fill(0)
     }
 
     this.container = scene.add.container(x, y)
@@ -299,9 +301,10 @@ export abstract class Enemy {
     this.x = this.container.x
     this.y = this.container.y
 
-    if (this.doOldPositionTracking || this.doOldVelocityTracking)
+    if ((this.doOldPositionTracking || this.doOldVelocityTracking) && this.scene.time.now - this.oldTrackingLastTime >= this.oldTrackingInterval)
     {
-      this.oldTrackingCounter++
+      this.oldTrackingLastTime = this.scene.time.now
+      
       if (this.doOldPositionTracking)
       {
         this.oldPositionX.shift()
@@ -319,8 +322,6 @@ export abstract class Enemy {
         this.oldVelocityY.shift()
         this.oldVelocityY.push(this.velocityY)
       }
-      
-      this.oldTrackingCounter = 0
     }
 
     // Only run AI if not in knockback state
@@ -334,6 +335,9 @@ export abstract class Enemy {
 
     this.body.setVelocity(this.velocityX, this.velocityY)
     this.container.rotation = this.rotation
+
+    // Redraw every frame to update trails and animations
+    this.Draw()
 
     // Update health bar position (kept upright in world space)
     this.drawHealthBar()

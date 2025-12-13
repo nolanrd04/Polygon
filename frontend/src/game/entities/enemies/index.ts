@@ -12,6 +12,7 @@
 export { Enemy } from './Enemy'
 import { Triangle } from './Triangle'
 import { Square } from './Square'
+import { Diamond } from './Diamond'
 import { Pentagon } from './Pentagon'
 import { Hexagon } from './Hexagon'
 // import { Dasher } from './Dasher'
@@ -31,6 +32,7 @@ export type EnemyType = {
 export const ENEMY_TYPES: EnemyType[] = [
   { id: 'triangle', class: Triangle },
   { id: 'square', class: Square },
+  { id: 'diamond', class: Diamond },
   { id: 'pentagon', class: Pentagon },
   { id: 'hexagon', class: Hexagon },
   // { id: 'dasher', class: Dasher },

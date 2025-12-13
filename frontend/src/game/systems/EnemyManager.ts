@@ -104,6 +104,7 @@ export class EnemyManager {
     if (wave >= 7) types.push('shooter')
     if (wave >= 8) types.push('exploder')
     if (wave >= 10) types.push('hexagon')
+    if (wave >= 11) types.push('diamond')
 
     return types
   }

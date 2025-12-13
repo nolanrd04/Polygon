@@ -42,12 +42,15 @@ export class CollisionManager {
       this.handleEnemyProjectilePlayerCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback
     )
 
-    // Player vs Enemy
+    // Player vs Enemy (damage overlap)
     this.scene.physics.add.overlap(
       this.player,
       this.enemyManager.getGroup(),
       this.handlePlayerEnemyCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback
     )
+
+    // Player vs Enemy (solid collision - prevents passing through)
+    this.scene.physics.add.collider(this.player, this.enemyManager.getGroup())
 
     // Setup obstacle collisions if obstacles exist
     if (this.obstacles) {

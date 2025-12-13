@@ -1,0 +1,2 @@
+1. added dasher enemy
+2. enemies collide with the player instead of passing through
