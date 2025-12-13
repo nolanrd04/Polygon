@@ -86,6 +86,11 @@ export class MainScene extends Phaser.Scene {
       this.player.activateShield()
     })
 
+    // Dash ability on SPACE
+    this.input.keyboard!.on('keydown-SPACE', () => {
+      this.player.dash()
+    })
+
     // Listen for events
     EventBus.on('game-pause', () => this.scene.pause())
     EventBus.on('game-resume', () => this.scene.resume())

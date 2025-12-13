@@ -94,6 +94,16 @@ export class Player extends Phaser.GameObjects.Container {
   private shielded: boolean = false
   private shieldGraphics: Phaser.GameObjects.Graphics | null = null
 
+  /** Dash ability state */
+  private isDashing: boolean = false
+  private dashEndTime: number = 0
+  private dashSpeed: number = 600
+  private dashDuration: number = 200 // milliseconds
+  private dashCooldown: number = 500 // milliseconds
+  private lastDashTime: number = -1000
+  private dashDirection: { x: number; y: number } = { x: 0, y: 0 }
+  private dashRechargeBar: Phaser.GameObjects.Graphics | null = null
+
   // ============================================================
   // CONSTRUCTOR
   // ============================================================
@@ -502,6 +512,9 @@ export class Player extends Phaser.GameObjects.Container {
     this.positionX = this.x
     this.positionY = this.y
 
+    // Update dash state
+    this.updateDash()
+
     // Update spinner to follow player position
     if (this.activeSpinner && !this.activeSpinner.isDestroyed) {
       this.activeSpinner.followPlayer(this.x, this.y)
@@ -522,6 +535,109 @@ export class Player extends Phaser.GameObjects.Container {
         proj._update()
       }
     }
+  }
+
+  /**
+   * Update dash state and continue dashing if active.
+   */
+  private updateDash(): void {
+    // Check if currently dashing
+    if (this.isDashing) {
+      if (this.scene.time.now >= this.dashEndTime) {
+        // Dash ended
+        this.isDashing = false
+        this.body.setVelocity(0, 0)
+      } else {
+        // Continue dash in the saved direction
+        this.body.setVelocity(
+          this.dashDirection.x * this.dashSpeed,
+          this.dashDirection.y * this.dashSpeed
+        )
+      }
+    }
+
+    // Update recharge bar if dash ability is active
+    if (UpgradeEffectSystem.hasAbility('dash')) {
+      this.updateDashRechargeBar()
+    } else {
+      // Hide recharge bar if ability is disabled
+      if (this.dashRechargeBar) {
+        this.dashRechargeBar.destroy()
+        this.dashRechargeBar = null
+      }
+    }
+  }
+
+  /**
+   * Update the dash recharge bar visual.
+   */
+  private updateDashRechargeBar(): void {
+    const now = this.scene.time.now
+    const timeSinceLastDash = now - this.lastDashTime
+    const rechargeProgress = Math.min(1, timeSinceLastDash / this.dashCooldown)
+
+    // Create bar if it doesn't exist
+    if (!this.dashRechargeBar) {
+      this.dashRechargeBar = this.scene.add.graphics()
+      this.add(this.dashRechargeBar)
+    }
+
+    // Clear and redraw
+    this.dashRechargeBar.clear()
+
+    // Bar dimensions
+    const barWidth = 40
+    const barHeight = 6
+    const barX = -barWidth / 2
+    const barY = -this.radius - 20
+
+    // Background (empty/depleted)
+    this.dashRechargeBar.fillStyle(0x333333, 0.8)
+    this.dashRechargeBar.fillRect(barX, barY, barWidth, barHeight)
+
+    // Fill (charged portion)
+    const fillColor = rechargeProgress >= 1 ? 0x00ff00 : 0x0099ff // Green when ready, blue when charging
+    this.dashRechargeBar.fillStyle(fillColor, 0.9)
+    this.dashRechargeBar.fillRect(barX, barY, barWidth * rechargeProgress, barHeight)
+
+    // Border
+    this.dashRechargeBar.lineStyle(1, fillColor, 1)
+    this.dashRechargeBar.strokeRect(barX, barY, barWidth, barHeight)
+  }
+
+  /**
+   * Initiate a dash in the direction the player is facing.
+   */
+  dash(): void {
+    // Check if dash ability is unlocked
+    if (!UpgradeEffectSystem.hasAbility('dash')) return
+
+    // Check cooldown
+    const now = this.scene.time.now
+    if (now - this.lastDashTime < this.dashCooldown) return
+
+    // Get current velocity direction or use rotation direction
+    const velocityMagnitude = Phaser.Math.Distance.Between(0, 0, this.body.velocity.x, this.body.velocity.y)
+    if (velocityMagnitude > 0) {
+      // Dash in the direction of current movement
+      this.dashDirection.x = this.body.velocity.x / velocityMagnitude
+      this.dashDirection.y = this.body.velocity.y / velocityMagnitude
+    } else {
+      // Dash in the direction the player is facing (rotation)
+      this.dashDirection.x = Math.cos(this.rotation - Math.PI / 2)
+      this.dashDirection.y = Math.sin(this.rotation - Math.PI / 2)
+    }
+
+    // Start dash
+    this.isDashing = true
+    this.dashEndTime = now + this.dashDuration
+    this.lastDashTime = now
+
+    // Apply dash velocity
+    this.body.setVelocity(
+      this.dashDirection.x * this.dashSpeed,
+      this.dashDirection.y * this.dashSpeed
+    )
   }
 
   // ============================================================
@@ -564,6 +680,12 @@ export class Player extends Phaser.GameObjects.Container {
     this.activeSpinner = null
     this.activeFlame = null
     this.projectileGroup.clear(true, true)
+
+    // Clear dash recharge bar
+    if (this.dashRechargeBar) {
+      this.dashRechargeBar.destroy()
+      this.dashRechargeBar = null
+    }
   }
 
   // ============================================================

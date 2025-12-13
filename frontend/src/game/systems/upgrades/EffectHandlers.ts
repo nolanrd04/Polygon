@@ -82,8 +82,9 @@ export function registerEffectHandlers(): void {
   // ============================================================
   // DASH ABILITY - Quick movement
   // ============================================================
-  // Abilities are tracked by UpgradeEffectSystem.hasAbility('dash')
-  // The actual implementation is in Player.ts or MainScene.ts
+  UpgradeEffectSystem.registerEffect('dash', {})
+  // The ability is tracked by hasAbility('dash')
+  // Implementation in Player.ts dash() method, triggered by Space key in MainScene.ts
 
   // ============================================================
   // SHIELD ABILITY - Temporary invulnerability
