@@ -14,7 +14,7 @@ interface DevToolsProps {
 
 export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }: DevToolsProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<'stat' | 'effect' | 'variant' | 'visual' | 'ability'>('stat')
+  const [selectedCategory, setSelectedCategory] = useState<'stat' | 'effect' | 'variant' | 'visual' | 'ability' | 'enemies'>('stat')
   const [waveInput, setWaveInput] = useState('1')
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -25,6 +25,15 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
     visual: visualUpgrades.upgrades,
     ability: abilityUpgrades.upgrades
   }
+
+  const enemyTypes = [
+    { id: 'triangle', name: 'Triangle', description: 'Basic enemy' },
+    { id: 'square', name: 'Square', description: 'Faster enemy' },
+    { id: 'pentagon', name: 'Pentagon', description: 'Tanky enemy' },
+    { id: 'hexagon', name: 'Hexagon', description: 'Boss with shield' },
+    { id: 'diamond', name: 'Diamond', description: 'Dashes at player' },
+    { id: 'shooter', name: 'Shooter', description: 'Ranged attacker' }
+  ]
 
   const handleApplyUpgrade = (upgrade: UpgradeDefinition) => {
     // Emit dev-only event that bypasses point cost
@@ -51,6 +60,11 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
     }
   }
 
+  const handleSpawnEnemy = (enemyType: string) => {
+    EventBus.emit('dev-spawn-enemy' as any, enemyType)
+    console.log(`Spawned ${enemyType}`)
+  }
+
   if (!isOpen) {
     return (
       <button
@@ -63,7 +77,7 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
   }
 
   return (
-    <div className="fixed bottom-4 right-4 w-96 bg-gray-900 border-2 border-purple-500 rounded-lg shadow-2xl z-50 max-h-screen overflow-hidden flex flex-col">
+    <div className="fixed bottom-4 right-4 w-[420px] bg-gray-900 border-2 border-purple-500 rounded-lg shadow-2xl z-50 max-h-screen overflow-hidden flex flex-col">
       {/* Header */}
       <div className="bg-purple-600 p-3 flex justify-between items-center">
         <h3 className="font-mono font-bold text-white">DEV TOOLS</h3>
@@ -116,51 +130,71 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
 
       {/* Category Tabs */}
       <div className="flex border-b border-gray-700">
-        {(['stat', 'effect', 'variant', 'visual', 'ability'] as const).map(cat => (
+        {(['stat', 'effect', 'variant', 'visual', 'ability', 'enemies'] as const).map(cat => (
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`flex-1 py-2 px-2 text-xs font-mono uppercase ${
+            className={`flex-1 py-2 px-1 text-[10px] font-mono uppercase ${
               selectedCategory === cat
                 ? 'bg-purple-600 text-white'
                 : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
             }`}
           >
-            {cat}
+            {cat === 'enemies' ? 'enemy' : cat}
           </button>
         ))}
       </div>
 
-      {/* Upgrade List */}
+      {/* Content Area */}
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
-        {allUpgrades[selectedCategory].map((upgrade) => {
-          const applied = UpgradeSystem.getAppliedUpgrades().some(u => u.id === upgrade.id)
-          const stackCount = UpgradeSystem.getStackCount(upgrade.id)
-
-          return (
+        {selectedCategory === 'enemies' ? (
+          // Enemy Spawn List
+          enemyTypes.map((enemy) => (
             <button
-              key={`${upgrade.id}-${refreshKey}`}
-              onClick={() => handleApplyUpgrade(upgrade as UpgradeDefinition)}
-              className={`w-full text-left p-2 rounded text-xs ${
-                applied
-                  ? 'bg-green-900 border border-green-500'
-                  : 'bg-gray-800 hover:bg-gray-700 border border-gray-600'
-              }`}
+              key={enemy.id}
+              onClick={() => handleSpawnEnemy(enemy.id)}
+              className="w-full text-left p-2 rounded text-xs bg-gray-800 hover:bg-gray-700 border border-gray-600"
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <div className="font-bold text-white">{upgrade.name}</div>
-                  <div className="text-gray-400 text-xs">{upgrade.description}</div>
+                  <div className="font-bold text-white">{enemy.name}</div>
+                  <div className="text-gray-400 text-xs">{enemy.description}</div>
                 </div>
-                {stackCount > 0 && (
-                  <div className="bg-green-600 text-white px-2 py-0.5 rounded text-xs font-bold">
-                    x{stackCount}
-                  </div>
-                )}
+                <div className="text-purple-400 text-xs">SPAWN</div>
               </div>
             </button>
-          )
-        })}
+          ))
+        ) : (
+          // Upgrade List
+          allUpgrades[selectedCategory].map((upgrade) => {
+            const applied = UpgradeSystem.getAppliedUpgrades().some(u => u.id === upgrade.id)
+            const stackCount = UpgradeSystem.getStackCount(upgrade.id)
+
+            return (
+              <button
+                key={`${upgrade.id}-${refreshKey}`}
+                onClick={() => handleApplyUpgrade(upgrade as UpgradeDefinition)}
+                className={`w-full text-left p-2 rounded text-xs ${
+                  applied
+                    ? 'bg-green-900 border border-green-500'
+                    : 'bg-gray-800 hover:bg-gray-700 border border-gray-600'
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-bold text-white">{upgrade.name}</div>
+                    <div className="text-gray-400 text-xs">{upgrade.description}</div>
+                  </div>
+                  {stackCount > 0 && (
+                    <div className="bg-green-600 text-white px-2 py-0.5 rounded text-xs font-bold">
+                      x{stackCount}
+                    </div>
+                  )}
+                </div>
+              </button>
+            )
+          })
+        )}
       </div>
     </div>
   )

@@ -156,6 +156,17 @@ export class MainScene extends Phaser.Scene {
       })
     })
 
+    // Handle dev enemy spawning
+    EventBus.on('dev-spawn-enemy' as any, (enemyType: string) => {
+      // Spawn near player with some random offset
+      const offsetX = Phaser.Math.Between(-200, 200)
+      const offsetY = Phaser.Math.Between(-200, 200)
+      const spawnX = this.player.x + offsetX
+      const spawnY = this.player.y + offsetY
+
+      this.enemyManager.spawnEnemy(enemyType, spawnX, spawnY)
+    })
+
     // Start with initial upgrade phase
     this.time.delayedCall(500, () => {
       // Give player starting points for initial upgrades

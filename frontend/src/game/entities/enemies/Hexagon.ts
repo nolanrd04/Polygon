@@ -10,6 +10,7 @@ export class Hexagon extends Enemy {
   private maxShieldHealth: number = 0
   private shieldRechargeDelay: number = 5000 // Time before shield can recharge after breaking
   private lastShieldBreakTime: number = 0
+  private shieldGraphics: Phaser.GameObjects.Graphics | null = null
 
   SetDefaults(): void {
     this.health = 575
@@ -23,8 +24,8 @@ export class Hexagon extends Enemy {
   }
 
   PreAI(): boolean {
-    // Activate shield on first update
-    if (!this.shielded && this.shieldHealth <= 0) {
+    // Activate shield on first spawn only (maxShieldHealth will be 0 on first spawn)
+    if (!this.shielded && this.maxShieldHealth === 0) {
       this.activateShield()
     }
     return true
@@ -51,17 +52,17 @@ export class Hexagon extends Enemy {
     if (this.shielded) {
       // Shield absorbs the damage
       this.shieldHealth -= _damage
-      
+      console.log(`Hexagon ${this.id} shield hit: ${_damage} damage, shield health: ${this.shieldHealth}/${this.maxShieldHealth}`)
+
       if (this.shieldHealth <= 0) {
         // Shield is broken
-        this.shielded = false
-        this.lastShieldBreakTime = this.scene.time.now
-        this.Draw() // Return to normal appearance
+        console.log(`Hexagon ${this.id} shield broken!`)
+        this.deactivateShield()
       } else {
-        // Shield is still active, redraw it
-        this._drawShielded()
+        // Shield is still active, update the visual
+        this._updateShieldVisual()
       }
-      
+
       return false // Don't damage the hexagon
     }
     return true // Normal damage
@@ -71,13 +72,40 @@ export class Hexagon extends Enemy {
     this.shielded = true
     this.maxShieldHealth = this.health * 0.65
     this.shieldHealth = this.maxShieldHealth
-    this._drawShielded()
+    console.log(`Hexagon ${this.id} shield activated: ${this.shieldHealth} HP`)
+
+    // Create shield visual as separate graphics object
+    if (!this.shieldGraphics) {
+      this.shieldGraphics = this.scene.add.graphics()
+      this.container.add(this.shieldGraphics)
+    }
+    this._updateShieldVisual()
   }
 
-  private _drawShielded(): void {
-    this.Draw()
-    // Add shield visual
-    this.graphics.lineStyle(3, 0x00ffff, 0.8)
-    this.graphics.strokeCircle(0, 0, this.radius + 5)
+  private deactivateShield(): void {
+    this.shielded = false
+    this.lastShieldBreakTime = this.scene.time.now
+
+    // Remove shield visual
+    if (this.shieldGraphics) {
+      this.shieldGraphics.destroy()
+      this.shieldGraphics = null
+    }
+  }
+
+  private _updateShieldVisual(): void {
+    if (!this.shieldGraphics) return
+
+    this.shieldGraphics.clear()
+
+    // Shield opacity based on remaining health
+    const shieldPercent = this.shieldHealth / this.maxShieldHealth
+    const alpha = 0.4 + (shieldPercent * 0.4) // 0.4 to 0.8
+
+    // Shield circle
+    this.shieldGraphics.lineStyle(3, 0x00ffff, alpha)
+    this.shieldGraphics.strokeCircle(0, 0, this.radius + 5)
+    this.shieldGraphics.fillStyle(0x00ffff, alpha * 0.2)
+    this.shieldGraphics.fillCircle(0, 0, this.radius + 5)
   }
 }
