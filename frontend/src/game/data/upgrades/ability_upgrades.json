@@ -13,11 +13,12 @@
     {
       "id": "shield_ability",
       "name": "Energy Shield",
-      "description": "Press E for temporary shield",
+      "description": "Press E for temporary shield (consumable, stacks)",
       "rarity": "rare",
-      "type": "ability",
+      "type": "effect",
       "effect": "shield",
-      "stackable": false,
+      "value": 1,
+      "stackable": true,
       "cost": 10
     }
   ]

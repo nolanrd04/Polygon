@@ -102,7 +102,6 @@ export class Player extends Phaser.GameObjects.Container {
   private dashCooldown: number = 500 // milliseconds
   private lastDashTime: number = -1000
   private dashDirection: { x: number; y: number } = { x: 0, y: 0 }
-  private dashRechargeBar: Phaser.GameObjects.Graphics | null = null
 
   // ============================================================
   // CONSTRUCTOR
@@ -466,11 +465,17 @@ export class Player extends Phaser.GameObjects.Container {
   }
 
   /**
-   * Activate shield (E key ability).
+   * Activate shield (E key ability) - consumes one shield charge.
    */
   activateShield(): void {
     if (this.shielded) return
-    if (!UpgradeEffectSystem.hasAbility('shield')) return
+
+    // Check if we have shield charges
+    const shieldCharges = UpgradeEffectSystem.getEffectValue('shield')
+    if (shieldCharges <= 0) return
+
+    // Consume one shield charge
+    UpgradeEffectSystem.addEffect('shield', -1)
 
     this.shielded = true
 
@@ -555,54 +560,6 @@ export class Player extends Phaser.GameObjects.Container {
         )
       }
     }
-
-    // Update recharge bar if dash ability is active
-    if (UpgradeEffectSystem.hasAbility('dash')) {
-      this.updateDashRechargeBar()
-    } else {
-      // Hide recharge bar if ability is disabled
-      if (this.dashRechargeBar) {
-        this.dashRechargeBar.destroy()
-        this.dashRechargeBar = null
-      }
-    }
-  }
-
-  /**
-   * Update the dash recharge bar visual.
-   */
-  private updateDashRechargeBar(): void {
-    const now = this.scene.time.now
-    const timeSinceLastDash = now - this.lastDashTime
-    const rechargeProgress = Math.min(1, timeSinceLastDash / this.dashCooldown)
-
-    // Create bar if it doesn't exist
-    if (!this.dashRechargeBar) {
-      this.dashRechargeBar = this.scene.add.graphics()
-      this.add(this.dashRechargeBar)
-    }
-
-    // Clear and redraw
-    this.dashRechargeBar.clear()
-
-    // Bar dimensions
-    const barWidth = 40
-    const barHeight = 6
-    const barX = -barWidth / 2
-    const barY = -this.radius - 20
-
-    // Background (empty/depleted)
-    this.dashRechargeBar.fillStyle(0x333333, 0.8)
-    this.dashRechargeBar.fillRect(barX, barY, barWidth, barHeight)
-
-    // Fill (charged portion)
-    const fillColor = rechargeProgress >= 1 ? 0x00ff00 : 0x0099ff // Green when ready, blue when charging
-    this.dashRechargeBar.fillStyle(fillColor, 0.9)
-    this.dashRechargeBar.fillRect(barX, barY, barWidth * rechargeProgress, barHeight)
-
-    // Border
-    this.dashRechargeBar.lineStyle(1, fillColor, 1)
-    this.dashRechargeBar.strokeRect(barX, barY, barWidth, barHeight)
   }
 
   /**
@@ -669,6 +626,18 @@ export class Player extends Phaser.GameObjects.Container {
     return this.sides
   }
 
+  /** Get dash cooldown progress (0 to 1, where 1 means ready) */
+  getDashCooldownProgress(): number {
+    const now = this.scene.time.now
+    const timeSinceLastDash = now - this.lastDashTime
+    return Math.min(1, timeSinceLastDash / this.dashCooldown)
+  }
+
+  /** Check if dash is ready to use */
+  isDashReady(): boolean {
+    return this.getDashCooldownProgress() >= 1
+  }
+
   /** Clear all projectiles (called at end of round) */
   clearProjectiles(): void {
     for (const proj of this.projectiles) {
@@ -680,12 +649,6 @@ export class Player extends Phaser.GameObjects.Container {
     this.activeSpinner = null
     this.activeFlame = null
     this.projectileGroup.clear(true, true)
-
-    // Clear dash recharge bar
-    if (this.dashRechargeBar) {
-      this.dashRechargeBar.destroy()
-      this.dashRechargeBar = null
-    }
   }
 
   // ============================================================

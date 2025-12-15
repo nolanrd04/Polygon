@@ -6,6 +6,7 @@ import WaveComplete from '../components/WaveComplete'
 import GameHUD from '../components/GameHUD'
 import PauseMenu from '../components/PauseMenu'
 import DevTools from '../components/DevTools'
+import AbilityDisplay from '../components/AbilityDisplay'
 import { EventBus } from '../game/core/EventBus'
 import { GameManager } from '../game/core/GameManager'
 
@@ -19,6 +20,7 @@ export default function GamePage() {
   const [playerStats, setPlayerStats] = useState({ health: 100, maxHealth: 100, points: 0, kills: 0 })
   const [selectedAttack, setSelectedAttack] = useState('bullet')
   const [showCollisionBoxes, setShowCollisionBoxes] = useState(false)
+  const [abilityState, setAbilityState] = useState({ shieldCharges: 0, hasDash: false, dashCooldownProgress: 1 })
 
   useEffect(() => {
     // Get selected attack from sessionStorage
@@ -54,9 +56,20 @@ export default function GamePage() {
     EventBus.on('game-pause', () => setIsPaused(true))
     EventBus.on('game-resume', () => setIsPaused(false))
 
+    // Listen for ability state updates
+    EventBus.on('ability-state-update' as any, (state: { shieldCharges: number; hasDash: boolean; dashCooldownProgress: number }) => {
+      setAbilityState(state)
+    })
+
+    // Poll for ability state (for dash cooldown which changes constantly)
+    const abilityInterval = setInterval(() => {
+      EventBus.emit('request-ability-state' as any)
+    }, 100) // Update 10 times per second
+
     // Removed upgrade-applied listener - now handled by Start Wave button
 
     return () => {
+      clearInterval(abilityInterval)
       if (gameRef.current) {
         gameRef.current.destroy(true)
         gameRef.current = null
@@ -85,6 +98,12 @@ export default function GamePage() {
         points={playerStats.points}
         kills={playerStats.kills}
         wave={waveData.wave}
+      />
+
+      <AbilityDisplay
+        shieldCharges={abilityState.shieldCharges}
+        hasDash={abilityState.hasDash}
+        dashCooldownProgress={abilityState.dashCooldownProgress}
       />
 
       {isPaused && (

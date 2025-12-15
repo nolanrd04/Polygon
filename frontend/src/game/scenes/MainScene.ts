@@ -141,6 +141,19 @@ export class MainScene extends Phaser.Scene {
       }
     })
 
+    // Handle ability state requests from UI
+    EventBus.on('request-ability-state' as any, () => {
+      const shieldCharges = UpgradeEffectSystem.getEffectValue('shield')
+      const hasDash = UpgradeEffectSystem.hasAbility('dash')
+      const dashCooldownProgress = this.player.getDashCooldownProgress()
+
+      EventBus.emit('ability-state-update' as any, {
+        shieldCharges,
+        hasDash,
+        dashCooldownProgress
+      })
+    })
+
     // Start with initial upgrade phase
     this.time.delayedCall(500, () => {
       // Give player starting points for initial upgrades
