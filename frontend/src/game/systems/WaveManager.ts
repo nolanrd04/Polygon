@@ -66,28 +66,36 @@ export class WaveManager {
     const spawnCount = 30
     if (this.currentWave == 1 || this.currentWave == 3)
     {
-      return spawnCount
+      return 30
     }
     else if (this.currentWave == 2)
     {
-      return spawnCount + 5
+      return 35
     }
     else if (this.currentWave == 4 || this.currentWave == 5)
     {
-      return spawnCount + 10
+      return 40
     }
     else if (this.currentWave == 6)
     {
-      return spawnCount + 20
+      return 60
     }
     else if (this.currentWave == 7)
     {
-      return spawnCount + 15
+      return 45
     }
+    else if (this.currentWave == 8)
+    {
+      return 50
+    }
+    else if (this.currentWave == 9 || this.currentWave == 10)
+    {
+      return 60
+    }  
 
     else 
     {
-      return Math.floor(45 + this.currentWave * 2 + Math.pow(this.currentWave, 1.2))
+      return Math.floor(60 + this.currentWave * 2 + Math.pow(this.currentWave, 1.2))
     }
   }
 
@@ -133,14 +141,22 @@ export class WaveManager {
       weights.push({ type: 'square', weight: 30 })
       weights.push({ type: 'shooter', weight: 10 })
     }
-    // Wave 7-10: Add pentagons, more shooters
-    else if (this.currentWave < 11) {
+    // Wave 7: Add pentagons, more shooters
+    else if (this.currentWave == 7) {
       weights.push({ type: 'triangle', weight: 40 })
       weights.push({ type: 'square', weight: 25 })
       weights.push({ type: 'shooter', weight: 20 })
       weights.push({ type: 'pentagon', weight: 15 })
     }
-    // Wave 11+: Full variety with hexagons
+    // Wave 8-10: Introduce diamonds
+    else if (this.currentWave < 10) {
+      weights.push({ type: 'triangle', weight: 30 })
+      weights.push({ type: 'square', weight: 20 })
+      weights.push({ type: 'shooter', weight: 20 })
+      weights.push({ type: 'pentagon', weight: 15 })
+      weights.push({ type: 'diamond', weight: 15 })
+    }
+    // Wave 10+: Full variety with hexagons
     else {
       weights.push({ type: 'triangle', weight: 25 })
       weights.push({ type: 'square', weight: 20 })

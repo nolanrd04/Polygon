@@ -60,6 +60,7 @@ export abstract class Enemy {
   private _id: number = 0
   isBoss: boolean = false
   private knockbackEndTime: number = 0 // When knockback effect expires
+  lastHitPlayerTime: number = 0 // When this enemy last hit the player (for per-enemy damage cooldown)
 
   // ============ LIFECYCLE HOOKS (override these) ============
 

@@ -134,7 +134,7 @@ export class MapManager {
     }
 
     graphics.fillStyle(obstacle.color, 1)
-    graphics.lineStyle(2, 0x555566, 0.5)
+    graphics.lineStyle(2, 0x555566, 1)
 
     graphics.beginPath()
     graphics.moveTo(vertices[0].x, vertices[0].y)

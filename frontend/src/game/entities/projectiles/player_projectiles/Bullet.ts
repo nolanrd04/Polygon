@@ -228,7 +228,7 @@ export class ExplosiveBullet extends Projectile {
   DoExplosionDamage(): void {
     // Apply damage modifiers to get the actual damage value
     const modifiedDamage = UpgradeModifierSystem.applyModifiers('bullet', 'damage', this.damage)
-    const explosionDamage = modifiedDamage * 0.5
+    const explosionDamage = modifiedDamage
 
     // Create explosion visual
     const explosion = this.scene.add.graphics()

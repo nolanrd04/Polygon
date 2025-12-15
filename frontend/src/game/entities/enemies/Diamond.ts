@@ -113,7 +113,7 @@ export class Diamond extends Enemy {
 
     // Draw main diamond (fully opaque)
     this.graphics.fillStyle(this.color, 1)
-    this.graphics.lineStyle(2, 0xffffff, 0.5)
+    this.graphics.lineStyle(2, 0xffffff, 1)
 
     this.graphics.beginPath()
     this.graphics.moveTo(diamondVertices[0].x, diamondVertices[0].y)

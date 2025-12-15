@@ -132,14 +132,14 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
       </div>
 
       {/* Upgrade List */}
-      <div key={refreshKey} className="flex-1 overflow-y-auto p-2 space-y-1">
+      <div className="flex-1 overflow-y-auto p-2 space-y-1">
         {allUpgrades[selectedCategory].map((upgrade) => {
           const applied = UpgradeSystem.getAppliedUpgrades().some(u => u.id === upgrade.id)
           const stackCount = UpgradeSystem.getStackCount(upgrade.id)
 
           return (
             <button
-              key={upgrade.id}
+              key={`${upgrade.id}-${refreshKey}`}
               onClick={() => handleApplyUpgrade(upgrade as UpgradeDefinition)}
               className={`w-full text-left p-2 rounded text-xs ${
                 applied

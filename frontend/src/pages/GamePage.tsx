@@ -7,6 +7,7 @@ import GameHUD from '../components/GameHUD'
 import PauseMenu from '../components/PauseMenu'
 import DevTools from '../components/DevTools'
 import { EventBus } from '../game/core/EventBus'
+import { GameManager } from '../game/core/GameManager'
 
 export default function GamePage() {
   const gameRef = useRef<Game | null>(null)
@@ -88,7 +89,7 @@ export default function GamePage() {
 
       {isPaused && (
         <PauseMenu
-          onResume={() => EventBus.emit('game-resume')}
+          onResume={() => GameManager.resume()}
           onQuit={() => window.location.href = '/'}
         />
       )}

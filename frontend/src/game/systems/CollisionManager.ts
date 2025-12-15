@@ -10,8 +10,8 @@ export class CollisionManager {
   private player: Player
   private enemyManager: EnemyManager
   private obstacles: Phaser.GameObjects.Group | null = null
-  private lastPlayerDamageTime: number = 0
-  private playerDamageCooldown: number = 500 // milliseconds
+  private playerDamageCooldown: number = 500 // milliseconds - per-enemy cooldown for melee hits
+  private lastProjectileDamageTime: number = 0 // Global cooldown for enemy projectile hits
 
   constructor(
     scene: Phaser.Scene,
@@ -161,14 +161,14 @@ export class CollisionManager {
 
     if (!projectile || projectile.isDestroyed) return
 
-    // Check damage cooldown
+    // Check damage cooldown (global for projectiles)
     const now = this.scene.time.now
-    if (now - this.lastPlayerDamageTime < this.playerDamageCooldown) return
+    if (now - this.lastProjectileDamageTime < this.playerDamageCooldown) return
 
     // Damage player
     console.log(`Enemy projectile hitting player with damage: ${projectile.damage}`)
     this.player.takeDamage(Math.ceil(projectile.damage))
-    this.lastPlayerDamageTime = now
+    this.lastProjectileDamageTime = now
 
     // Destroy the projectile
     projectile._destroy()
@@ -197,14 +197,14 @@ export class CollisionManager {
 
     if (!enemy || enemy.isDestroyed) return
 
-    // Check damage cooldown
+    // Check per-enemy damage cooldown
     const now = this.scene.time.now
-    if (now - this.lastPlayerDamageTime < this.playerDamageCooldown) return
+    if (now - enemy.lastHitPlayerTime < this.playerDamageCooldown) return
 
     // Damage player (round up to nearest whole number)
     const damageAmount = Math.ceil(enemy.damage)
     this.player.takeDamage(damageAmount)
-    this.lastPlayerDamageTime = now
+    enemy.lastHitPlayerTime = now
 
     // Handle thorns - damage the enemy that hit the player
     if (UpgradeEffectSystem.hasEffect('thorns')) {
