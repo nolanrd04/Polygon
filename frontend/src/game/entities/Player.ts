@@ -128,8 +128,8 @@ export class Player extends Phaser.GameObjects.Container {
     this.body.setOffset(-hitboxRadius, -hitboxRadius)
     this.body.setCollideWorldBounds(true)
 
-    // Render player above everything else
-    this.setDepth(1000)
+    // Render player above enemies and projectiles
+    this.setDepth(100)
 
     this.Draw()
   }
@@ -161,7 +161,7 @@ export class Player extends Phaser.GameObjects.Container {
 
     // Main polygon body
     this.graphics.fillStyle(COLORS.player, 1)
-    this.graphics.lineStyle(3, COLORS.playerHead, 1)
+    this.graphics.lineStyle(3, 0xffffff, 1)
 
     this.graphics.beginPath()
     this.graphics.moveTo(vertices[0].x, vertices[0].y)
@@ -173,7 +173,7 @@ export class Player extends Phaser.GameObjects.Container {
     this.graphics.strokePath()
 
     // "Head" indicator (front vertex)
-    this.graphics.fillStyle(COLORS.playerHead, 1)
+    this.graphics.fillStyle(0xffffff, 1)
     this.graphics.fillCircle(vertices[0].x, vertices[0].y, 6)
   }
 
