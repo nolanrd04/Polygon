@@ -231,7 +231,7 @@ export class ExplosiveBullet extends Projectile {
     // No need for damageMultiplier here as it's already factored in
     const explosionDamage = this.damage
 
-    console.log('Explosive bullet explosion damage:', explosionDamage)
+    // console.log('Explosive bullet explosion damage:', explosionDamage)
 
     // Create explosion visual
     const explosion = this.scene.add.graphics()
