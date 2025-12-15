@@ -19,6 +19,7 @@
       "effect": "shield",
       "value": 1,
       "stackable": true,
+      "maxStacks": 5,
       "cost": 10
     }
   ]
