@@ -24,7 +24,7 @@ export default function WaveComplete({ wave, score, isPrime, onContinue }: WaveC
           <span className="text-2xl text-polygon-warning ml-2">PTS</span>
         </div>
 
-        {wave % 10 === 0 && wave > 0 && (
+        {(wave + 1) % 10 === 0 && (
           <div className="text-polygon-danger text-xl mb-4 animate-pulse">
             WARNING: BOSS INCOMING
           </div>

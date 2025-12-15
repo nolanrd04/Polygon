@@ -101,6 +101,9 @@ export class MainScene extends Phaser.Scene {
     EventBus.on('dev-apply-upgrade', (upgradeId) => {
       this.applyUpgrade(upgradeId, true) // Skip cost check for dev tools
     })
+    EventBus.on('dev-remove-upgrade' as any, (upgradeId: string) => {
+      UpgradeSystem.decrementUpgrade(upgradeId)
+    })
     EventBus.on('toggle-collision-boxes' as any, (show: boolean) => {
       this.showCollisionBoxes = show
     })

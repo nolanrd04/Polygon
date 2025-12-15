@@ -292,6 +292,45 @@ class UpgradeSystemClass {
   }
 
   /**
+   * Subtract/decrement an upgrade (for dev tools).
+   * For stackable upgrades, reduces stack by 1. For non-stackable, removes it.
+   */
+  decrementUpgrade(upgradeId: string): void {
+    const upgrade = this.appliedUpgrades.get(upgradeId)
+    if (!upgrade) return
+
+    const stackCount = this.stackCounts.get(upgradeId) || 0
+
+    if (upgrade.stackable && stackCount > 1) {
+      // Decrement stack count
+      this.stackCounts.set(upgradeId, stackCount - 1)
+
+      // Reduce the effect/modifier by one stack's worth
+      switch (upgrade.type) {
+        case 'stat_modifier':
+          if (upgrade.target && upgrade.stat && upgrade.value !== undefined) {
+            UpgradeModifierSystem.removeModifier(upgrade.target, upgrade.stat)
+            // Re-apply with reduced stacks
+            const newStacks = stackCount - 1
+            for (let i = 0; i < newStacks; i++) {
+              UpgradeModifierSystem.addModifier(upgrade.target, upgrade.stat, upgrade.value, upgrade.isMultiplier || false)
+            }
+          }
+          break
+
+        case 'effect':
+          if (upgrade.effect && upgrade.value !== undefined) {
+            UpgradeEffectSystem.addEffect(upgrade.effect, -upgrade.value)
+          }
+          break
+      }
+    } else {
+      // Remove completely (either non-stackable or last stack)
+      this.removeUpgrade(upgradeId)
+    }
+  }
+
+  /**
    * Get the active variant class for a target.
    * Returns null if no variant is active (use default class).
    */

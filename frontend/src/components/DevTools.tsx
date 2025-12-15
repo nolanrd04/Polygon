@@ -44,6 +44,15 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
     setTimeout(() => setRefreshKey(prev => prev + 1), 100)
   }
 
+  const handleRemoveUpgrade = (upgrade: UpgradeDefinition, e: React.MouseEvent) => {
+    e.preventDefault() // Prevent context menu
+    EventBus.emit('dev-remove-upgrade' as any, upgrade.id)
+    console.log('❌ Removed:', upgrade.name)
+
+    // Force re-render to show updated stack count
+    setTimeout(() => setRefreshKey(prev => prev + 1), 100)
+  }
+
   const handleReset = () => {
     UpgradeSystem.reset()
     console.log('🔄 Reset all upgrades')
@@ -174,6 +183,7 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
               <button
                 key={`${upgrade.id}-${refreshKey}`}
                 onClick={() => handleApplyUpgrade(upgrade as UpgradeDefinition)}
+                onContextMenu={(e) => handleRemoveUpgrade(upgrade as UpgradeDefinition, e)}
                 className={`w-full text-left p-2 rounded text-xs ${
                   applied
                     ? 'bg-green-900 border border-green-500'
