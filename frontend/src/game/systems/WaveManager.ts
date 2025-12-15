@@ -63,7 +63,7 @@ export class WaveManager {
   }
 
   private calculateEnemyCount(): number {
-    const spawnCount = 30
+    // const spawnCount = 30
     if (this.currentWave == 1 || this.currentWave == 3)
     {
       return 30
