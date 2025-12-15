@@ -133,9 +133,11 @@ export class MainScene extends Phaser.Scene {
     // Handle explosion damage
     this.events.on('explosion-damage', (data: { x: number; y: number; radius: number; damage: number }) => {
       const enemies = this.enemyManager.getEnemies()
+      // console.log(`Explosion at (${Math.round(data.x)}, ${Math.round(data.y)}) radius=${data.radius} damage=${data.damage}, enemies in range:`)
       for (const enemy of enemies) {
         const dist = Phaser.Math.Distance.Between(data.x, data.y, enemy.x, enemy.y)
         if (dist <= data.radius) {
+          // console.log(`  - Enemy ${enemy.id} at distance ${Math.round(dist)}, dealing ${data.damage} damage`)
           enemy.takeDamage(data.damage)
         }
       }

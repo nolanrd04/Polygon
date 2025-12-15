@@ -3,7 +3,6 @@ import { Enemy } from './Enemy'
 export class Diamond extends Enemy {
     private baseSpeed: number = 100
     private maxDashSpeed: number = 500
-    private cycleFrameStart: number = 0
     private waitFrames: number = 240 // ~4 seconds at 60fps
     private dashFrames: number = 60 // ~1 second at 60fps
     private recoverFrames: number = 60 // ~1 second at 60fps

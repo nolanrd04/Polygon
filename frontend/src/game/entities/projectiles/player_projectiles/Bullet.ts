@@ -196,6 +196,7 @@ export class ExplosiveBullet extends Projectile {
   }
 
   OnObstacleCollide(): void {
+    this.DoExplosionDamage()
     if (UpgradeEffectSystem.hasEffect('ricochet') && !this.canCutTiles) {
       this.currentPierceCount++
       
@@ -204,7 +205,7 @@ export class ExplosiveBullet extends Projectile {
       this.velocityX = -this.velocityX
       this.velocityY = -this.velocityY
       
-      this.DoExplosionDamage()
+      
       
       // Stop if we've bounced too many times
       if (this.currentPierceCount >= this.pierce) {
@@ -214,25 +215,27 @@ export class ExplosiveBullet extends Projectile {
   }
 
   OnHitNPC(_enemy: any): boolean {
-    // Trigger explosion on hit - returns false to prevent normal collision damage
-    // (explosion damage is handled separately)
-    this.OnKill()
+    // Explode on every hit (important for pierce - should explode each time it hits)
+    this.DoExplosionDamage()
     return false // Don't apply normal bullet damage since explosion handles it
   }
 
   OnKill(): void {
-    this.DoExplosionDamage()
+    // Don't explode on kill - we already exploded on hit
+    // This prevents double explosion when projectile is finally destroyed
   }
 
   // class specific explosion damage logic
   DoExplosionDamage(): void {
-    // Apply damage modifiers to get the actual damage value
-    const modifiedDamage = UpgradeModifierSystem.applyModifiers('bullet', 'damage', this.damage)
-    const explosionDamage = modifiedDamage
+    // Use this.damage directly - it's already been modified by Player.applyUpgradeModifiers()
+    // No need for damageMultiplier here as it's already factored in
+    const explosionDamage = this.damage
+
+    console.log('Explosive bullet explosion damage:', explosionDamage)
 
     // Create explosion visual
     const explosion = this.scene.add.graphics()
-    explosion.fillStyle(this.color, 0.6)
+    explosion.fillStyle(this.color, 0.3)
     explosion.fillCircle(this.positionX, this.positionY, this.explosionRadius)
 
     // Fade out

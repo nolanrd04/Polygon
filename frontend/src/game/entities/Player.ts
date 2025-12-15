@@ -128,6 +128,9 @@ export class Player extends Phaser.GameObjects.Container {
     this.body.setOffset(-hitboxRadius, -hitboxRadius)
     this.body.setCollideWorldBounds(true)
 
+    // Render player above everything else
+    this.setDepth(1000)
+
     this.Draw()
   }
 

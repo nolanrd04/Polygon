@@ -103,16 +103,19 @@ export class CollisionManager {
     // Check if projectile wants to handle damage (e.g., ExplosiveBullet returns false to handle via explosion)
     const shouldApplyCollisionDamage = projectile.OnHitNPC(enemy)
 
-    // Apply damage modifiers and round up to nearest whole number
-    const baseDamage = projectile.damage
-    const modifiedDamage = UpgradeModifierSystem.applyModifiers('bullet', 'damage', baseDamage)
-    const multipliedDamage = modifiedDamage * projectile.damageMultiplier
-    const finalDamage = Math.ceil(multipliedDamage)
-
     // Deal damage if projectile allows it
     let killed = false
     if (shouldApplyCollisionDamage) {
+      // Apply damage modifiers and round up to nearest whole number
+      const baseDamage = projectile.damage
+      const modifiedDamage = UpgradeModifierSystem.applyModifiers('bullet', 'damage', baseDamage)
+      const multipliedDamage = modifiedDamage * projectile.damageMultiplier
+      const finalDamage = Math.ceil(multipliedDamage)
+
+      console.log(`Collision damage: base=${baseDamage}, modified=${modifiedDamage}, final=${finalDamage}`)
       killed = enemy.takeDamage(finalDamage)
+    } else {
+      console.log('Collision damage skipped (projectile OnHitNPC returned false)')
     }
 
     if (killed) {
