@@ -17,7 +17,7 @@ export class Diamond extends Enemy {
     this.radius = 25
     this.color = 0xfcf003
     this.scoreChance = .45
-    this.speedCap = 1.5  // Low cap (somewhat slow)
+    this.speedCap = 2.5
     this.doOldPositionTracking = true
     this.oldTrackingCounter = 3
     this.oldTrackingInterval = 100

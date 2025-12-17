@@ -230,12 +230,13 @@ export class WaveManager {
     }
     // Wave +: Full variety with hexagons
     else {
-      weights.push({ type: 'triangle', weight: 20 })
-      weights.push({ type: 'square', weight: 15 })
+      weights.push({ type: 'triangle', weight: 5 })
+      weights.push({ type: 'square', weight: 10 })
       weights.push({ type: 'shooter', weight: 20 })
       weights.push({ type: 'pentagon', weight: 15 })
       weights.push({ type: 'hexagon', weight: 15 })
-      weights.push({ type: 'diamond', weight: 15 })
+      weights.push({ type: 'diamond', weight: 20 })
+      weights.push({type: 'octogon', weight: 15})
     }
 
     return weights
