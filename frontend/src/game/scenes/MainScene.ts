@@ -104,6 +104,9 @@ export class MainScene extends Phaser.Scene {
     EventBus.on('dev-remove-upgrade' as any, (upgradeId: string) => {
       UpgradeSystem.decrementUpgrade(upgradeId)
     })
+    EventBus.on('evolution-milestone', () => {
+      this.applyUpgrade('polygon_upgrade', true) // Apply Evolution upgrade for free
+    })
     EventBus.on('toggle-collision-boxes' as any, (show: boolean) => {
       this.showCollisionBoxes = show
     })

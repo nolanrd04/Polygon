@@ -25,6 +25,7 @@ export interface GameEvents {
   'enemy-shoot': { x: number; y: number; targetX: number; targetY: number; damage: number; speed: number; color: number }
   'thorns-reflect': { damage: number }
   'dev-apply-upgrade': string  // Dev-only: apply upgrade without cost
+  'evolution-milestone': number  // Emitted every 6 waves with the current wave number
 }
 
 type EventCallback<T = void> = T extends void ? () => void : (data: T) => void

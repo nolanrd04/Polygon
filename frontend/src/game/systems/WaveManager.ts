@@ -2,6 +2,7 @@ import Phaser from 'phaser'
 import { EnemyManager } from './EnemyManager'
 import { GameManager } from '../core/GameManager'
 import { EventBus } from '../core/EventBus'
+import { UpgradeModifierSystem, UpgradeSystem } from './upgrades'
 
 type EnemySpawnWeight = {
   type: string
@@ -32,7 +33,7 @@ export class WaveManager {
     this.enemyManager.scaleEnemyStats(this.currentWave - 1)
 
     // Determine if this is a boss wave
-    if (this.currentWave % 10  === 0) {
+    if (this.currentWave % 10  === 0 && this.currentWave < 31) {
       this.startBossWave()
     } else {
       this.startNormalWave()
@@ -212,6 +213,9 @@ export class WaveManager {
     this.scene.events.emit('clear-projectiles')
 
     GameManager.completeWave()
+    if (this.currentWave % 6 === 0 && this.currentWave > 0) {
+      EventBus.emit('evolution-milestone', this.currentWave)
+    }
   }
 
   getCurrentWave(): number {
