@@ -18,6 +18,7 @@ import { Hexagon } from './Hexagon'
 // import { Dasher } from './Dasher'
 import { Shooter } from './Shooter'
 import { Octogon } from './Octogon'
+import { Dodecahedron } from './Dodecahedron'
 // import { Exploder } from './Exploder'
 import type { Enemy } from './Enemy'
 
@@ -39,6 +40,7 @@ export const ENEMY_TYPES: EnemyType[] = [
   // { id: 'dasher', class: Dasher },
   { id: 'shooter', class: Shooter },
   { id: 'octogon', class: Octogon },
+  { id: 'dodecahedron', class: Dodecahedron }
   // { id: 'exploder', class: Exploder },
 ]
 

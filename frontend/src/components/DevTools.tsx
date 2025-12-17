@@ -33,7 +33,8 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
     { id: 'hexagon', name: 'Hexagon', description: 'Enemy with shield' },
     { id: 'diamond', name: 'Diamond', description: 'Dashes at player' },
     { id: 'shooter', name: 'Shooter', description: 'Ranged attacker' },
-    { id: 'octogon', name: 'Octogon', description: 'Tanky enemy that splits on death' }
+    { id: 'octogon', name: 'Octogon', description: 'Tanky enemy that splits on death' },
+    { id: 'dodecahedron', name: 'Dodecahedron', description: 'Boss enemy with high health' }
   ]
 
   const handleApplyUpgrade = (upgrade: UpgradeDefinition) => {

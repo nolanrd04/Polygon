@@ -73,8 +73,13 @@ export class CollisionManager {
         this.processProjectileObstacleCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback
       )
 
-      // Enemies vs Obstacles
-      this.scene.physics.add.collider(this.enemyManager.getGroup(), this.obstacles)
+      // Enemies vs Obstacles (bosses pass through)
+      this.scene.physics.add.collider(
+        this.enemyManager.getGroup(),
+        this.obstacles,
+        undefined,
+        this.processEnemyObstacleCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback
+      )
     }
   }
 
@@ -279,5 +284,25 @@ export class CollisionManager {
     _obstacle: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody
   ): void {
     // Not needed - destruction handled in processCallback
+  }
+
+  /**
+   * ProcessCallback for enemy-obstacle collision.
+   * Bosses pass through obstacles, regular enemies collide normally.
+   */
+  private processEnemyObstacleCollision(
+    enemyContainer: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    _obstacle: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody
+  ): boolean {
+    const enemyContainerObj = enemyContainer as Phaser.GameObjects.Container
+    const enemy = enemyContainerObj.getData('enemyInstance') as Enemy
+
+    if (!enemy) return true
+
+    // Boss enemies pass through obstacles
+    if (enemy.isBoss) return false
+
+    // Regular enemies collide normally
+    return true
   }
 }
