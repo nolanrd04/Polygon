@@ -50,6 +50,7 @@ export default function GamePage() {
     })
 
     EventBus.on('player-stats-update', (stats) => {
+      // console.log(`[GamePage] Stats update received - kills: ${stats.kills}`)
       setPlayerStats(stats)
     })
 

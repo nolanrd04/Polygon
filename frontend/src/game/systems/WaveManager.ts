@@ -92,7 +92,23 @@ export class WaveManager {
     else if (this.currentWave == 9 || this.currentWave == 10)
     {
       return 60
-    }  
+    }
+    else if (this.currentWave == 11)
+    {
+      return 70
+    }
+    else if (this.currentWave == 12)  
+    {
+      return 80
+    }
+    else if (this.currentWave == 13 || this.currentWave == 14)
+    {
+      return 100
+    }
+    else if (this.currentWave == 15 || this.currentWave == 16)
+    {
+      return 90
+    }
 
     else 
     {
@@ -150,21 +166,71 @@ export class WaveManager {
       weights.push({ type: 'pentagon', weight: 15 })
     }
     // Wave 8-10: Introduce diamonds
-    else if (this.currentWave < 10) {
+    else if (this.currentWave < 11) {
       weights.push({ type: 'triangle', weight: 30 })
       weights.push({ type: 'square', weight: 20 })
       weights.push({ type: 'shooter', weight: 20 })
       weights.push({ type: 'pentagon', weight: 15 })
       weights.push({ type: 'diamond', weight: 15 })
     }
-    // Wave 10+: Full variety with hexagons
-    else {
+    else if (this.currentWave == 11)
+    {
       weights.push({ type: 'triangle', weight: 25 })
       weights.push({ type: 'square', weight: 20 })
       weights.push({ type: 'shooter', weight: 20 })
       weights.push({ type: 'pentagon', weight: 15 })
-      weights.push({ type: 'hexagon', weight: 10 })
+      weights.push({ type: 'diamond', weight: 15 })
+      weights.push({ type: 'hexagon', weight: 5 })
+    }
+    else if (this.currentWave == 12)
+    {
+      weights.push({ type: 'triangle', weight: 20 })
+      weights.push({ type: 'square', weight: 20 })
+      weights.push({ type: 'shooter', weight: 20 })
+      weights.push({ type: 'pentagon', weight: 15 })
+      weights.push({ type: 'diamond', weight: 20 })
+      weights.push({ type: 'hexagon', weight: 5 })
+    }
+    else if (this.currentWave == 13)
+    {
+      weights.push({ type: 'triangle', weight: 10 })
+      weights.push({ type: 'square', weight: 20 })
+      weights.push({ type: 'shooter', weight: 45 })
+      weights.push({ type: 'pentagon', weight: 15 })
       weights.push({ type: 'diamond', weight: 10 })
+    }
+    else if (this.currentWave == 14)
+    {
+      weights.push({ type: 'triangle', weight: 10 })
+      weights.push({ type: 'square', weight: 10 })
+      weights.push({ type: 'shooter', weight: 20 })
+      weights.push({ type: 'pentagon', weight: 15 })
+      weights.push({ type: 'diamond', weight: 45 })
+    }
+    else if (this.currentWave == 15)
+    {
+      weights.push({ type: 'square', weight: 30 })
+      weights.push({ type: 'shooter', weight: 25 })
+      weights.push({ type: 'pentagon', weight: 15 })
+      weights.push({ type: 'diamond', weight: 25 })
+      weights.push({ type: 'hexagon', weight: 5 })
+    }
+    else if (this.currentWave == 16)
+    {
+      weights.push({ type: 'square', weight: 30 })
+      weights.push({ type: 'shooter', weight: 25 })
+      weights.push({ type: 'pentagon', weight: 15 })
+      weights.push({ type: 'diamond', weight: 20 })
+      weights.push({ type: 'hexagon', weight: 10 })
+    }
+    // Wave +: Full variety with hexagons
+    else {
+      weights.push({ type: 'triangle', weight: 20 })
+      weights.push({ type: 'square', weight: 15 })
+      weights.push({ type: 'shooter', weight: 20 })
+      weights.push({ type: 'pentagon', weight: 15 })
+      weights.push({ type: 'hexagon', weight: 15 })
+      weights.push({ type: 'diamond', weight: 15 })
     }
 
     return weights

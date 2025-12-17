@@ -259,6 +259,7 @@ class GameManagerClass {
       ...this.state.playerStats,
       kills: this.state.playerStats.kills + 1
     }
+    // console.log(`[GameManager] Kill count: ${this.state.playerStats.kills}`)
     EventBus.emit('player-stats-update', this.state.playerStats)
   }
 
