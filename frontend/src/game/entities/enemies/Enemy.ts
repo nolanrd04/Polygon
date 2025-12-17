@@ -198,6 +198,11 @@ export abstract class Enemy {
    * Apply knockback to this enemy.
    */
   applyKnockback(velocityX: number, velocityY: number): void {
+    // Skip knockback entirely if immune
+    if (this.knockbackResistance >= 1) {
+      return
+    }
+
     // Apply knockback resistance
     const knockbackMultiplier = 1 - this.knockbackResistance
     this.velocityX = velocityX * knockbackMultiplier

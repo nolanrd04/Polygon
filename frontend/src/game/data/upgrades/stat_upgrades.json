@@ -395,7 +395,6 @@
       "cost": 6,
       "dependentOn": ["explosive_bullets"],
       "dependencyCount": 1
-
     }
   ]
 }

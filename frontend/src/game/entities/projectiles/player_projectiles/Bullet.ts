@@ -18,6 +18,19 @@ export class Bullet extends Projectile {
     this.knockback = 7 // Push enemies back on hit
   }
 
+  Draw(): void {
+      this.graphics.lineStyle(2.5, 0xffffff, 1)
+      this.graphics.strokeCircle(0, 0, this.size + 1)
+
+    // Main bullet circle
+    this.graphics.fillStyle(this.color, 1)
+    this.graphics.fillCircle(0, 0, this.size)
+
+    // Glow effect behind it
+    this.graphics.fillStyle(this.color, this.glowAlpha)
+    this.graphics.fillCircle(0, 0, this.size * this.glowScale * 1.2)
+  }
+
   OnObstacleCollide(): void {
     if (UpgradeEffectSystem.hasEffect('ricochet') && !this.canCutTiles) {
       this.currentPierceCount++

@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { Enemy } from './Enemy'
-import { Bullet } from '../projectiles/player_projectiles/Bullet'
+import { EnemyBullet } from '../projectiles/enemy_projectiles/EnemyBullet'
 
 export class Shooter extends Enemy {
   private lastFireTime: number = 0
@@ -49,11 +49,11 @@ export class Shooter extends Enemy {
         this.lastFireTime = now
 
         // Create and spawn projectile using centralized method
-        const projectile = new Bullet()
+        const projectile = new EnemyBullet()
         projectile.SetDefaults()
         // Scale damage based on enemy's damage stat
         projectile.damage = this.damage
-        console.log(`Shooter spawning projectile with damage: ${projectile.damage} (enemy damage: ${this.damage})`)
+        // console.log(`Shooter spawning projectile with damage: ${projectile.damage} (enemy damage: ${this.damage})`)
 
         const scene = this.scene as any
         scene.spawnProjectile(projectile, this.x, this.y, _playerX, _playerY, 'enemy', this.id)

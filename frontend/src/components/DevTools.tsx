@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { type UpgradeDefinition, UpgradeSystem } from '../game/systems/upgrades'
 import { EventBus } from '../game/core/EventBus'
+import { ATTACK_INFO, type AttackType } from '../game/data/attackTypes'
 import statUpgrades from '../game/data/upgrades/stat_upgrades.json'
 import effectUpgrades from '../game/data/upgrades/effect_upgrades.json'
 import variantUpgrades from '../game/data/upgrades/variant_upgrades.json'
@@ -15,6 +16,7 @@ interface DevToolsProps {
 export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }: DevToolsProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<'stat' | 'effect' | 'variant' | 'visual' | 'ability' | 'enemies'>('stat')
+  const [selectedAttack, setSelectedAttack] = useState<AttackType>('bullet')
   const [waveInput, setWaveInput] = useState('1')
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -156,6 +158,25 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
         ))}
       </div>
 
+      {/* Attack Type Filter */}
+      {selectedCategory !== 'enemies' && (
+        <div className="flex border-b border-gray-700 flex-wrap gap-1 p-2">
+          {(Object.keys(ATTACK_INFO) as AttackType[]).map(attack => (
+            <button
+              key={attack}
+              onClick={() => setSelectedAttack(attack)}
+              className={`py-1 px-2 text-[10px] font-mono uppercase rounded ${
+                selectedAttack === attack
+                  ? 'bg-cyan-600 text-white'
+                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+              }`}
+            >
+              {attack}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
         {selectedCategory === 'enemies' ? (
@@ -176,36 +197,44 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
             </button>
           ))
         ) : (
-          // Upgrade List
-          allUpgrades[selectedCategory].map((upgrade) => {
-            const applied = UpgradeSystem.getAppliedUpgrades().some(u => u.id === upgrade.id)
-            const stackCount = UpgradeSystem.getStackCount(upgrade.id)
+          // Upgrade List with Attack Type Filtering
+          allUpgrades[selectedCategory]
+            .filter(upgrade => {
+              // Filter by attack type
+              if ((upgrade as any).attackType && (upgrade as any).attackType !== selectedAttack) {
+                return false
+              }
+              return true
+            })
+            .map((upgrade) => {
+              const applied = UpgradeSystem.getAppliedUpgrades().some(u => u.id === upgrade.id)
+              const stackCount = UpgradeSystem.getStackCount(upgrade.id)
 
-            return (
-              <button
-                key={`${upgrade.id}-${refreshKey}`}
-                onClick={() => handleApplyUpgrade(upgrade as UpgradeDefinition)}
-                onContextMenu={(e) => handleRemoveUpgrade(upgrade as UpgradeDefinition, e)}
-                className={`w-full text-left p-2 rounded text-xs ${
-                  applied
-                    ? 'bg-green-900 border border-green-500'
-                    : 'bg-gray-800 hover:bg-gray-700 border border-gray-600'
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="font-bold text-white">{upgrade.name}</div>
-                    <div className="text-gray-400 text-xs">{upgrade.description}</div>
-                  </div>
-                  {stackCount > 0 && (
-                    <div className="bg-green-600 text-white px-2 py-0.5 rounded text-xs font-bold">
-                      x{stackCount}
+              return (
+                <button
+                  key={`${upgrade.id}-${refreshKey}`}
+                  onClick={() => handleApplyUpgrade(upgrade as UpgradeDefinition)}
+                  onContextMenu={(e) => handleRemoveUpgrade(upgrade as UpgradeDefinition, e)}
+                  className={`w-full text-left p-2 rounded text-xs ${
+                    applied
+                      ? 'bg-green-900 border border-green-500'
+                      : 'bg-gray-800 hover:bg-gray-700 border border-gray-600'
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-bold text-white">{upgrade.name}</div>
+                      <div className="text-gray-400 text-xs">{upgrade.description}</div>
                     </div>
-                  )}
-                </div>
-              </button>
-            )
-          })
+                    {stackCount > 0 && (
+                      <div className="bg-green-600 text-white px-2 py-0.5 rounded text-xs font-bold">
+                        x{stackCount}
+                      </div>
+                    )}
+                  </div>
+                </button>
+              )
+            })
         )}
       </div>
     </div>
