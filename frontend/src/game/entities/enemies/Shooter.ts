@@ -13,7 +13,7 @@ export class Shooter extends Enemy {
     this.sides = 3
     this.radius = 15
     this.color = 0x4287f5
-    this.scoreChance = 0.6
+    this.scoreChance = 0.5
     this.speedCap = 1.5  // Capped at 1.5x (already fast)
   }
 

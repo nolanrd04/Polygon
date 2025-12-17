@@ -19,7 +19,7 @@ export class Hexagon extends Enemy {
     this.sides = 6
     this.radius = 30
     this.color = 0xff00ff
-    this.scoreChance = .6
+    this.scoreChance = .65
     this.speedCap = 1.3  // Very low cap (tank, shouldn't be fast)
   }
 
