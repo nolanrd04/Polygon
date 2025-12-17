@@ -165,6 +165,11 @@ export class HomingBullet extends Projectile {
   }
 
   Draw(): void {
+    // Outline triangle
+    this.graphics.lineStyle(1.5, 0xffffff, .7)
+    this.graphics.strokeCircle(0, 0, this.size + 1.1)
+    //this.graphics.strokeTriangle(this.size, 0, -this.size, -this.size * 0.6, -this.size, this.size * 0.6)
+
     // Triangle shape for homing bullet
     this.graphics.fillStyle(this.color, 1)
     this.graphics.beginPath()
@@ -202,10 +207,13 @@ export class ExplosiveBullet extends Projectile {
   Draw(): void {
     // Pulsing effect
     this.graphics.fillStyle(this.color, 1)
-    this.graphics.fillCircle(0, 0, this.size)
+    this.graphics.fillCircle(0, 0, this.size * 1.1)
+
+    this.graphics.lineStyle(1.5, 0xffffff, .7)
+    this.graphics.strokeCircle(0, 0, this.size * 0.75)
 
     this.graphics.fillStyle(0xffff00, 0.5)
-    this.graphics.fillCircle(0, 0, this.size * 0.5)
+    this.graphics.fillCircle(0, 0, this.size * 0.7)
   }
 
   OnObstacleCollide(): void {
