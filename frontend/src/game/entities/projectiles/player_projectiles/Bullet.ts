@@ -85,7 +85,7 @@ export class HomingBullet extends Projectile {
 
   SetDefaults(): void {
     this.damage = 10
-    this.damageMultiplier = 0.75
+    this.damageMultiplier = 1
     this.speed = 300 // Increased from 250 for less circling
     this.size = 6
     this.pierce = 0
