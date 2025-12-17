@@ -14,14 +14,4 @@ export class Pentagon extends Enemy {
     this.scoreChance = 0.5
     this.speedCap = 2.5  // Higher cap (dangerous)
   }
-
-  OnDeath(): void {
-    // Spawn 2 smaller triangles on death
-    this.scene.events.emit('enemy-split', {
-      x: this.x,
-      y: this.y,
-      spawnType: 'triangle',
-      count: 2
-    })
-  }
 }

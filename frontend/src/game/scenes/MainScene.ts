@@ -173,6 +173,15 @@ export class MainScene extends Phaser.Scene {
       this.enemyManager.spawnEnemy(enemyType, spawnX, spawnY)
     })
 
+    // Handle enemy splitting on death
+    EventBus.on('enemy-split' as any, (data: { x: number; y: number; spawnType?: string; count?: number }) => {
+      const spawnType = data.spawnType || 'triangle'
+      const count = data.count || 2
+      for (let i = 0; i < count; i++) {
+        this.enemyManager.spawnEnemy(spawnType, data.x, data.y)
+      }
+    })
+
     // Start with initial upgrade phase
     this.time.delayedCall(500, () => {
       // Give player starting points for initial upgrades

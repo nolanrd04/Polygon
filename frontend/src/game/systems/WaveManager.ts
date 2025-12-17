@@ -2,7 +2,6 @@ import Phaser from 'phaser'
 import { EnemyManager } from './EnemyManager'
 import { GameManager } from '../core/GameManager'
 import { EventBus } from '../core/EventBus'
-import { UpgradeModifierSystem, UpgradeSystem } from './upgrades'
 
 type EnemySpawnWeight = {
   type: string
@@ -105,7 +104,11 @@ export class WaveManager {
     {
       return 100
     }
-    else if (this.currentWave == 15 || this.currentWave == 16)
+    else if (this.currentWave == 15)
+    {
+      return 85
+    }
+    else if (this.currentWave == 16)
     {
       return 90
     }
@@ -210,18 +213,20 @@ export class WaveManager {
     else if (this.currentWave == 15)
     {
       weights.push({ type: 'square', weight: 30 })
-      weights.push({ type: 'shooter', weight: 25 })
+      weights.push({ type: 'shooter', weight: 20 })
       weights.push({ type: 'pentagon', weight: 15 })
-      weights.push({ type: 'diamond', weight: 25 })
+      weights.push({ type: 'diamond', weight: 20 })
       weights.push({ type: 'hexagon', weight: 5 })
+      weights.push({type: 'octogon', weight: 10})
     }
     else if (this.currentWave == 16)
     {
-      weights.push({ type: 'square', weight: 30 })
-      weights.push({ type: 'shooter', weight: 25 })
+      weights.push({ type: 'square', weight: 25 })
+      weights.push({ type: 'shooter', weight: 20 })
       weights.push({ type: 'pentagon', weight: 15 })
-      weights.push({ type: 'diamond', weight: 20 })
+      weights.push({ type: 'diamond', weight: 15 })
       weights.push({ type: 'hexagon', weight: 10 })
+      weights.push({type: 'octogon', weight: 15})
     }
     // Wave +: Full variety with hexagons
     else {
