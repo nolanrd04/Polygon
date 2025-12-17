@@ -1,0 +1,236 @@
+import axios from 'axios'
+import { GameManager } from '../core/GameManager'
+import { UpgradeSystem } from '../systems/upgrades'
+
+export interface FrameSample {
+  frame: number
+  timestamp: number
+  player: {
+    x: number
+    y: number
+    vx: number
+    vy: number
+    health: number
+  }
+}
+
+export interface EnemyDeath {
+  type: string
+  x: number
+  y: number
+  frame: number
+}
+
+export class WaveValidationService {
+  private waveToken: string | null = null
+  private waveStartTime: number = 0
+  private frameCount: number = 0
+  private frameSamples: FrameSample[] = []
+  private enemyDeaths: EnemyDeath[] = []
+  private totalKills: number = 0
+  private totalDamage: number = 0
+  private offeredUpgrades: any[] = []
+
+  /**
+   * Start a new wave - get token and upgrades from backend
+   */
+  async startWave(waveNumber: number, seed: number): Promise<any[] | null> {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        console.error('No auth token found')
+        return null
+      }
+
+      const response = await axios.post('/api/waves/start', {
+        wave_number: waveNumber,
+        seed: seed
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      console.log('Full response.data from backend:', response.data)
+
+      this.waveToken = response.data.token
+      this.offeredUpgrades = response.data.offered_upgrades
+      this.waveStartTime = Date.now()
+      this.frameCount = 0
+      this.frameSamples = []
+      this.enemyDeaths = []
+      this.totalKills = 0
+      this.totalDamage = 0
+
+      console.log(`Wave ${waveNumber} started. Token expires in ${response.data.expires_in}s`)
+      console.log('Stored offeredUpgrades:', this.offeredUpgrades)
+      console.log('Type of first upgrade:', typeof this.offeredUpgrades[0])
+
+      return this.offeredUpgrades
+    } catch (error) {
+      console.error('Failed to start wave:', error)
+      return null
+    }
+  }
+
+  /**
+   * Sample current frame data (call every 30-60 frames)
+   */
+  sampleFrame(playerX: number, playerY: number, playerVX: number, playerVY: number, playerHealth: number) {
+    const sample: FrameSample = {
+      frame: this.frameCount,
+      timestamp: Date.now() - this.waveStartTime,
+      player: {
+        x: Math.round(playerX),
+        y: Math.round(playerY),
+        vx: Math.round(playerVX * 10) / 10,
+        vy: Math.round(playerVY * 10) / 10,
+        health: playerHealth
+      }
+    }
+
+    this.frameSamples.push(sample)
+
+    // Limit frame samples to prevent excessive data
+    if (this.frameSamples.length > 200) {
+      // Keep every other sample
+      this.frameSamples = this.frameSamples.filter((_, i) => i % 2 === 0)
+    }
+  }
+
+  /**
+   * Record an enemy death
+   */
+  recordEnemyDeath(enemyType: string, x: number, y: number) {
+    this.enemyDeaths.push({
+      type: enemyType.toLowerCase(),
+      x: Math.round(x),
+      y: Math.round(y),
+      frame: this.frameCount
+    })
+    this.totalKills++
+  }
+
+  /**
+   * Record damage dealt
+   */
+  recordDamage(damage: number) {
+    this.totalDamage += Math.round(damage)
+  }
+
+  /**
+   * Increment frame counter
+   */
+  incrementFrame() {
+    this.frameCount++
+  }
+
+  /**
+   * Complete wave and submit to backend for validation
+   */
+  async completeWave(waveNumber: number): Promise<{ success: boolean; errors?: string[] }> {
+    if (!this.waveToken) {
+      console.error('No wave token - wave was not started properly')
+      return { success: false, errors: ['No wave token'] }
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        console.error('No auth token found')
+        return { success: false, errors: ['Not authenticated'] }
+      }
+
+      // Get currently applied upgrades
+      const appliedUpgrades = UpgradeSystem.getAppliedUpgrades().map(u => u.id)
+
+      const response = await axios.post('/api/waves/complete', {
+        token: this.waveToken,
+        wave: waveNumber,
+        kills: this.totalKills,
+        total_damage: this.totalDamage,
+        frame_samples: this.frameSamples,
+        enemy_deaths: this.enemyDeaths,
+        upgrades_used: appliedUpgrades
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.data.success) {
+        console.log(`Wave ${waveNumber} completed and validated`)
+        return { success: true }
+      } else {
+        console.warn('Wave validation failed:', response.data.errors)
+        return { success: false, errors: response.data.errors }
+      }
+    } catch (error: any) {
+      console.error('Failed to complete wave:', error)
+      return {
+        success: false,
+        errors: [error.response?.data?.detail || 'Network error']
+      }
+    } finally {
+      // Reset for next wave
+      this.waveToken = null
+    }
+  }
+
+  /**
+   * Select an upgrade (validates with backend)
+   */
+  async selectUpgrade(upgradeId: string, waveNumber: number): Promise<boolean> {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        console.error('No auth token found')
+        return false
+      }
+
+      const response = await axios.post('/api/waves/select-upgrade', {
+        upgrade_id: upgradeId,
+        wave: waveNumber
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.data.success) {
+        console.log(`Upgrade ${upgradeId} applied and validated`)
+        return true
+      }
+
+      return false
+    } catch (error: any) {
+      console.error('Failed to select upgrade:', error)
+      return false
+    }
+  }
+
+  /**
+   * Get offered upgrades for this wave
+   */
+  getOfferedUpgrades(): any[] {
+    console.log('WaveValidation.getOfferedUpgrades() called, returning:', this.offeredUpgrades)
+    return this.offeredUpgrades
+  }
+
+  /**
+   * Get current stats for debugging
+   */
+  getStats() {
+    return {
+      frameCount: this.frameCount,
+      frameSamples: this.frameSamples.length,
+      enemyDeaths: this.enemyDeaths.length,
+      totalKills: this.totalKills,
+      totalDamage: this.totalDamage,
+      hasToken: !!this.waveToken
+    }
+  }
+}
+
+// Singleton instance
+export const waveValidation = new WaveValidationService()

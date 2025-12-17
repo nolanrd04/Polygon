@@ -1,84 +1,63 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from pydantic import BaseModel
-from app.core.database import get_db
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from pydantic import BaseModel, Field
+from app.core.database import get_database
 from app.core.security import get_current_user
 from app.models.user import User
-from app.models.game_save import GameSave
+from app.models.game_save import GameSave, GameSaveResponse
+from app.repositories.game_save_repository import GameSaveRepository
 
 router = APIRouter()
 
 
-class PlayerStatsSchema(BaseModel):
-    health: int
-    maxHealth: int
-    speed: int
-    polygonSides: int
-
-
-class AttackStatsSchema(BaseModel):
-    damage: int
-    speed: Optional[int] = None
-    cooldown: int
-    size: Optional[float] = None
-    pierce: Optional[int] = None
-    chains: Optional[int] = None
-    range: Optional[int] = None
-
-
 class GameSaveCreate(BaseModel):
-    slot: int = 1
-    wave: int
-    points: int
-    seed: int
-    player_stats: dict
-    applied_upgrades: List[str]
-    attack_stats: dict
-    unlocked_attacks: List[str]
-
-
-class GameSaveResponse(BaseModel):
-    id: int
-    slot: int
-    wave: int
-    points: int
-    seed: int
-    player_stats: dict
-    applied_upgrades: List[str]
-    attack_stats: dict
-    unlocked_attacks: List[str]
-
-    class Config:
-        from_attributes = True
+    slot: int = Field(default=1, ge=1, le=5)
+    wave: int = Field(..., ge=1)
+    points: int = Field(..., ge=0)
+    seed: int = Field(...)
+    player_stats: Dict[str, Any] = Field(...)
+    applied_upgrades: List[str] = Field(default_factory=list)
+    attack_stats: Dict[str, Any] = Field(...)
+    unlocked_attacks: List[str] = Field(default_factory=list)
 
 
 @router.get("/", response_model=List[GameSaveResponse])
 async def get_all_saves(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    result = await db.execute(
-        select(GameSave).where(GameSave.user_id == current_user.id)
-    )
-    saves = result.scalars().all()
-    return saves
+    """Get all game saves for the current user"""
+    repo = GameSaveRepository(db)
+    saves = await repo.find_by_user_id(current_user.id)
+    return [
+        GameSaveResponse(
+            id=save.id,
+            user_id=save.user_id,
+            slot=save.slot,
+            wave=save.wave,
+            points=save.points,
+            seed=save.seed,
+            player_stats=save.player_stats,
+            applied_upgrades=save.applied_upgrades,
+            attack_stats=save.attack_stats,
+            unlocked_attacks=save.unlocked_attacks,
+            created_at=save.created_at,
+            updated_at=save.updated_at
+        )
+        for save in saves
+    ]
 
 
 @router.get("/{slot}", response_model=GameSaveResponse)
 async def get_save(
     slot: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    result = await db.execute(
-        select(GameSave).where(
-            GameSave.user_id == current_user.id,
-            GameSave.slot == slot
-        )
-    )
-    save = result.scalar_one_or_none()
+    """Get a specific save slot for the current user"""
+    repo = GameSaveRepository(db)
+    save = await repo.find_by_user_and_slot(current_user.id, slot)
 
     if not save:
         raise HTTPException(
@@ -86,36 +65,49 @@ async def get_save(
             detail="Save not found"
         )
 
-    return save
+    return GameSaveResponse(
+        id=save.id,
+        user_id=save.user_id,
+        slot=save.slot,
+        wave=save.wave,
+        points=save.points,
+        seed=save.seed,
+        player_stats=save.player_stats,
+        applied_upgrades=save.applied_upgrades,
+        attack_stats=save.attack_stats,
+        unlocked_attacks=save.unlocked_attacks,
+        created_at=save.created_at,
+        updated_at=save.updated_at
+    )
 
 
 @router.post("/", response_model=GameSaveResponse)
 async def create_or_update_save(
     save_data: GameSaveCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncIOMotorDatabase = Depends(get_database)
 ):
+    """Create or update a game save"""
+    repo = GameSaveRepository(db)
+
     # Check if save exists for this slot
-    result = await db.execute(
-        select(GameSave).where(
-            GameSave.user_id == current_user.id,
-            GameSave.slot == save_data.slot
-        )
-    )
-    existing_save = result.scalar_one_or_none()
+    existing_save = await repo.find_by_user_and_slot(current_user.id, save_data.slot)
 
     if existing_save:
         # Update existing save
-        existing_save.wave = save_data.wave
-        existing_save.points = save_data.points
-        existing_save.seed = save_data.seed
-        existing_save.player_stats = save_data.player_stats
-        existing_save.applied_upgrades = save_data.applied_upgrades
-        existing_save.attack_stats = save_data.attack_stats
-        existing_save.unlocked_attacks = save_data.unlocked_attacks
-        await db.commit()
-        await db.refresh(existing_save)
-        return existing_save
+        updated_save = await repo.update_by_id(
+            existing_save.id,
+            {
+                "wave": save_data.wave,
+                "points": save_data.points,
+                "seed": save_data.seed,
+                "player_stats": save_data.player_stats,
+                "applied_upgrades": save_data.applied_upgrades,
+                "attack_stats": save_data.attack_stats,
+                "unlocked_attacks": save_data.unlocked_attacks
+            }
+        )
+        save = updated_save
     else:
         # Create new save
         new_save = GameSave(
@@ -129,25 +121,33 @@ async def create_or_update_save(
             attack_stats=save_data.attack_stats,
             unlocked_attacks=save_data.unlocked_attacks
         )
-        db.add(new_save)
-        await db.commit()
-        await db.refresh(new_save)
-        return new_save
+        save = await repo.create(new_save)
+
+    return GameSaveResponse(
+        id=save.id,
+        user_id=save.user_id,
+        slot=save.slot,
+        wave=save.wave,
+        points=save.points,
+        seed=save.seed,
+        player_stats=save.player_stats,
+        applied_upgrades=save.applied_upgrades,
+        attack_stats=save.attack_stats,
+        unlocked_attacks=save.unlocked_attacks,
+        created_at=save.created_at,
+        updated_at=save.updated_at
+    )
 
 
 @router.delete("/{slot}")
 async def delete_save(
     slot: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    result = await db.execute(
-        select(GameSave).where(
-            GameSave.user_id == current_user.id,
-            GameSave.slot == slot
-        )
-    )
-    save = result.scalar_one_or_none()
+    """Delete a specific save slot"""
+    repo = GameSaveRepository(db)
+    save = await repo.find_by_user_and_slot(current_user.id, slot)
 
     if not save:
         raise HTTPException(
@@ -155,8 +155,13 @@ async def delete_save(
             detail="Save not found"
         )
 
-    await db.delete(save)
-    await db.commit()
+    deleted = await repo.delete_by_user_and_slot(current_user.id, slot)
+
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete save"
+        )
 
     return {"message": "Save deleted successfully"}
 
@@ -165,7 +170,7 @@ async def delete_save(
 async def autosave(
     save_data: GameSaveCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncIOMotorDatabase = Depends(get_database)
 ):
     """
     Autosave endpoint called after each wave completion.

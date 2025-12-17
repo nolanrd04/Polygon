@@ -4,6 +4,7 @@ import { Enemy } from '../entities/enemies/Enemy'
 import { EnemyManager } from './EnemyManager'
 import { GameManager } from '../core/GameManager'
 import { UpgradeEffectSystem, UpgradeModifierSystem } from './upgrades'
+import { EventBus } from '../core/EventBus'
 
 export class CollisionManager {
   private scene: Phaser.Scene
@@ -110,6 +111,8 @@ export class CollisionManager {
     let killed = false
     if (shouldApplyCollisionDamage) {
       killed = enemy.takeDamage(finalDamage)
+      // Emit damage event for wave validation
+      EventBus.emit('damage-dealt', finalDamage)
     }
 
     if (killed) {

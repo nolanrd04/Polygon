@@ -7,7 +7,7 @@ import abilityUpgrades from '../game/data/upgrades/ability_upgrades.json'
 import { UpgradeSystem } from '../game/systems/upgrades'
 import { GameManager } from '../game/core/GameManager'
 import { EventBus } from '../game/core/EventBus'
-import { RARITY_WEIGHTS } from '../game/core/GameConfig'
+import { waveValidation } from '../game/services/WaveValidation'
 
 interface Upgrade {
   id: string
@@ -55,7 +55,8 @@ export default function UpgradeModal({ onStartWave, playerPoints, selectedAttack
   const [selectedIndices, setSelectedIndices] = useState<number[]>([])  // Track by index, not ID
   const [rerollCost] = useState(1)
 
-  const generateOptions = () => {
+  const loadBackendUpgrades = () => {
+    // Get all available upgrades
     const allUpgrades = [
       ...statUpgrades.upgrades,
       ...effectUpgrades.upgrades,
@@ -64,147 +65,40 @@ export default function UpgradeModal({ onStartWave, playerPoints, selectedAttack
       ...abilityUpgrades.upgrades
     ] as Upgrade[]
 
-    // Get already applied upgrades from UpgradeSystem
-    const appliedUpgrades = UpgradeSystem.getAppliedUpgrades()
+    // Get upgrade IDs from backend (rolled server-side)
+    const offeredUpgradeIds = waveValidation.getOfferedUpgrades()
 
-    // Filter upgrades based on selected attack type and availability
-    const filteredUpgrades = allUpgrades.filter(upgrade => {
-      // Filter by attack type
-      if (upgrade.attackType && upgrade.attackType !== selectedAttack) {
-        return false
-      }
+    console.log('Raw offeredUpgradeIds from backend:', offeredUpgradeIds)
 
-      // Check if non-stackable upgrade is already applied
-      if (!upgrade.stackable) {
-        const alreadyApplied = appliedUpgrades.some((u: any) => u.id === upgrade.id)
-        if (alreadyApplied) {
-          return false
-        }
-      }
-
-      // Check if stackable upgrade has reached max stacks
-      if (upgrade.stackable && upgrade.maxStacks) {
-        const stackCount = UpgradeSystem.getStackCount(upgrade.id)
-        if (stackCount >= upgrade.maxStacks) {
-          return false
-        }
-      }
-
-      // Check if any applied upgrade conflicts with this one
-      if (upgrade.replaces) {
-        for (const replacedId of upgrade.replaces) {
-          const hasConflict = appliedUpgrades.some((u: any) => u.id === replacedId)
-          if (hasConflict) {
-            return false
-          }
-        }
-      }
-
-      // Check if this upgrade is replaced by any already-applied upgrade
-      for (const appliedUpgrade of appliedUpgrades) {
-        const appliedFull = allUpgrades.find(u => u.id === appliedUpgrade.id)
-        if (appliedFull?.replaces?.includes(upgrade.id)) {
-          return false
-        }
-      }
-
-      return true
-    })
-
-    // Group upgrades by rarity
-    const upgradesByRarity = {
-      common: filteredUpgrades.filter(u => u.rarity === 'common'),
-      uncommon: filteredUpgrades.filter(u => u.rarity === 'uncommon'),
-      rare: filteredUpgrades.filter(u => u.rarity === 'rare'),
-      epic: filteredUpgrades.filter(u => u.rarity === 'epic'),
-      legendary: filteredUpgrades.filter(u => u.rarity === 'legendary')
+    if (!offeredUpgradeIds || offeredUpgradeIds.length === 0) {
+      console.warn('No upgrades offered from backend')
+      setOptions([])
+      return
     }
 
-    // Helper function to pick a random rarity based on weights
-    const pickRarity = (): 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' => {
-      const rand = Math.random()
-      let cumulative = 0
-      
-      for (const [rarity, weight] of Object.entries(RARITY_WEIGHTS)) {
-        cumulative += weight
-        if (rand < cumulative) {
-          return rarity as 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary'
-        }
-      }
-      
-      return 'common' // Fallback
+    // Check if backend returned full upgrade objects or just IDs
+    const firstItem = offeredUpgradeIds[0]
+    const isFullObject = typeof firstItem === 'object' && firstItem !== null && 'id' in firstItem
+
+    let offeredUpgrades: Upgrade[]
+    if (isFullObject) {
+      // Backend returned full upgrade objects
+      console.log('Backend returned full upgrade objects')
+      offeredUpgrades = offeredUpgradeIds as Upgrade[]
+    } else {
+      // Backend returned just IDs - map to full upgrade objects
+      console.log('Backend returned upgrade IDs, mapping to full objects')
+      offeredUpgrades = offeredUpgradeIds
+        .map(id => allUpgrades.find(u => u.id === id))
+        .filter(u => u !== undefined) as Upgrade[]
     }
 
-    // Helper function to pick a random upgrade from a rarity tier
-    const pickUpgradeFromRarity = (rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary'): Upgrade | null => {
-      const upgrades = upgradesByRarity[rarity]
-      if (upgrades.length === 0) return null
-      return upgrades[Math.floor(Math.random() * upgrades.length)]
-    }
-
-    // Generate 3 unique upgrades using weighted rarity selection
-    const selected: Upgrade[] = []
-    let attempts = 0
-    const maxAttempts = 100
-
-    while (selected.length < 3 && attempts < maxAttempts) {
-      const rarity = pickRarity()
-      const upgrade = pickUpgradeFromRarity(rarity)
-      
-      if (upgrade) {
-        // Check if stackable upgrade has reached max stacks
-        if (upgrade.stackable && upgrade.maxStacks) {
-          const stackCount = UpgradeSystem.getStackCount(upgrade.id)
-          if (stackCount >= upgrade.maxStacks) {
-            attempts++
-            continue // Skip this upgrade if max stacks reached
-          }
-        }
-
-        // Check if upgrade dependencies are met
-        if (upgrade.dependentOn && upgrade.dependentOn.length > 0) {
-          const required = upgrade.dependencyCount || 1
-          let dependencyCount = 0
-          
-          for (const dependentId of upgrade.dependentOn) {
-            const applied = appliedUpgrades.find(u => u.id === dependentId)
-            if (applied) {
-              // For variants, check if it's still active
-              if (applied.type === 'variant') {
-                const activeVariant = UpgradeSystem.getVariant(applied.target!)
-                if (activeVariant === applied.variantClass) {
-                  dependencyCount++
-                }
-              } else {
-                dependencyCount++
-              }
-            }
-          }
-          
-          if (dependencyCount < required) {
-            attempts++
-            continue // Skip this upgrade if dependencies not met
-          }
-        }
-        
-        // Check if upgrade is already in current selection
-        const alreadyInSelection = selected.some(u => u.id === upgrade.id)
-        
-        // Allow duplicates only for stackable upgrades
-        if (!alreadyInSelection || upgrade.stackable) {
-          selected.push(upgrade)
-        }
-      }
-      
-      attempts++
-    }
-
-    // Ensure exactly 3 upgrades
-    setOptions(selected.length > 3 ? selected.slice(0, 3) : selected)
+    console.log(`Loaded ${offeredUpgrades.length} upgrades from backend:`, offeredUpgrades)
+    setOptions(offeredUpgrades)
   }
 
   useEffect(() => {
-    generateOptions()
+    loadBackendUpgrades()
   }, [])
 
   const handleReroll = () => {
@@ -212,7 +106,7 @@ export default function UpgradeModal({ onStartWave, playerPoints, selectedAttack
       GameManager.addPoints(-rerollCost)
       setSelectedIndices([])  // Reset selected indices for new roll
       setOptions([])  // Clear old options to prevent sticking
-      generateOptions()
+      loadBackendUpgrades()  // Reload upgrades from backend (backend will need reroll endpoint if we want different upgrades)
     }
   }
 

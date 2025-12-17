@@ -10,6 +10,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from '../core/GameConfig'
 import { AttackType } from '../data/attackTypes'
 import { Projectile } from '../entities/projectiles/Projectile'
 import { UpgradeSystem, UpgradeEffectSystem, registerEffectHandlers, type UpgradeDefinition } from '../systems/upgrades'
+import { waveValidation } from '../services/WaveValidation'
 
 // Import all upgrade JSONs
 import statUpgrades from '../data/upgrades/stat_upgrades.json'
@@ -136,10 +137,25 @@ export class MainScene extends Phaser.Scene {
       }
     })
 
+    // WAVE VALIDATION: Track enemy deaths
+    EventBus.on('enemy-killed', (data: { type: string; x: number; y: number }) => {
+      waveValidation.recordEnemyDeath(data.type, data.x, data.y)
+    })
+
+    // WAVE VALIDATION: Track damage dealt
+    EventBus.on('damage-dealt', (damage: number) => {
+      waveValidation.recordDamage(damage)
+    })
+
     // Start with initial upgrade phase
-    this.time.delayedCall(500, () => {
+    this.time.delayedCall(500, async () => {
       // Give player starting points for initial upgrades
       GameManager.addPoints(70)
+
+      // Pre-load upgrades for wave 1 from backend
+      const seed = Math.floor(Math.random() * 1000000)
+      await waveValidation.startWave(1, seed)
+
       // Show upgrade modal before wave 1
       EventBus.emit('show-upgrades')
     })
@@ -147,6 +163,21 @@ export class MainScene extends Phaser.Scene {
 
   update(_time: number, delta: number): void {
     if (GameManager.getState().isPaused) return
+
+    // INCREMENT FRAME COUNTER FOR WAVE VALIDATION
+    waveValidation.incrementFrame()
+
+    // SAMPLE FRAME DATA EVERY 30 FRAMES (about 2x per second at 60fps)
+    if (waveValidation.getStats().frameCount % 30 === 0) {
+      const playerBody = this.player.body as Phaser.Physics.Arcade.Body
+      waveValidation.sampleFrame(
+        this.player.x,
+        this.player.y,
+        playerBody.velocity.x,
+        playerBody.velocity.y,
+        GameManager.getPlayerStats().health
+      )
+    }
 
     // Update effect system (for regeneration, etc.)
     UpgradeEffectSystem.onUpdate(delta)
@@ -328,6 +359,16 @@ export class MainScene extends Phaser.Scene {
 
     if (success) {
       console.log(`Applied upgrade: ${upgrade.name}${skipCost ? ' (DEV - FREE)' : ''}`)
+
+      // VALIDATE WITH BACKEND (skip for dev tools)
+      if (!skipCost) {
+        const currentWave = GameManager.getWave()
+        waveValidation.selectUpgrade(upgradeId, currentWave).then(validated => {
+          if (!validated) {
+            console.warn('Backend rejected upgrade selection - possible desync')
+          }
+        })
+      }
 
       // Deduct points (skip for dev tools)
       if (!skipCost && cost > 0) {
