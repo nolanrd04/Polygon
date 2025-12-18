@@ -28,11 +28,13 @@ export class Dodecahedron extends Enemy {
   }
 
   AI(_playerX: number, _playerY: number): void {
-
+    // spawn animation
     if (this.spawnImmunityFrames === 60) {
       // Start animation on first frame
       this.spawnAnimation()
     }
+
+    // spawn invincibility frames
     if (this.spawnImmunityFrames > 0) {
       this.invincible = true
       this.spawnImmunityFrames--

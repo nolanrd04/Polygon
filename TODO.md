@@ -6,5 +6,4 @@
 7. improve waves/enemy spawns
 8. Add difficulties
 9. Add leaderboard
-11. fix thorns
 14. right click breaks things

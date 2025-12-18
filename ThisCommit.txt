@@ -1,3 +1,0 @@
-1. Improved dasher highlight
-2. improved obstacle highlight
-3. fixed piercing explosion damage
