@@ -7,6 +7,7 @@ import GameHUD from '../components/GameHUD'
 import PauseMenu from '../components/PauseMenu'
 import DevTools from '../components/DevTools'
 import { EventBus } from '../game/core/EventBus'
+import { SaveGameService } from '../game/services/SaveGameService'
 
 export default function GamePage() {
   const gameRef = useRef<Game | null>(null)
@@ -20,16 +21,35 @@ export default function GamePage() {
   const [showCollisionBoxes, setShowCollisionBoxes] = useState(false)
 
   useEffect(() => {
-    // Get selected attack from sessionStorage
-    const attack = sessionStorage.getItem('selectedAttack') || 'bullet'
-    setSelectedAttack(attack)
+    const initGame = async () => {
+      // Check if we're loading a saved game
+      const loadSavedGame = sessionStorage.getItem('loadSavedGame')
 
-    if (containerRef.current && !gameRef.current) {
-      gameRef.current = new Game({
-        ...gameConfig,
-        parent: containerRef.current
-      })
+      if (loadSavedGame === 'true') {
+        // Load saved game state
+        const savedData = await SaveGameService.loadSavedGame()
+        if (savedData) {
+          // Restore game state before creating the game
+          SaveGameService.restoreGameState(savedData)
+          console.log('Loaded saved game from wave', savedData.wave)
+        }
+        // Clear the flag
+        sessionStorage.removeItem('loadSavedGame')
+      }
+
+      // Get selected attack from sessionStorage
+      const attack = sessionStorage.getItem('selectedAttack') || 'bullet'
+      setSelectedAttack(attack)
+
+      if (containerRef.current && !gameRef.current) {
+        gameRef.current = new Game({
+          ...gameConfig,
+          parent: containerRef.current
+        })
+      }
     }
+
+    initGame()
 
     // Listen for game events
     EventBus.on('wave-start', (wave: number) => {

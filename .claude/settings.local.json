@@ -2,7 +2,23 @@
   "permissions": {
     "allow": [
       "WebSearch",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(pip install:*)",
+      "Bash(../.venv/bin/pip install:*)",
+      "Bash(systemctl status:*)",
+      "Bash(snap list:*)",
+      "Bash(dpkg:*)",
+      "Bash(systemctl list-units:*)",
+      "Bash(docker:*)",
+      "Bash(curl:*)",
+      "Bash(sudo gpg:*)",
+      "Bash(sudo tee:*)",
+      "Bash(sudo apt-get update:*)",
+      "Bash(sudo apt-get install:*)",
+      "Bash(sudo systemctl start:*)",
+      "Bash(sudo systemctl enable:*)",
+      "Bash(sudo systemctl status:*)",
+      "Bash(mongosh:*)"
     ],
     "deny": [],
     "ask": []

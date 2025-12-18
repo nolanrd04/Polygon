@@ -12,7 +12,9 @@ from bson import ObjectId
 from app.models.wave_token import WaveValidationToken
 from app.models.player_stats import PlayerStats
 from app.models.flagged_wave import FlaggedWave, FlagReason
+from app.models.game_save import GameSave
 from app.repositories.player_stats_repository import PlayerStatsRepository
+from app.repositories.game_save_repository import GameSaveRepository
 from app.core.upgrade_data import UPGRADES, RARITY_WEIGHTS, can_apply_upgrade, get_upgrade
 from app.core.enemy_data import calculate_minimum_damage_required, get_expected_enemy_count
 
@@ -25,6 +27,7 @@ class WaveService:
         self.wave_tokens_collection = database["wave_validation_tokens"]
         self.flagged_waves_collection = database["flagged_waves"]
         self.player_stats_repo = PlayerStatsRepository(database)
+        self.game_save_repo = GameSaveRepository(database)
 
     async def start_wave(
         self,
@@ -39,15 +42,23 @@ class WaveService:
         Returns:
             (validation_token, offered_upgrades)
         """
-        # Get player stats
+        # Get player stats (create if doesn't exist)
         player_stats = await self.player_stats_repo.find_by_user_id(user_id)
         if not player_stats:
-            raise ValueError("Player stats not found")
+            # Auto-create player stats if missing (e.g., after database clear)
+            from app.models.player_stats import PlayerStats
+            player_stats = PlayerStats(user_id=user_id)
+            player_stats = await self.player_stats_repo.create(player_stats)
+            print(f"Auto-created player stats for user {user_id}")
+
+        # Get current game save to check current upgrades
+        game_save = await self.game_save_repo.find_by_user_id(user_id)
+        current_upgrades = game_save.current_upgrades if game_save else []
 
         # Roll 3 upgrades
         offered_upgrades = self._roll_upgrades(
-            current_upgrades=player_stats.current_upgrades,
-            attack_type="bullet"  # TODO: Get from player stats
+            current_upgrades=current_upgrades,
+            attack_type="bullet"  # TODO: Get from game save
         )
 
         # Create validation token
@@ -62,7 +73,7 @@ class WaveService:
             user_id=user_id,
             wave_number=wave_number,
             player_stats=player_stats_dict,
-            current_upgrades=player_stats.current_upgrades,
+            current_upgrades=current_upgrades,
             offered_upgrades=[u["id"] for u in offered_upgrades],
             seed=seed,
             expiry_seconds=30
@@ -71,6 +82,34 @@ class WaveService:
         # Save token to database
         token_dict = token.to_dict(exclude_none=True)
         await self.wave_tokens_collection.insert_one(token_dict)
+
+        # Create game save if it doesn't exist (for wave 1)
+        if wave_number == 1 and not game_save:
+            new_save = GameSave(
+                user_id=user_id,
+                current_wave=1,
+                current_points=0,
+                seed=seed,
+                current_health=100,
+                current_max_health=100,
+                current_speed=200,
+                current_polygon_sides=3,
+                current_kills=0,
+                current_damage_dealt=0,
+                current_upgrades=[],
+                attack_stats={
+                    "bullet": {
+                        "damage": 10,
+                        "speed": 400,
+                        "cooldown": 200,
+                        "size": 1,
+                        "pierce": 0
+                    }
+                },
+                unlocked_attacks=["bullet"]
+            )
+            await self.game_save_repo.create(new_save)
+            print(f"Created new game save for user {user_id} at wave 1")
 
         return token, offered_upgrades
 
@@ -93,24 +132,34 @@ class WaveService:
         Returns:
             (is_valid, error_messages)
         """
+        print(f"=== WAVE COMPLETION START ===", flush=True)
+        print(f"Wave data received: kills={wave_data.get('kills')}, damage={wave_data.get('total_damage')}, wave={wave_data.get('wave')}", flush=True)
+
         # Find and validate token
         token_doc = await self.wave_tokens_collection.find_one({"token": token_string})
         if not token_doc:
+            print("ERROR: Token not found", flush=True)
             return False, ["Invalid or missing wave token"]
 
         token = WaveValidationToken.from_mongo(token_doc)
+        print(f"Token found for wave {token.wave_number}", flush=True)
 
         if not token.is_valid():
+            print(f"Token invalid: expired={token.expires_at}, used={token.used}", flush=True)
             return False, ["Token expired or already used"]
 
         if str(token.user_id) != str(user_id):
+            print(f"User ID mismatch: token={token.user_id}, user={user_id}", flush=True)
             return False, ["Token user mismatch"]
+
+        print(f"Starting validations...", flush=True)
 
         # Perform validations
         flags: List[FlagReason] = []
 
         # 1. Validate upgrades used
         upgrades_used = wave_data.get("upgrades_used", [])
+        print(f"Validating upgrades: {upgrades_used} vs allowed: {token.allowed_upgrades}")
         for upgrade_id in upgrades_used:
             if upgrade_id not in token.allowed_upgrades:
                 flags.append(FlagReason(
@@ -128,6 +177,7 @@ class WaveService:
             wave_data.get("enemy_deaths", []),
             token.wave_number
         )
+        print(f"Damage validation flags: {len(damage_flags)}")
         flags.extend(damage_flags)
 
         # 3. Validate movement (frame-by-frame)
@@ -135,6 +185,7 @@ class WaveService:
             wave_data.get("frame_samples", []),
             token.expected_player_stats.get("speed", 200)
         )
+        print(f"Movement validation flags: {len(movement_flags)}")
         flags.extend(movement_flags)
 
         # 4. Validate kill counts
@@ -142,7 +193,10 @@ class WaveService:
             wave_data.get("kills", 0),
             token.wave_number
         )
+        print(f"Kill validation flags: {len(kill_flags)}")
         flags.extend(kill_flags)
+
+        print(f"Total flags: {len(flags)}, High severity: {len([f for f in flags if f.severity in ['high', 'critical']])}")
 
         # Mark token as used
         await self.wave_tokens_collection.update_one(
@@ -156,18 +210,33 @@ class WaveService:
 
         # Determine if wave is valid (allow minor flags)
         high_severity_flags = [f for f in flags if f.severity in ["high", "critical"]]
+        critical_flags = [f for f in flags if f.severity == "critical"]
 
+        # Update player stats even if there are some flags (unless critical)
+        # This prevents legitimate players from losing progress due to minor validation issues
+        if not critical_flags:
+            kills = wave_data.get("kills", 0)
+            damage = wave_data.get("total_damage", 0)
+            print(f"Updating stats - Kills: {kills}, Damage: {damage}, Wave: {token.wave_number}")
+
+            await self._update_player_stats_after_wave(
+                user_id,
+                kills,
+                damage,
+                token.wave_number
+            )
+
+            # Create/update game save after wave completion
+            await self._save_game_state(user_id, wave_data, token.wave_number)
+        else:
+            print(f"CRITICAL FLAGS DETECTED - Stats not updated: {critical_flags}")
+
+        # Return validation result
         if high_severity_flags:
+            print(f"Wave validation FAILED: {[f.description for f in high_severity_flags]}")
             return False, [f.description for f in high_severity_flags]
 
-        # Update player stats
-        await self._update_player_stats_after_wave(
-            user_id,
-            wave_data.get("kills", 0),
-            wave_data.get("total_damage", 0),
-            token.wave_number
-        )
-
+        print(f"=== WAVE COMPLETION SUCCESS ===")
         return True, []
 
     def _roll_upgrades(
@@ -357,7 +426,7 @@ class WaveService:
         damage: int,
         wave: int
     ):
-        """Update player stats after successful wave completion"""
+        """Update permanent account stats after successful wave completion"""
         stats = await self.player_stats_repo.find_by_user_id(user_id)
         if stats:
             await self.player_stats_repo.update_by_id(
@@ -365,7 +434,66 @@ class WaveService:
                 {
                     "total_kills": stats.total_kills + kills,
                     "total_damage_dealt": stats.total_damage_dealt + damage,
-                    "current_wave": wave,
-                    "highest_wave": max(stats.highest_wave, wave)
+                    "highest_wave_ever": max(stats.highest_wave_ever, wave)
                 }
             )
+
+    async def _save_game_state(
+        self,
+        user_id: ObjectId,
+        wave_data: Dict[str, Any],
+        wave_number: int
+    ):
+        """Save/update temporary game state after wave completion"""
+        # Check if a save already exists for this user (one save per user)
+        existing_save = await self.game_save_repo.find_by_user_id(user_id)
+
+        if existing_save:
+            # Update existing save - ACCUMULATE kills and damage
+            save_data = {
+                "current_wave": wave_number,
+                "current_kills": existing_save.current_kills + wave_data.get("kills", 0),
+                "current_damage_dealt": existing_save.current_damage_dealt + wave_data.get("total_damage", 0),
+                "current_upgrades": wave_data.get("upgrades_used", existing_save.current_upgrades),
+                # Keep other fields as-is (TODO: get actual values from frontend)
+                "current_points": existing_save.current_points,  # TODO: Update from GameManager
+                "current_health": existing_save.current_health,
+                "current_max_health": existing_save.current_max_health,
+                "current_speed": existing_save.current_speed,
+                "current_polygon_sides": existing_save.current_polygon_sides,
+            }
+            save_data["seed"] = existing_save.seed  # Keep existing seed
+
+            await self.game_save_repo.update_by_id(
+                existing_save.id,
+                save_data
+            )
+        else:
+            # Create new save (shouldn't happen since wave 1 creates it)
+            save_data = {
+                "current_wave": wave_number,
+                "current_points": 0,
+                "current_health": 100,
+                "current_max_health": 100,
+                "current_speed": 200,
+                "current_polygon_sides": 3,
+                "current_kills": wave_data.get("kills", 0),
+                "current_damage_dealt": wave_data.get("total_damage", 0),
+                "current_upgrades": wave_data.get("upgrades_used", []),
+                "attack_stats": {
+                    "bullet": {
+                        "damage": 10,
+                        "speed": 400,
+                        "cooldown": 200,
+                        "size": 1,
+                        "pierce": 0
+                    }
+                },
+                "unlocked_attacks": ["bullet"],
+                "seed": wave_data.get("seed", 0)
+            }
+            new_save = GameSave(
+                user_id=user_id,
+                **save_data
+            )
+            await self.game_save_repo.create(new_save)

@@ -157,20 +157,21 @@ async def select_upgrade(
     - Upgrade dependencies are met
     - Stack limits not exceeded
     """
-    player_stats_repo = PlayerStatsRepository(db)
+    from app.repositories.game_save_repository import GameSaveRepository
+    from app.core.upgrade_data import get_upgrade, can_apply_upgrade
 
-    # Get player stats
-    stats = await player_stats_repo.find_by_user_id(current_user.id)
-    if not stats:
+    game_save_repo = GameSaveRepository(db)
+
+    # Get game save to check current upgrades
+    game_save = await game_save_repo.find_by_user_id(current_user.id)
+    if not game_save:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Player stats not found"
+            detail="No active game found"
         )
 
     # TODO: Validate upgrade was offered in the wave token
     # For now, just add it to current upgrades
-
-    from app.core.upgrade_data import get_upgrade, can_apply_upgrade
 
     upgrade = get_upgrade(request.upgrade_id)
     if not upgrade:
@@ -179,18 +180,18 @@ async def select_upgrade(
             detail="Invalid upgrade ID"
         )
 
-    # Check if can apply
-    if not can_apply_upgrade(request.upgrade_id, stats.current_upgrades):
+    # Check if can apply (using current upgrades from game save)
+    if not can_apply_upgrade(request.upgrade_id, game_save.current_upgrades):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot apply this upgrade (dependencies not met or max stacks reached)"
         )
 
-    # Add upgrade to current upgrades
-    updated_upgrades = stats.current_upgrades + [request.upgrade_id]
+    # Add upgrade to current upgrades in game save
+    updated_upgrades = game_save.current_upgrades + [request.upgrade_id]
 
-    await player_stats_repo.update_by_id(
-        stats.id,
+    await game_save_repo.update_by_id(
+        game_save.id,
         {"current_upgrades": updated_upgrades}
     )
 

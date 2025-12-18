@@ -362,7 +362,7 @@ export class MainScene extends Phaser.Scene {
 
       // VALIDATE WITH BACKEND (skip for dev tools)
       if (!skipCost) {
-        const currentWave = GameManager.getWave()
+        const currentWave = GameManager.getState().wave
         waveValidation.selectUpgrade(upgradeId, currentWave).then(validated => {
           if (!validated) {
             console.warn('Backend rejected upgrade selection - possible desync')

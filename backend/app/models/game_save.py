@@ -4,26 +4,31 @@ from app.models.base import BaseMongoModel, PyObjectId
 
 
 class GameSave(BaseMongoModel):
-    """Game save model for storing player progress"""
+    """
+    Game save model for storing current run progress - one save per user.
+    This is temporary data that gets deleted when starting a new game.
+    All permanent stats are stored in PlayerStats.
+    """
 
     user_id: PyObjectId = Field(...)
-    slot: int = Field(default=1, ge=1, le=5)  # Multiple save slots per user
 
-    # Game state
-    wave: int = Field(default=1, ge=1)
-    points: int = Field(default=0, ge=0)
+    # Current run state (temporary - reset on new game)
+    current_wave: int = Field(default=1, ge=1)
+    current_points: int = Field(default=0, ge=0)
     seed: int = Field(...)
 
-    # Player stats (stored as dict for flexibility)
-    player_stats: Dict[str, Any] = Field(default_factory=lambda: {
-        "health": 100,
-        "maxHealth": 100,
-        "speed": 200,
-        "polygonSides": 3
-    })
+    # Current player stats for this run (temporary)
+    current_health: int = Field(default=100, ge=0)
+    current_max_health: int = Field(default=100, ge=1)
+    current_speed: int = Field(default=200, ge=0)
+    current_polygon_sides: int = Field(default=3, ge=3, le=8)
 
-    # Upgrades applied (list of upgrade IDs)
-    applied_upgrades: List[str] = Field(default_factory=list)
+    # Current run kill/damage tracking (resets on new game)
+    current_kills: int = Field(default=0, ge=0)
+    current_damage_dealt: int = Field(default=0, ge=0)
+
+    # Upgrades applied in this run (resets on new game)
+    current_upgrades: List[str] = Field(default_factory=list)
 
     # Attack stats per attack type
     attack_stats: Dict[str, Any] = Field(default_factory=lambda: {
@@ -43,17 +48,16 @@ class GameSave(BaseMongoModel):
         json_schema_extra = {
             "example": {
                 "user_id": "507f1f77bcf86cd799439011",
-                "slot": 1,
-                "wave": 5,
-                "points": 1500,
+                "current_wave": 5,
+                "current_points": 1500,
                 "seed": 12345,
-                "player_stats": {
-                    "health": 120,
-                    "maxHealth": 120,
-                    "speed": 220,
-                    "polygonSides": 4
-                },
-                "applied_upgrades": ["health_1", "speed_1"],
+                "current_health": 120,
+                "current_max_health": 120,
+                "current_speed": 220,
+                "current_polygon_sides": 4,
+                "current_kills": 50,
+                "current_damage_dealt": 1200,
+                "current_upgrades": ["health_1", "speed_1"],
                 "attack_stats": {
                     "bullet": {
                         "damage": 15,
@@ -72,11 +76,15 @@ class GameSaveResponse(BaseMongoModel):
     """Game save response model"""
 
     user_id: PyObjectId
-    slot: int
-    wave: int
-    points: int
+    current_wave: int
+    current_points: int
     seed: int
-    player_stats: Dict[str, Any]
-    applied_upgrades: List[str]
+    current_health: int
+    current_max_health: int
+    current_speed: int
+    current_polygon_sides: int
+    current_kills: int
+    current_damage_dealt: int
+    current_upgrades: List[str]
     attack_stats: Dict[str, Any]
     unlocked_attacks: List[str]
