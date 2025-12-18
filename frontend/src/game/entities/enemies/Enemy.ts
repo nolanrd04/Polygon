@@ -26,6 +26,8 @@ export abstract class Enemy {
   scale: number = 1.0  // Visual scale multiplier (0.8 = 80%, 1.0 = 100%, 1.2 = 120%)
   hitboxSize: number = 1.0  // Collision radius multiplier relative to visual radius (0.8 = 80%, 1.0 = 100%)
   knockbackResistance: number = 0  // Knockback resistance (0 = none, 1 = immune)
+  barWidth: number = 20  // Health bar width
+  barHeight: number = 4  // Health bar height
 
   // ============ RUNTIME STATE ============
   protected scene!: Phaser.Scene
@@ -111,14 +113,14 @@ export abstract class Enemy {
   }
 
   /**
-   * Draw the health bar above the enemy.
+   * Draw the health bar below the enemy.
    */
-  private drawHealthBar(): void {
+  private drawHealthBar(_barWidth?: number, _barHeight?: number): void {
     if (this.healthBar) {
       this.healthBar.clear()
 
-      const barWidth = 20
-      const barHeight = 4
+      const barWidth = _barWidth ?? this.barWidth
+      const barHeight = _barHeight ?? this.barHeight
       
       // Position bar below enemy in world space (not relative to container)
       const barX = this.x - barWidth / 2
