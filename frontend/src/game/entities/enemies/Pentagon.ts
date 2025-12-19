@@ -1,8 +1,6 @@
 import { Enemy } from './Enemy'
 
-/**
- * Pentagon enemy - tougher, can split on death.
- */
+
 export class Pentagon extends Enemy {
   SetDefaults(): void {
     this.health = 250

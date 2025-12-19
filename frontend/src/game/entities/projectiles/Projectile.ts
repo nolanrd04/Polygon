@@ -75,15 +75,19 @@ export abstract class Projectile {
   /** Current vertical speed (pixels per second, positive = down) */
   velocityY: number = 0
 
-  /** old position and velocity values */
-  oldPositionX: number = 0
-  oldPositionY: number = 0
-  oldVelocityX: number = 0
-  oldVelocityY: number = 0
+  /** Whether to track old positions for trail effects */
+  doOldPositionTracking: boolean = false
+
+  /** Number of old positions to track for trail effects */
+  oldTrackingCounter: number = 0
+
+  /** old position values stored as arrays */
+  oldPositionX: number[] = []
+  oldPositionY: number[] = []
 
   /* old position tracking frequency */
-  oldTrackingInterval: number = 30 // frames
-  oldTrackingCounter: number = 0
+  oldTrackingInterval: number = 30 // milliseconds
+  oldTrackingLastTime: number = 0
 
   /** Current rotation angle in radians (0 = pointing right) */
   rotation: number = 0
@@ -257,6 +261,12 @@ export abstract class Projectile {
     this.positionY = startY
     this.spawnTime = scene.time.now
 
+    // Initialize old position tracking arrays
+    if (this.doOldPositionTracking && this.oldTrackingCounter > 0) {
+      this.oldPositionX = new Array(this.oldTrackingCounter).fill(startX)
+      this.oldPositionY = new Array(this.oldTrackingCounter).fill(startY)
+    }
+
     // Create the visual container
     this.container = scene.add.container(startX, startY)
     this.graphics = scene.add.graphics()
@@ -294,6 +304,17 @@ export abstract class Projectile {
     this.positionX = this.container.x
     this.positionY = this.container.y
 
+    // Track old positions for trails
+    if (this.doOldPositionTracking && this.scene.time.now - this.oldTrackingLastTime >= this.oldTrackingInterval) {
+      this.oldTrackingLastTime = this.scene.time.now
+      
+      this.oldPositionX.shift()
+      this.oldPositionX.push(this.positionX)
+    
+      this.oldPositionY.shift()
+      this.oldPositionY.push(this.positionY)
+    }
+
     // Check if lifetime expired
     if (this.scene.time.now - this.spawnTime > this.timeLeft) {
       this._destroy()
@@ -305,6 +326,9 @@ export abstract class Projectile {
 
     // Apply any velocity changes from AI
     this.body.setVelocity(this.velocityX, this.velocityY)
+
+    // Redraw every frame to update trails and animations
+    this.Draw()
   }
 
   /** @internal Checks if this projectile can hit a specific enemy (cooldown has elapsed) */
