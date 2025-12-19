@@ -11,7 +11,7 @@ SetDefaults(): void {
     this.damage = 100
     this.sides = 8
     this.radius = 35
-    this.color = 0xff8b1f
+    this.color = 0xff44ff
     this.scoreChance = .4
     this.speedCap = 1.4
   }
