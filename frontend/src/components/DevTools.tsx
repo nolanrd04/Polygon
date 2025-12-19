@@ -36,6 +36,7 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
     { id: 'diamond', name: 'Diamond', description: 'Dashes at player' },
     { id: 'shooter', name: 'Shooter', description: 'Ranged attacker' },
     { id: 'octogon', name: 'Octogon', description: 'Tanky enemy that splits on death' },
+    { id: 'activated_square', name: 'Activated Square', description: 'Enhanced square enemy with special abilities' },
     { id: 'dodecahedron', name: 'Dodecahedron', description: 'Boss enemy with high health' }
   ]
 

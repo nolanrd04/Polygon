@@ -179,8 +179,8 @@ export class CollisionManager {
     this.player.takeDamage(Math.ceil(projectile.damage))
     this.lastProjectileDamageByProjectileId.set(projectile.id, now)
 
-    // Destroy the projectile
-    projectile._destroy()
+    // Only destroy if pierce count is met (use player as enemy ID 0)
+    projectile._recordHit(0)
 
     // Push player away
     const angle = Phaser.Math.Angle.Between(
