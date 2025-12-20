@@ -40,7 +40,7 @@ export class EnemyBullet extends Projectile {
         textureKey,
         tint: this.color,
         maxAlpha: 0.5,
-        duration: 200,
+        duration: 0,
         scale: 1.0,
         scaleDecay: true
       })

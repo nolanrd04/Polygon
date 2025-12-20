@@ -16,7 +16,7 @@ export class Diamond extends Enemy {
     this.speed = 100
     this.damage = 50
     this.sides = 4
-    this.radius = 25
+    this.radius = 22
     this.color = 0xfcf003
     this.scoreChance = .45
     this.speedCap = 2.5
@@ -24,7 +24,7 @@ export class Diamond extends Enemy {
     this.doOldRotationTracking = true  // NEW: Track rotation for trails
     this.oldTrackingCounter = 3
     this.oldTrackingInterval = 100
-    this.scale = .8
+    this.scale = .85
     this.baseSpeed = this.speed
     this.frameCounter = 0
   }
@@ -128,8 +128,8 @@ export class Diamond extends Enemy {
         textureKey,
         tint: this.color,
         maxAlpha: 0.4,
-        duration: 300,
-        scale: this.scale,
+        duration: 0,
+        scale: this.scale * .85,
         scaleDecay: true
       })
     }

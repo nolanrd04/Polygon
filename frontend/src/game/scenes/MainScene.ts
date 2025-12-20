@@ -335,14 +335,16 @@ export class MainScene extends Phaser.Scene {
       }
     }
 
-    // Draw projectile collision boxes
-    this.debugGraphics.lineStyle(2, 0x00ffff, 1)
-    const projectiles = this.player.getProjectiles()
+    // Draw projectile collision boxes (both player and enemy)
+    const projectiles = GameManager.getAllProjectiles()
     for (const projectile of projectiles) {
       if (!projectile.isDestroyed) {
         const container = projectile.getContainer()
         const body = container.body as Phaser.Physics.Arcade.Body
         if (body) {
+          // Cyan for player projectiles, magenta for enemy projectiles
+          const color = (projectile as any).owner === 'player' ? 0x00ffff : 0xff00ff
+          this.debugGraphics.lineStyle(2, color, 1)
           this.debugGraphics.strokeCircle(
             container.x,
             container.y,

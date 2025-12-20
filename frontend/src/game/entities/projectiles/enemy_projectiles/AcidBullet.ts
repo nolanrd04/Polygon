@@ -40,7 +40,7 @@ export class AcidBullet extends Projectile {
         textureKey,
         tint: this.color,
         maxAlpha: 0.6,
-        duration: 250,
+        duration: 0,
         scale: 1.0,
         scaleDecay: true
       })

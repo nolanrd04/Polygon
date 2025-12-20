@@ -24,14 +24,18 @@ export class AcidExplosion extends Projectile {
    */
   PreDraw(): boolean {
     // First time: replace sprite with semi-transparent explosion texture
-    if (this.sprite.texture.key.startsWith('circle_') && !this.sprite.texture.key.includes('_0.3')) {
+    // Check for default bullet texture (fillAlpha=1.0) by looking for pattern _fffffff_1_s
+    // const currentKey = this.sprite.texture.key
+    // console.log('AcidExplosion texture key:', currentKey)
+
+    if (this.sprite.texture.key.startsWith('circle_') && this.sprite.texture.key.includes('_fffffff_1_s')) {
+      // console.log('Replacing texture...')
       const textureKey = TextureGenerator.getOrCreateCircle(this.scene, {
         radius: this.size,
         fillColor: 0xffffff,
-        fillAlpha: 0.3,  // Semi-transparent
-        glowRadius: this.size * 0.2,
-        glowAlpha: 0.15
+        fillAlpha: 0.5  // Single semi-transparent circle, no glow
       })
+      // console.log('New texture key:', textureKey)
 
       const oldSprite = this.sprite
       this.sprite = this.scene.add.sprite(0, 0, textureKey)
