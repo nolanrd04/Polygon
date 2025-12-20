@@ -409,7 +409,7 @@
       "isMultiplier": false,
       "stackable": true,
       "maxStacks": 99999,
-      "cost": 6,
+      "cost": 10,
       "dependentOn": ["explosive_bullets", "explosion_on_kill"],
       "dependencyCount": 1
     },
@@ -426,7 +426,7 @@
       "isMultiplier": false,
       "stackable": true,
       "maxStacks": 99999,
-      "cost": 10,
+      "cost": 20,
       "dependentOn": ["explosive_bullets", "explosion_on_kill"],
       "dependencyCount": 1
     },
@@ -443,7 +443,7 @@
       "isMultiplier": false,
       "stackable": true,
       "maxStacks": 99999,
-      "cost": 20,
+      "cost": 40,
       "dependentOn": ["explosive_bullets", "explosion_on_kill"],
       "dependencyCount": 1
     },
@@ -460,7 +460,7 @@
       "isMultiplier": true,
       "stackable": true,
       "maxStacks": 5,
-      "cost": 10,
+      "cost": 20,
       "dependentOn": ["explosive_bullets", "explosion_on_kill"],
       "dependencyCount": 1
     },
@@ -477,7 +477,7 @@
       "isMultiplier": true,
       "stackable": true,
       "maxStacks": 3,
-      "cost": 20,
+      "cost": 40,
       "dependentOn": ["explosive_bullets", "explosion_on_kill"],
       "dependencyCount": 1
     }
