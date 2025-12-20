@@ -164,13 +164,22 @@ export class MainScene extends Phaser.Scene {
       for (const enemy of enemies) {
         const dist = Phaser.Math.Distance.Between(data.x, data.y, enemy.x, enemy.y)
         if (dist <= data.radius) {
-          // Calculate damage falloff based on distance from center
-          // At center (dist=0): 100% damage
-          // At edge (dist=radius): minimum damage (5% of base)
-          const falloffFactor = Math.max(0.05, 1 - (dist / data.radius) * 0.95)
+          // Calculate damage falloff with two zones:
+          // Inner zone (0-40% radius): 100% damage
+          // Outer zone (40-100% radius): Smoothly falls from 100% to 50% using smoothstep curve
+          const innerRadius = data.radius * 0.4
+          let falloffFactor = 1.0
+
+          if (dist > innerRadius) {
+            // Smoothstep interpolation from 1.0 to 0.5 in the outer zone
+            const t = Math.min(1, (dist - innerRadius) / (data.radius - innerRadius))
+            const smoothT = t * t * (3 - 2 * t) // Smoothstep formula
+            falloffFactor = 1.0 - (smoothT * 0.5) // Interpolate from 100% to 50%
+          }
+
           const actualDamage = data.damage * falloffFactor
-          
-          // console.log(`  - Enemy ${enemy.id} at distance ${Math.round(dist)}, falloff=${falloffFactor.toFixed(2)}, dealing ${actualDamage.toFixed(1)} damage`)
+
+          console.log(`Explosion hit Enemy ${enemy.id}: dist=${Math.round(dist)}/${data.radius}, falloff=${(falloffFactor * 100).toFixed(0)}%, damage=${actualDamage.toFixed(1)}`)
           enemy.takeDamage(actualDamage)
         }
       }
