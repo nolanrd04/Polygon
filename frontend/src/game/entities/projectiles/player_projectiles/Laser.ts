@@ -22,26 +22,6 @@ export class Laser extends Projectile {
     this.timeLeft = 100 // Visual duration only
   }
 
-  Draw(): void {
-    // Laser is drawn differently - as a line from origin to range
-    // The line is drawn in world space, not local space
-    const endX = Math.cos(this.rotation) * this.range
-    const endY = Math.sin(this.rotation) * this.range
-
-    // Main beam
-    this.graphics.lineStyle(this.thickness, this.color, 1)
-    this.graphics.beginPath()
-    this.graphics.moveTo(0, 0)
-    this.graphics.lineTo(endX, endY)
-    this.graphics.strokePath()
-
-    // Glow effect
-    this.graphics.lineStyle(this.thickness * 3, this.color, 0.3)
-    this.graphics.beginPath()
-    this.graphics.moveTo(0, 0)
-    this.graphics.lineTo(endX, endY)
-    this.graphics.strokePath()
-  }
 
   AI(): void {
     // Laser doesn't move - it's instant

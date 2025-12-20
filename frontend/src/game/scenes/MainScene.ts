@@ -10,6 +10,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from '../core/GameConfig'
 import { AttackType } from '../data/attackTypes'
 import { Projectile } from '../entities/projectiles/Projectile'
 import { UpgradeSystem, UpgradeEffectSystem, registerEffectHandlers, type UpgradeDefinition } from '../systems/upgrades'
+import { TextureGenerator } from '../utils/TextureGenerator'
 
 // Import all upgrade JSONs
 import statUpgrades from '../data/upgrades/stat_upgrades.json'
@@ -37,6 +38,9 @@ export class MainScene extends Phaser.Scene {
   create(): void {
     // Register effect handlers (once at game start)
     registerEffectHandlers()
+
+    // Generate common sprite textures (MUST be done before creating entities)
+    TextureGenerator.generateCommonTextures(this)
 
     // Initialize debug graphics
     this.debugGraphics = this.add.graphics()

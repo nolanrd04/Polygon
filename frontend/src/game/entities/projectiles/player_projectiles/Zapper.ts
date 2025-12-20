@@ -25,66 +25,42 @@ export class Zapper extends Projectile {
     this.pierce = 0
     this.color = COLORS.zapper
     this.timeLeft = 200 // Visual duration
+    this.usesCustomRendering = true // Enable Graphics API for chain lightning
   }
 
-  Draw(): void {
-    // Draw lightning bolts between chain points
-    if (this.chainPoints.length < 2) {
-      // Just draw a spark at origin
-      this.graphics.fillStyle(this.color, 1)
-      this.graphics.fillCircle(0, 0, 5)
-      return
-    }
-
-    this.graphics.lineStyle(2, this.color, 1)
-
-    for (let i = 0; i < this.chainPoints.length - 1; i++) {
-      const start = this.chainPoints[i]
-      const end = this.chainPoints[i + 1]
-
-      // Draw jagged lightning line
-      this.drawLightningBolt(
-        start.x - this.positionX,
-        start.y - this.positionY,
-        end.x - this.positionX,
-        end.y - this.positionY
-      )
-    }
-  }
-
-  private drawLightningBolt(x1: number, y1: number, x2: number, y2: number): void {
-    const segments = 5
-    const jitter = 10
-
-    this.graphics.beginPath()
-    this.graphics.moveTo(x1, y1)
-
-    for (let i = 1; i < segments; i++) {
-      const t = i / segments
-      const midX = x1 + (x2 - x1) * t + (Math.random() - 0.5) * jitter
-      const midY = y1 + (y2 - y1) * t + (Math.random() - 0.5) * jitter
-      this.graphics.lineTo(midX, midY)
-    }
-
-    this.graphics.lineTo(x2, y2)
-    this.graphics.strokePath()
-
-    // Glow
-    this.graphics.lineStyle(6, this.color, 0.3)
-    this.graphics.beginPath()
-    this.graphics.moveTo(x1, y1)
-    this.graphics.lineTo(x2, y2)
-    this.graphics.strokePath()
-
-    // Reset line style for next bolt
-    this.graphics.lineStyle(2, this.color, 1)
-  }
 
   /** Set the chain points for drawing (called by collision system) */
   setChainPoints(points: { x: number; y: number }[]): void {
     this.chainPoints = points
+    if (this.graphics) {
+      this.graphics.clear()
+      this.Draw()
+    }
+  }
+
+  /** Draw the chain lightning effect */
+  Draw(): void {
+    if (!this.graphics || this.chainPoints.length === 0) return
+
     this.graphics.clear()
-    this.Draw()
+    this.graphics.lineStyle(2, this.color, 1)
+
+    // Draw lines connecting all chain points
+    for (let i = 0; i < this.chainPoints.length - 1; i++) {
+      const start = this.chainPoints[i]
+      const end = this.chainPoints[i + 1]
+
+      // Convert world coordinates to local container coordinates
+      const localStartX = start.x - this.positionX
+      const localStartY = start.y - this.positionY
+      const localEndX = end.x - this.positionX
+      const localEndY = end.y - this.positionY
+
+      this.graphics.beginPath()
+      this.graphics.moveTo(localStartX, localStartY)
+      this.graphics.lineTo(localEndX, localEndY)
+      this.graphics.strokePath()
+    }
   }
 
   AI(): void {

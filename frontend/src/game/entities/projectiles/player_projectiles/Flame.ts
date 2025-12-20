@@ -22,23 +22,6 @@ export class Flame extends Projectile {
     this.timeLeft = 50 // Very short, refreshed each frame while firing
   }
 
-  Draw(): void {
-    // Draw flame cone
-    this.graphics.fillStyle(this.color, 0.5)
-    this.graphics.beginPath()
-    this.graphics.moveTo(0, 0)
-    this.graphics.arc(0, 0, this.range, -this.coneSpread, this.coneSpread)
-    this.graphics.closePath()
-    this.graphics.fillPath()
-
-    // Inner brighter flame
-    this.graphics.fillStyle(0xffff00, 0.3)
-    this.graphics.beginPath()
-    this.graphics.moveTo(0, 0)
-    this.graphics.arc(0, 0, this.range * 0.6, -this.coneSpread * 0.7, this.coneSpread * 0.7)
-    this.graphics.closePath()
-    this.graphics.fillPath()
-  }
 
   AI(): void {
     this.velocityX = 0

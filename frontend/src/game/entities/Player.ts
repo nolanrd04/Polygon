@@ -9,6 +9,7 @@ import { Flame } from './projectiles/player_projectiles/Flame'
 import { Spinner } from './projectiles/player_projectiles/Spinner'
 import { AttackType } from '../data/attackTypes'
 import { UpgradeSystem, UpgradeEffectSystem, UpgradeModifierSystem } from '../systems/upgrades'
+import { TextureGenerator } from '../utils/TextureGenerator'
 
 /**
  * The player character - a polygon that can move and shoot projectiles.
@@ -72,8 +73,11 @@ export class Player extends Phaser.GameObjects.Container {
   /** The Phaser physics body for collision and movement */
   declare public body: Phaser.Physics.Arcade.Body
 
-  /** The graphics object for drawing the player polygon */
-  private graphics: Phaser.GameObjects.Graphics
+  /** The sprite for the player polygon */
+  private sprite: Phaser.GameObjects.Sprite
+
+  /** The head indicator sprite (front vertex marker) */
+  private headIndicator: Phaser.GameObjects.Sprite
 
   /** All active projectiles fired by this player */
   private projectiles: Projectile[] = []
@@ -92,7 +96,7 @@ export class Player extends Phaser.GameObjects.Container {
 
   /** Shield state */
   private shielded: boolean = false
-  private shieldGraphics: Phaser.GameObjects.Graphics | null = null
+  private shieldSprite: Phaser.GameObjects.Sprite | null = null
 
   /** Dash ability state */
   private isDashing: boolean = false
@@ -114,8 +118,36 @@ export class Player extends Phaser.GameObjects.Container {
     this.positionX = x
     this.positionY = y
 
-    this.graphics = scene.add.graphics()
-    this.add(this.graphics)
+    // Create initial sprites (will be replaced in Draw())
+    const stats = GameManager.getPlayerStats()
+    this.sides = stats.polygonSides
+
+    // Generate polygon texture with actual player color (no tinting needed)
+    const polygonTexture = TextureGenerator.getOrCreatePolygon(scene, {
+      sides: this.sides,
+      radius: this.radius,
+      fillColor: COLORS.player,  // Use actual player color
+      fillAlpha: 1.0,
+      strokeWidth: 3,
+      strokeColor: 0xffffff,  // White stroke
+      strokeAlpha: 1.0,
+      rotation: -Math.PI / 2  // Rotate to point upward
+    })
+
+    this.sprite = scene.add.sprite(0, 0, polygonTexture)
+    this.sprite.setScale(TextureGenerator.getDisplayScale())  // Scale down high-res texture
+    // Don't use setTint - texture already has correct colors
+    this.add(this.sprite)
+
+    // Create head indicator (white circle at front vertex)
+    const headTexture = TextureGenerator.getOrCreateCircle(scene, {
+      radius: 6,
+      fillColor: 0xffffff,
+      fillAlpha: 1.0
+    })
+    this.headIndicator = scene.add.sprite(0, -this.radius, headTexture)  // Position at top (front vertex)
+    this.headIndicator.setScale(TextureGenerator.getDisplayScale())  // Scale down high-res texture
+    this.add(this.headIndicator)
 
     this.projectileGroup = scene.add.group()
 
@@ -130,8 +162,6 @@ export class Player extends Phaser.GameObjects.Container {
 
     // Render player above enemies and projectiles
     this.setDepth(100)
-
-    this.Draw()
   }
 
   // ============================================================
@@ -143,71 +173,46 @@ export class Player extends Phaser.GameObjects.Container {
    * Called automatically when the player is created or updated.
    */
   Draw(): void {
-    this.graphics.clear()
-
     const stats = GameManager.getPlayerStats()
-    this.sides = stats.polygonSides
+    const newSides = stats.polygonSides
 
-    const vertices: Phaser.Math.Vector2[] = []
-    const angleStep = (Math.PI * 2) / this.sides
+    // Only regenerate sprite if sides changed
+    if (newSides !== this.sides) {
+      this.sides = newSides
 
-    for (let i = 0; i < this.sides; i++) {
-      const angle = angleStep * i - Math.PI / 2
-      vertices.push(new Phaser.Math.Vector2(
-        Math.cos(angle) * this.radius,
-        Math.sin(angle) * this.radius
-      ))
+      // Generate new polygon texture with actual player color
+      const polygonTexture = TextureGenerator.getOrCreatePolygon(this.scene, {
+        sides: this.sides,
+        radius: this.radius,
+        fillColor: COLORS.player,  // Use actual player color
+        fillAlpha: 1.0,
+        strokeWidth: 3,
+        strokeColor: 0xffffff,  // White stroke
+        strokeAlpha: 1.0,
+        rotation: -Math.PI / 2
+      })
+
+      // Replace the sprite
+      const oldSprite = this.sprite
+      this.sprite = this.scene.add.sprite(0, 0, polygonTexture)
+      this.sprite.setScale(TextureGenerator.getDisplayScale())  // Scale down high-res texture
+      // Don't use setTint - texture already has correct colors
+      this.add(this.sprite)
+      oldSprite.destroy()
+
+      // Update hitbox for new sides
+      const hitboxRadius = this.radius * this.hitboxSize
+      this.body.setCircle(hitboxRadius)
+      this.body.setOffset(-hitboxRadius, -hitboxRadius)
     }
-
-    // Main polygon body
-    this.graphics.fillStyle(COLORS.player, 1)
-    this.graphics.lineStyle(3, 0xffffff, 1)
-
-    this.graphics.beginPath()
-    this.graphics.moveTo(vertices[0].x, vertices[0].y)
-    for (let i = 1; i < vertices.length; i++) {
-      this.graphics.lineTo(vertices[i].x, vertices[i].y)
-    }
-    this.graphics.closePath()
-    this.graphics.fillPath()
-    this.graphics.strokePath()
-
-    // "Head" indicator (front vertex)
-    this.graphics.fillStyle(0xffffff, 1)
-    this.graphics.fillCircle(vertices[0].x, vertices[0].y, 6)
   }
 
   /**
    * Draw the player with a temporary color (used for damage flash).
    */
   private DrawWithColor(color: number): void {
-    this.graphics.clear()
-
-    const vertices: Phaser.Math.Vector2[] = []
-    const angleStep = (Math.PI * 2) / this.sides
-
-    for (let i = 0; i < this.sides; i++) {
-      const angle = angleStep * i - Math.PI / 2
-      vertices.push(new Phaser.Math.Vector2(
-        Math.cos(angle) * this.radius,
-        Math.sin(angle) * this.radius
-      ))
-    }
-
-    this.graphics.fillStyle(color, 1)
-    this.graphics.lineStyle(3, 0xffffff, 1)
-
-    this.graphics.beginPath()
-    this.graphics.moveTo(vertices[0].x, vertices[0].y)
-    for (let i = 1; i < vertices.length; i++) {
-      this.graphics.lineTo(vertices[i].x, vertices[i].y)
-    }
-    this.graphics.closePath()
-    this.graphics.fillPath()
-    this.graphics.strokePath()
-
-    this.graphics.fillStyle(0xffffff, 1)
-    this.graphics.fillCircle(vertices[0].x, vertices[0].y, 6)
+    // Use sprite tinting instead of redrawing
+    this.sprite.setTint(color)
   }
 
   // ============================================================
@@ -463,7 +468,8 @@ export class Player extends Phaser.GameObjects.Container {
     // Flash red
     this.DrawWithColor(0xff0000)
     this.scene.time.delayedCall(100, () => {
-      this.Draw()
+      // Reset tint to show original sprite colors
+      this.sprite.setTint(0xffffff)  // White tint = no tint
     })
   }
 
@@ -482,13 +488,18 @@ export class Player extends Phaser.GameObjects.Container {
 
     this.shielded = true
 
-    // Create shield visual
-    this.shieldGraphics = this.scene.add.graphics()
-    this.shieldGraphics.lineStyle(3, 0x00ffff, 0.8)
-    this.shieldGraphics.strokeCircle(0, 0, this.radius + 10)
-    this.shieldGraphics.fillStyle(0x00ffff, 0.2)
-    this.shieldGraphics.fillCircle(0, 0, this.radius + 10)
-    this.add(this.shieldGraphics)
+    // Create shield visual using sprite
+    const shieldTexture = TextureGenerator.getOrCreateCircle(this.scene, {
+      radius: this.radius + 10,
+      fillColor: 0x00ffff,
+      fillAlpha: 0.2,
+      strokeWidth: 3,
+      strokeColor: 0x00ffff,
+      strokeAlpha: 0.8
+    })
+    this.shieldSprite = this.scene.add.sprite(0, 0, shieldTexture)
+    this.shieldSprite.setScale(TextureGenerator.getDisplayScale())  // Scale down high-res texture
+    this.add(this.shieldSprite)
 
     // Deactivate after 3 seconds
     this.scene.time.delayedCall(3000, () => {
@@ -501,9 +512,9 @@ export class Player extends Phaser.GameObjects.Container {
    */
   private deactivateShield(): void {
     this.shielded = false
-    if (this.shieldGraphics) {
-      this.shieldGraphics.destroy()
-      this.shieldGraphics = null
+    if (this.shieldSprite) {
+      this.shieldSprite.destroy()
+      this.shieldSprite = null
     }
   }
 

@@ -1,5 +1,6 @@
 import { Enemy } from './Enemy'
-import { AcidBullet } from '../projectiles/enemy_projectiles/AcidBullet' 
+import { AcidBullet } from '../projectiles/enemy_projectiles/AcidBullet'
+import { TextureGenerator } from '../../utils/TextureGenerator'
 
 /**
  * Square enemy - balanced stats.
@@ -7,7 +8,8 @@ import { AcidBullet } from '../projectiles/enemy_projectiles/AcidBullet'
 export class SuperSquare extends Enemy {
 
   private lastFireTime: number = 0
-  private fireCooldown: number = 3000 
+  private fireCooldown: number = 3000
+  private hasOutline: boolean = false
 
   SetDefaults(): void {
     this.health = 120
@@ -18,6 +20,32 @@ export class SuperSquare extends Enemy {
     this.color = 0x33ff33
     this.scoreChance = 0.5
     this.speedCap = 2.45  // Normal cap (2x)
+  }
+
+  /**
+   * Add outer outline sprite for Super variant
+   */
+  Draw(): void {
+    super.Draw()
+
+    // Create outer outline sprite if it doesn't exist
+    if (!this.hasOutline) {
+      // Generate outline texture on-demand with larger radius and no fill
+      const outlineKey = TextureGenerator.getOrCreatePolygon(this.scene, {
+        sides: this.sides,
+        radius: this.radius + 6,  // Larger radius for outline effect
+        fillColor: 0x000000,
+        fillAlpha: 0,  // Transparent fill
+        strokeWidth: 2,
+        strokeColor: 0xffffff,
+        strokeAlpha: 0.8
+      })
+
+      const outlineSprite = this.scene.add.sprite(0, 0, outlineKey)
+      outlineSprite.setScale(TextureGenerator.getDisplayScale())  // Scale down high-res texture
+      this.container.add(outlineSprite)
+      this.hasOutline = true
+    }
   }
 
   AI(_playerX: number, _playerY: number): void {
@@ -35,53 +63,4 @@ export class SuperSquare extends Enemy {
     }
   }
 
-  Draw(): void {
-    this.graphics.clear()
-
-    // Calculate square vertices
-    const vertices: Phaser.Math.Vector2[] = []
-    const angleStep = (Math.PI * 2) / this.sides
-
-    for (let i = 0; i < this.sides; i++) {
-      const angle = angleStep * i - Math.PI / 2
-      vertices.push(new Phaser.Math.Vector2(
-        Math.cos(angle) * this.radius,
-        Math.sin(angle) * this.radius
-      ))
-    }
-
-    // Draw inner square (normal)
-    this.graphics.fillStyle(this.color, 1)
-    this.graphics.lineStyle(2, 0xffffff, 0.5)
-
-    this.graphics.beginPath()
-    this.graphics.moveTo(vertices[0].x, vertices[0].y)
-    for (let i = 1; i < vertices.length; i++) {
-      this.graphics.lineTo(vertices[i].x, vertices[i].y)
-    }
-    this.graphics.closePath()
-    this.graphics.fillPath()
-    this.graphics.strokePath()
-
-    // Draw outer perimeter with space
-    const outerRadius = this.radius + 6
-    const outerVertices: Phaser.Math.Vector2[] = []
-
-    for (let i = 0; i < this.sides; i++) {
-      const angle = angleStep * i - Math.PI / 2
-      outerVertices.push(new Phaser.Math.Vector2(
-        Math.cos(angle) * outerRadius,
-        Math.sin(angle) * outerRadius
-      ))
-    }
-
-    this.graphics.lineStyle(1.5, 0xffffff, 0.8)
-    this.graphics.beginPath()
-    this.graphics.moveTo(outerVertices[0].x, outerVertices[0].y)
-    for (let i = 1; i < outerVertices.length; i++) {
-      this.graphics.lineTo(outerVertices[i].x, outerVertices[i].y)
-    }
-    this.graphics.closePath()
-    this.graphics.strokePath()
-  }
 }

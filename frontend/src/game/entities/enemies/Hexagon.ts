@@ -1,4 +1,5 @@
 import { Enemy } from './Enemy'
+import { TextureGenerator } from '../../utils/TextureGenerator'
 
 /**
  * Hexagon enemy - tanky boss-like enemy with shield ability.
@@ -10,7 +11,7 @@ export class Hexagon extends Enemy {
   private maxShieldHealth: number = 0
   private shieldRechargeDelay: number = 5000 // Time before shield can recharge after breaking
   private lastShieldBreakTime: number = 0
-  private shieldGraphics: Phaser.GameObjects.Graphics | null = null
+  private shieldSprite: Phaser.GameObjects.Sprite | null = null
 
   SetDefaults(): void {
     this.health = 575
@@ -74,10 +75,19 @@ export class Hexagon extends Enemy {
     this.shieldHealth = this.maxShieldHealth
     console.log(`Hexagon ${this.id} shield activated: ${this.shieldHealth} HP`)
 
-    // Create shield visual as separate graphics object
-    if (!this.shieldGraphics) {
-      this.shieldGraphics = this.scene.add.graphics()
-      this.container.add(this.shieldGraphics)
+    // Create shield visual as sprite using cached texture
+    if (!this.shieldSprite) {
+      const shieldTextureKey = TextureGenerator.getOrCreateCircle(this.scene, {
+        radius: this.radius + 5,
+        fillColor: 0x00ffff,
+        fillAlpha: 0.2,
+        strokeWidth: 3,
+        strokeColor: 0x00ffff,
+        strokeAlpha: 1.0
+      })
+      this.shieldSprite = this.scene.add.sprite(0, 0, shieldTextureKey)
+      this.shieldSprite.setScale(TextureGenerator.getDisplayScale())  // Scale down high-res texture
+      this.container.add(this.shieldSprite)
     }
     this._updateShieldVisual()
   }
@@ -87,25 +97,20 @@ export class Hexagon extends Enemy {
     this.lastShieldBreakTime = this.scene.time.now
 
     // Remove shield visual
-    if (this.shieldGraphics) {
-      this.shieldGraphics.destroy()
-      this.shieldGraphics = null
+    if (this.shieldSprite) {
+      this.shieldSprite.destroy()
+      this.shieldSprite = null
     }
   }
 
   private _updateShieldVisual(): void {
-    if (!this.shieldGraphics) return
-
-    this.shieldGraphics.clear()
+    if (!this.shieldSprite) return
 
     // Shield opacity based on remaining health
     const shieldPercent = this.shieldHealth / this.maxShieldHealth
     const alpha = 0.4 + (shieldPercent * 0.4) // 0.4 to 0.8
 
-    // Shield circle
-    this.shieldGraphics.lineStyle(3, 0x00ffff, alpha)
-    this.shieldGraphics.strokeCircle(0, 0, this.radius + 5)
-    this.shieldGraphics.fillStyle(0x00ffff, alpha * 0.2)
-    this.shieldGraphics.fillCircle(0, 0, this.radius + 5)
+    // Update sprite alpha (no redrawing needed!)
+    this.shieldSprite.setAlpha(alpha)
   }
 }

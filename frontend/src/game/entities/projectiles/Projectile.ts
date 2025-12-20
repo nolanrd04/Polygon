@@ -1,16 +1,54 @@
 import Phaser from 'phaser'
-// import { Player } from '../Player'
 import { GameManager } from '../../core/GameManager'
+import { TextureGenerator } from '../../utils/TextureGenerator'
 
 /**
  * Base class for all projectiles.
  *
+ * ============================================================================
+ * PERFORMANCE OPTIMIZATION - SPRITE RENDERING
+ * ============================================================================
+ *
+ * This class uses GPU-accelerated sprites instead of CPU-intensive graphics
+ * drawing for massive performance gains.
+ *
+ * HOW IT WORKS:
+ * - Circle textures are pre-generated once at startup
+ * - Each projectile uses a sprite with color/size via tint/scale
+ * - Special projectiles (Laser, Zapper, etc.) can opt into Graphics
+ *
+ * CUSTOMIZATION:
+ * - Most projectiles automatically use sprites (no code changes needed)
+ * - For special effects (beams, lightning, trails), set:
+ *   ```typescript
+ *   usesCustomRendering = true
+ *   ```
+ *   Then override Draw() for custom graphics
+ *
+ * ============================================================================
+ * HOW TO CREATE A NEW PROJECTILE
+ * ============================================================================
+ *
  * To create a new projectile type, extend this class and override:
- * - SetDefaults() - Define stats like damage, speed, size, pierce
- * - Draw() - Define how the projectile looks
- * - AI() - Define behavior each frame (optional)
+ * - SetDefaults() - Define stats like damage, speed, size, pierce, color
+ * - AI() - Define behavior each frame (optional, for homing/etc)
  * - OnHitNPC() - What happens when hitting an enemy (optional)
  * - OnKill() - What happens when projectile is destroyed (optional)
+ *
+ * DYNAMIC PROPERTIES:
+ * ```typescript
+ * this.color = 0xff0000 // Updates sprite tint automatically
+ * this.size = 10        // Updates sprite scale automatically
+ * ```
+ *
+ * CUSTOM RENDERING (opt-in for special effects):
+ * ```typescript
+ * usesCustomRendering = true // Forces Graphics rendering
+ * Draw(): void {
+ *   this.graphics.clear()
+ *   // Your custom drawing code (beams, lightning, etc.)
+ * }
+ * ```
  */
 export abstract class Projectile {
   id: number = 0
@@ -111,14 +149,24 @@ export abstract class Projectile {
   /** The Phaser scene this projectile belongs to. Use for spawning effects, timers, etc. */
   protected scene!: Phaser.Scene
 
-  /** The container holding this projectile's graphics. Used internally for physics. */
+  /** The container holding this projectile. Used internally for physics. */
   protected container!: Phaser.GameObjects.Container
 
-  /** The graphics object for drawing. Use this in Draw() to create visuals. */
-  protected graphics!: Phaser.GameObjects.Graphics
+  /** Main sprite for rendering. Most projectiles use sprites. */
+  protected sprite!: Phaser.GameObjects.Sprite
+
+  /** Optional graphics object for custom rendering (beams, lightning, etc.) */
+  protected graphics?: Phaser.GameObjects.Graphics
+
+  /** Set to true to enable custom Graphics rendering instead of sprites */
+  usesCustomRendering: boolean = false
 
   /** The physics body. Used internally for movement and collision. */
   protected body!: Phaser.Physics.Arcade.Body
+
+  /** Tracks the current color/size to detect changes for sprite tinting/scaling */
+  private _previousColor: number = 0
+  private _previousSize: number = 0
 
   /** How many enemies this projectile has already pierced through */
   currentPierceCount: number = 0
@@ -153,26 +201,41 @@ export abstract class Projectile {
   abstract SetDefaults(): void
 
   /**
-   * Draw the projectile's visuals. Called once after spawning.
-   * Use this.graphics to draw shapes. Default draws a circle with glow.
-   *
-   * Example:
-   * ```
-   * Draw() {
-   *   // Draw a triangle instead of circle
-   *   this.graphics.fillStyle(this.color, 1)
-   *   this.graphics.fillTriangle(-5, 5, 5, 0, -5, -5)
-   * }
-   * ```
+   * TMODLOADER-STYLE RENDERING HOOKS
+   * PreDraw/Draw/PostDraw for customizable sprite rendering.
+   */
+  PreDraw(): boolean {
+    return true
+  }
+
+  /**
+   * Renders the projectile's sprite.
+   * Default: Updates sprite tint/scale based on color/size.
+   * Override for custom rendering (multiple sprites, special textures).
    */
   Draw(): void {
-    // Main projectile body
-    this.graphics.fillStyle(this.color, 1)
-    this.graphics.fillCircle(0, 0, this.size)
+    // Update sprite if color changed
+    if (this.color !== this._previousColor) {
+      this.sprite.setTint(this.color)
+      this._previousColor = this.color
+    }
 
-    // Glow effect behind it
-    this.graphics.fillStyle(this.color, this.glowAlpha)
-    this.graphics.fillCircle(0, 0, this.size * this.glowScale)
+    // Update sprite if size changed
+    if (this.size !== this._previousSize) {
+      const { key, scale } = TextureGenerator.getCircleTextureWithScale(this.scene, this.size)
+      if (this.sprite.texture.key !== key) {
+        this.sprite.setTexture(key)
+      }
+      this.sprite.setScale(scale)
+      this._previousSize = this.size
+    }
+  }
+
+  /**
+   * Called after Draw(). Use for trails, particles, effects.
+   */
+  PostDraw(): void {
+    // Default: no post effects
   }
 
   /**
@@ -260,6 +323,8 @@ export abstract class Projectile {
     this.positionX = startX
     this.positionY = startY
     this.spawnTime = scene.time.now
+    this._previousColor = this.color // Track initial color
+    this._previousSize = this.size   // Track initial size
 
     // Initialize old position tracking arrays
     if (this.doOldPositionTracking && this.oldTrackingCounter > 0) {
@@ -269,8 +334,33 @@ export abstract class Projectile {
 
     // Create the visual container
     this.container = scene.add.container(startX, startY)
-    this.graphics = scene.add.graphics()
-    this.container.add(this.graphics)
+
+    // ============ CREATE SPRITE (Always) ============
+    // Generate or get cached texture for this projectile
+    // Player projectiles get a white stroke to distinguish them
+    const textureKey = TextureGenerator.getOrCreateCircle(scene, {
+      radius: this.size,
+      fillColor: 0xffffff,
+      fillAlpha: 1.0,
+      strokeWidth: this.owner === 'player' ? 2 : 0,  // White stroke for player projectiles
+      strokeColor: 0xffffff,
+      strokeAlpha: 1.0,
+      glowRadius: this.size * 0.5,
+      glowAlpha: 0.3
+    })
+
+    this.sprite = scene.add.sprite(0, 0, textureKey)
+    this.sprite.setTint(this.color)
+    this.sprite.setScale(TextureGenerator.getDisplayScale())  // Scale down high-res texture
+    this.container.add(this.sprite)
+
+    // ============ CREATE GRAPHICS (Optional for custom rendering) ============
+    if (this.usesCustomRendering) {
+      this.graphics = scene.add.graphics()
+      this.container.add(this.graphics)
+      // Hide sprite when using custom graphics
+      this.sprite.setVisible(false)
+    }
 
     // Add to scene and enable physics
     scene.add.existing(this.container)
@@ -290,8 +380,8 @@ export abstract class Projectile {
     this.body.setVelocity(this.velocityX, this.velocityY)
     this.container.rotation = angle
 
-    // Draw the projectile
-    this.Draw()
+    // Initial render
+    this._renderFrame()
 
     return this.container
   }
@@ -327,8 +417,17 @@ export abstract class Projectile {
     // Apply any velocity changes from AI
     this.body.setVelocity(this.velocityX, this.velocityY)
 
-    // Redraw every frame to update trails and animations
+    // ============ RENDER FRAME ============
+    this._renderFrame()
+  }
+
+  /** @internal Calls PreDraw/Draw/PostDraw */
+  private _renderFrame(): void {
+    const shouldDraw = this.PreDraw()
+    if (!shouldDraw) return
+
     this.Draw()
+    this.PostDraw()
   }
 
   /** @internal Checks if this projectile can hit a specific enemy (cooldown has elapsed) */

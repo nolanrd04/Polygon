@@ -27,34 +27,7 @@ export class Spinner extends Projectile {
     this.timeLeft = this.spinDuration
   }
 
-  Draw(): void {
-    this.graphics.clear()
-    this.graphics.lineStyle(3, this.color, 0.7)
-
-    // Draw spinning lines
-    for (let i = 0; i < this.lineCount; i++) {
-      const angle = this.spinRotation + (Math.PI * 2 / this.lineCount) * i
-      this.graphics.beginPath()
-      this.graphics.moveTo(0, 0)
-      this.graphics.lineTo(
-        Math.cos(angle) * this.radius,
-        Math.sin(angle) * this.radius
-      )
-      this.graphics.strokePath()
-    }
-
-    // Outer circle
-    this.graphics.lineStyle(1, this.color, 0.3)
-    this.graphics.strokeCircle(0, 0, this.radius)
-  }
-
   AI(): void {
-    // Rotate the spinner
-    this.spinRotation += 0.3
-
-    // Redraw with new rotation
-    this.Draw()
-
     // Stay in place (would follow player position in update)
     this.velocityX = 0
     this.velocityY = 0
