@@ -153,6 +153,7 @@ export class HomingBullet extends Projectile {
  */
 export class ExplosiveBullet extends Projectile {
   private explosionRadius: number = 50
+  private explosionDamage: number = 0 // Additional damage on top of bullet damage
 
   SetDefaults(): void {
     this.damage = 20
@@ -163,6 +164,7 @@ export class ExplosiveBullet extends Projectile {
     this.knockback = 75
 
     this.explosionRadius = UpgradeModifierSystem.applyModifiers('bullet', 'explosionRadius', this.explosionRadius)
+    this.explosionDamage = UpgradeModifierSystem.applyModifiers('bullet', 'explosionDamage', 0)
   }
 
   OnObstacleCollide(): void {
@@ -198,8 +200,12 @@ export class ExplosiveBullet extends Projectile {
   // class specific explosion damage logic
   DoExplosionDamage(): void {
     // Use this.damage directly - it's already been modified by Player.applyUpgradeModifiers()
-    // No need for damageMultiplier here as it's already factored in
-    const explosionDamage = this.damage
+    // Add the explosionDamage modifier on top (both additive and multiplicative mods)
+    const baseDamage = this.damage + this.explosionDamage
+    
+    // Apply explosionDamage multiplicative modifiers if they exist
+    const multiplicativeBonus = UpgradeModifierSystem.getMultiplicativeModifier('bullet', 'explosionDamage')
+    const explosionDamage = baseDamage * (1 + multiplicativeBonus)
 
     // console.log('Explosive bullet explosion damage:', explosionDamage)
 

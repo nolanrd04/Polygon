@@ -1,4 +1,5 @@
 import { UpgradeEffectSystem } from './UpgradeEffectSystem'
+import { UpgradeModifierSystem } from './UpgradeModifierSystem'
 import { GameManager } from '../../core/GameManager'
 import { EventBus } from '../../core/EventBus'
 
@@ -60,7 +61,12 @@ export function registerEffectHandlers(): void {
   // ============================================================
   UpgradeEffectSystem.registerEffect('explode_on_kill', {
     onKill: (enemy: any) => {
-      const damage = UpgradeEffectSystem.getEffectValue('explode_on_kill')
+      let damage = UpgradeEffectSystem.getEffectValue('explode_on_kill')
+      
+      // Apply explosionDamage upgrades (both additive and multiplicative)
+      const additiveMod = UpgradeModifierSystem.getAdditiveModifier('bullet', 'explosionDamage')
+      const multiplicativeMod = UpgradeModifierSystem.getMultiplicativeModifier('bullet', 'explosionDamage')
+      damage = (damage + additiveMod) * (1 + multiplicativeMod)
 
       // Emit event for explosion effect
       // The scene will handle creating the visual and dealing AOE damage

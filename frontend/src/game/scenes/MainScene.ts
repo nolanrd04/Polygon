@@ -164,8 +164,14 @@ export class MainScene extends Phaser.Scene {
       for (const enemy of enemies) {
         const dist = Phaser.Math.Distance.Between(data.x, data.y, enemy.x, enemy.y)
         if (dist <= data.radius) {
-          // console.log(`  - Enemy ${enemy.id} at distance ${Math.round(dist)}, dealing ${data.damage} damage`)
-          enemy.takeDamage(data.damage)
+          // Calculate damage falloff based on distance from center
+          // At center (dist=0): 100% damage
+          // At edge (dist=radius): minimum damage (5% of base)
+          const falloffFactor = Math.max(0.05, 1 - (dist / data.radius) * 0.95)
+          const actualDamage = data.damage * falloffFactor
+          
+          // console.log(`  - Enemy ${enemy.id} at distance ${Math.round(dist)}, falloff=${falloffFactor.toFixed(2)}, dealing ${actualDamage.toFixed(1)} damage`)
+          enemy.takeDamage(actualDamage)
         }
       }
     })
