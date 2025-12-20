@@ -159,20 +159,20 @@ export class WaveManager {
     else if (this.currentWave < 7) {
       weights.push({ type: 'triangle', weight: 60 })
       weights.push({ type: 'square', weight: 30 })
-      weights.push({ type: 'shooter', weight: 10 })
+      weights.push({ type: 'super_triangle', weight: 10 })
     }
     // Wave 7: Add pentagons, more shooters
     else if (this.currentWave == 7) {
       weights.push({ type: 'triangle', weight: 40 })
       weights.push({ type: 'square', weight: 25 })
-      weights.push({ type: 'shooter', weight: 20 })
+      weights.push({ type: 'super_triangle', weight: 20 })
       weights.push({ type: 'pentagon', weight: 15 })
     }
     // Wave 8-10: Introduce diamonds
     else if (this.currentWave < 11) {
       weights.push({ type: 'triangle', weight: 30 })
       weights.push({ type: 'square', weight: 20 })
-      weights.push({ type: 'shooter', weight: 20 })
+      weights.push({ type: 'super_triangle', weight: 20 })
       weights.push({ type: 'pentagon', weight: 15 })
       weights.push({ type: 'diamond', weight: 15 })
     }
@@ -180,7 +180,7 @@ export class WaveManager {
     {
       weights.push({ type: 'triangle', weight: 25 })
       weights.push({ type: 'square', weight: 20 })
-      weights.push({ type: 'shooter', weight: 20 })
+      weights.push({ type: 'super_triangle', weight: 20 })
       weights.push({ type: 'pentagon', weight: 15 })
       weights.push({ type: 'diamond', weight: 15 })
       weights.push({ type: 'hexagon', weight: 5 })
@@ -189,7 +189,7 @@ export class WaveManager {
     {
       weights.push({ type: 'triangle', weight: 20 })
       weights.push({ type: 'square', weight: 20 })
-      weights.push({ type: 'shooter', weight: 20 })
+      weights.push({ type: 'super_triangle', weight: 20 })
       weights.push({ type: 'pentagon', weight: 15 })
       weights.push({ type: 'diamond', weight: 20 })
       weights.push({ type: 'hexagon', weight: 5 })
@@ -198,7 +198,7 @@ export class WaveManager {
     {
       weights.push({ type: 'triangle', weight: 10 })
       weights.push({ type: 'square', weight: 20 })
-      weights.push({ type: 'shooter', weight: 45 })
+      weights.push({ type: 'super_triangle', weight: 45 })
       weights.push({ type: 'pentagon', weight: 15 })
       weights.push({ type: 'diamond', weight: 10 })
     }
@@ -206,14 +206,15 @@ export class WaveManager {
     {
       weights.push({ type: 'triangle', weight: 10 })
       weights.push({ type: 'square', weight: 10 })
-      weights.push({ type: 'shooter', weight: 20 })
+      weights.push({ type: 'super_triangle', weight: 20 })
       weights.push({ type: 'pentagon', weight: 15 })
       weights.push({ type: 'diamond', weight: 45 })
     }
     else if (this.currentWave == 15)
+      // introduce octogons
     {
       weights.push({ type: 'square', weight: 30 })
-      weights.push({ type: 'shooter', weight: 20 })
+      weights.push({ type: 'super_triangle', weight: 20 })
       weights.push({ type: 'pentagon', weight: 15 })
       weights.push({ type: 'diamond', weight: 20 })
       weights.push({ type: 'hexagon', weight: 5 })
@@ -222,7 +223,7 @@ export class WaveManager {
     else if (this.currentWave == 16)
     {
       weights.push({ type: 'square', weight: 25 })
-      weights.push({ type: 'shooter', weight: 20 })
+      weights.push({ type: 'super_triangle', weight: 20 })
       weights.push({ type: 'pentagon', weight: 15 })
       weights.push({ type: 'diamond', weight: 15 })
       weights.push({ type: 'hexagon', weight: 10 })
@@ -232,7 +233,7 @@ export class WaveManager {
     else {
       weights.push({ type: 'triangle', weight: 5 })
       weights.push({ type: 'square', weight: 10 })
-      weights.push({ type: 'shooter', weight: 20 })
+      weights.push({ type: 'super_triangle', weight: 20 })
       weights.push({ type: 'pentagon', weight: 15 })
       weights.push({ type: 'hexagon', weight: 15 })
       weights.push({ type: 'diamond', weight: 20 })

@@ -4,7 +4,7 @@ import { AcidBullet } from '../projectiles/enemy_projectiles/AcidBullet'
 /**
  * Square enemy - balanced stats.
  */
-export class ActivatedSquare extends Enemy {
+export class SuperSquare extends Enemy {
 
   private lastFireTime: number = 0
   private fireCooldown: number = 3000 

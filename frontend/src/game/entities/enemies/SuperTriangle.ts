@@ -2,7 +2,7 @@ import Phaser from 'phaser'
 import { Enemy } from './Enemy'
 import { EnemyBullet } from '../projectiles/enemy_projectiles/EnemyBullet'
 
-export class Shooter extends Enemy {
+export class SuperTriangle extends Enemy {
   private lastFireTime: number = 0
   private fireCooldown: number = 1000 // milliseconds
 
@@ -12,14 +12,56 @@ export class Shooter extends Enemy {
     this.damage = 20
     this.sides = 3
     this.radius = 15
-    this.color = 0x4287f5
+    this.color = 0xff0000
     this.scoreChance = 0.5
     this.speedCap = 1.5  // Capped at 1.5x (already fast)
   }
 
   Draw(): void {
-    // Call parent Draw to render the polygon
-    super.Draw()
+    const vertices: Phaser.Math.Vector2[] = []
+    const angleStep = (Math.PI * 2) / this.sides
+
+    for (let i = 0; i < this.sides; i++) {
+      const angle = angleStep * i - Math.PI / 2
+      vertices.push(new Phaser.Math.Vector2(
+        Math.cos(angle) * this.radius,
+        Math.sin(angle) * this.radius
+      ))
+    }
+
+    // Draw inner square (normal)
+    this.graphics.fillStyle(this.color, 1)
+    this.graphics.lineStyle(2, 0xffffff, 0.5)
+
+    this.graphics.beginPath()
+    this.graphics.moveTo(vertices[0].x, vertices[0].y)
+    for (let i = 1; i < vertices.length; i++) {
+      this.graphics.lineTo(vertices[i].x, vertices[i].y)
+    }
+    this.graphics.closePath()
+    this.graphics.fillPath()
+    this.graphics.strokePath()
+
+    // Draw outer perimeter with space
+    const outerRadius = this.radius + 6
+    const outerVertices: Phaser.Math.Vector2[] = []
+
+    for (let i = 0; i < this.sides; i++) {
+      const angle = angleStep * i - Math.PI / 2
+      outerVertices.push(new Phaser.Math.Vector2(
+        Math.cos(angle) * outerRadius,
+        Math.sin(angle) * outerRadius
+      ))
+    }
+
+    this.graphics.lineStyle(1.5, 0xffffff, 0.8)
+    this.graphics.beginPath()
+    this.graphics.moveTo(outerVertices[0].x, outerVertices[0].y)
+    for (let i = 1; i < outerVertices.length; i++) {
+      this.graphics.lineTo(outerVertices[i].x, outerVertices[i].y)
+    }
+    this.graphics.closePath()
+    this.graphics.strokePath()
 
     // Add a "head" indicator (front vertex marker) so player knows which way it faces
     // const _angleStep = (Math.PI * 2) / this.sides

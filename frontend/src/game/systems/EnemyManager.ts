@@ -74,42 +74,6 @@ export class EnemyManager {
   }
 
   /**
-   * Spawn a wave of enemies.
-   */
-  spawnWave(wave: number): void {
-    this.currentWave = wave
-    this.scaleEnemyStats(wave)
-    
-    const count = this.getEnemyCount(wave)
-    const types = this.getAvailableTypes(wave)
-
-    for (let i = 0; i < count; i++) {
-      const typeId = types[Math.floor(Math.random() * types.length)]
-      this.scene.time.delayedCall(i * 500, () => {
-        this.spawnEnemy(typeId)
-      })
-    }
-  }
-
-  private getEnemyCount(wave: number): number {
-    return Math.floor(5 + wave * 2 + Math.pow(wave, 1.2))
-  }
-
-  private getAvailableTypes(wave: number): string[] {
-    const types: string[] = ['triangle']
-
-    if (wave >= 3) types.push('square')
-    if (wave >= 5) types.push('dasher')
-    if (wave >= 6) types.push('pentagon')
-    if (wave >= 7) types.push('shooter')
-    if (wave >= 8) types.push('exploder')
-    if (wave >= 10) types.push('hexagon')
-    if (wave >= 11) types.push('diamond')
-
-    return types
-  }
-
-  /**
    * Update all enemies and enemy projectiles.
    */
   update(playerX: number, playerY: number): void {

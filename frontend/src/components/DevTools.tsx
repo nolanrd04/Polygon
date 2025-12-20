@@ -34,9 +34,9 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
     { id: 'pentagon', name: 'Pentagon', description: 'Tanky enemy' },
     { id: 'hexagon', name: 'Hexagon', description: 'Enemy with shield' },
     { id: 'diamond', name: 'Diamond', description: 'Dashes at player' },
-    { id: 'shooter', name: 'Shooter', description: 'Ranged attacker' },
+    { id: 'super_triangle', name: 'Super Triangle', description: 'Ranged attacker' },
     { id: 'octogon', name: 'Octogon', description: 'Tanky enemy that splits on death' },
-    { id: 'activated_square', name: 'Activated Square', description: 'Enhanced square enemy with special abilities' },
+    { id: 'super_square', name: 'Super Square', description: 'Enhanced square enemy with special abilities' },
     { id: 'dodecahedron', name: 'Dodecahedron', description: 'Boss enemy with high health' }
   ]
 

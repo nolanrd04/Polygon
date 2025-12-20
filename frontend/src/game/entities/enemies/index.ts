@@ -16,9 +16,9 @@ import { Diamond } from './Diamond'
 import { Pentagon } from './Pentagon'
 import { Hexagon } from './Hexagon'
 // import { Dasher } from './Dasher'
-import { Shooter } from './Shooter'
+import { SuperTriangle } from './SuperTriangle'
 import { Octogon } from './Octogon'
-import { ActivatedSquare } from './ActivatedSquare'
+import { SuperSquare } from './SuperSquare'
 
 // bosses
 import { Dodecahedron } from './Dodecahedron'
@@ -41,10 +41,10 @@ export const ENEMY_TYPES: EnemyType[] = [
   { id: 'pentagon', class: Pentagon },
   { id: 'hexagon', class: Hexagon },
   // { id: 'dasher', class: Dasher },
-  { id: 'shooter', class: Shooter },
+  { id: 'super_triangle', class: SuperTriangle },
   { id: 'octogon', class: Octogon },
   { id: 'dodecahedron', class: Dodecahedron },
-  { id: 'activated_square', class: ActivatedSquare },
+  { id: 'super_square', class: SuperSquare },
   // { id: 'exploder', class: Exploder },
 ]
 
