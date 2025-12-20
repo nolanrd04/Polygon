@@ -12,7 +12,7 @@ export class SuperSquare extends Enemy {
   SetDefaults(): void {
     this.health = 120
     this.speed = 90
-    this.damage = 75
+    this.damage = 17
     this.sides = 4
     this.radius = 20
     this.color = 0x33ff33

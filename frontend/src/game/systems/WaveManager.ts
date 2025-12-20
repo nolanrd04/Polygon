@@ -229,15 +229,34 @@ export class WaveManager {
       weights.push({ type: 'hexagon', weight: 10 })
       weights.push({type: 'octogon', weight: 15})
     }
+    else if (this.currentWave == 17)
+      // introducte super squares
+    {
+      weights.push({ type: 'square', weight: 35 })
+      weights.push({ type: 'super_triangle', weight: 15 })
+      weights.push({type: 'octogon', weight: 15})
+      weights.push({type: 'super_square', weight: 35})
+    }
+    else if (this.currentWave == 18)
+    {
+      weights.push({ type: 'square', weight: 20 })
+      weights.push({ type: 'super_triangle', weight: 10 })
+      weights.push({ type: 'pentagon', weight: 5 })
+      weights.push({ type: 'diamond', weight: 15 })
+      weights.push({ type: 'hexagon', weight: 10 })
+      weights.push({type: 'octogon', weight: 15})
+      weights.push({type: 'super_square', weight: 25})
+    }
     // Wave +: Full variety with hexagons
     else {
       weights.push({ type: 'triangle', weight: 5 })
       weights.push({ type: 'square', weight: 10 })
       weights.push({ type: 'super_triangle', weight: 20 })
-      weights.push({ type: 'pentagon', weight: 15 })
-      weights.push({ type: 'hexagon', weight: 15 })
+      weights.push({ type: 'pentagon', weight: 10 })
+      weights.push({ type: 'hexagon', weight: 10 })
       weights.push({ type: 'diamond', weight: 20 })
       weights.push({type: 'octogon', weight: 15})
+      weights.push({type: 'super_square', weight: 10})
     }
 
     return weights
