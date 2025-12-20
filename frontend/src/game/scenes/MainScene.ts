@@ -119,6 +119,19 @@ export class MainScene extends Phaser.Scene {
       this.waveManager.setWave(wave)
     })
     EventBus.on('enemy-explode', (data: { x: number; y: number; radius: number; damage: number }) => {
+      // Create explosion visual with a reddish color
+      const explosion = this.add.graphics()
+      explosion.fillStyle(0xff6b6b, 0.3)
+      explosion.fillCircle(data.x, data.y, data.radius)
+
+      // Fade out
+      this.tweens.add({
+        targets: explosion,
+        alpha: 0,
+        duration: 200,
+        onComplete: () => explosion.destroy()
+      })
+
       // Convert enemy-explode event to explosion-damage event so that blast radius and damage upgrades apply
       this.events.emit('explosion-damage', data)
     })
