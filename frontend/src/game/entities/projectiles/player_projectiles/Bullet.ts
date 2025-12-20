@@ -62,6 +62,7 @@ export class HomingBullet extends Projectile {
   // private _lastTargetId: number = -1
   private canHome: boolean = true
   private homeDelay: number = 125 // Delay before homing re-activates after hit (milliseconds)
+  private directionIndicator?: Phaser.GameObjects.Sprite
 
   // for ricochet detection
 
@@ -74,6 +75,39 @@ export class HomingBullet extends Projectile {
     this.color = 0x00ff00
     this.timeLeft = 3000 // Despawn after 3 seconds
     this.knockback = 1 // Push enemies back on hit
+  }
+
+  PreDraw(): boolean {
+      if (this.sprite.texture.key.startsWith('circle_') && this.sprite.texture.key.includes('_fffffff_1_s')) {
+
+      const textureKey = TextureGenerator.getOrCreateCircle(this.scene, {
+        radius: this.size,
+        fillColor: 0xffffff,
+        fillAlpha: 0.5  // Single semi-transparent circle, no glow
+      })
+
+      const oldSprite = this.sprite
+      this.sprite = this.scene.add.sprite(0, 0, textureKey)
+      this.sprite.setTint(this.color)
+      this.sprite.setScale(TextureGenerator.getDisplayScale())  // Scale down high-res texture
+      this.container.add(this.sprite)
+      oldSprite.destroy()
+
+      // Add direction indicator (solid triangle pointing right)
+      if (!this.directionIndicator) {
+        const triangleTexture = TextureGenerator.getOrCreatePolygon(this.scene, {
+          sides: 3,
+          radius: this.size * 0.9,  // Smaller than the circle
+          fillColor: this.color,
+          fillAlpha: 1.0,  // Solid
+          rotation: 0  // Point to the right
+        })
+        this.directionIndicator = this.scene.add.sprite(0, 0, triangleTexture)
+        this.directionIndicator.setScale(TextureGenerator.getDisplayScale())
+        this.container.add(this.directionIndicator)
+      }
+    }
+    return true
   }
 
   AI(): void {
