@@ -211,8 +211,18 @@ export class Player extends Phaser.GameObjects.Container {
    * Draw the player with a temporary color (used for damage flash).
    */
   private DrawWithColor(color: number): void {
-    // Use sprite tinting instead of redrawing
-    this.sprite.setTint(color)
+    // Create temporary texture with the flash color
+    const tempTexture = TextureGenerator.getOrCreatePolygon(this.scene, {
+      sides: this.sides,
+      radius: this.radius,
+      fillColor: color,  // Flash color (e.g., red for damage)
+      fillAlpha: 1.0,
+      strokeWidth: 3,
+      strokeColor: 0xffffff,  // Keep white stroke
+      strokeAlpha: 1.0,
+      rotation: -Math.PI / 2
+    })
+    this.sprite.setTexture(tempTexture)
   }
 
   // ============================================================
@@ -468,8 +478,18 @@ export class Player extends Phaser.GameObjects.Container {
     // Flash red
     this.DrawWithColor(0xff0000)
     this.scene.time.delayedCall(100, () => {
-      // Reset tint to show original sprite colors
-      this.sprite.setTint(0xffffff)  // White tint = no tint
+      // Restore original player color texture
+      const originalTexture = TextureGenerator.getOrCreatePolygon(this.scene, {
+        sides: this.sides,
+        radius: this.radius,
+        fillColor: COLORS.player,
+        fillAlpha: 1.0,
+        strokeWidth: 3,
+        strokeColor: 0xffffff,
+        strokeAlpha: 1.0,
+        rotation: -Math.PI / 2
+      })
+      this.sprite.setTexture(originalTexture)
     })
   }
 
