@@ -127,7 +127,8 @@
       "maxStacks": 2,
       "cost": 20,
       "dependentOn": ["bullet_pierce_1"],
-      "dependencyCount": 1
+      "dependencyCount": 1,
+      "incompatibleWith": ["homing_bullets"]
     }
   ]
 }

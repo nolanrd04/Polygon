@@ -37,6 +37,7 @@ export interface UpgradeDefinition {
   // Dependencies
   dependentOn?: string[] // IDs of upgrades that must be owned
   dependencyCount?: number // How many of the dependent upgrades must be owned (default: 1)
+  incompatibleWith?: string[] // IDs of upgrades that cannot be owned if this upgrade is active
 
   // Cost
   cost?: number
@@ -105,6 +106,15 @@ class UpgradeSystemClass {
     // Check dependencies
     if (!this.canMeetDependencies(upgrade)) {
       return false
+    }
+
+    // Check incompatibilities
+    if (upgrade.incompatibleWith && upgrade.incompatibleWith.length > 0) {
+      for (const incompatibleId of upgrade.incompatibleWith) {
+        if (this.hasUpgrade(incompatibleId)) {
+          return false
+        }
+      }
     }
 
     // Check stack limit
