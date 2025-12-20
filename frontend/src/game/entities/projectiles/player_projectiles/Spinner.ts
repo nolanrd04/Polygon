@@ -16,7 +16,7 @@ export class Spinner extends Projectile {
   /** Number of spinning lines */
   lineCount: number = 6
 
-  private spinRotation: number = 0
+  // private spinRotation: number = 0
 
   SetDefaults(): void {
     this.damage = 20
