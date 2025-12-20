@@ -1,6 +1,7 @@
 import { Projectile } from '../Projectile'
 import { COLORS } from '../../../core/GameConfig'
 import { UpgradeEffectSystem, UpgradeModifierSystem } from '../../../systems/upgrades'
+import { TextureGenerator } from '../../../utils/TextureGenerator'
 
 /**
  * Standard bullet projectile.
@@ -209,10 +210,16 @@ export class ExplosiveBullet extends Projectile {
 
     // console.log('Explosive bullet explosion damage:', explosionDamage)
 
-    // Create explosion visual
-    const explosion = this.scene.add.graphics()
-    explosion.fillStyle(this.color, 0.3)
-    explosion.fillCircle(this.positionX, this.positionY, this.explosionRadius)
+    // Create explosion visual using TextureGenerator
+    const explosionTexture = TextureGenerator.getOrCreateCircle(this.scene, {
+      radius: this.explosionRadius,
+      fillColor: 0xffffff,
+      fillAlpha: 0.4
+    })
+
+    const explosion = this.scene.add.sprite(this.positionX, this.positionY, explosionTexture)
+    explosion.setTint(this.color)
+    explosion.setScale(TextureGenerator.getDisplayScale())
 
     // Fade out
     this.scene.tweens.add({
