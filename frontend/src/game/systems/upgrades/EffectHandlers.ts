@@ -64,7 +64,7 @@ export function registerEffectHandlers(): void {
 
       // Emit event for explosion effect
       // The scene will handle creating the visual and dealing AOE damage
-      enemy.scene?.events.emit('enemy-explode', {
+      EventBus.emit('enemy-explode', {
         x: enemy.x,
         y: enemy.y,
         radius: 60,

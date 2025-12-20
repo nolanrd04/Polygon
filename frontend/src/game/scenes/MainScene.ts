@@ -118,6 +118,10 @@ export class MainScene extends Phaser.Scene {
       this.enemyManager.clear()
       this.waveManager.setWave(wave)
     })
+    EventBus.on('enemy-explode', (data: { x: number; y: number; radius: number; damage: number }) => {
+      // Convert enemy-explode event to explosion-damage event so that blast radius and damage upgrades apply
+      this.events.emit('explosion-damage', data)
+    })
     EventBus.on('player-death', () => {
       // Display death message
       const deathText = this.add.text(
