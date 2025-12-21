@@ -144,11 +144,15 @@ export class WaveValidationService {
       // Get currently applied upgrades
       const appliedUpgrades = UpgradeSystem.getAppliedUpgrades().map(u => u.id)
 
+      // Get current player health
+      const currentHealth = GameManager.getState().playerStats.health
+
       const response = await axios.post('/api/waves/complete', {
         token: this.waveToken,
         wave: waveNumber,
         kills: this.totalKills,
         total_damage: this.totalDamage,
+        current_health: currentHealth,
         frame_samples: this.frameSamples,
         enemy_deaths: this.enemyDeaths,
         upgrades_used: appliedUpgrades

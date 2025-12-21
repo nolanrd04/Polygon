@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from app.core.database import get_database
 from app.core.security import get_current_user
 from app.models.user import User
-from app.models.game_save import GameSave, GameSaveResponse
+from app.models.game_save import GameSave, GameSaveResponse, OfferedUpgrade
 from app.repositories.game_save_repository import GameSaveRepository
 
 router = APIRouter()
@@ -22,6 +22,7 @@ class GameSaveCreate(BaseModel):
     current_kills: int = Field(default=0, ge=0)
     current_damage_dealt: int = Field(default=0, ge=0)
     current_upgrades: List[str] = Field(default_factory=list)
+    offered_upgrades: List[OfferedUpgrade] = Field(default_factory=list)
     attack_stats: Dict[str, Any] = Field(...)
     unlocked_attacks: List[str] = Field(default_factory=list)
 
@@ -51,6 +52,7 @@ async def get_save(
         current_kills=save.current_kills,
         current_damage_dealt=save.current_damage_dealt,
         current_upgrades=save.current_upgrades,
+        offered_upgrades=save.offered_upgrades,
         attack_stats=save.attack_stats,
         unlocked_attacks=save.unlocked_attacks,
         created_at=save.created_at,
@@ -85,6 +87,7 @@ async def create_or_update_save(
                 "current_kills": save_data.current_kills,
                 "current_damage_dealt": save_data.current_damage_dealt,
                 "current_upgrades": save_data.current_upgrades,
+                "offered_upgrades": save_data.offered_upgrades,
                 "attack_stats": save_data.attack_stats,
                 "unlocked_attacks": save_data.unlocked_attacks
             }
@@ -104,6 +107,7 @@ async def create_or_update_save(
             current_kills=save_data.current_kills,
             current_damage_dealt=save_data.current_damage_dealt,
             current_upgrades=save_data.current_upgrades,
+            offered_upgrades=save_data.offered_upgrades,
             attack_stats=save_data.attack_stats,
             unlocked_attacks=save_data.unlocked_attacks
         )
@@ -122,6 +126,7 @@ async def create_or_update_save(
         current_kills=save.current_kills,
         current_damage_dealt=save.current_damage_dealt,
         current_upgrades=save.current_upgrades,
+        offered_upgrades=save.offered_upgrades,
         attack_stats=save.attack_stats,
         unlocked_attacks=save.unlocked_attacks,
         created_at=save.created_at,

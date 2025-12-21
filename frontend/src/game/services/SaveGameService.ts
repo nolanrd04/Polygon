@@ -1,6 +1,21 @@
 import axios from 'axios'
 import { GameManager } from '../core/GameManager'
 
+// Backend response format
+export interface BackendSaveData {
+  current_wave: number
+  current_points: number
+  seed: number
+  current_health: number
+  current_max_health: number
+  current_speed: number
+  current_polygon_sides: number
+  current_upgrades: string[]
+  attack_stats: Record<string, any>
+  unlocked_attacks: string[]
+}
+
+// Frontend game format
 export interface SavedGameData {
   wave: number
   points: number
@@ -18,6 +33,26 @@ export interface SavedGameData {
 
 export class SaveGameService {
   /**
+   * Transform backend save data to frontend format
+   */
+  private static transformBackendData(backendData: BackendSaveData): SavedGameData {
+    return {
+      wave: backendData.current_wave,
+      points: backendData.current_points,
+      seed: backendData.seed,
+      player_stats: {
+        health: backendData.current_health,
+        maxHealth: backendData.current_max_health,
+        speed: backendData.current_speed,
+        polygonSides: backendData.current_polygon_sides
+      },
+      applied_upgrades: backendData.current_upgrades,
+      attack_stats: backendData.attack_stats,
+      unlocked_attacks: backendData.unlocked_attacks
+    }
+  }
+
+  /**
    * Load the saved game for the current user
    */
   static async loadSavedGame(): Promise<SavedGameData | null> {
@@ -28,13 +63,14 @@ export class SaveGameService {
         return null
       }
 
-      const response = await axios.get('/api/saves/', {
+      const response = await axios.get<BackendSaveData | null>('/api/saves/', {
         headers: { Authorization: `Bearer ${token}` }
       })
 
       if (response.data) {
         console.log('Loaded saved game:', response.data)
-        return response.data
+        console.log('→ Points from database:', response.data.current_points, ', Wave:', response.data.current_wave)
+        return this.transformBackendData(response.data)
       }
 
       return null

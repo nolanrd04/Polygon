@@ -1,6 +1,17 @@
-from typing import List, Dict, Any, Optional
-from pydantic import Field
+from typing import List, Dict, Any, Optional, Union
+from pydantic import Field, BaseModel, field_validator
 from app.models.base import BaseMongoModel, PyObjectId
+
+
+class OfferedUpgrade(BaseModel):
+    """Tracks an offered upgrade and whether it's been purchased"""
+    id: str = Field(..., description="Upgrade ID")
+    purchased: bool = Field(default=False, description="Whether player purchased this upgrade")
+
+    @classmethod
+    def from_string(cls, upgrade_id: str) -> "OfferedUpgrade":
+        """Create OfferedUpgrade from old string format"""
+        return cls(id=upgrade_id, purchased=False)
 
 
 class GameSave(BaseMongoModel):
@@ -29,6 +40,29 @@ class GameSave(BaseMongoModel):
 
     # Upgrades applied in this run (resets on new game)
     current_upgrades: List[str] = Field(default_factory=list)
+
+    # Upgrades currently offered (for preventing reroll exploit)
+    # Each upgrade tracks whether it's been purchased
+    offered_upgrades: List[OfferedUpgrade] = Field(default_factory=list)
+
+    @field_validator('offered_upgrades', mode='before')
+    @classmethod
+    def convert_offered_upgrades(cls, v):
+        """Convert old string format to new OfferedUpgrade objects"""
+        if not v:
+            return []
+
+        # Check if already in correct format
+        if isinstance(v, list) and len(v) > 0:
+            first_item = v[0]
+            # Old format: list of strings
+            if isinstance(first_item, str):
+                return [OfferedUpgrade(id=upgrade_id, purchased=False) for upgrade_id in v]
+            # New format: list of dicts or OfferedUpgrade objects
+            elif isinstance(first_item, dict):
+                return [OfferedUpgrade(**item) if isinstance(item, dict) else item for item in v]
+
+        return v
 
     # Attack stats per attack type
     attack_stats: Dict[str, Any] = Field(default_factory=lambda: {
@@ -86,5 +120,6 @@ class GameSaveResponse(BaseMongoModel):
     current_kills: int
     current_damage_dealt: int
     current_upgrades: List[str]
+    offered_upgrades: List[OfferedUpgrade]
     attack_stats: Dict[str, Any]
     unlocked_attacks: List[str]

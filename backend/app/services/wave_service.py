@@ -55,11 +55,41 @@ class WaveService:
         game_save = await self.game_save_repo.find_by_user_id(user_id)
         current_upgrades = game_save.current_upgrades if game_save else []
 
-        # Roll 3 upgrades
-        offered_upgrades = self._roll_upgrades(
-            current_upgrades=current_upgrades,
-            attack_type="bullet"  # TODO: Get from game save
-        )
+        # Check if upgrades have already been offered for this wave (prevent reroll exploit)
+        if game_save and game_save.current_wave == wave_number and game_save.offered_upgrades:
+            # Use existing offered upgrades (player is resuming/reloading)
+            print(f"Using existing offered upgrades for wave {wave_number}: {[u.id for u in game_save.offered_upgrades]}")
+            from app.core.upgrade_data import get_upgrade
+            from app.models.game_save import OfferedUpgrade
+            # Return full upgrade data WITH purchased status
+            offered_upgrades = [
+                {**get_upgrade(u.id), "purchased": u.purchased}
+                for u in game_save.offered_upgrades
+            ]
+            # Store the OfferedUpgrade objects for later use
+            offered_upgrade_objs = game_save.offered_upgrades
+        else:
+            # Roll new upgrades (first time starting this wave)
+            offered_upgrades = self._roll_upgrades(
+                current_upgrades=current_upgrades,
+                attack_type="bullet"  # TODO: Get from game save
+            )
+            print(f"Rolled new upgrades for wave {wave_number}: {[u['id'] for u in offered_upgrades]}")
+
+            # Create OfferedUpgrade objects with purchased=False
+            from app.models.game_save import OfferedUpgrade
+            offered_upgrade_objs = [
+                OfferedUpgrade(id=u["id"], purchased=False)
+                for u in offered_upgrades
+            ]
+
+            # Save the offered upgrades to prevent reroll
+            if game_save:
+                await self.game_save_repo.update_by_id(
+                    game_save.id,
+                    {"offered_upgrades": [u.model_dump() for u in offered_upgrade_objs]}
+                )
+            # Note: For wave 1, we'll save it when creating the game save below
 
         # Create validation token
         player_stats_dict = {
@@ -97,6 +127,7 @@ class WaveService:
                 current_kills=0,
                 current_damage_dealt=0,
                 current_upgrades=[],
+                offered_upgrades=offered_upgrade_objs,
                 attack_stats={
                     "bullet": {
                         "damage": 10,
@@ -109,7 +140,7 @@ class WaveService:
                 unlocked_attacks=["bullet"]
             )
             await self.game_save_repo.create(new_save)
-            print(f"Created new game save for user {user_id} at wave 1")
+            print(f"Created new game save for user {user_id} at wave 1 with offered upgrades")
 
         return token, offered_upgrades
 
@@ -159,14 +190,16 @@ class WaveService:
 
         # 1. Validate upgrades used
         upgrades_used = wave_data.get("upgrades_used", [])
-        print(f"Validating upgrades: {upgrades_used} vs allowed: {token.allowed_upgrades}")
+        # Valid upgrades = previously allowed + newly offered this wave
+        valid_upgrades = set(token.allowed_upgrades + token.offered_upgrades)
+        print(f"Validating upgrades: {upgrades_used} vs valid: {valid_upgrades}")
         for upgrade_id in upgrades_used:
-            if upgrade_id not in token.allowed_upgrades:
+            if upgrade_id not in valid_upgrades:
                 flags.append(FlagReason(
                     category="upgrades",
                     severity="high",
                     description=f"Unauthorized upgrade used: {upgrade_id}",
-                    expected=token.allowed_upgrades,
+                    expected=list(valid_upgrades),
                     actual=upgrades_used
                 ))
 
@@ -450,15 +483,18 @@ class WaveService:
 
         if existing_save:
             # Update existing save - ACCUMULATE kills and damage
+            # Increment to NEXT wave (after completing wave_number, player advances to wave_number + 1)
             save_data = {
-                "current_wave": wave_number,
+                "current_wave": wave_number + 1,
                 "current_kills": existing_save.current_kills + wave_data.get("kills", 0),
                 "current_damage_dealt": existing_save.current_damage_dealt + wave_data.get("total_damage", 0),
                 "current_upgrades": wave_data.get("upgrades_used", existing_save.current_upgrades),
-                # Keep other fields as-is (TODO: get actual values from frontend)
-                "current_points": existing_save.current_points,  # TODO: Update from GameManager
-                "current_health": existing_save.current_health,
-                "current_max_health": existing_save.current_max_health,
+                "offered_upgrades": [],  # Clear offered upgrades after wave completion
+                # Keep other fields as-is - don't overwrite what autosave set
+                # NOTE: Points are updated by autosave and upgrade purchases, keep existing value
+                # "current_points": existing_save.current_points,  # Removed - keep what's in DB
+                "current_health": wave_data.get("current_health", existing_save.current_health),
+                "current_max_health": existing_save.current_max_health,  # TODO: Update from frontend
                 "current_speed": existing_save.current_speed,
                 "current_polygon_sides": existing_save.current_polygon_sides,
             }

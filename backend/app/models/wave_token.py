@@ -79,8 +79,8 @@ class WaveValidationToken(BaseMongoModel):
         )
 
     def is_valid(self) -> bool:
-        """Check if token is still valid"""
-        return not self.used and datetime.utcnow() < self.expires_at
+        """Check if token is still valid (only checks if used, not expiry time)"""
+        return not self.used
 
     def mark_used(self):
         """Mark token as used"""

@@ -41,6 +41,7 @@ class WaveCompleteRequest(BaseModel):
     wave: int
     kills: int
     total_damage: int
+    current_health: int
     frame_samples: List[FrameSample]
     enemy_deaths: List[EnemyDeath]
     upgrades_used: List[str]
@@ -118,6 +119,7 @@ async def complete_wave(
         "wave": request.wave,
         "kills": request.kills,
         "total_damage": request.total_damage,
+        "current_health": request.current_health,
         "frame_samples": [f.model_dump() for f in request.frame_samples],
         "enemy_deaths": [e.model_dump() for e in request.enemy_deaths],
         "upgrades_used": request.upgrades_used
@@ -170,8 +172,21 @@ async def select_upgrade(
             detail="No active game found"
         )
 
-    # TODO: Validate upgrade was offered in the wave token
-    # For now, just add it to current upgrades
+    # Validate upgrade was offered in the current wave
+    offered_upgrade_ids = [u.id for u in game_save.offered_upgrades]
+    if request.upgrade_id not in offered_upgrade_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Upgrade was not offered this wave"
+        )
+
+    # Check if upgrade was already purchased
+    upgrade_index = next((i for i, u in enumerate(game_save.offered_upgrades) if u.id == request.upgrade_id), None)
+    if upgrade_index is not None and game_save.offered_upgrades[upgrade_index].purchased:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Upgrade already purchased"
+        )
 
     upgrade = get_upgrade(request.upgrade_id)
     if not upgrade:
@@ -187,16 +202,34 @@ async def select_upgrade(
             detail="Cannot apply this upgrade (dependencies not met or max stacks reached)"
         )
 
+    # Mark upgrade as purchased in offered_upgrades
+    updated_offered_upgrades = []
+    for u in game_save.offered_upgrades:
+        if u.id == request.upgrade_id:
+            from app.models.game_save import OfferedUpgrade
+            updated_offered_upgrades.append(OfferedUpgrade(id=u.id, purchased=True))
+        else:
+            updated_offered_upgrades.append(u)
+
     # Add upgrade to current upgrades in game save
     updated_upgrades = game_save.current_upgrades + [request.upgrade_id]
 
+    # Deduct upgrade cost from points
+    upgrade_cost = upgrade.get('cost', 0)
+    updated_points = max(0, game_save.current_points - upgrade_cost)
+
     await game_save_repo.update_by_id(
         game_save.id,
-        {"current_upgrades": updated_upgrades}
+        {
+            "current_upgrades": updated_upgrades,
+            "offered_upgrades": [u.model_dump() for u in updated_offered_upgrades],
+            "current_points": updated_points
+        }
     )
 
     return {
         "success": True,
         "message": f"Upgrade {upgrade['name']} applied",
-        "current_upgrades": updated_upgrades
+        "current_upgrades": updated_upgrades,
+        "current_points": updated_points
     }

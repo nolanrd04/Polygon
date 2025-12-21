@@ -82,9 +82,16 @@ export default function UpgradeModal({ onStartWave, playerPoints, selectedAttack
 
     let offeredUpgrades: Upgrade[]
     if (isFullObject) {
-      // Backend returned full upgrade objects
+      // Backend returned full upgrade objects with purchase status
       console.log('Backend returned full upgrade objects')
-      offeredUpgrades = offeredUpgradeIds as Upgrade[]
+      offeredUpgrades = offeredUpgradeIds.map((item: any) => {
+        const upgrade = allUpgrades.find(u => u.id === item.id)
+        if (upgrade) {
+          // Attach purchase status from backend
+          return { ...upgrade, purchased: item.purchased } as Upgrade & { purchased?: boolean }
+        }
+        return null
+      }).filter(u => u !== null) as Upgrade[]
     } else {
       // Backend returned just IDs - map to full upgrade objects
       console.log('Backend returned upgrade IDs, mapping to full objects')
@@ -167,8 +174,10 @@ export default function UpgradeModal({ onStartWave, playerPoints, selectedAttack
       <div className="flex gap-6 mb-8">
         {options.map((upgrade, index) => {
           const isDisabled = isUpgradeDisabled(upgrade, index)
-          // Mark as purchased if THIS SPECIFIC INDEX was selected
-          const isPurchased = selectedIndices.includes(index)
+          // Check if purchased from backend OR selected in current session
+          const isPurchasedFromBackend = (upgrade as any).purchased === true
+          const isPurchasedThisSession = selectedIndices.includes(index)
+          const isPurchased = isPurchasedFromBackend || isPurchasedThisSession
           const stats = GameManager.getPlayerStats()
           const canAfford = stats.points >= upgrade.cost
 

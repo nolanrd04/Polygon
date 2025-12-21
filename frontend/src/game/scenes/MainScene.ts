@@ -149,14 +149,38 @@ export class MainScene extends Phaser.Scene {
 
     // Start with initial upgrade phase
     this.time.delayedCall(500, async () => {
-      // Give player starting points for initial upgrades
-      GameManager.addPoints(70)
+      const currentState = GameManager.getState()
 
-      // Pre-load upgrades for wave 1 from backend
-      const seed = Math.floor(Math.random() * 1000000)
-      await waveValidation.startWave(1, seed)
+      console.log('MainScene initializing - Current GameManager state:', {
+        wave: currentState.wave,
+        points: currentState.playerStats.points,
+        seed: currentState.seed
+      })
 
-      // Show upgrade modal before wave 1
+      // Determine wave number
+      const waveNumber = currentState.wave || 1
+      const isLoadedGame = currentState.playerStats.points > 0
+
+      // Only give starting points if this is a new game (no points yet)
+      // If loading a saved game, points are already restored by SaveGameService
+      if (!isLoadedGame) {
+        console.log('New game detected - adding 70 starting points')
+        GameManager.addPoints(70)
+      } else {
+        console.log('Loaded game detected - keeping existing points:', currentState.playerStats.points)
+        // IMPORTANT: Sync WaveManager with loaded wave number
+        // WaveManager starts at 0, so we need to set it to the loaded wave
+        this.waveManager.setWave(waveNumber)
+        console.log('Synced WaveManager to wave:', waveNumber)
+      }
+
+      // Pre-load upgrades from backend using saved wave number
+      const seed = currentState.seed || Math.floor(Math.random() * 1000000)
+
+      console.log('Starting wave from MainScene:', waveNumber, 'with seed:', seed)
+      await waveValidation.startWave(waveNumber, seed)
+
+      // Show upgrade modal
       EventBus.emit('show-upgrades')
     })
   }
