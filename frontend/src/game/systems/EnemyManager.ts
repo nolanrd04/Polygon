@@ -142,39 +142,39 @@ export class EnemyManager {
   scaleEnemyStats(wave: number): void {
     if (this.currentWave == 2)
     {
-      this.waveMultiplier = this.waveMultiplier + (wave * .15) // +15% per wave for first 6 waves
+      this.waveMultiplier = this.waveMultiplier + (wave * .15)
       return
     }
     else if (this.currentWave == 3 || this.currentWave == 4)
     {
-      this.waveMultiplier = this.waveMultiplier + (wave * .25)
+      this.waveMultiplier = this.waveMultiplier + (wave * .20)
     }
     else if (this.currentWave < 7)
     {
-      this.waveMultiplier = this.waveMultiplier + (wave * .45) // +30% per wave
+      this.waveMultiplier = this.waveMultiplier + (wave * .30)
       return
     }
     else if (this.currentWave < 9)
     {
-      this.waveMultiplier = this.waveMultiplier + (wave * .65)
+      this.waveMultiplier = this.waveMultiplier + (wave * .45)
     }
     else if (this.currentWave < 11)
     {
-      this.waveMultiplier = this.waveMultiplier + (wave * 1.15) // +35% per wave for waves 9-10
+      this.waveMultiplier = this.waveMultiplier + (wave * 0.65)
     }
     else if (this.currentWave < 14)
     {
-      this.waveMultiplier = this.waveMultiplier + (wave * 1.45) // +45% per wave for waves 11-13
+      this.waveMultiplier = this.waveMultiplier + (wave * 1.0)
       return
     }
     else if (this.currentWave < 17)
     {
-      this.waveMultiplier = this.waveMultiplier  + (wave * 1.85) // +40% per wave for waves 13-15
+      this.waveMultiplier = this.waveMultiplier  + (wave * 1.55)
       return
     }
     else if (this.currentWave < 21)
     {
-      this.waveMultiplier = this.waveMultiplier + (wave * 2.25) // +50% per wave for waves 16-18
+      this.waveMultiplier = this.waveMultiplier + (wave * 2.0)
       return
     }
     else

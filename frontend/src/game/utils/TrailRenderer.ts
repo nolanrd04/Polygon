@@ -53,8 +53,10 @@ export class TrailRenderer {
       duration?: number
       /** Scale multiplier for trail sprites */
       scale?: number
-      /** Whether to decrease scale for older trail positions */
+      /** Whether to shrink sprites over time as they fade */
       scaleDecay?: boolean
+      /** Minimum scale when scaleDecay is true (0-1, default 0.3) */
+      minScale?: number
     }
   ): void {
     const {
@@ -65,7 +67,8 @@ export class TrailRenderer {
       maxAlpha = 0.3,
       duration = 200,
       scale = 1.0,
-      scaleDecay = true
+      scaleDecay = true,
+      minScale = 0.3
     } = options
 
     // Create a sprite for each trail position
@@ -76,13 +79,8 @@ export class TrailRenderer {
       const progress = (i + 1) / positions.length
       const alpha = progress * maxAlpha
 
-      // Calculate scale (newer = larger if scaleDecay is true)
-      const baseScale = scaleDecay
-        ? scale * (i * 0.15 + 0.75) // Smaller for older positions
-        : scale
-
       // Apply TextureGenerator display scale for high-res textures
-      const spriteScale = baseScale * TextureGenerator.getDisplayScale()
+      const spriteScale = scale * TextureGenerator.getDisplayScale()
 
       // Create sprite
       const trailSprite = scene.add.sprite(pos.x, pos.y, textureKey)
@@ -96,15 +94,23 @@ export class TrailRenderer {
         trailSprite.setRotation(rotations[i])
       }
 
-      // Fade out and destroy
-      scene.tweens.add({
+      // Fade out and destroy (with optional scale decay)
+      const tweenConfig: any = {
         targets: trailSprite,
         alpha: 0,
         duration: duration,
         onComplete: () => {
           trailSprite.destroy()
         }
-      })
+      }
+
+      // Add scale decay to tween if enabled
+      if (scaleDecay) {
+        const finalScale = spriteScale * minScale
+        tweenConfig.scale = finalScale
+      }
+
+      scene.tweens.add(tweenConfig)
     }
   }
 

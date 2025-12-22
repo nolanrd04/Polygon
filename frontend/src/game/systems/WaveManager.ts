@@ -304,6 +304,8 @@ export class WaveManager {
     for (let i = 0; i < 3; i++) {
       this.enemyManager.spawnEnemy('hexagon')
     }
+
+    this.enemyManager.spawnEnemy('dodecahedron')
   }
 
   isWaveComplete(): boolean {
