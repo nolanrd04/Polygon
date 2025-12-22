@@ -112,15 +112,23 @@ export class WaveManager {
     {
       return 90
     }
+    else if (this.currentWave == 17)
+    {
+      return 80
+    }
+    else if (this.currentWave == 18 || this.currentWave == 19)
+    {
+      return 100
+    }
 
     else 
     {
-      return Math.floor(60 + this.currentWave * 2 + Math.pow(this.currentWave, 1.2))
+      return Math.floor(100 + this.currentWave * 2 + Math.pow(this.currentWave, 1.2))
     }
   }
 
   private spawnEnemiesGradually(): void {
-    const spawnDelay = Math.max(50, 1000 - this.currentWave * 50)
+    const spawnDelay = Math.max(50, 1000 - this.currentWave * 25)
 
     const spawnTimer = this.scene.time.addEvent({
       delay: spawnDelay,
@@ -232,12 +240,20 @@ export class WaveManager {
     else if (this.currentWave == 17)
       // introducte super squares
     {
+      weights.push({ type: 'triangle', weight: 20 })
       weights.push({ type: 'square', weight: 35 })
       weights.push({ type: 'super_triangle', weight: 15 })
-      weights.push({type: 'octogon', weight: 15})
-      weights.push({type: 'super_square', weight: 35})
+      weights.push({type: 'octogon', weight: 5})
+      weights.push({type: 'super_square', weight: 25})
     }
     else if (this.currentWave == 18)
+    {
+      weights.push({ type: 'square', weight: 40 })
+      weights.push({ type: 'super_triangle', weight: 15 })
+      weights.push({type: 'octogon', weight: 10})
+      weights.push({type: 'super_square', weight: 35})
+    }
+    else if (this.currentWave == 19)
     {
       weights.push({ type: 'square', weight: 20 })
       weights.push({ type: 'super_triangle', weight: 10 })

@@ -140,7 +140,49 @@ export class EnemyManager {
    * Increases gradually but exponentially with each wave
    */
   scaleEnemyStats(wave: number): void {
-    this.waveMultiplier = Math.exp(wave / 6)
+    if (this.currentWave == 2)
+    {
+      this.waveMultiplier = this.waveMultiplier + (wave * .15) // +15% per wave for first 6 waves
+      return
+    }
+    else if (this.currentWave == 3 || this.currentWave == 4)
+    {
+      this.waveMultiplier = this.waveMultiplier + (wave * .25)
+    }
+    else if (this.currentWave < 7)
+    {
+      this.waveMultiplier = this.waveMultiplier + (wave * .45) // +30% per wave
+      return
+    }
+    else if (this.currentWave < 9)
+    {
+      this.waveMultiplier = this.waveMultiplier + (wave * .65)
+    }
+    else if (this.currentWave < 11)
+    {
+      this.waveMultiplier = this.waveMultiplier + (wave * 1.15) // +35% per wave for waves 9-10
+    }
+    else if (this.currentWave < 14)
+    {
+      this.waveMultiplier = this.waveMultiplier + (wave * 1.45) // +45% per wave for waves 11-13
+      return
+    }
+    else if (this.currentWave < 17)
+    {
+      this.waveMultiplier = this.waveMultiplier  + (wave * 1.85) // +40% per wave for waves 13-15
+      return
+    }
+    else if (this.currentWave < 21)
+    {
+      this.waveMultiplier = this.waveMultiplier + (wave * 2.25) // +50% per wave for waves 16-18
+      return
+    }
+    else
+    {
+      this.waveMultiplier = Math.exp((wave-19) / 6)
+    }
+
+    // this.waveMultiplier = Math.exp(wave / 6)
   }
 
   /**
