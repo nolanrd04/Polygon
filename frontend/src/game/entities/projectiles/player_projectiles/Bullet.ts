@@ -71,7 +71,7 @@ export class HomingBullet extends Projectile {
     this.damageMultiplier = 1
     this.speed = 300 // Increased from 250 for less circling
     this.size = 6
-    this.pierce = 0
+    this.pierce = 1
     this.color = 0x00ff00
     this.timeLeft = 3000 // Despawn after 3 seconds
     this.knockback = 1 // Push enemies back on hit

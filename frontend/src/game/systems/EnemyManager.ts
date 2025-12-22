@@ -142,39 +142,39 @@ export class EnemyManager {
   scaleEnemyStats(wave: number): void {
     if (this.currentWave == 2)
     {
-      this.waveMultiplier = this.waveMultiplier + (wave * .15)
+      this.waveMultiplier = 1 + (wave * .15)
       return
     }
     else if (this.currentWave == 3 || this.currentWave == 4)
     {
-      this.waveMultiplier = this.waveMultiplier + (wave * .20)
+      this.waveMultiplier = 1 + (wave * .20)
     }
     else if (this.currentWave < 7)
     {
-      this.waveMultiplier = this.waveMultiplier + (wave * .30)
+      this.waveMultiplier = 1 + (wave * .30)
       return
     }
     else if (this.currentWave < 9)
     {
-      this.waveMultiplier = this.waveMultiplier + (wave * .45)
+      this.waveMultiplier = 1 + (wave * .45)
     }
     else if (this.currentWave < 11)
     {
-      this.waveMultiplier = this.waveMultiplier + (wave * 0.65)
+      this.waveMultiplier = 1 + (wave * 0.65)
     }
     else if (this.currentWave < 14)
     {
-      this.waveMultiplier = this.waveMultiplier + (wave * 1.0)
+      this.waveMultiplier = 1 + (wave * 1.0)
       return
     }
     else if (this.currentWave < 17)
     {
-      this.waveMultiplier = this.waveMultiplier  + (wave * 1.55)
+      this.waveMultiplier = 1 + (wave * 1.55)
       return
     }
     else if (this.currentWave < 21)
     {
-      this.waveMultiplier = this.waveMultiplier + (wave * 2.0)
+      this.waveMultiplier = 1 + (wave * 2.0)
       return
     }
     else

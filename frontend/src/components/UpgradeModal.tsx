@@ -26,6 +26,7 @@ interface Upgrade {
   variantClass?: string
   dependentOn?: string[]
   dependencyCount?: number
+  incompatibleWith?: string[]
 }
 
 interface UpgradeModalProps {
@@ -105,6 +106,16 @@ export default function UpgradeModal({ onStartWave, playerPoints, selectedAttack
         const appliedFull = allUpgrades.find(u => u.id === appliedUpgrade.id)
         if (appliedFull?.replaces?.includes(upgrade.id)) {
           return false
+        }
+      }
+
+      // Check if this upgrade is incompatible with any already-applied upgrade
+      if (upgrade.incompatibleWith) {
+        for (const incompatibleId of upgrade.incompatibleWith) {
+          const hasIncompatible = appliedUpgrades.some((u: any) => u.id === incompatibleId)
+          if (hasIncompatible) {
+            return false
+          }
         }
       }
 
