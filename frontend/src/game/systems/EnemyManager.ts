@@ -140,49 +140,49 @@ export class EnemyManager {
    * Increases gradually but exponentially with each wave
    */
   scaleEnemyStats(wave: number): void {
-    if (this.currentWave == 2)
-    {
-      this.waveMultiplier = 1 + (wave * .15)
-      return
-    }
-    else if (this.currentWave == 3 || this.currentWave == 4)
-    {
-      this.waveMultiplier = 1 + (wave * .20)
-    }
-    else if (this.currentWave < 7)
-    {
-      this.waveMultiplier = 1 + (wave * .35)
-      return
-    }
-    else if (this.currentWave < 9)
-    {
-      this.waveMultiplier = 1 + (wave * .85)
-    }
-    else if (this.currentWave < 11)
-    {
-      this.waveMultiplier = 1 + (wave * 1.65)
-    }
-    else if (this.currentWave < 14)
-    {
-      this.waveMultiplier = 1 + (wave * 3.0)
-      return
-    }
-    else if (this.currentWave < 17)
-    {
-      this.waveMultiplier = 1 + (wave * 5.2)
-      return
-    }
-    else if (this.currentWave < 21)
-    {
-      this.waveMultiplier = 1 + (wave * 8.0)
-      return
-    }
-    else
-    {
-      this.waveMultiplier = Math.exp((wave-19) / 6)
-    }
+    // if (this.currentWave == 2)
+    // {
+    //   this.waveMultiplier = 1 + (wave * .15)
+    //   return
+    // }
+    // else if (this.currentWave == 3 || this.currentWave == 4)
+    // {
+    //   this.waveMultiplier = 1 + (wave * .20)
+    // }
+    // else if (this.currentWave < 7)
+    // {
+    //   this.waveMultiplier = 1 + (wave * .35)
+    //   return
+    // }
+    // else if (this.currentWave < 9)
+    // {
+    //   this.waveMultiplier = 1 + (wave * .85)
+    // }
+    // else if (this.currentWave < 11)
+    // {
+    //   this.waveMultiplier = 1 + (wave * 1.65)
+    // }
+    // else if (this.currentWave < 14)
+    // {
+    //   this.waveMultiplier = 1 + (wave * 3.0)
+    //   return
+    // }
+    // else if (this.currentWave < 17)
+    // {
+    //   this.waveMultiplier = 1 + (wave * 5.2)
+    //   return
+    // }
+    // else if (this.currentWave < 21)
+    // {
+    //   this.waveMultiplier = 1 + (wave * 8.0)
+    //   return
+    // }
+    // else
+    // {
+    //   this.waveMultiplier = Math.exp((wave-19) / 6)
+    // }
 
-    // this.waveMultiplier = Math.exp(wave / 6)
+    this.waveMultiplier = Math.exp(wave / 8)
   }
 
   /**
