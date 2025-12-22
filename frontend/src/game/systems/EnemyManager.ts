@@ -2,7 +2,7 @@ import Phaser from 'phaser'
 import { getEnemyRegistry } from '../entities/enemies'
 import type { Enemy } from '../entities/enemies/Enemy'
 import { Projectile } from '../entities/projectiles/Projectile'
-import { GAME_WIDTH, GAME_HEIGHT } from '../core/GameConfig'
+import { WORLD_WIDTH, WORLD_HEIGHT } from '../core/GameConfig'
 
 // Get the registry from the centralized enemies/index.ts
 // Now to add a new enemy, just edit enemies/index.ts!
@@ -65,10 +65,10 @@ export class EnemyManager {
   private getRandomEdgePosition(): { x: number; y: number } {
     const edge = Math.floor(Math.random() * 4)
     switch (edge) {
-      case 0: return { x: Math.random() * GAME_WIDTH, y: -50 }
-      case 1: return { x: GAME_WIDTH + 50, y: Math.random() * GAME_HEIGHT }
-      case 2: return { x: Math.random() * GAME_WIDTH, y: GAME_HEIGHT + 50 }
-      case 3: return { x: -50, y: Math.random() * GAME_HEIGHT }
+      case 0: return { x: Math.random() * WORLD_WIDTH, y: -50 }
+      case 1: return { x: WORLD_WIDTH + 50, y: Math.random() * WORLD_HEIGHT }
+      case 2: return { x: Math.random() * WORLD_WIDTH, y: WORLD_HEIGHT + 50 }
+      case 3: return { x: -50, y: Math.random() * WORLD_HEIGHT }
       default: return { x: 0, y: 0 }
     }
   }
@@ -92,7 +92,7 @@ export class EnemyManager {
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const proj = this.projectiles[i]
 
-      if (proj.isDestroyed || proj._isOutOfBounds(GAME_WIDTH, GAME_HEIGHT)) {
+      if (proj.isDestroyed || proj._isOutOfBounds(WORLD_WIDTH, WORLD_HEIGHT)) {
         if (!proj.isDestroyed) proj._destroy()
         this.projectiles.splice(i, 1)
       } else {

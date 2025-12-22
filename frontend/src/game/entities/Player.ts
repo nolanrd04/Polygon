@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { GameManager } from '../core/GameManager'
-import { COLORS } from '../core/GameConfig'
+import { COLORS, WORLD_WIDTH, WORLD_HEIGHT } from '../core/GameConfig'
 import { Projectile } from './projectiles/Projectile'
 import { Bullet, HeavyBullet, HomingBullet, ExplosiveBullet } from './projectiles/player_projectiles/Bullet'
 import { Laser } from './projectiles/player_projectiles/Laser'
@@ -563,7 +563,7 @@ export class Player extends Phaser.GameObjects.Container {
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const proj = this.projectiles[i]
 
-      if (proj.isDestroyed || proj._isOutOfBounds(1280, 720)) {
+      if (proj.isDestroyed || proj._isOutOfBounds(WORLD_WIDTH, WORLD_HEIGHT)) {
         if (!proj.isDestroyed) proj._destroy()
         this.projectiles.splice(i, 1)
 

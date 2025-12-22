@@ -6,7 +6,7 @@ import { CollisionManager } from '../systems/CollisionManager'
 import { MapManager } from '../systems/MapManager'
 import { EventBus } from '../core/EventBus'
 import { GameManager } from '../core/GameManager'
-import { GAME_WIDTH, GAME_HEIGHT } from '../core/GameConfig'
+import { /*GAME_WIDTH,*/ GAME_HEIGHT, WORLD_WIDTH, WORLD_HEIGHT } from '../core/GameConfig'
 import { AttackType } from '../data/attackTypes'
 import { Projectile } from '../entities/projectiles/Projectile'
 import { UpgradeSystem, UpgradeEffectSystem, registerEffectHandlers, type UpgradeDefinition } from '../systems/upgrades'
@@ -46,6 +46,10 @@ export class MainScene extends Phaser.Scene {
     this.debugGraphics = this.add.graphics()
     this.debugGraphics.setDepth(1000) // Render on top
 
+    // Set up world bounds (larger than camera view for scrolling)
+    this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT)
+    this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT)
+
     // Initialize map
     this.mapManager = new MapManager(this)
     this.mapManager.generateMap()
@@ -54,7 +58,19 @@ export class MainScene extends Phaser.Scene {
     const selectedAttack = (sessionStorage.getItem('selectedAttack') as AttackType) || 'bullet'
 
     // Initialize player at center with selected attack
-    this.player = new Player(this, GAME_WIDTH / 2, GAME_HEIGHT / 2, selectedAttack)
+    this.player = new Player(this, WORLD_WIDTH / 2, WORLD_HEIGHT / 2, selectedAttack)
+
+    // Make camera follow player smoothly with pixel rounding to prevent jitter
+    // roundPixels: true forces full pixel rounding to eliminate sub-pixel jitter
+    // Higher lerp values (0.5) = tighter follow
+    this.cameras.main.startFollow(this.player, true, 0.5, 0.5)
+    this.cameras.main.roundPixels = true
+
+    // Ensure camera zoom is exactly 1.0 (integer zoom prevents jitter)
+    this.cameras.main.setZoom(1.0)
+
+    // Disable right-click context menu to prevent movement getting stuck
+    this.input.mouse!.disableContextMenu()
 
     // Initialize managers
     this.enemyManager = new EnemyManager(this)
@@ -251,13 +267,15 @@ export class MainScene extends Phaser.Scene {
 
     this.player.move(velocityX, velocityY)
 
-    // Update player rotation to face mouse
+    // Update player rotation to face mouse (updates every frame)
+    // Manually calculate world position from screen position to handle camera movement
     const pointer = this.input.activePointer
-    this.player.rotateTowards(pointer.worldX, pointer.worldY)
+    const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y)
+    this.player.rotateTowards(worldPoint.x, worldPoint.y)
 
     // Handle shooting
-    if (this.input.activePointer.isDown) {
-      this.player.shoot(pointer.worldX, pointer.worldY)
+    if (pointer.isDown) {
+      this.player.shoot(worldPoint.x, worldPoint.y)
     }
 
     // Update player (for attack animations like spinner/flamer)

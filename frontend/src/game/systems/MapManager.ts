@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { GAME_WIDTH, GAME_HEIGHT } from '../core/GameConfig'
+import { WORLD_WIDTH, WORLD_HEIGHT } from '../core/GameConfig'
 
 interface Obstacle {
   x: number
@@ -40,8 +40,8 @@ export class MapManager {
 
       // Find valid position (not in safe zone, not overlapping)
       do {
-        x = random() * (GAME_WIDTH - 100) + 50
-        y = random() * (GAME_HEIGHT - 100) + 50
+        x = random() * (WORLD_WIDTH - 100) + 50
+        y = random() * (WORLD_HEIGHT - 100) + 50
         attempts++
       } while (
         this.isInSafeZone(x, y, safeRadius) ||
@@ -77,7 +77,7 @@ export class MapManager {
   } {
     const biomes: Record<string, ReturnType<typeof this.getBiomeConfig>> = {
       default: {
-        obstacleCount: 15,
+        obstacleCount: 60,  // Increased for larger map (was 15 for 1280x720)
         obstacleSize: 40,
         obstacleColor: 0x333344,
         backgroundColor: 0x0a0a0f,
@@ -103,8 +103,8 @@ export class MapManager {
   }
 
   private isInSafeZone(x: number, y: number, safeRadius: number): boolean {
-    const centerX = GAME_WIDTH / 2
-    const centerY = GAME_HEIGHT / 2
+    const centerX = WORLD_WIDTH / 2
+    const centerY = WORLD_HEIGHT / 2
     const dist = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2))
     return dist < safeRadius
   }
@@ -167,23 +167,23 @@ export class MapManager {
 
     // Background
     graphics.fillStyle(config.backgroundColor, 1)
-    graphics.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT)
+    graphics.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT)
 
     // Grid
     graphics.lineStyle(1, config.gridColor, 0.3)
     const gridSize = 50
 
-    for (let x = 0; x <= GAME_WIDTH; x += gridSize) {
+    for (let x = 0; x <= WORLD_WIDTH; x += gridSize) {
       graphics.beginPath()
       graphics.moveTo(x, 0)
-      graphics.lineTo(x, GAME_HEIGHT)
+      graphics.lineTo(x, WORLD_HEIGHT)
       graphics.strokePath()
     }
 
-    for (let y = 0; y <= GAME_HEIGHT; y += gridSize) {
+    for (let y = 0; y <= WORLD_HEIGHT; y += gridSize) {
       graphics.beginPath()
       graphics.moveTo(0, y)
-      graphics.lineTo(GAME_WIDTH, y)
+      graphics.lineTo(WORLD_WIDTH, y)
       graphics.strokePath()
     }
   }
