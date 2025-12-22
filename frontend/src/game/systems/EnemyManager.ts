@@ -136,7 +136,7 @@ export class EnemyManager {
   /**
    * Scale enemy stats based on wave number.
    * Uses exponential scaling: e^(wave/8)
-   * At wave 0: multiplier = 1
+   * At wave 1: multiplier = 1
    * Increases gradually but exponentially with each wave
    */
   scaleEnemyStats(wave: number): void {
@@ -151,30 +151,30 @@ export class EnemyManager {
     }
     else if (this.currentWave < 7)
     {
-      this.waveMultiplier = 1 + (wave * .30)
+      this.waveMultiplier = 1 + (wave * .35)
       return
     }
     else if (this.currentWave < 9)
     {
-      this.waveMultiplier = 1 + (wave * .45)
+      this.waveMultiplier = 1 + (wave * .85)
     }
     else if (this.currentWave < 11)
     {
-      this.waveMultiplier = 1 + (wave * 0.65)
+      this.waveMultiplier = 1 + (wave * 1.65)
     }
     else if (this.currentWave < 14)
     {
-      this.waveMultiplier = 1 + (wave * 1.0)
+      this.waveMultiplier = 1 + (wave * 3.0)
       return
     }
     else if (this.currentWave < 17)
     {
-      this.waveMultiplier = 1 + (wave * 1.55)
+      this.waveMultiplier = 1 + (wave * 5.2)
       return
     }
     else if (this.currentWave < 21)
     {
-      this.waveMultiplier = 1 + (wave * 2.0)
+      this.waveMultiplier = 1 + (wave * 8.0)
       return
     }
     else

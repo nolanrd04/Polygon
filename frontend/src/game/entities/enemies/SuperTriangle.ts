@@ -11,7 +11,7 @@ export class SuperTriangle extends Enemy {
   SetDefaults(): void {
     this.health = 45
     this.speed = 50
-    this.damage = 40
+    this.damage = 50
     this.sides = 3
     this.radius = 15
     this.color = 0xff0000
