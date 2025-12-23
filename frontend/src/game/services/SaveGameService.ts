@@ -11,8 +11,10 @@ export interface BackendSaveData {
   current_speed: number
   current_polygon_sides: number
   current_upgrades: string[]
+  current_kills: number
   attack_stats: Record<string, any>
   unlocked_attacks: string[]
+  game_over?: boolean
 }
 
 // Frontend game format
@@ -27,8 +29,10 @@ export interface SavedGameData {
     polygonSides: number
   }
   applied_upgrades: string[]
+  kills: number
   attack_stats: Record<string, any>
   unlocked_attacks: string[]
+  game_over?: boolean
 }
 
 export class SaveGameService {
@@ -47,8 +51,10 @@ export class SaveGameService {
         polygonSides: backendData.current_polygon_sides
       },
       applied_upgrades: backendData.current_upgrades,
+      kills: backendData.current_kills || 0,
       attack_stats: backendData.attack_stats,
-      unlocked_attacks: backendData.unlocked_attacks
+      unlocked_attacks: backendData.unlocked_attacks,
+      game_over: backendData.game_over || false
     }
   }
 
@@ -87,13 +93,14 @@ export class SaveGameService {
     // Set the wave number
     GameManager.setWave(savedData.wave)
 
-    // Restore player stats
+    // Restore player stats (including kills)
     GameManager.updatePlayerStats({
       health: savedData.player_stats.health,
       maxHealth: savedData.player_stats.maxHealth,
       speed: savedData.player_stats.speed,
       points: savedData.points,
       polygonSides: savedData.player_stats.polygonSides,
+      kills: savedData.kills || 0,
       unlockedAttacks: savedData.unlocked_attacks
     })
 
@@ -119,8 +126,10 @@ export class SaveGameService {
 
   /**
    * Save current game state to backend
+   * @param allowMidWave - If true, allows saving during active wave (for death saves)
+   * @param isGameOver - If true, marks the save as game over (death, run ended)
    */
-  static async saveCurrentGameState(): Promise<boolean> {
+  static async saveCurrentGameState(allowMidWave: boolean = false, isGameOver: boolean = false): Promise<boolean> {
     try {
       const token = localStorage.getItem('token')
       if (!token) return false
@@ -142,13 +151,13 @@ export class SaveGameService {
       }
 
       // Don't save mid-wave to prevent exploit (replaying same wave for easy points)
-      // Only save between waves (during upgrade screen) or on quit/death
-      if (gameState.isWaveActive) {
+      // Exception: Allow saving on death even if wave is active
+      if (gameState.isWaveActive && !allowMidWave) {
         console.log('Skipping save - wave is active (prevents mid-wave save exploit)')
         return false
       }
 
-      console.log('Saving game state with points:', stats.points)
+      console.log('Saving game state with points:', stats.points, allowMidWave ? '(death save)' : '', isGameOver ? '[GAME OVER]' : '')
 
       await axios.post('/api/saves/', {
         current_wave: gameState.wave,
@@ -171,7 +180,8 @@ export class SaveGameService {
             pierce: 0
           }
         },
-        unlocked_attacks: stats.unlockedAttacks || ['bullet']
+        unlocked_attacks: stats.unlockedAttacks || ['bullet'],
+        game_over: isGameOver
       }, {
         headers: { Authorization: `Bearer ${token}` }
       })

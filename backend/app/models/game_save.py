@@ -78,6 +78,9 @@ class GameSave(BaseMongoModel):
     # Unlocked attacks
     unlocked_attacks: List[str] = Field(default_factory=lambda: ["bullet"])
 
+    # Game over flag (death, run ended)
+    game_over: bool = Field(default=False)
+
     class Config(BaseMongoModel.Config):
         json_schema_extra = {
             "example": {
@@ -123,3 +126,4 @@ class GameSaveResponse(BaseMongoModel):
     offered_upgrades: List[OfferedUpgrade]
     attack_stats: Dict[str, Any]
     unlocked_attacks: List[str]
+    game_over: bool = False
