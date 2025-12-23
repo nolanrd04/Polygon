@@ -25,6 +25,7 @@ class GameSaveCreate(BaseModel):
     offered_upgrades: List[OfferedUpgrade] = Field(default_factory=list)
     attack_stats: Dict[str, Any] = Field(...)
     unlocked_attacks: List[str] = Field(default_factory=list)
+    game_over: bool = Field(default=False)
 
 
 @router.get("/", response_model=Optional[GameSaveResponse])
@@ -55,6 +56,7 @@ async def get_save(
         offered_upgrades=save.offered_upgrades,
         attack_stats=save.attack_stats,
         unlocked_attacks=save.unlocked_attacks,
+        game_over=save.game_over,
         created_at=save.created_at,
         updated_at=save.updated_at
     )
@@ -89,7 +91,8 @@ async def create_or_update_save(
             "current_damage_dealt": save_data.current_damage_dealt,
             "current_upgrades": save_data.current_upgrades,
             "attack_stats": save_data.attack_stats,
-            "unlocked_attacks": save_data.unlocked_attacks
+            "unlocked_attacks": save_data.unlocked_attacks,
+            "game_over": save_data.game_over
         }
 
         # Only update current_wave if it's greater than existing (prevent going backwards)
@@ -123,7 +126,8 @@ async def create_or_update_save(
             current_upgrades=save_data.current_upgrades,
             offered_upgrades=save_data.offered_upgrades,
             attack_stats=save_data.attack_stats,
-            unlocked_attacks=save_data.unlocked_attacks
+            unlocked_attacks=save_data.unlocked_attacks,
+            game_over=save_data.game_over
         )
         save = await repo.create(new_save)
 
@@ -143,6 +147,7 @@ async def create_or_update_save(
         offered_upgrades=save.offered_upgrades,
         attack_stats=save.attack_stats,
         unlocked_attacks=save.unlocked_attacks,
+        game_over=save.game_over,
         created_at=save.created_at,
         updated_at=save.updated_at
     )
