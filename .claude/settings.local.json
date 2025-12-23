@@ -18,7 +18,10 @@
       "Bash(sudo systemctl start:*)",
       "Bash(sudo systemctl enable:*)",
       "Bash(sudo systemctl status:*)",
-      "Bash(mongosh:*)"
+      "Bash(mongosh:*)",
+      "Bash(git merge-base:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

@@ -257,12 +257,16 @@ export class MainScene extends Phaser.Scene {
 
         // RE-APPLY SAVED UPGRADES
         // This restores effect system state (like shield charges) from saved game
+        console.log('DEBUG: currentState.appliedUpgrades =', currentState.appliedUpgrades)
         const savedUpgrades = currentState.appliedUpgrades || []
+        console.log('DEBUG: savedUpgrades array:', savedUpgrades, 'length:', savedUpgrades.length)
         if (savedUpgrades.length > 0) {
           console.log(`Re-applying ${savedUpgrades.length} saved upgrades:`, savedUpgrades)
           for (const upgradeId of savedUpgrades) {
             this.applyUpgrade(upgradeId, true) // Skip cost check - already paid for
           }
+        } else {
+          console.warn('WARNING: No saved upgrades to re-apply! This will lose effect state like shield charges.')
         }
       }
 

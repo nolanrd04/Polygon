@@ -99,10 +99,12 @@ export class SaveGameService {
 
     // Store applied upgrades in GameManager
     const currentState = GameManager.getState()
+    console.log('DEBUG: savedData.applied_upgrades =', savedData.applied_upgrades)
     currentState.appliedUpgrades = savedData.applied_upgrades
     currentState.seed = savedData.seed
 
     console.log('Game state restored:', currentState)
+    console.log('DEBUG: Verified currentState.appliedUpgrades after restore =', currentState.appliedUpgrades)
   }
 
   /**
