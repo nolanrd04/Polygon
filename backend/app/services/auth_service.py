@@ -1,6 +1,7 @@
 from datetime import timedelta
 from fastapi import HTTPException, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from pydantic import ValidationError
 from app.core.security import verify_password, get_password_hash, create_access_token
 from app.core.config import settings
 from app.repositories.user_repository import UserRepository
@@ -31,13 +32,24 @@ class AuthService:
                 detail="Username already taken"
             )
 
-        # Create user
-        user = User(
-            username=username,
-            first_name=first_name,
-            last_name=last_name,
-            hashed_password=get_password_hash(password)
-        )
+        # Create user with validation error handling
+        try:
+            user = User(
+                username=username,
+                first_name=first_name,
+                last_name=last_name,
+                hashed_password=get_password_hash(password)
+            )
+        except ValidationError as e:
+            # Extract the first error message
+            error_msg = e.errors()[0]['msg']
+            # Remove "Value error, " prefix if present
+            error_msg = error_msg.replace('Value error, ', '')
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=error_msg
+            )
+
         created_user = await self.user_repo.create(user)
 
         # Create initial player stats

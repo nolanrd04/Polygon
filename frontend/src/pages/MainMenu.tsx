@@ -7,6 +7,8 @@ export default function MainMenu() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [hasSavedGame, setHasSavedGame] = useState(false)
   const [savedGameWave, setSavedGameWave] = useState(0)
+  const [isGameOver, setIsGameOver] = useState(false)
+  const [finalStats, setFinalStats] = useState({ wave: 0, points: 0, kills: 0 })
 
   useEffect(() => {
     // Check if user is logged in
@@ -28,6 +30,21 @@ export default function MainMenu() {
       if (response.data) {
         setHasSavedGame(true)
         setSavedGameWave(response.data.current_wave)
+
+        // Check if save is marked as game over
+        console.log('[MAIN MENU] Checking game_over flag:', response.data.game_over)
+        if (response.data.game_over) {
+          console.log('[MAIN MENU] GAME OVER DETECTED - Hiding continue button')
+          setIsGameOver(true)
+          setFinalStats({
+            wave: response.data.current_wave,
+            points: response.data.current_points,
+            kills: response.data.current_kills || 0
+          })
+          console.log('[MAIN MENU] Run ended - Wave:', response.data.current_wave, 'Points:', response.data.current_points, 'Kills:', response.data.current_kills)
+        } else {
+          console.log('[MAIN MENU] Game is active - showing continue button')
+        }
       }
     } catch (error) {
       console.error('Failed to check for saved game:', error)
@@ -57,8 +74,20 @@ export default function MainMenu() {
       <p className="text-gray-400 mb-12 text-lg">Survive. Evolve. Dominate.</p>
 
       <div className="flex flex-col gap-4 w-64">
-        {/* Show Continue Game if logged in and has save */}
-        {isLoggedIn && hasSavedGame && (
+        {/* Show final stats if game is over */}
+        {isLoggedIn && hasSavedGame && isGameOver && (
+          <div className="px-8 py-6 bg-red-900/30 border-2 border-red-500 rounded mb-2">
+            <h2 className="text-xl font-bold text-red-400 mb-2">RUN ENDED</h2>
+            <div className="text-gray-300 text-sm space-y-1">
+              <p>Wave Reached: <span className="text-white font-bold">{finalStats.wave}</span></p>
+              <p>Final Points: <span className="text-white font-bold">{finalStats.points}</span></p>
+              <p>Total Kills: <span className="text-white font-bold">{finalStats.kills}</span></p>
+            </div>
+          </div>
+        )}
+
+        {/* Show Continue Game if logged in and has save (only if not game over) */}
+        {isLoggedIn && hasSavedGame && !isGameOver && (
           <button
             onClick={handleContinueGame}
             className="px-8 py-4 bg-polygon-warning text-black font-bold text-xl rounded hover:bg-yellow-400 transition-all transform hover:scale-105"

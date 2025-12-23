@@ -241,9 +241,14 @@ export class MainScene extends Phaser.Scene {
 
       // Determine wave number
       const waveNumber = currentState.wave || 1
-      // Check if this is a loaded game by looking for saved upgrades or wave > 1
-      // Don't rely on points > 0 because player may have spent all points
-      const isLoadedGame = (currentState.appliedUpgrades && currentState.appliedUpgrades.length > 0) || currentState.wave > 1
+
+      // Check if this is a loaded game by checking if GameManager already has points
+      // SaveGameService restores points BEFORE MainScene runs, so if points > 0, it's a loaded game
+      // Also check for wave > 1 or existing upgrades as fallback
+      const hasPoints = currentState.playerStats.points > 0
+      const hasUpgrades = currentState.appliedUpgrades && currentState.appliedUpgrades.length > 0
+      const hasProgressedWaves = currentState.wave > 1
+      const isLoadedGame = hasPoints || hasUpgrades || hasProgressedWaves
 
       // Only give starting points if this is a new game (no points yet)
       // If loading a saved game, points are already restored by SaveGameService
@@ -251,7 +256,7 @@ export class MainScene extends Phaser.Scene {
         console.log('New game detected - adding 70 starting points')
         GameManager.addPoints(70)
       } else {
-        console.log('Loaded game detected - keeping existing points:', currentState.playerStats.points)
+        console.log('Loaded game detected (points:', hasPoints, ', upgrades:', hasUpgrades, ', wave:', hasProgressedWaves, ') - keeping existing points:', currentState.playerStats.points)
         // IMPORTANT: Sync WaveManager with loaded wave number
         // WaveManager starts at 0, so we need to set it to the loaded wave
         this.waveManager.setWave(waveNumber)
@@ -485,6 +490,14 @@ export class MainScene extends Phaser.Scene {
 
     if (success) {
       console.log(`Applied upgrade: ${upgrade.name}${skipCost ? ' (DEV - FREE)' : ''}`)
+
+      // Add to GameManager's appliedUpgrades array for save/load
+      // (Only add if not already there - for loading saved games)
+      const currentState = GameManager.getState()
+      if (!currentState.appliedUpgrades.includes(upgradeId)) {
+        currentState.appliedUpgrades.push(upgradeId)
+        console.log('Added to GameManager.appliedUpgrades:', upgradeId, '(total:', currentState.appliedUpgrades.length, ')')
+      }
 
       // VALIDATE WITH BACKEND (skip for dev tools)
       if (!skipCost) {

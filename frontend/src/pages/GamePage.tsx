@@ -26,6 +26,8 @@ export default function GamePage() {
 
   // Store last known game state in ref to survive game destruction
   const lastGameStateRef = useRef<any>(null)
+  // Track if death save has been completed to prevent overwriting it
+  const deathSaveCompletedRef = useRef(false)
 
   // Autosave current game state to backend
   const saveCurrentGameState = async () => {
@@ -167,6 +169,25 @@ export default function GamePage() {
     EventBus.on('game-pause', () => setIsPaused(true))
     EventBus.on('game-resume', () => setIsPaused(false))
 
+    // Save on player death (allows mid-wave save for death, marks as game over)
+    EventBus.on('player-death', () => {
+      // Only save once on death (event fires every frame while dead)
+      if (deathSaveCompletedRef.current) {
+        return
+      }
+
+      console.log('[DEATH] Event triggered - Saving final state as GAME OVER')
+      const state = GameManager.getState()
+      console.log('[DEATH] Current state:', { wave: state.wave, points: state.playerStats.points, kills: state.playerStats.kills })
+      SaveGameService.saveCurrentGameState(true, true).then(success => {
+        console.log('[DEATH] Save result:', success ? 'SUCCESS' : 'FAILED')
+        if (success) {
+          deathSaveCompletedRef.current = true
+          console.log('[DEATH] Death save completed - all future saves blocked')
+        }
+      })
+    })
+
     // Listen for ability state updates
     EventBus.on('ability-state-update' as any, (state: { shieldCharges: number; hasDash: boolean; dashCooldownProgress: number }) => {
       setAbilityState(state)
@@ -181,14 +202,23 @@ export default function GamePage() {
 
     // Add beforeunload handler to save on tab close
     const handleBeforeUnload = () => {
-      saveCurrentGameState()
+      // Don't save if death save already completed (prevents overwriting game_over flag)
+      if (!deathSaveCompletedRef.current) {
+        saveCurrentGameState()
+      }
     }
     window.addEventListener('beforeunload', handleBeforeUnload)
 
     return () => {
       clearInterval(abilityInterval)
-      // Save game state before unmounting
-      saveCurrentGameState()
+
+      // Don't save if death save already completed (prevents overwriting game_over flag)
+      if (!deathSaveCompletedRef.current) {
+        console.log('[UNMOUNT] Saving game state')
+        saveCurrentGameState()
+      } else {
+        console.log('[UNMOUNT] Skipping save - death save already completed')
+      }
 
       if (gameRef.current) {
         gameRef.current.destroy(true)
@@ -231,7 +261,12 @@ export default function GamePage() {
         <PauseMenu
           onResume={() => EventBus.emit('game-resume')}
           onQuit={async () => {
-            await saveCurrentGameState()
+            // Don't save if death save already completed (prevents overwriting game_over flag)
+            if (!deathSaveCompletedRef.current) {
+              await saveCurrentGameState()
+            } else {
+              console.log('[QUIT] Skipping save - death save already completed')
+            }
             window.location.href = '/'
           }}
         />

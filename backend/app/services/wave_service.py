@@ -272,6 +272,35 @@ class WaveService:
         print(f"=== WAVE COMPLETION SUCCESS ===")
         return True, []
 
+    async def reroll_upgrades(
+        self,
+        user_id: ObjectId,
+        current_upgrades: List[str],
+        attack_type: str
+    ) -> Dict[str, Any]:
+        """
+        Reroll upgrades for the current wave.
+        Returns both the upgrade dicts and the OfferedUpgrade objects.
+        """
+        # Roll new upgrades
+        offered_upgrades = self._roll_upgrades(
+            current_upgrades=current_upgrades,
+            attack_type=attack_type
+        )
+        print(f"Rerolled upgrades for user {user_id}: {[u['id'] for u in offered_upgrades]}")
+
+        # Create OfferedUpgrade objects with purchased=False
+        from app.models.game_save import OfferedUpgrade
+        offered_upgrade_objs = [
+            OfferedUpgrade(id=u["id"], purchased=False)
+            for u in offered_upgrades
+        ]
+
+        return {
+            "offered_upgrades": offered_upgrades,
+            "offered_upgrade_objs": [u.model_dump() for u in offered_upgrade_objs]
+        }
+
     def _roll_upgrades(
         self,
         current_upgrades: List[str],

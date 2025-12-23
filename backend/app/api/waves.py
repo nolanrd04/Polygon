@@ -58,6 +58,17 @@ class UpgradeSelectRequest(BaseModel):
     wave: int
 
 
+class RerollRequest(BaseModel):
+    wave: int
+    reroll_cost: int = Field(..., ge=0)
+
+
+class RerollResponse(BaseModel):
+    success: bool
+    offered_upgrades: List[Dict[str, Any]]
+    current_points: int
+
+
 @router.post("/start", response_model=WaveStartResponse)
 async def start_wave(
     request: WaveStartRequest,
@@ -234,3 +245,64 @@ async def select_upgrade(
         "current_upgrades": updated_upgrades,
         "current_points": updated_points
     }
+
+
+@router.post("/reroll", response_model=RerollResponse)
+async def reroll_upgrades(
+    request: RerollRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """
+    Reroll the offered upgrades for the current wave.
+
+    Validates that:
+    - User has enough points for reroll
+    - Game save exists
+    - Deducts reroll cost
+    - Rolls new upgrades
+    """
+    from app.repositories.game_save_repository import GameSaveRepository
+
+    game_save_repo = GameSaveRepository(db)
+    wave_service = WaveService(db)
+
+    # Get game save
+    game_save = await game_save_repo.find_by_user_id(current_user.id)
+    if not game_save:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No active game found"
+        )
+
+    # Check if user has enough points
+    if game_save.current_points < request.reroll_cost:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Not enough points. Need {request.reroll_cost}, have {game_save.current_points}"
+        )
+
+    # Deduct reroll cost
+    updated_points = game_save.current_points - request.reroll_cost
+
+    # Roll new upgrades
+    new_upgrades = await wave_service.reroll_upgrades(
+        user_id=current_user.id,
+        current_upgrades=game_save.current_upgrades,
+        attack_type="bullet"  # TODO: Get from game save
+    )
+
+    # Update game save with new points and new offered upgrades
+    await game_save_repo.update_by_id(
+        game_save.id,
+        {
+            "current_points": updated_points,
+            "offered_upgrades": new_upgrades["offered_upgrade_objs"]
+        }
+    )
+
+    return RerollResponse(
+        success=True,
+        offered_upgrades=new_upgrades["offered_upgrades"],
+        current_points=updated_points
+    )

@@ -7,6 +7,7 @@ import abilityUpgrades from '../game/data/upgrades/ability_upgrades.json'
 import { GameManager } from '../game/core/GameManager'
 import { EventBus } from '../game/core/EventBus'
 import { waveValidation } from '../game/services/WaveValidation'
+import { SaveGameService } from '../game/services/SaveGameService'
 
 /**
  * UPGRADE ARCHITECTURE:
@@ -128,12 +129,47 @@ export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModal
     loadBackendUpgrades()
   }, [])
 
-  const handleReroll = () => {
+  const handleReroll = async () => {
     if (playerPoints >= rerollCost) {
-      GameManager.addPoints(-rerollCost)
-      setSelectedIndices([])  // Reset selected indices for new roll
-      setOptions([])  // Clear old options to prevent sticking
-      loadBackendUpgrades()  // Reload upgrades from backend (backend will need reroll endpoint if we want different upgrades)
+      // Save current game state first to sync points to backend
+      console.log('Saving game state before reroll...')
+      await SaveGameService.saveCurrentGameState()
+
+      const currentWave = GameManager.getState().wave
+
+      // Call backend to reroll upgrades
+      const result = await waveValidation.rerollUpgrades(currentWave, rerollCost)
+
+      if (result) {
+        // Update GameManager with the new points from backend
+        GameManager.updatePlayerStats({ points: result.newPoints })
+        console.log('Updated points to:', result.newPoints)
+
+        setSelectedIndices([])  // Reset selected indices for new roll
+        setOptions([])  // Clear old options first
+
+        // Load the new upgrades from the backend response
+        const allUpgrades = [
+          ...statUpgrades.upgrades,
+          ...effectUpgrades.upgrades,
+          ...variantUpgrades.upgrades,
+          ...visualUpgrades.upgrades,
+          ...abilityUpgrades.upgrades
+        ] as Upgrade[]
+
+        // Backend returns full upgrade objects, map them to frontend upgrade objects
+        const offeredUpgrades = result.upgrades
+          .map((backendUpgrade: any) => {
+            const upgrade = allUpgrades.find(u => u.id === backendUpgrade.id)
+            return upgrade
+          })
+          .filter(u => u !== undefined) as Upgrade[]
+
+        setOptions(offeredUpgrades)
+        console.log(`Rerolled to ${offeredUpgrades.length} new upgrades`)
+      } else {
+        console.error('Failed to reroll upgrades')
+      }
     }
   }
 
