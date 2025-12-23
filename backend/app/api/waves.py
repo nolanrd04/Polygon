@@ -42,6 +42,7 @@ class WaveCompleteRequest(BaseModel):
     kills: int
     total_damage: int
     current_health: int
+    damage_taken: int = Field(default=0, ge=0)
     frame_samples: List[FrameSample]
     enemy_deaths: List[EnemyDeath]
     upgrades_used: List[str]
@@ -131,6 +132,7 @@ async def complete_wave(
         "kills": request.kills,
         "total_damage": request.total_damage,
         "current_health": request.current_health,
+        "damage_taken": request.damage_taken,
         "frame_samples": [f.model_dump() for f in request.frame_samples],
         "enemy_deaths": [e.model_dump() for e in request.enemy_deaths],
         "upgrades_used": request.upgrades_used

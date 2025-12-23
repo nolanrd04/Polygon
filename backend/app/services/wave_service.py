@@ -231,11 +231,15 @@ class WaveService:
 
         print(f"Total flags: {len(flags)}, High severity: {len([f for f in flags if f.severity in ['high', 'critical']])}")
 
-        # Mark token as used
+        # Mark token as used and calculate playtime
+        used_at = datetime.utcnow()
         await self.wave_tokens_collection.update_one(
             {"_id": token_doc["_id"]},
-            {"$set": {"used": True, "used_at": datetime.utcnow()}}
+            {"$set": {"used": True, "used_at": used_at}}
         )
+
+        # Calculate wave duration in seconds
+        wave_duration_seconds = int((used_at - token.created_at).total_seconds())
 
         # If flags detected, save to flagged_waves
         if flags:
@@ -250,13 +254,16 @@ class WaveService:
         if not critical_flags:
             kills = wave_data.get("kills", 0)
             damage = wave_data.get("total_damage", 0)
-            print(f"Updating stats - Kills: {kills}, Damage: {damage}, Wave: {token.wave_number}")
+            damage_taken = wave_data.get("damage_taken", 0)
+            print(f"Updating stats - Kills: {kills}, Damage: {damage}, Wave: {token.wave_number}, Duration: {wave_duration_seconds}s, Damage Taken: {damage_taken}")
 
             await self._update_player_stats_after_wave(
                 user_id,
                 kills,
                 damage,
-                token.wave_number
+                token.wave_number,
+                wave_duration_seconds,
+                damage_taken
             )
 
             # Create/update game save after wave completion
@@ -486,18 +493,29 @@ class WaveService:
         user_id: ObjectId,
         kills: int,
         damage: int,
-        wave: int
+        wave: int,
+        duration_seconds: int,
+        damage_taken: int
     ):
         """Update permanent account stats after successful wave completion"""
         stats = await self.player_stats_repo.find_by_user_id(user_id)
         if stats:
+            # Check for perfect wave (no damage taken, wave > 5)
+            is_perfect_wave = damage_taken == 0 and wave > 5
+            experience_gain = 1 if is_perfect_wave else 0
+
+            if is_perfect_wave:
+                print(f"🌟 PERFECT WAVE! No damage taken on wave {wave}. Experience +1")
+
             await self.player_stats_repo.update_by_id(
                 stats.id,
                 {
                     "total_kills": stats.total_kills + kills,
                     "total_damage_dealt": stats.total_damage_dealt + damage,
                     "highest_wave_ever": max(stats.highest_wave_ever, wave),
-                    "games_won": stats.games_won + 1
+                    "games_won": stats.games_won + 1,
+                    "total_playtime_seconds": stats.total_playtime_seconds + duration_seconds,
+                    "experience": stats.experience + experience_gain
                 }
             )
 
