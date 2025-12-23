@@ -7,6 +7,7 @@ from app.core.security import get_current_user
 from app.models.user import User
 from app.models.game_save import GameSave, GameSaveResponse, OfferedUpgrade
 from app.repositories.game_save_repository import GameSaveRepository
+from app.repositories.player_stats_repository import PlayerStatsRepository
 
 router = APIRouter()
 
@@ -174,6 +175,15 @@ async def delete_save(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete save"
+        )
+
+    # Increment games_played when starting a new game (deleting the old save)
+    stats_repo = PlayerStatsRepository(db)
+    stats = await stats_repo.find_by_user_id(current_user.id)
+    if stats:
+        await stats_repo.update_by_id(
+            stats.id,
+            {"games_played": stats.games_played + 1}
         )
 
     return {"message": "Save deleted successfully"}

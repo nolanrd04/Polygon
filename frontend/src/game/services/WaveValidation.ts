@@ -29,6 +29,7 @@ export class WaveValidationService {
   private enemyDeaths: EnemyDeath[] = []
   private totalKills: number = 0
   private totalDamage: number = 0
+  private damageTaken: number = 0
   private offeredUpgrades: any[] = []
 
   /**
@@ -61,6 +62,7 @@ export class WaveValidationService {
       this.enemyDeaths = []
       this.totalKills = 0
       this.totalDamage = 0
+      this.damageTaken = 0
 
       console.log(`Wave ${waveNumber} started. Token expires in ${response.data.expires_in}s`)
       console.log('Stored offeredUpgrades:', this.offeredUpgrades)
@@ -119,6 +121,13 @@ export class WaveValidationService {
   }
 
   /**
+   * Record damage taken by player
+   */
+  recordDamageTaken(damage: number) {
+    this.damageTaken += Math.round(damage)
+  }
+
+  /**
    * Increment frame counter
    */
   incrementFrame() {
@@ -153,6 +162,7 @@ export class WaveValidationService {
         kills: this.totalKills,
         total_damage: this.totalDamage,
         current_health: currentHealth,
+        damage_taken: this.damageTaken,
         frame_samples: this.frameSamples,
         enemy_deaths: this.enemyDeaths,
         upgrades_used: appliedUpgrades
@@ -273,6 +283,7 @@ export class WaveValidationService {
       enemyDeaths: this.enemyDeaths.length,
       totalKills: this.totalKills,
       totalDamage: this.totalDamage,
+      damageTaken: this.damageTaken,
       hasToken: !!this.waveToken
     }
   }

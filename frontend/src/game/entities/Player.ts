@@ -10,6 +10,7 @@ import { Spinner } from './projectiles/player_projectiles/Spinner'
 import { AttackType } from '../data/attackTypes'
 import { UpgradeSystem, UpgradeEffectSystem, UpgradeModifierSystem } from '../systems/upgrades'
 import { TextureGenerator } from '../utils/TextureGenerator'
+import { waveValidation } from '../services/WaveValidation'
 
 /**
  * The player character - a polygon that can move and shoot projectiles.
@@ -474,6 +475,9 @@ export class Player extends Phaser.GameObjects.Container {
     const modifiedAmount = UpgradeEffectSystem.onPlayerDamage(amount)
 
     GameManager.takeDamage(modifiedAmount)
+
+    // Track damage for perfect wave detection
+    waveValidation.recordDamageTaken(modifiedAmount)
 
     // Flash red
     this.DrawWithColor(0xff0000)
