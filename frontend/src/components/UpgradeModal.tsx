@@ -8,6 +8,26 @@ import { GameManager } from '../game/core/GameManager'
 import { EventBus } from '../game/core/EventBus'
 import { waveValidation } from '../game/services/WaveValidation'
 
+/**
+ * UPGRADE ARCHITECTURE:
+ *
+ * Upgrades are managed using a hybrid backend/frontend approach:
+ *
+ * BACKEND (backend/app/core/upgrade_data.py):
+ * - Contains the source of truth for all upgrade definitions
+ * - Handles upgrade rolling (3 random upgrades based on rarity weights)
+ * - Validates upgrade selection (dependencies, max stacks, cost)
+ * - Returns only upgrade IDs to the frontend
+ *
+ * FRONTEND (frontend/src/game/data/upgrades/*.json):
+ * - Contains a copy of the same upgrade data for display purposes
+ * - Used to look up full upgrade details (name, description, rarity) based on IDs from backend
+ * - Enables rendering upgrade cards in the UI
+ * - Used by DevTools for development upgrade selection
+ *
+ * This architecture prevents client-side manipulation while keeping UI rendering fast.
+ */
+
 interface Upgrade {
   id: string
   name: string
