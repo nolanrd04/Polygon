@@ -52,6 +52,9 @@ export class AcidBullet extends Projectile {
     const scene = this.scene as Phaser.Scene & { spawnProjectile: Function }
     const explosion = new AcidExplosion()
     explosion.SetDefaults()
+    
+    // Scale explosion damage to match the bullet's scaled damage
+    explosion.damage = this.damage
 
     // Spawn at death location, doesn't travel anywhere
     scene.spawnProjectile(explosion, this.positionX, this.positionY, this.positionX, this.positionY, 'enemy', this.ownerId)

@@ -166,6 +166,7 @@ export class MainScene extends Phaser.Scene {
       )
       deathText.setOrigin(0, 1) // Anchor from bottom-left corner
       deathText.setDepth(10000) // Render on top of everything
+      deathText.setScrollFactor(0) // Fix to screen space, don't move with camera
     })
 
     // Clear projectiles at end of wave
