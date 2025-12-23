@@ -180,12 +180,13 @@ async def select_upgrade(
             detail="Upgrade was not offered this wave"
         )
 
-    # Check if upgrade was already purchased
-    upgrade_index = next((i for i, u in enumerate(game_save.offered_upgrades) if u.id == request.upgrade_id), None)
-    if upgrade_index is not None and game_save.offered_upgrades[upgrade_index].purchased:
+    # Check if upgrade was already purchased (find first unpurchased instance)
+    upgrade_index = next((i for i, u in enumerate(game_save.offered_upgrades) if u.id == request.upgrade_id and not u.purchased), None)
+    if upgrade_index is None:
+        # All instances of this upgrade have been purchased (or it wasn't offered)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Upgrade already purchased"
+            detail="Upgrade already purchased or not offered"
         )
 
     upgrade = get_upgrade(request.upgrade_id)
@@ -202,10 +203,10 @@ async def select_upgrade(
             detail="Cannot apply this upgrade (dependencies not met or max stacks reached)"
         )
 
-    # Mark upgrade as purchased in offered_upgrades
+    # Mark upgrade as purchased in offered_upgrades (only mark the specific instance found above)
     updated_offered_upgrades = []
-    for u in game_save.offered_upgrades:
-        if u.id == request.upgrade_id:
+    for i, u in enumerate(game_save.offered_upgrades):
+        if i == upgrade_index:
             from app.models.game_save import OfferedUpgrade
             updated_offered_upgrades.append(OfferedUpgrade(id=u.id, purchased=True))
         else:
