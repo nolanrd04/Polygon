@@ -267,7 +267,7 @@ export class Player extends Phaser.GameObjects.Container {
    */
   private getCooldown(): number {
     switch (this.attackType) {
-      case 'bullet': return 200
+      case 'bullet': return 300
       case 'laser': return 300
       case 'zapper': return 400
       case 'flamer': return 50 // Very fast for continuous effect

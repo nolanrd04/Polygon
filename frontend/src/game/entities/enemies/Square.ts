@@ -5,7 +5,7 @@ import { Enemy } from './Enemy'
  */
 export class Square extends Enemy {
   SetDefaults(): void {
-    this.health = 110
+    this.health = 200
     this.speed = 80
     this.damage = 75
     this.sides = 4
@@ -13,6 +13,6 @@ export class Square extends Enemy {
     this.color = 0x33ff33
     this.scoreChance = 0.4
     this.speedCap = 4.5
-    this.knockbackResistance = 0.5
+    this.knockbackResistance = 0.95
   }
 }

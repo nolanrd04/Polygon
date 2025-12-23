@@ -12,7 +12,7 @@ export class Diamond extends Enemy {
     private dashDirection: number = 0 // Store direction for dash
 
   SetDefaults(): void {
-    this.health = 100
+    this.health = 250
     this.speed = 100
     this.damage = 65
     this.sides = 4
@@ -27,7 +27,7 @@ export class Diamond extends Enemy {
     this.scale = .85
     this.baseSpeed = this.speed
     this.frameCounter = 0
-    this.knockbackResistance = .7
+    this.knockbackResistance = .95
   }
 
   PreAI(): boolean {

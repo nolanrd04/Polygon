@@ -12,7 +12,7 @@ export class SuperSquare extends Enemy {
   private hasOutline: boolean = false
 
   SetDefaults(): void {
-    this.health = 120
+    this.health = 230
     this.speed = 90
     this.damage = 30
     this.sides = 4

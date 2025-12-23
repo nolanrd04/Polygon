@@ -76,7 +76,7 @@
       "effectValue": 0.06,
       "multipler": true,
       "stackable": true,
-      "maxStacks": 5,
+      "maxStacks": 3,
       "cost": 20
     },
     {

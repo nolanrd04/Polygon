@@ -316,9 +316,10 @@ export abstract class Enemy {
     this.knockbackEndTime = this.scene.time.now + 100
   }
 
-  /**
-   * Deal damage to this enemy.
-   * Returns true if the enemy died.
+  /*this.velocityX = velocityX * knockbackMultiplier
+    this.velocityY = velocityY * knockbackMultiplier
+    // Prevent AI from immediately overwriting knockback velocity for 100ms
+    this.knockbackEndTime = this.scene.time.now + 100
    */
   takeDamage(amount: number, source?: any): boolean {
     if (!this.OnHit(amount, source)) {
@@ -460,7 +461,7 @@ export abstract class Enemy {
 
       if (this.doOldRotationTracking)
       {
-        this.oldRotations.shift()
+        //  this.oldRotations.shift()
         this.oldRotations.push(this.rotation)
       }
     }

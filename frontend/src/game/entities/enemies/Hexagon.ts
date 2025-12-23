@@ -14,7 +14,7 @@ export class Hexagon extends Enemy {
   private shieldSprite: Phaser.GameObjects.Sprite | null = null
 
   SetDefaults(): void {
-    this.health = 575
+    this.health = 800
     this.speed = 52
     this.damage = 100
     this.sides = 6
@@ -22,6 +22,7 @@ export class Hexagon extends Enemy {
     this.color = 0xff00ff
     this.scoreChance = .65
     this.speedCap = 4.5
+    this.knockbackResistance = 0.8
   }
 
   PreAI(): boolean {

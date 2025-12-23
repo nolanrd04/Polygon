@@ -161,21 +161,6 @@
       "cost": 2
     },
     {
-      "id": "bullet_speed_2",
-      "name": "Velocity Boost",
-      "description": "+17% bullet speed",
-      "rarity": "uncommon",
-      "type": "stat_modifier",
-      "target": "bullet",
-      "attackType": "bullet",
-      "stat": "speed",
-      "value": 0.17,
-      "isMultiplier": true,
-      "stackable": true,
-      "maxStacks": 5,
-      "cost": 6
-    },
-    {
       "id": "bullet_pierce_1",
       "name": "Piercing Shot",
       "description": "Bullets pierce +1 enemy",
@@ -514,38 +499,6 @@
       "dependencyCount": 1
     },
     {
-      "id": "maximum_homing_damage_multiplier_1",
-      "name": "Kinetic Amplifier",
-      "description": "Increases the maximum possible damage of homing bullets by 10%",
-      "rarity": "epic",
-      "type": "stat_modifier",
-      "target": "bullet",
-      "attackType": "bullet",
-      "stat":"maximumSpawnDamageMultiplier",
-      "value": 0.10,
-      "stackable": true,
-      "maxStacks": 5,
-      "cost": 20,
-      "dependentOn": ["homing_bullets"],
-      "dependencyCount": 1
-    },
-    {
-      "id": "maximum_homing_damage_multiplier_2",
-      "name": "Kinetic Amplifier",
-      "description": "Increases the maximum possible damage of homing bullets by 25%",
-      "rarity": "legendary",
-      "type": "stat_modifier",
-      "target": "bullet",
-      "attackType": "bullet",
-      "stat":"maximumSpawnDamageMultiplier",
-      "value": 0.25,
-      "stackable": true,
-      "maxStacks": 2,
-      "cost": 40,
-      "dependentOn": ["homing_bullets"],
-      "dependencyCount": 1
-    },
-    {
       "id": "minimum_homing_damage_multiplier_1",
       "name": "Kinetic Sustainer",
       "description": "Increases the minimum possible damage of homing bullets by 5%",
@@ -556,7 +509,7 @@
       "stat":"minimumDamageMultiplier",
       "value": 0.05,
       "stackable": true,
-      "maxStacks": 3,
+      "maxStacks": 2,
       "cost": 20,
       "dependentOn": ["homing_bullets"],
       "dependencyCount": 1
@@ -572,7 +525,7 @@
       "stat":"minimumDamageMultiplier",
       "value": 0.12,
       "stackable": true,
-      "maxStacks": 2,
+      "maxStacks": 1,
       "cost": 40,
       "dependentOn": ["homing_bullets"],
       "dependencyCount": 1

@@ -9,7 +9,7 @@ export class SuperTriangle extends Enemy {
   private hasOutline: boolean = false
 
   SetDefaults(): void {
-    this.health = 45
+    this.health = 120
     this.speed = 50
     this.damage = 50
     this.sides = 3

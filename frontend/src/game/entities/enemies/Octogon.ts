@@ -6,7 +6,7 @@ import { Enemy } from './Enemy'
 export class Octogon extends Enemy {
 
 SetDefaults(): void {
-    this.health = 1400
+    this.health = 1500
     this.speed = 58
     this.damage = 100
     this.sides = 8

@@ -34,9 +34,9 @@ export class Dodecahedron extends Enemy {
 
 
   SetDefaults(): void {
-    this.health = 12000
+    this.health = 16000
     this.speed = 60
-    this.damage = 50
+    this.damage = 130
     this.sides = 12
     this.radius = 80
     this.color = this.defaultColor
