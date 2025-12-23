@@ -254,6 +254,16 @@ export class MainScene extends Phaser.Scene {
         // WaveManager starts at 0, so we need to set it to the loaded wave
         this.waveManager.setWave(waveNumber)
         console.log('Synced WaveManager to wave:', waveNumber)
+
+        // RE-APPLY SAVED UPGRADES
+        // This restores effect system state (like shield charges) from saved game
+        const savedUpgrades = currentState.appliedUpgrades || []
+        if (savedUpgrades.length > 0) {
+          console.log(`Re-applying ${savedUpgrades.length} saved upgrades:`, savedUpgrades)
+          for (const upgradeId of savedUpgrades) {
+            this.applyUpgrade(upgradeId, true) // Skip cost check - already paid for
+          }
+        }
       }
 
       // Pre-load upgrades from backend using saved wave number
