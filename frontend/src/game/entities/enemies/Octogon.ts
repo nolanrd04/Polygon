@@ -13,7 +13,7 @@ SetDefaults(): void {
     this.radius = 35
     this.color = 0xff8b1f
     this.scoreChance = .4
-    this.speedCap = 1.4
+    this.speedCap = 4.5
     this.knockbackResistance = 0.9
   }
 

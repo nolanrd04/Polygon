@@ -19,7 +19,8 @@ export class SuperSquare extends Enemy {
     this.radius = 20
     this.color = 0x33ff33
     this.scoreChance = 0.5
-    this.speedCap = 2.45  // Normal cap (2x)
+    this.speedCap = 4.5
+    this.knockbackResistance = 0.5
   }
 
   /**
@@ -58,7 +59,7 @@ export class SuperSquare extends Enemy {
         // Scale damage based on enemy's damage stat
         projectile.damage = this.damage
         
-        const scene = this.scene as any
+        const scene = this.scene as Phaser.Scene & { spawnProjectile: Function }
         scene.spawnProjectile(projectile, this.x, this.y, _playerX, _playerY, 'enemy', this.id)
     }
   }

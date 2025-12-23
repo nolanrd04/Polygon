@@ -6,7 +6,6 @@ export class AcidExplosion extends Projectile {
   private maxExpansionTime: number = 200 // milliseconds
   private currentRadius: number = 0
   private maxRadius: number = 40
-  private spawnTimeMs: number = 0
 
   SetDefaults(): void {
     this.damage = 12
@@ -50,8 +49,8 @@ export class AcidExplosion extends Projectile {
 
   AI(): void {
     // Track spawn time on first frame
-    if (this.spawnTimeMs === 0) {
-      this.spawnTimeMs = this.scene.time.now
+    if (this.spawnTime === 0) {
+      this.spawnTime = this.scene.time.now
     }
 
     // Expand from center over time
@@ -86,7 +85,7 @@ export class AcidExplosion extends Projectile {
   private calculateFadeAlpha(): number {
     // Calculate time elapsed since spawn
     const currentTime = this.scene.time.now
-    const elapsedMs = currentTime - this.spawnTimeMs
+    const elapsedMs = currentTime - this.spawnTime
     const timeRemaining = this.timeLeft - elapsedMs
     
     // Fade out during last 500ms

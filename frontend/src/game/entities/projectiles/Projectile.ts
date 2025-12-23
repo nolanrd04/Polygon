@@ -178,7 +178,7 @@ export abstract class Projectile {
   private destroyed: boolean = false
 
   /** When this projectile was spawned (for timeLeft tracking) */
-  private spawnTime: number = 0
+  spawnTime: number = 0
 
   // ============================================================
   // LIFECYCLE HOOKS - Override these in your projectile class

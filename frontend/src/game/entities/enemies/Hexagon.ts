@@ -21,7 +21,7 @@ export class Hexagon extends Enemy {
     this.radius = 30
     this.color = 0xff00ff
     this.scoreChance = .65
-    this.speedCap = 1.3  // Very low cap (tank, shouldn't be fast)
+    this.speedCap = 4.5
   }
 
   PreAI(): boolean {

@@ -63,6 +63,11 @@ export class HomingBullet extends Projectile {
   private canHome: boolean = true
   private homeDelay: number = 125 // Delay before homing re-activates after hit (milliseconds)
   private directionIndicator?: Phaser.GameObjects.Sprite
+  private trackingDistance: number = 200
+  private maximumSpawnDamageMultiplier: number = 1
+  private minimumDamageMultiplier: number = 0.3
+  private initialDamage: number = 0 // Will be set on first AI frame after upgrades applied
+  private hasInitializedDamage: boolean = false
 
   // for ricochet detection
 
@@ -75,6 +80,12 @@ export class HomingBullet extends Projectile {
     this.color = 0x00ff00
     this.timeLeft = 3000 // Despawn after 3 seconds
     this.knockback = 1 // Push enemies back on hit
+    
+    this.trackingDistance = UpgradeModifierSystem.applyModifiers('bullet', 'trackingDistance', this.trackingDistance)
+    this.maximumSpawnDamageMultiplier = UpgradeModifierSystem.applyModifiers('bullet', 'maximumSpawnDamageMultiplier', this.maximumSpawnDamageMultiplier)
+    this.minimumDamageMultiplier = UpgradeModifierSystem.applyModifiers('bullet', 'minimumDamageMultiplier', this.minimumDamageMultiplier)
+    console.log('Maximum spawn damage multiplier:', this.maximumSpawnDamageMultiplier)
+    console.log('Minimum damage multiplier:', this.minimumDamageMultiplier)
   }
 
   PreDraw(): boolean {
@@ -111,6 +122,11 @@ export class HomingBullet extends Projectile {
   }
 
   AI(): void {
+    // Capture the modified damage on first frame (after Player.applyUpgradeModifiers)
+    if (!this.hasInitializedDamage) {
+      this.initialDamage = this.damage
+      this.hasInitializedDamage = true
+    }
 
     // Check if homing cooldown has expired
     if (!this.canHome && this.scene.time.now >= this.homeDelay) {
@@ -127,7 +143,7 @@ export class HomingBullet extends Projectile {
     if (this.canHome)
     {
       let nearest: any = null
-      let nearestDist = 300
+      let nearestDist = this.trackingDistance
 
       for (const enemy of enemies) {
         const e = enemy as Phaser.GameObjects.Container
@@ -171,12 +187,28 @@ export class HomingBullet extends Projectile {
       }
     }
   }
+  private getDamageMultiplier(): number {
+    const elapsedTime = this.scene.time.now - this.spawnTime
+    const progress = Math.min(1, elapsedTime / this.timeLeft)
+
+    // Only decay for first half of lifetime
+    if (progress > 0.5) {
+      return this.minimumDamageMultiplier
+    }
+
+    // Interpolate from max to min over first half
+    const halfLifeProgress = progress / 0.5 // Convert to 0-1 range for first half
+    return this.maximumSpawnDamageMultiplier - (halfLifeProgress * (this.maximumSpawnDamageMultiplier - this.minimumDamageMultiplier))
+  }
 
   OnHitNPC(_enemy: any): boolean {
     // Disable homing temporarily after hitting to prevent sticking
     this.canHome = false
     this.homeDelay = this.scene.time.now + 500 // Re-enable homing after 500ms
-    this.damage *= .5
+    
+    // Apply damage decay based on time alive
+    this.damage = this.initialDamage * this.getDamageMultiplier()
+    console.log('Collision damage (decayed):', this.damage)
     return true
   }
 

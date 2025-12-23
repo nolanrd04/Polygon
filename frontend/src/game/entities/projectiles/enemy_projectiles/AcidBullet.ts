@@ -49,7 +49,7 @@ export class AcidBullet extends Projectile {
 
   OnKill(): void {
     // Spawn acid explosion on death
-    const scene = this.scene as any
+    const scene = this.scene as Phaser.Scene & { spawnProjectile: Function }
     const explosion = new AcidExplosion()
     explosion.SetDefaults()
 

@@ -12,14 +12,14 @@ export class Diamond extends Enemy {
     private dashDirection: number = 0 // Store direction for dash
 
   SetDefaults(): void {
-    this.health = 50
+    this.health = 100
     this.speed = 100
-    this.damage = 50
+    this.damage = 65
     this.sides = 4
     this.radius = 22
     this.color = 0xfcf003
     this.scoreChance = .45
-    this.speedCap = 2.5
+    this.speedCap = 4.5
     this.doOldPositionTracking = true
     this.doOldRotationTracking = true  // NEW: Track rotation for trails
     this.oldTrackingCounter = 3
@@ -27,6 +27,7 @@ export class Diamond extends Enemy {
     this.scale = .85
     this.baseSpeed = this.speed
     this.frameCounter = 0
+    this.knockbackResistance = .7
   }
 
   PreAI(): boolean {
