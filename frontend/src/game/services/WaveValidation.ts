@@ -222,6 +222,40 @@ export class WaveValidationService {
   }
 
   /**
+   * Reroll upgrades for the current wave
+   */
+  async rerollUpgrades(wave: number, rerollCost: number): Promise<any[] | null> {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        console.error('No auth token found')
+        return null
+      }
+
+      const response = await axios.post('/api/waves/reroll', {
+        wave: wave,
+        reroll_cost: rerollCost
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.data.success) {
+        // Update the offered upgrades with the new ones
+        this.offeredUpgrades = response.data.offered_upgrades
+        console.log('Rerolled upgrades:', this.offeredUpgrades)
+        return this.offeredUpgrades
+      }
+
+      return null
+    } catch (error: any) {
+      console.error('Failed to reroll upgrades:', error)
+      return null
+    }
+  }
+
+  /**
    * Get current stats for debugging
    */
   getStats() {

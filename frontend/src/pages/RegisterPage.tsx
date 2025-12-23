@@ -63,7 +63,8 @@ export default function RegisterPage() {
       navigate('/login')
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.detail || 'Registration failed')
+        const detail = err.response?.data?.detail
+        setError(detail || 'Registration failed')
       } else {
         setError('Registration failed')
       }

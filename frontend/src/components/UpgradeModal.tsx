@@ -128,12 +128,39 @@ export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModal
     loadBackendUpgrades()
   }, [])
 
-  const handleReroll = () => {
+  const handleReroll = async () => {
     if (playerPoints >= rerollCost) {
-      GameManager.addPoints(-rerollCost)
-      setSelectedIndices([])  // Reset selected indices for new roll
-      setOptions([])  // Clear old options to prevent sticking
-      loadBackendUpgrades()  // Reload upgrades from backend (backend will need reroll endpoint if we want different upgrades)
+      const currentWave = GameManager.getState().wave
+
+      // Call backend to reroll upgrades
+      const newUpgrades = await waveValidation.rerollUpgrades(currentWave, rerollCost)
+
+      if (newUpgrades) {
+        setSelectedIndices([])  // Reset selected indices for new roll
+        setOptions([])  // Clear old options first
+
+        // Load the new upgrades from the backend response
+        const allUpgrades = [
+          ...statUpgrades.upgrades,
+          ...effectUpgrades.upgrades,
+          ...variantUpgrades.upgrades,
+          ...visualUpgrades.upgrades,
+          ...abilityUpgrades.upgrades
+        ] as Upgrade[]
+
+        // Backend returns full upgrade objects, map them to frontend upgrade objects
+        const offeredUpgrades = newUpgrades
+          .map((backendUpgrade: any) => {
+            const upgrade = allUpgrades.find(u => u.id === backendUpgrade.id)
+            return upgrade
+          })
+          .filter(u => u !== undefined) as Upgrade[]
+
+        setOptions(offeredUpgrades)
+        console.log(`Rerolled to ${offeredUpgrades.length} new upgrades`)
+      } else {
+        console.error('Failed to reroll upgrades')
+      }
     }
   }
 
