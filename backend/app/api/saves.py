@@ -74,23 +74,37 @@ async def create_or_update_save(
 
     if existing_save:
         # Update existing save
+        # NOTE: Do NOT update offered_upgrades here - it should only be modified by:
+        # 1. Wave start (rolling new upgrades)
+        # 2. Select upgrade (marking as purchased)
+        # 3. Wave completion (clearing after wave completes)
+        update_data = {
+            "current_points": save_data.current_points,
+            "seed": save_data.seed,
+            "current_health": save_data.current_health,
+            "current_max_health": save_data.current_max_health,
+            "current_speed": save_data.current_speed,
+            "current_polygon_sides": save_data.current_polygon_sides,
+            "current_kills": save_data.current_kills,
+            "current_damage_dealt": save_data.current_damage_dealt,
+            "current_upgrades": save_data.current_upgrades,
+            "attack_stats": save_data.attack_stats,
+            "unlocked_attacks": save_data.unlocked_attacks
+        }
+
+        # Only update current_wave if it's greater than existing (prevent going backwards)
+        # Wave progression should be driven by wave completion, not autosave
+        if save_data.current_wave > existing_save.current_wave:
+            update_data["current_wave"] = save_data.current_wave
+
+        # Only update offered_upgrades if explicitly provided (not empty)
+        # This prevents autosave from clearing the offered upgrades
+        if save_data.offered_upgrades:
+            update_data["offered_upgrades"] = save_data.offered_upgrades
+
         updated_save = await repo.update_by_id(
             existing_save.id,
-            {
-                "current_wave": save_data.current_wave,
-                "current_points": save_data.current_points,
-                "seed": save_data.seed,
-                "current_health": save_data.current_health,
-                "current_max_health": save_data.current_max_health,
-                "current_speed": save_data.current_speed,
-                "current_polygon_sides": save_data.current_polygon_sides,
-                "current_kills": save_data.current_kills,
-                "current_damage_dealt": save_data.current_damage_dealt,
-                "current_upgrades": save_data.current_upgrades,
-                "offered_upgrades": save_data.offered_upgrades,
-                "attack_stats": save_data.attack_stats,
-                "unlocked_attacks": save_data.unlocked_attacks
-            }
+            update_data
         )
         save = updated_save
     else:
