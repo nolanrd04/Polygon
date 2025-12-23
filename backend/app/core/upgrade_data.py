@@ -17,20 +17,19 @@ RARITY_WEIGHTS = {
 # All upgrades - complete database
 UPGRADES: Dict[str, Dict[str, Any]] = {
     # STAT UPGRADES
-    "damage_1": {"id": "damage_1", "name": "Devastation", "description": "+0.1% damage.", "rarity": "common", "type": "stat_modifier", "target": "attack", "stat": "damage", "value": 0.001, "isMultiplier": True, "stackable": True, "maxStacks": 99999, "cost": 2},
-    "damage_2": {"id": "damage_2", "name": "Devastation", "description": "+0.4% damage.", "rarity": "uncommon", "type": "stat_modifier", "target": "attack", "stat": "damage", "value": 0.004, "isMultiplier": True, "stackable": True, "maxStacks": 99999, "cost": 6},
-    "damage_3": {"id": "damage_3", "name": "Devastation", "description": "+0.8% damage.", "rarity": "rare", "type": "stat_modifier", "target": "attack", "stat": "damage", "value": 0.008, "isMultiplier": True, "stackable": True, "maxStacks": 99999, "cost": 10},
-    "damage_4": {"id": "damage_4", "name": "Devastation", "description": "+1.6% damage.", "rarity": "epic", "type": "stat_modifier", "target": "attack", "stat": "damage", "value": 0.016, "isMultiplier": True, "stackable": True, "maxStacks": 99999, "cost": 20},
-    "damage_5": {"id": "damage_5", "name": "Devastation", "description": "+3.5% damage.", "rarity": "legendary", "type": "stat_modifier", "target": "attack", "stat": "damage", "value": 0.035, "isMultiplier": True, "stackable": True, "maxStacks": 99999, "cost": 40},
+    "damage_1": {"id": "damage_1", "name": "Devastation", "description": "+0.2% damage.", "rarity": "common", "type": "stat_modifier", "target": "attack", "stat": "damage", "value": 0.002, "isMultiplier": True, "stackable": True, "maxStacks": 99999, "cost": 2},
+    "damage_2": {"id": "damage_2", "name": "Devastation", "description": "+0.8% damage.", "rarity": "uncommon", "type": "stat_modifier", "target": "attack", "stat": "damage", "value": 0.008, "isMultiplier": True, "stackable": True, "maxStacks": 99999, "cost": 6},
+    "damage_3": {"id": "damage_3", "name": "Devastation", "description": "+1.6% damage.", "rarity": "rare", "type": "stat_modifier", "target": "attack", "stat": "damage", "value": 0.016, "isMultiplier": True, "stackable": True, "maxStacks": 99999, "cost": 10},
+    "damage_4": {"id": "damage_4", "name": "Devastation", "description": "+3.5% damage.", "rarity": "epic", "type": "stat_modifier", "target": "attack", "stat": "damage", "value": 0.035, "isMultiplier": True, "stackable": True, "maxStacks": 99999, "cost": 20},
+    "damage_5": {"id": "damage_5", "name": "Devastation", "description": "+7.5% damage.", "rarity": "legendary", "type": "stat_modifier", "target": "attack", "stat": "damage", "value": 0.075, "isMultiplier": True, "stackable": True, "maxStacks": 99999, "cost": 40},
 
     "bullet_damage_1": {"id": "bullet_damage_1", "name": "Sharper Rounds", "description": "+1 bullet damage", "rarity": "common", "type": "stat_modifier", "target": "attack", "attackType": "bullet", "stat": "damage", "value": 1, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 2},
-    "bullet_damage_2": {"id": "bullet_damage_2", "name": "Shaper Rounds", "description": "+4 bullet damage", "rarity": "uncommon", "type": "stat_modifier", "target": "attack", "attackType": "bullet", "stat": "damage", "value": 4, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 6},
-    "bullet_damage_3": {"id": "bullet_damage_3", "name": "Shaper Rounds", "description": "+8 bullet damage", "rarity": "rare", "type": "stat_modifier", "target": "attack", "attackType": "bullet", "stat": "damage", "value": 8, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 10},
-    "bullet_damage_4": {"id": "bullet_damage_4", "name": "Shaper Rounds", "description": "+16 bullet damage", "rarity": "epic", "type": "stat_modifier", "target": "attack", "attackType": "bullet", "stat": "damage", "value": 16, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 20},
-    "bullet_damage_5": {"id": "bullet_damage_5", "name": "Shaper Rounds", "description": "+35 bullet damage", "rarity": "legendary", "type": "stat_modifier", "target": "attack", "attackType": "bullet", "stat": "damage", "value": 35, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 40},
+    "bullet_damage_2": {"id": "bullet_damage_2", "name": "Sharper Rounds", "description": "+4 bullet damage", "rarity": "uncommon", "type": "stat_modifier", "target": "attack", "attackType": "bullet", "stat": "damage", "value": 4, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 6},
+    "bullet_damage_3": {"id": "bullet_damage_3", "name": "Sharper Rounds", "description": "+8 bullet damage", "rarity": "rare", "type": "stat_modifier", "target": "attack", "attackType": "bullet", "stat": "damage", "value": 8, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 10},
+    "bullet_damage_4": {"id": "bullet_damage_4", "name": "Sharper Rounds", "description": "+16 bullet damage", "rarity": "epic", "type": "stat_modifier", "target": "attack", "attackType": "bullet", "stat": "damage", "value": 16, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 20},
+    "bullet_damage_5": {"id": "bullet_damage_5", "name": "Sharper Rounds", "description": "+35 bullet damage", "rarity": "legendary", "type": "stat_modifier", "target": "attack", "attackType": "bullet", "stat": "damage", "value": 35, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 40},
 
     "bullet_speed_1": {"id": "bullet_speed_1", "name": "Velocity Boost", "description": "+5% bullet speed", "rarity": "common", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "speed", "value": 0.05, "isMultiplier": True, "stackable": True, "maxStacks": 5, "cost": 2},
-    "bullet_speed_2": {"id": "bullet_speed_2", "name": "Velocity Boost", "description": "+17% bullet speed", "rarity": "uncommon", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "speed", "value": 0.17, "isMultiplier": True, "stackable": True, "maxStacks": 5, "cost": 6},
 
     "bullet_pierce_1": {"id": "bullet_pierce_1", "name": "Piercing Shot", "description": "Bullets pierce +1 enemy", "rarity": "rare", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "pierce", "value": 1, "stackable": True, "maxStacks": 3, "cost": 10},
 
@@ -47,14 +46,14 @@ UPGRADES: Dict[str, Dict[str, Any]] = {
     "player_health_5": {"id": "player_health_5", "name": "Reinforced Core", "description": "+300 max health", "rarity": "legendary", "type": "stat_modifier", "target": "player", "stat": "maxHealth", "value": 300, "stackable": True, "maxStacks": 5, "cost": 40},
 
     "knockback_1": {"id": "knockback_1", "name": "Knockback Boost", "description": "+5% knockback", "rarity": "common", "type": "stat_modifier", "target": "attack", "stat": "knockback", "value": 0.05, "isMultiplier": True, "stackable": True, "maxStacks": 5, "cost": 2},
-    "knockback_2": {"id": "knockback_2", "name": "Knockback Boost", "description": "+20% knockback", "rarity": "uncommon", "type": "stat_modifier", "target": "attack", "stat": "knockback", "value": 0.20, "isMultiplier": True, "stackable": True, "maxStacks": 5, "cost": 6},
-    "knockback_3": {"id": "knockback_3", "name": "Knockback Boost", "description": "+50% knockback", "rarity": "rare", "type": "stat_modifier", "target": "attack", "stat": "knockback", "value": 0.50, "isMultiplier": True, "stackable": True, "maxStacks": 5, "cost": 10},
+    "knockback_2": {"id": "knockback_2", "name": "Knockback Boost", "description": "+20% knockback", "rarity": "uncommon", "type": "stat_modifier", "target": "attack", "stat": "knockback", "value": 0.20, "isMultiplier": True, "stackable": True, "maxStacks": 3, "cost": 6},
+    "knockback_3": {"id": "knockback_3", "name": "Knockback Boost", "description": "+50% knockback", "rarity": "rare", "type": "stat_modifier", "target": "attack", "stat": "knockback", "value": 0.50, "isMultiplier": True, "stackable": True, "maxStacks": 2, "cost": 10},
 
     "player_speed_1": {"id": "player_speed_1", "name": "Thruster Boost", "description": "+10 movement speed", "rarity": "uncommon", "type": "stat_modifier", "target": "player", "stat": "speed", "value": 10, "stackable": True, "maxStacks": 10, "cost": 6},
 
-    "polygon_upgrade": {"id": "polygon_upgrade", "name": "Evolution", "description": "+1 polygon side", "rarity": "legendary", "type": "stat_modifier", "target": "player", "stat": "polygonSides", "value": 1, "stackable": True, "maxStacks": 9, "cost": 35},
+    "polygon_upgrade": {"id": "polygon_upgrade", "name": "Evolution", "description": "+1 polygon side", "rarity": "legendary", "type": "stat_modifier", "target": "player", "stat": "polygonSides", "value": 1, "stackable": True, "maxStacks": 9, "cost": 60},
 
-    "explosion_radius": {"id": "explosion_radius", "name": "Blast Radius", "description": "+5 explosion radius", "rarity": "uncommon", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "explosionRadius", "value": 5, "stackable": True, "maxStacks": 5, "cost": 6, "dependentOn": ["explosive_bullets"], "dependencyCount": 1},
+    "explosion_radius": {"id": "explosion_radius", "name": "Blast Radius", "description": "+5 explosion radius", "rarity": "uncommon", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "explosionRadius", "value": 5, "stackable": True, "maxStacks": 5, "cost": 6, "dependentOn": ["explosive_bullets", "explosion_on_kill"], "dependencyCount": 1},
 
     # EFFECT UPGRADES
     "vampirism_1": {"id": "vampirism_1", "name": "Vampirism", "description": "Heal for 2% of damage dealt", "rarity": "rare", "type": "effect", "effect": "lifesteal", "effectValue": 0.02, "stackable": False, "maxStacks": 1, "cost": 10, "tier": 1, "upgradesTo": "vampirism_2"},
@@ -64,7 +63,7 @@ UPGRADES: Dict[str, Dict[str, Any]] = {
     "regeneration": {"id": "regeneration", "name": "Auto Repair", "description": "Regenerate 1 HP/sec", "rarity": "epic", "type": "effect", "effect": "regen", "effectValue": 1, "stackable": True, "maxStacks": 3, "cost": 20},
 
     "armor": {"id": "armor", "name": "Hardened Shell", "description": "Reduce incoming damage by 2.5%", "rarity": "rare", "type": "effect", "effect": "armor", "effectValue": 0.025, "multipler": True, "stackable": True, "maxStacks": 5, "cost": 10},
-    "armor_2": {"id": "armor_2", "name": "Hardened Shell", "description": "Reduce incoming damage by 6%", "rarity": "epic", "type": "effect", "effect": "armor", "effectValue": 0.06, "multipler": True, "stackable": True, "maxStacks": 5, "cost": 20},
+    "armor_2": {"id": "armor_2", "name": "Hardened Shell", "description": "Reduce incoming damage by 6%", "rarity": "epic", "type": "effect", "effect": "armor", "effectValue": 0.06, "multipler": True, "stackable": True, "maxStacks": 3, "cost": 20},
 
     "thorns": {"id": "thorns", "name": "Thorns", "description": "Reflect 10% of damage taken", "rarity": "epic", "type": "effect", "effect": "thorns", "effectValue": 0.1, "stackable": True, "maxStacks": 3, "cost": 20},
 
@@ -72,7 +71,25 @@ UPGRADES: Dict[str, Dict[str, Any]] = {
 
     "multishot_1": {"id": "multishot_1", "name": "Double Tap", "description": "Fire +1 additional projectile", "rarity": "legendary", "type": "effect", "effect": "multishot", "attackType": "bullet", "effectValue": 1, "stackable": True, "maxStacks": 2, "cost": 40},
 
-    "ricochet": {"id": "ricochet", "name": "Ricochet Rounds", "description": "Projectiles bounce off surfaces.", "rarity": "epic", "type": "effect", "effect": "ricochet", "effectValue": 1, "stackable": True, "maxStacks": 2, "cost": 20, "dependentOn": ["bullet_pierce_1"], "dependencyCount": 1},
+    "ricochet": {"id": "ricochet", "name": "Ricochet Rounds", "description": "Projectiles bounce off surfaces.", "rarity": "epic", "type": "effect", "effect": "ricochet", "effectValue": 1, "stackable": True, "maxStacks": 2, "cost": 20, "dependentOn": ["bullet_pierce_1"], "dependencyCount": 1, "incompatibleWith": ["homing_bullets"]},
+
+    # NEW EXPLOSION DAMAGE UPGRADES
+    "explosion_damage_1": {"id": "explosion_damage_1", "name": "Volatile Core", "description": "+5 explosion damage", "rarity": "rare", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "explosionDamage", "value": 5, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 10, "dependentOn": ["explosive_bullets", "explosion_on_kill"], "dependencyCount": 1},
+    "explosion_damage_2": {"id": "explosion_damage_2", "name": "Volatile Core", "description": "+10 explosion damage", "rarity": "epic", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "explosionDamage", "value": 10, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 20, "dependentOn": ["explosive_bullets", "explosion_on_kill"], "dependencyCount": 1},
+    "explosion_damage_3": {"id": "explosion_damage_3", "name": "Volatile Core", "description": "+20 explosion damage", "rarity": "legendary", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "explosionDamage", "value": 30, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 40, "dependentOn": ["explosive_bullets", "explosion_on_kill"], "dependencyCount": 1},
+    "explosion_damage_percent_1": {"id": "explosion_damage_percent_1", "name": "Explosive Force", "description": "+5% explosion damage", "rarity": "epic", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "explosionDamage", "value": 0.05, "isMultiplier": True, "stackable": True, "maxStacks": 5, "cost": 20, "dependentOn": ["explosive_bullets", "explosion_on_kill"], "dependencyCount": 1},
+    "explosion_damage_percent_2": {"id": "explosion_damage_percent_2", "name": "Explosive Force", "description": "+10% explosion damage", "rarity": "legendary", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "explosionDamage", "value": 0.10, "isMultiplier": True, "stackable": True, "maxStacks": 3, "cost": 40, "dependentOn": ["explosive_bullets", "explosion_on_kill"], "dependencyCount": 1},
+
+    # NEW HOMING BULLET UPGRADES
+    "homing_distance_1": {"id": "homing_distance_1", "name": "Enhanced Eyesight", "description": "+20 tracking distance for homing bullets", "rarity": "uncommon", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "trackingDistance", "value": 20, "stackable": True, "maxStacks": 6, "cost": 6, "dependentOn": ["homing_bullets"], "dependencyCount": 1},
+    "homing_distance_2": {"id": "homing_distance_2", "name": "Enhanced Eyesight", "description": "+50 tracking distance for homing bullets", "rarity": "rare", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "trackingDistance", "value": 50, "stackable": True, "maxStacks": 4, "cost": 10, "dependentOn": ["homing_bullets"], "dependencyCount": 1},
+    "minimum_homing_damage_multiplier_1": {"id": "minimum_homing_damage_multiplier_1", "name": "Kinetic Sustainer", "description": "Increases the minimum possible damage of homing bullets by 5%", "rarity": "epic", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "minimumDamageMultiplier", "value": 0.05, "stackable": True, "maxStacks": 2, "cost": 20, "dependentOn": ["homing_bullets"], "dependencyCount": 1},
+    "minimum_homing_damage_multiplier_2": {"id": "minimum_homing_damage_multiplier_2", "name": "Kinetic Sustainer", "description": "Increases the minimum possible damage of homing bullets by 12%", "rarity": "legendary", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "minimumDamageMultiplier", "value": 0.12, "stackable": True, "maxStacks": 1, "cost": 40, "dependentOn": ["homing_bullets"], "dependencyCount": 1},
+
+    # NEW TENACITY (BULLET LIFESPAN) UPGRADES
+    "tenacity_1": {"id": "tenacity_1", "name": "Tenacity", "description": "Increased the bullet lifespan by .15 seconds", "rarity": "rare", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "timeLeft", "value": 150, "stackable": True, "maxStacks": 6, "cost": 10},
+    "tenacity_2": {"id": "tenacity_2", "name": "Tenacity", "description": "Increased the bullet lifespan by .4 seconds", "rarity": "epic", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "timeLeft", "value": 400, "stackable": True, "maxStacks": 3, "cost": 20},
+    "tenacity_3": {"id": "tenacity_3", "name": "Tenacity", "description": "Increased the bullet lifespan by 1 second", "rarity": "legendary", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "timeLeft", "value": 1000, "stackable": True, "maxStacks": 1, "cost": 40},
 
     # VARIANT UPGRADES
     "homing_bullets": {"id": "homing_bullets", "name": "Homing Bullets", "description": "Bullets track nearest enemy with reduced damage.", "rarity": "epic", "type": "variant", "target": "bullet", "attackType": "bullet", "variantClass": "HomingBullet", "replaces": ["explosive_bullets"], "stackable": False, "cost": 20},
@@ -84,7 +101,7 @@ UPGRADES: Dict[str, Dict[str, Any]] = {
 
     # ABILITY UPGRADES
     "dash_ability": {"id": "dash_ability", "name": "Dash", "description": "Press SPACE to dash", "rarity": "rare", "type": "ability", "effect": "dash", "stackable": False, "cost": 10},
-    "shield_ability": {"id": "shield_ability", "name": "Energy Shield", "description": "Press E for temporary shield", "rarity": "rare", "type": "ability", "effect": "shield", "stackable": False, "cost": 10},
+    "shield_ability": {"id": "shield_ability", "name": "Energy Shield", "description": "Press E for temporary shield (consumable, stacks)", "rarity": "rare", "type": "effect", "effect": "shield", "value": 1, "stackable": True, "maxStacks": 5, "cost": 10},
 }
 
 
