@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Game } from 'phaser'
 import { gameConfig } from '../game/core/GameConfig'
 import UpgradeModal from '../components/UpgradeModal'
@@ -13,6 +14,7 @@ import { GameManager } from '../game/core/GameManager'
 import axios from 'axios'
 
 export default function GamePage() {
+  const navigate = useNavigate()
   const gameRef = useRef<Game | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [isPaused, setIsPaused] = useState(false)
@@ -23,6 +25,7 @@ export default function GamePage() {
   const [selectedAttack, setSelectedAttack] = useState('bullet')
   const [showCollisionBoxes, setShowCollisionBoxes] = useState(false)
   const [abilityState, setAbilityState] = useState({ shieldCharges: 0, hasDash: false, dashCooldownProgress: 1 })
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   // Store last known game state in ref to survive game destruction
   const lastGameStateRef = useRef<any>(null)
@@ -103,7 +106,32 @@ export default function GamePage() {
       if (loadSavedGame === 'true') {
         // Load saved game state
         const savedData = await SaveGameService.loadSavedGame()
+        
+        // If we tried to load but failed (returns null), it means the save was invalid/game_over
+        if (loadSavedGame === 'true' && !savedData) {
+          console.log('[LOAD] Failed to load save - save is marked as game over or invalid')
+          setLoadError('This save has ended. Starting a new game...')
+          // Redirect to main menu after a short delay so user can see the message
+          setTimeout(() => {
+            navigate('/')
+          }, 1500)
+          sessionStorage.removeItem('loadSavedGame')
+          return
+        }
+        
         if (savedData) {
+          // Check if the loaded save is marked as game over (prevents multi-tab exploit)
+          if (savedData.game_over) {
+            console.log('[LOAD] Save is marked as GAME OVER - cannot continue this run')
+            setLoadError('This save has ended. Starting a new game...')
+            // Redirect to main menu after a short delay so user can see the message
+            setTimeout(() => {
+              navigate('/')
+            }, 1500)
+            sessionStorage.removeItem('loadSavedGame')
+            return
+          }
+          
           // Restore game state before creating the game
           SaveGameService.restoreGameState(savedData)
           console.log('Loaded saved game from wave', savedData.wave)
@@ -241,6 +269,18 @@ export default function GamePage() {
 
   return (
     <div className="w-full h-full relative">
+      {loadError && (
+        <div className="fixed inset-0 bg-polygon-darker/95 flex flex-col items-center justify-center z-50">
+          <div className="text-center space-y-4">
+            <h2 className="text-3xl font-bold text-red-500">INVALID SAVE</h2>
+            <p className="text-lg text-gray-300">{loadError}</p>
+            <div className="mt-8 animate-pulse">
+              <p className="text-sm text-gray-400">Returning to menu...</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div ref={containerRef} className="w-full h-full" />
 
       <GameHUD

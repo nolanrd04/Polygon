@@ -69,6 +69,22 @@ export class SaveGameService {
         return null
       }
 
+      // First, validate that the save can be loaded (not marked as game over)
+      // This prevents exploits where stale client state allows loading dead runs
+      try {
+        const validationResponse = await axios.get<{ can_load: boolean; reason?: string }>('/api/saves/validate-load', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+
+        if (!validationResponse.data.can_load) {
+          console.log('[LOAD] Backend validation failed:', validationResponse.data.reason)
+          return null
+        }
+      } catch (validationError) {
+        console.error('Failed to validate save load:', validationError)
+        return null
+      }
+
       const response = await axios.get<BackendSaveData | null>('/api/saves/', {
         headers: { Authorization: `Bearer ${token}` }
       })

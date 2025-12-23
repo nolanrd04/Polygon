@@ -29,6 +29,7 @@ class GameSaveCreate(BaseModel):
     game_over: bool = Field(default=False)
 
 
+
 @router.get("/", response_model=Optional[GameSaveResponse])
 async def get_save(
     current_user: User = Depends(get_current_user),
@@ -200,3 +201,24 @@ async def autosave(
     This prevents reroll exploitation by saving progress immediately.
     """
     return await create_or_update_save(save_data, current_user, db)
+
+@router.get("/validate-load", response_model=dict)
+async def validate_load_save(
+    current_user: User = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """
+    Validate that the user's save can be loaded (not marked as game over).
+    This prevents exploits where stale client state allows loading dead runs.
+    Returns whether the save can be loaded and the current game_over status.
+    """
+    repo = GameSaveRepository(db)
+    save = await repo.find_by_user_id(current_user.id)
+
+    if not save:
+        return {"can_load": False, "reason": "No save found"}
+
+    if save.game_over:
+        return {"can_load": False, "reason": "Save is marked as game over"}
+
+    return {"can_load": True}
