@@ -45,9 +45,9 @@ export default function GamePage() {
       const stats = gameState.playerStats
 
       // Don't save if game hasn't been initialized yet (prevents saving 0 points on mount)
-      // Allow wave 0 ONLY if we have the state from ref (means we're in the middle of a game)
-      if (!gameState.wave || (gameState.wave === 0 && !lastGameStateRef.current)) {
-        console.log('Skipping autosave - game not initialized yet (wave:', gameState.wave, ', has ref:', !!lastGameStateRef.current, ')')
+      // Backend requires wave >= 1, so never save wave 0
+      if (!gameState.wave || gameState.wave === 0) {
+        console.log('Skipping autosave - game not initialized yet (wave:', gameState.wave, ')')
         return
       }
 

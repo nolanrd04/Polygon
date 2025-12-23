@@ -26,6 +26,8 @@ export interface GameEvents {
   'thorns-reflect': { damage: number }
   'dev-apply-upgrade': string  // Dev-only: apply upgrade without cost
   'evolution-milestone': number  // Emitted every 6 waves with the current wave number
+  'enemy-killed': { type: string; x: number; y: number }  // Wave validation tracking
+  'damage-dealt': number  // Wave validation tracking
 }
 
 type EventCallback<T = void> = T extends void ? () => void : (data: T) => void

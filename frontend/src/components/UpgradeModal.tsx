@@ -4,7 +4,6 @@ import effectUpgrades from '../game/data/upgrades/effect_upgrades.json'
 import variantUpgrades from '../game/data/upgrades/variant_upgrades.json'
 import visualUpgrades from '../game/data/upgrades/visual_upgrades.json'
 import abilityUpgrades from '../game/data/upgrades/ability_upgrades.json'
-import { UpgradeSystem } from '../game/systems/upgrades'
 import { GameManager } from '../game/core/GameManager'
 import { EventBus } from '../game/core/EventBus'
 import { waveValidation } from '../game/services/WaveValidation'
@@ -51,7 +50,7 @@ const rarityTextColors = {
   legendary: 'text-yellow-400'
 }
 
-export default function UpgradeModal({ onStartWave, playerPoints, selectedAttack = 'bullet' }: UpgradeModalProps) {
+export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModalProps) {
   const [options, setOptions] = useState<Upgrade[]>([])
   const [selectedIndices, setSelectedIndices] = useState<number[]>([])  // Track by index, not ID
   const [rerollCost] = useState(1)

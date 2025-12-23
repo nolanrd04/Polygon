@@ -241,7 +241,9 @@ export class MainScene extends Phaser.Scene {
 
       // Determine wave number
       const waveNumber = currentState.wave || 1
-      const isLoadedGame = currentState.playerStats.points > 0
+      // Check if this is a loaded game by looking for saved upgrades or wave > 1
+      // Don't rely on points > 0 because player may have spent all points
+      const isLoadedGame = (currentState.appliedUpgrades && currentState.appliedUpgrades.length > 0) || currentState.wave > 1
 
       // Only give starting points if this is a new game (no points yet)
       // If loading a saved game, points are already restored by SaveGameService
