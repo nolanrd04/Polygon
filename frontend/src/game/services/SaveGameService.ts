@@ -97,14 +97,13 @@ export class SaveGameService {
       unlockedAttacks: savedData.unlocked_attacks
     })
 
-    // Store applied upgrades in GameManager
-    const currentState = GameManager.getState()
+    // Store applied upgrades and seed in GameManager
     console.log('DEBUG: savedData.applied_upgrades =', savedData.applied_upgrades)
-    currentState.appliedUpgrades = savedData.applied_upgrades
-    currentState.seed = savedData.seed
+    GameManager.setAppliedUpgrades(savedData.applied_upgrades)
+    GameManager.setSeed(savedData.seed)
 
-    console.log('Game state restored:', currentState)
-    console.log('DEBUG: Verified currentState.appliedUpgrades after restore =', currentState.appliedUpgrades)
+    console.log('Game state restored:', GameManager.getState())
+    console.log('DEBUG: Verified currentState.appliedUpgrades after restore =', GameManager.getState().appliedUpgrades)
   }
 
   /**

@@ -153,6 +153,22 @@ class GameManagerClass {
   }
 
   /**
+   * Restore applied upgrades from saved game
+   * Replaces the entire appliedUpgrades array
+   */
+  setAppliedUpgrades(upgrades: string[]): void {
+    this.state.appliedUpgrades = upgrades
+    console.log('GameManager.setAppliedUpgrades:', upgrades.length, 'upgrades')
+  }
+
+  /**
+   * Set the random seed (for save/load)
+   */
+  setSeed(seed: number): void {
+    this.state.seed = seed
+  }
+
+  /**
    * Complete the current wave
    * Calculates score (doubled for prime number waves), awards points, and shows completion screen
    */
