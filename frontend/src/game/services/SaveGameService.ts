@@ -141,6 +141,13 @@ export class SaveGameService {
         return false
       }
 
+      // Don't save mid-wave to prevent exploit (replaying same wave for easy points)
+      // Only save between waves (during upgrade screen) or on quit/death
+      if (gameState.isWaveActive) {
+        console.log('Skipping save - wave is active (prevents mid-wave save exploit)')
+        return false
+      }
+
       console.log('Saving game state with points:', stats.points)
 
       await axios.post('/api/saves/', {
