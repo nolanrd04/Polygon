@@ -2,6 +2,7 @@ import Phaser from 'phaser'
 import { EnemyManager } from './EnemyManager'
 import { GameManager } from '../core/GameManager'
 import { EventBus } from '../core/EventBus'
+import { waveValidation } from '../services/WaveValidation'
 
 type EnemySpawnWeight = {
   type: string
@@ -21,12 +22,17 @@ export class WaveManager {
     this.enemyManager = enemyManager
   }
 
-  startNextWave(): void {
+  async startNextWave(): Promise<void> {
     this.currentWave++
     this.waveActive = true
 
     // Sync GameManager's wave counter
     GameManager.setWave(this.currentWave)
+
+    // Upgrades are pre-loaded:
+    // - Wave 1: loaded in MainScene before showing initial upgrade modal
+    // - Wave 2+: loaded in GameManager.completeWave() before showing upgrade modal
+    console.log(`Wave ${this.currentWave} starting with pre-loaded upgrades`)
 
     // Scale enemy stats for this wave (use currentWave - 1 since wave 1 should have wave 0 multiplier)
     this.enemyManager.scaleEnemyStats(this.currentWave - 1)
@@ -328,13 +334,22 @@ export class WaveManager {
     )
   }
 
-  completeWave(): void {
+  async completeWave(): Promise<void> {
     this.waveActive = false
+
+    // Submit wave validation data to backend
+    const validationResult = await waveValidation.completeWave(this.currentWave)
+    if (!validationResult.success) {
+      console.warn('Wave validation failed:', validationResult.errors)
+      // Still allow progression for now, but log the failure
+    } else {
+      console.log(`Wave ${this.currentWave} validated successfully`)
+    }
 
     // Clear all projectiles
     this.scene.events.emit('clear-projectiles')
 
-    GameManager.completeWave()
+    await GameManager.completeWave()
     if (this.currentWave % 6 === 0 && this.currentWave > 0) {
       EventBus.emit('evolution-milestone', this.currentWave)
     }

@@ -11,6 +11,7 @@ import { AttackType } from '../data/attackTypes'
 import { Projectile } from '../entities/projectiles/Projectile'
 import { UpgradeSystem, UpgradeEffectSystem, registerEffectHandlers, type UpgradeDefinition } from '../systems/upgrades'
 import { TextureGenerator } from '../utils/TextureGenerator'
+import { waveValidation } from '../services/WaveValidation'
 
 // Import all upgrade JSONs
 import statUpgrades from '../data/upgrades/stat_upgrades.json'
@@ -218,17 +219,71 @@ export class MainScene extends Phaser.Scene {
       }
     })
 
+    // WAVE VALIDATION: Track enemy deaths
+    EventBus.on('enemy-killed', (data: { type: string; x: number; y: number }) => {
+      waveValidation.recordEnemyDeath(data.type, data.x, data.y)
+    })
+
+    // WAVE VALIDATION: Track damage dealt
+    EventBus.on('damage-dealt', (damage: number) => {
+      waveValidation.recordDamage(damage)
+    })
+
     // Start with initial upgrade phase
-    this.time.delayedCall(500, () => {
-      // Give player starting points for initial upgrades
-      GameManager.addPoints(70)
-      // Show upgrade modal before wave 1
+    this.time.delayedCall(500, async () => {
+      const currentState = GameManager.getState()
+
+      console.log('MainScene initializing - Current GameManager state:', {
+        wave: currentState.wave,
+        points: currentState.playerStats.points,
+        seed: currentState.seed
+      })
+
+      // Determine wave number
+      const waveNumber = currentState.wave || 1
+      const isLoadedGame = currentState.playerStats.points > 0
+
+      // Only give starting points if this is a new game (no points yet)
+      // If loading a saved game, points are already restored by SaveGameService
+      if (!isLoadedGame) {
+        console.log('New game detected - adding 70 starting points')
+        GameManager.addPoints(70)
+      } else {
+        console.log('Loaded game detected - keeping existing points:', currentState.playerStats.points)
+        // IMPORTANT: Sync WaveManager with loaded wave number
+        // WaveManager starts at 0, so we need to set it to the loaded wave
+        this.waveManager.setWave(waveNumber)
+        console.log('Synced WaveManager to wave:', waveNumber)
+      }
+
+      // Pre-load upgrades from backend using saved wave number
+      const seed = currentState.seed || Math.floor(Math.random() * 1000000)
+
+      console.log('Starting wave from MainScene:', waveNumber, 'with seed:', seed)
+      await waveValidation.startWave(waveNumber, seed)
+
+      // Show upgrade modal
       EventBus.emit('show-upgrades')
     })
   }
 
   update(_time: number, delta: number): void {
     if (GameManager.getState().isPaused) return
+
+    // INCREMENT FRAME COUNTER FOR WAVE VALIDATION
+    waveValidation.incrementFrame()
+
+    // SAMPLE FRAME DATA EVERY 30 FRAMES (about 2x per second at 60fps)
+    if (waveValidation.getStats().frameCount % 30 === 0) {
+      const playerBody = this.player.body as Phaser.Physics.Arcade.Body
+      waveValidation.sampleFrame(
+        this.player.x,
+        this.player.y,
+        playerBody.velocity.x,
+        playerBody.velocity.y,
+        GameManager.getPlayerStats().health
+      )
+    }
 
     // Update effect system (for regeneration, etc.)
     UpgradeEffectSystem.onUpdate(delta)
@@ -414,6 +469,16 @@ export class MainScene extends Phaser.Scene {
 
     if (success) {
       console.log(`Applied upgrade: ${upgrade.name}${skipCost ? ' (DEV - FREE)' : ''}`)
+
+      // VALIDATE WITH BACKEND (skip for dev tools)
+      if (!skipCost) {
+        const currentWave = GameManager.getState().wave
+        waveValidation.selectUpgrade(upgradeId, currentWave).then(validated => {
+          if (!validated) {
+            console.warn('Backend rejected upgrade selection - possible desync')
+          }
+        })
+      }
 
       // Deduct points (skip for dev tools)
       if (!skipCost && cost > 0) {

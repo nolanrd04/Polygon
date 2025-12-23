@@ -4,7 +4,7 @@ import axios from 'axios'
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -15,7 +15,7 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const response = await axios.post('/api/auth/login', { email, password })
+      const response = await axios.post('/api/auth/login', { username, password })
       localStorage.setItem('token', response.data.access_token)
       navigate('/')
     } catch (err: unknown) {
@@ -41,10 +41,10 @@ export default function LoginPage() {
         )}
 
         <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           className="px-4 py-3 bg-polygon-dark border border-gray-700 rounded text-white focus:border-polygon-primary focus:outline-none"
           required
         />

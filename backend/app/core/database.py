@@ -1,20 +1,29 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, declarative_base
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from app.core.config import settings
 
-engine = create_async_engine(settings.database_url, echo=settings.debug)
-async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-Base = declarative_base()
+
+class MongoDB:
+    client: AsyncIOMotorClient = None
+    database: AsyncIOMotorDatabase = None
 
 
-async def get_db():
-    async with async_session() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
+mongodb = MongoDB()
 
 
-async def create_tables():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+async def connect_to_mongo():
+    """Connect to MongoDB on application startup"""
+    mongodb.client = AsyncIOMotorClient(settings.mongodb_url)
+    mongodb.database = mongodb.client[settings.mongodb_database]
+    print(f"Connected to MongoDB database: {settings.mongodb_database}")
+
+
+async def close_mongo_connection():
+    """Close MongoDB connection on application shutdown"""
+    if mongodb.client:
+        mongodb.client.close()
+        print("Closed MongoDB connection")
+
+
+def get_database() -> AsyncIOMotorDatabase:
+    """Get MongoDB database instance"""
+    return mongodb.database

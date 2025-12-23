@@ -1,153 +1,161 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from pydantic import BaseModel
-from app.core.database import get_db
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from pydantic import BaseModel, Field
+from app.core.database import get_database
 from app.core.security import get_current_user
 from app.models.user import User
-from app.models.game_save import GameSave
+from app.models.game_save import GameSave, GameSaveResponse, OfferedUpgrade
+from app.repositories.game_save_repository import GameSaveRepository
 
 router = APIRouter()
 
 
-class PlayerStatsSchema(BaseModel):
-    health: int
-    maxHealth: int
-    speed: int
-    polygonSides: int
-
-
-class AttackStatsSchema(BaseModel):
-    damage: int
-    speed: Optional[int] = None
-    cooldown: int
-    size: Optional[float] = None
-    pierce: Optional[int] = None
-    chains: Optional[int] = None
-    range: Optional[int] = None
-
-
 class GameSaveCreate(BaseModel):
-    slot: int = 1
-    wave: int
-    points: int
-    seed: int
-    player_stats: dict
-    applied_upgrades: List[str]
-    attack_stats: dict
-    unlocked_attacks: List[str]
+    current_wave: int = Field(..., ge=1)
+    current_points: int = Field(..., ge=0)
+    seed: int = Field(...)
+    current_health: int = Field(..., ge=0)
+    current_max_health: int = Field(..., ge=1)
+    current_speed: int = Field(..., ge=0)
+    current_polygon_sides: int = Field(..., ge=3, le=8)
+    current_kills: int = Field(default=0, ge=0)
+    current_damage_dealt: int = Field(default=0, ge=0)
+    current_upgrades: List[str] = Field(default_factory=list)
+    offered_upgrades: List[OfferedUpgrade] = Field(default_factory=list)
+    attack_stats: Dict[str, Any] = Field(...)
+    unlocked_attacks: List[str] = Field(default_factory=list)
 
 
-class GameSaveResponse(BaseModel):
-    id: int
-    slot: int
-    wave: int
-    points: int
-    seed: int
-    player_stats: dict
-    applied_upgrades: List[str]
-    attack_stats: dict
-    unlocked_attacks: List[str]
-
-    class Config:
-        from_attributes = True
-
-
-@router.get("/", response_model=List[GameSaveResponse])
-async def get_all_saves(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    result = await db.execute(
-        select(GameSave).where(GameSave.user_id == current_user.id)
-    )
-    saves = result.scalars().all()
-    return saves
-
-
-@router.get("/{slot}", response_model=GameSaveResponse)
+@router.get("/", response_model=Optional[GameSaveResponse])
 async def get_save(
-    slot: int,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    result = await db.execute(
-        select(GameSave).where(
-            GameSave.user_id == current_user.id,
-            GameSave.slot == slot
-        )
-    )
-    save = result.scalar_one_or_none()
+    """Get the game save for the current user (one save per user)"""
+    repo = GameSaveRepository(db)
+    save = await repo.find_by_user_id(current_user.id)
 
     if not save:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Save not found"
-        )
+        return None
 
-    return save
+    return GameSaveResponse(
+        id=save.id,
+        user_id=save.user_id,
+        current_wave=save.current_wave,
+        current_points=save.current_points,
+        seed=save.seed,
+        current_health=save.current_health,
+        current_max_health=save.current_max_health,
+        current_speed=save.current_speed,
+        current_polygon_sides=save.current_polygon_sides,
+        current_kills=save.current_kills,
+        current_damage_dealt=save.current_damage_dealt,
+        current_upgrades=save.current_upgrades,
+        offered_upgrades=save.offered_upgrades,
+        attack_stats=save.attack_stats,
+        unlocked_attacks=save.unlocked_attacks,
+        created_at=save.created_at,
+        updated_at=save.updated_at
+    )
 
 
 @router.post("/", response_model=GameSaveResponse)
 async def create_or_update_save(
     save_data: GameSaveCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    # Check if save exists for this slot
-    result = await db.execute(
-        select(GameSave).where(
-            GameSave.user_id == current_user.id,
-            GameSave.slot == save_data.slot
-        )
-    )
-    existing_save = result.scalar_one_or_none()
+    """Create or update the game save for the current user (one save per user)"""
+    repo = GameSaveRepository(db)
+
+    # Check if save exists for this user
+    existing_save = await repo.find_by_user_id(current_user.id)
 
     if existing_save:
         # Update existing save
-        existing_save.wave = save_data.wave
-        existing_save.points = save_data.points
-        existing_save.seed = save_data.seed
-        existing_save.player_stats = save_data.player_stats
-        existing_save.applied_upgrades = save_data.applied_upgrades
-        existing_save.attack_stats = save_data.attack_stats
-        existing_save.unlocked_attacks = save_data.unlocked_attacks
-        await db.commit()
-        await db.refresh(existing_save)
-        return existing_save
+        # NOTE: Do NOT update offered_upgrades here - it should only be modified by:
+        # 1. Wave start (rolling new upgrades)
+        # 2. Select upgrade (marking as purchased)
+        # 3. Wave completion (clearing after wave completes)
+        update_data = {
+            "current_points": save_data.current_points,
+            "seed": save_data.seed,
+            "current_health": save_data.current_health,
+            "current_max_health": save_data.current_max_health,
+            "current_speed": save_data.current_speed,
+            "current_polygon_sides": save_data.current_polygon_sides,
+            "current_kills": save_data.current_kills,
+            "current_damage_dealt": save_data.current_damage_dealt,
+            "current_upgrades": save_data.current_upgrades,
+            "attack_stats": save_data.attack_stats,
+            "unlocked_attacks": save_data.unlocked_attacks
+        }
+
+        # Only update current_wave if it's greater than existing (prevent going backwards)
+        # Wave progression should be driven by wave completion, not autosave
+        if save_data.current_wave > existing_save.current_wave:
+            update_data["current_wave"] = save_data.current_wave
+
+        # Only update offered_upgrades if explicitly provided (not empty)
+        # This prevents autosave from clearing the offered upgrades
+        if save_data.offered_upgrades:
+            update_data["offered_upgrades"] = save_data.offered_upgrades
+
+        updated_save = await repo.update_by_id(
+            existing_save.id,
+            update_data
+        )
+        save = updated_save
     else:
         # Create new save
         new_save = GameSave(
             user_id=current_user.id,
-            slot=save_data.slot,
-            wave=save_data.wave,
-            points=save_data.points,
+            current_wave=save_data.current_wave,
+            current_points=save_data.current_points,
             seed=save_data.seed,
-            player_stats=save_data.player_stats,
-            applied_upgrades=save_data.applied_upgrades,
+            current_health=save_data.current_health,
+            current_max_health=save_data.current_max_health,
+            current_speed=save_data.current_speed,
+            current_polygon_sides=save_data.current_polygon_sides,
+            current_kills=save_data.current_kills,
+            current_damage_dealt=save_data.current_damage_dealt,
+            current_upgrades=save_data.current_upgrades,
+            offered_upgrades=save_data.offered_upgrades,
             attack_stats=save_data.attack_stats,
             unlocked_attacks=save_data.unlocked_attacks
         )
-        db.add(new_save)
-        await db.commit()
-        await db.refresh(new_save)
-        return new_save
+        save = await repo.create(new_save)
 
-
-@router.delete("/{slot}")
-async def delete_save(
-    slot: int,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    result = await db.execute(
-        select(GameSave).where(
-            GameSave.user_id == current_user.id,
-            GameSave.slot == slot
-        )
+    return GameSaveResponse(
+        id=save.id,
+        user_id=save.user_id,
+        current_wave=save.current_wave,
+        current_points=save.current_points,
+        seed=save.seed,
+        current_health=save.current_health,
+        current_max_health=save.current_max_health,
+        current_speed=save.current_speed,
+        current_polygon_sides=save.current_polygon_sides,
+        current_kills=save.current_kills,
+        current_damage_dealt=save.current_damage_dealt,
+        current_upgrades=save.current_upgrades,
+        offered_upgrades=save.offered_upgrades,
+        attack_stats=save.attack_stats,
+        unlocked_attacks=save.unlocked_attacks,
+        created_at=save.created_at,
+        updated_at=save.updated_at
     )
-    save = result.scalar_one_or_none()
+
+
+@router.delete("/")
+async def delete_save(
+    current_user: User = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Delete the game save for the current user"""
+    repo = GameSaveRepository(db)
+    save = await repo.find_by_user_id(current_user.id)
 
     if not save:
         raise HTTPException(
@@ -155,8 +163,13 @@ async def delete_save(
             detail="Save not found"
         )
 
-    await db.delete(save)
-    await db.commit()
+    deleted = await repo.delete_by_user_id(current_user.id)
+
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete save"
+        )
 
     return {"message": "Save deleted successfully"}
 
@@ -165,7 +178,7 @@ async def delete_save(
 async def autosave(
     save_data: GameSaveCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncIOMotorDatabase = Depends(get_database)
 ):
     """
     Autosave endpoint called after each wave completion.

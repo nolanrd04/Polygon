@@ -1,6 +1,7 @@
 import Phaser from 'phaser'
 import { DEV_SETTINGS } from '../../core/GameConfig'
 import { TextureGenerator } from '../../utils/TextureGenerator'
+import { EventBus } from '../../core/EventBus'
 
 /**
  * Base class for all enemies.
@@ -506,6 +507,13 @@ export abstract class Enemy {
   private _die(): void {
     if (this._isDestroyed) return
     this._isDestroyed = true
+
+    // Emit event for wave validation tracking
+    EventBus.emit('enemy-killed', {
+      type: this.constructor.name,
+      x: this.x,
+      y: this.y
+    })
 
     this.OnDeath()
 

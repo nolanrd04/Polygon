@@ -3,8 +3,9 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    # Database
-    database_url: str = "sqlite+aiosqlite:///./polygon.db"
+    # MongoDB
+    mongodb_url: str = "mongodb://localhost:27017"
+    mongodb_database: str = "polygon_game"
 
     # JWT
     secret_key: str = "your-secret-key-change-in-production"

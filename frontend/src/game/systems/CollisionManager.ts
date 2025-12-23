@@ -4,6 +4,7 @@ import { Enemy } from '../entities/enemies/Enemy'
 import { EnemyManager } from './EnemyManager'
 import { GameManager } from '../core/GameManager'
 import { UpgradeEffectSystem, UpgradeModifierSystem } from './upgrades'
+import { EventBus } from '../core/EventBus'
 
 export class CollisionManager {
   private scene: Phaser.Scene
@@ -119,6 +120,8 @@ export class CollisionManager {
 
       console.log(`Collision damage: base=${baseDamage}, modified=${modifiedDamage}, final=${finalDamage}`)
       killed = enemy.takeDamage(finalDamage)
+      // Emit damage event for wave validation
+      EventBus.emit('damage-dealt', finalDamage)
     } else {
       console.log('Collision damage skipped (projectile OnHitNPC returned false)')
     }

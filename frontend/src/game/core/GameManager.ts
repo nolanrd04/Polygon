@@ -156,7 +156,7 @@ class GameManagerClass {
    * Complete the current wave
    * Calculates score (doubled for prime number waves), awards points, and shows completion screen
    */
-  completeWave(): void {
+  async completeWave(): Promise<void> {
     this.state.isWaveActive = false
     // Base wave bonus of 10, scaled exponentially: 10 * e^(wave/8)
     const baseBonus = 25
@@ -165,6 +165,14 @@ class GameManagerClass {
     const score = Math.min(55, Math.floor(baseBonus + (this.state.wave) * 2))
 
     this.addPoints(score)
+
+    // Pre-load upgrades for next wave so they're ready when modal is shown
+    const nextWave = this.state.wave + 1
+    const seed = Math.floor(Math.random() * 1000000)
+    const { waveValidation } = await import('../services/WaveValidation')
+    await waveValidation.startWave(nextWave, seed)
+    console.log(`Pre-loaded upgrades for wave ${nextWave}`)
+
     EventBus.emit('wave-complete', {
       wave: this.state.wave,
       score,

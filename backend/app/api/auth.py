@@ -1,30 +1,23 @@
-from datetime import timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from pydantic import BaseModel, EmailStr
-from app.core.database import get_db
-from app.core.security import verify_password, get_password_hash, create_access_token
-from app.core.config import settings
-from app.models.user import User
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from app.core.database import get_database
+from app.services.auth_service import AuthService
+from app.models.user import UserResponse
 
 router = APIRouter()
 
 
-class UserCreate(BaseModel):
-    username: str
-    email: EmailStr
-    password: str
+class UserRegisterRequest(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+    first_name: str = Field(..., min_length=1, max_length=100)
+    last_name: str = Field(..., min_length=1, max_length=100)
+    password: str = Field(..., min_length=6)
 
 
-class UserResponse(BaseModel):
-    id: int
-    username: str
-    email: str
-
-    class Config:
-        from_attributes = True
+class UserLoginRequest(BaseModel):
+    username: str = Field(...)
+    password: str = Field(...)
 
 
 class Token(BaseModel):
@@ -32,82 +25,58 @@ class Token(BaseModel):
     token_type: str
 
 
-class LoginRequest(BaseModel):
-    email: str
-    password: str
+class UsernameCheckRequest(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
 
 
-@router.post("/register", response_model=UserResponse)
-async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
-    # Check if email exists
-    result = await db.execute(select(User).where(User.email == user_data.email))
-    if result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
+class UsernameCheckResponse(BaseModel):
+    available: bool
+    username: str
 
-    # Check if username exists
-    result = await db.execute(select(User).where(User.username == user_data.username))
-    if result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already taken"
-        )
 
-    # Create user
-    user = User(
+@router.post("/register", response_model=UserResponse, status_code=201)
+async def register(
+    user_data: UserRegisterRequest,
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Register a new user"""
+    auth_service = AuthService(db)
+    user = await auth_service.register_user(
         username=user_data.username,
-        email=user_data.email,
-        hashed_password=get_password_hash(user_data.password)
+        first_name=user_data.first_name,
+        last_name=user_data.last_name,
+        password=user_data.password
     )
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
-
-    return user
+    return UserResponse(
+        id=user.id,
+        username=user.username,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        created_at=user.created_at,
+        updated_at=user.updated_at
+    )
 
 
 @router.post("/login", response_model=Token)
-async def login(login_data: LoginRequest, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User).where(User.email == login_data.email))
-    user = result.scalar_one_or_none()
-
-    if not user or not verify_password(login_data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
-    access_token = create_access_token(
-        data={"sub": str(user.id)},
-        expires_delta=access_token_expires
-    )
-
-    return {"access_token": access_token, "token_type": "bearer"}
-
-
-@router.post("/token", response_model=Token)
-async def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: AsyncSession = Depends(get_db)
+async def login(
+    login_data: UserLoginRequest,
+    db: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    result = await db.execute(select(User).where(User.email == form_data.username))
-    user = result.scalar_one_or_none()
-
-    if not user or not verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
-    access_token = create_access_token(
-        data={"sub": str(user.id)},
-        expires_delta=access_token_expires
+    """Login with username and password"""
+    auth_service = AuthService(db)
+    access_token = await auth_service.authenticate_user(
+        username=login_data.username,
+        password=login_data.password
     )
-
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.get("/check-username/{username}", response_model=UsernameCheckResponse)
+async def check_username_availability(
+    username: str,
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Check if a username is available (for real-time validation)"""
+    auth_service = AuthService(db)
+    available = await auth_service.check_username_availability(username)
+    return {"available": available, "username": username}

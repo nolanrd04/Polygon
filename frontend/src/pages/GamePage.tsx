@@ -8,7 +8,9 @@ import PauseMenu from '../components/PauseMenu'
 import DevTools from '../components/DevTools'
 import AbilityDisplay from '../components/AbilityDisplay'
 import { EventBus } from '../game/core/EventBus'
+import { SaveGameService } from '../game/services/SaveGameService'
 import { GameManager } from '../game/core/GameManager'
+import axios from 'axios'
 
 export default function GamePage() {
   const gameRef = useRef<Game | null>(null)
@@ -22,27 +24,133 @@ export default function GamePage() {
   const [showCollisionBoxes, setShowCollisionBoxes] = useState(false)
   const [abilityState, setAbilityState] = useState({ shieldCharges: 0, hasDash: false, dashCooldownProgress: 1 })
 
-  useEffect(() => {
-    // Get selected attack from sessionStorage
-    const attack = sessionStorage.getItem('selectedAttack') || 'bullet'
-    setSelectedAttack(attack)
+  // Store last known game state in ref to survive game destruction
+  const lastGameStateRef = useRef<any>(null)
 
-    if (containerRef.current && !gameRef.current) {
-      gameRef.current = new Game({
-        ...gameConfig,
-        parent: containerRef.current
+  // Autosave current game state to backend
+  const saveCurrentGameState = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
+
+      // Use ref state if available (survives game destruction), otherwise get from GameManager
+      const gameState = lastGameStateRef.current || GameManager.getState()
+
+      // Don't save if we have no valid state at all
+      if (!gameState || !gameState.playerStats) {
+        console.log('Skipping autosave - no valid game state')
+        return
+      }
+
+      const stats = gameState.playerStats
+
+      // Don't save if game hasn't been initialized yet (prevents saving 0 points on mount)
+      // Allow wave 0 ONLY if we have the state from ref (means we're in the middle of a game)
+      if (!gameState.wave || (gameState.wave === 0 && !lastGameStateRef.current)) {
+        console.log('Skipping autosave - game not initialized yet (wave:', gameState.wave, ', has ref:', !!lastGameStateRef.current, ')')
+        return
+      }
+
+      // Don't save if both ref is empty AND points are 0 (likely a mount/unmount cycle)
+      if (!lastGameStateRef.current && stats.points === 0) {
+        console.log('Skipping autosave - no ref and 0 points (likely initial mount)')
+        return
+      }
+
+      console.log('Autosaving game state with points:', stats.points, '(from ref:', !!lastGameStateRef.current, ')')
+      console.log('→ Sending to backend: wave =', gameState.wave, ', points =', stats.points)
+
+      // Save current game state to backend
+      await axios.post('/api/saves/', {
+        current_wave: gameState.wave,
+        current_points: stats.points,
+        seed: gameState.seed,
+        current_health: stats.health,
+        current_max_health: stats.maxHealth,
+        current_speed: stats.speed,
+        current_polygon_sides: stats.polygonSides,
+        current_kills: 0, // Accumulated kills tracked on wave completion
+        current_damage_dealt: 0, // Accumulated damage tracked on wave completion
+        current_upgrades: gameState.appliedUpgrades,
+        offered_upgrades: [], // Will be populated when starting next wave
+        attack_stats: {
+          bullet: {
+            damage: 10,
+            speed: 400,
+            cooldown: 200,
+            size: 1,
+            pierce: 0
+          }
+        },
+        unlocked_attacks: stats.unlockedAttacks || ['bullet']
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       })
+
+      console.log('Game state auto-saved successfully')
+    } catch (error) {
+      console.error('Failed to autosave game state:', error)
     }
+  }
+
+  useEffect(() => {
+    const initGame = async () => {
+      // Check if we're loading a saved game
+      const loadSavedGame = sessionStorage.getItem('loadSavedGame')
+
+      if (loadSavedGame === 'true') {
+        // Load saved game state
+        const savedData = await SaveGameService.loadSavedGame()
+        if (savedData) {
+          // Restore game state before creating the game
+          SaveGameService.restoreGameState(savedData)
+          console.log('Loaded saved game from wave', savedData.wave)
+          // Initialize ref with restored state
+          lastGameStateRef.current = GameManager.getState()
+        }
+        // Clear the flag
+        sessionStorage.removeItem('loadSavedGame')
+      }
+
+      // Get selected attack from sessionStorage
+      const attack = sessionStorage.getItem('selectedAttack') || 'bullet'
+      setSelectedAttack(attack)
+
+      if (containerRef.current && !gameRef.current) {
+        gameRef.current = new Game({
+          ...gameConfig,
+          parent: containerRef.current
+        })
+      }
+
+      // Initialize ref with initial game state after game is created
+      // Use setTimeout to ensure game has fully initialized
+      setTimeout(() => {
+        if (!lastGameStateRef.current) {
+          const initialState = GameManager.getState()
+          if (initialState && initialState.wave && initialState.wave > 0) {
+            lastGameStateRef.current = initialState
+            console.log('Initialized ref with initial game state, wave:', initialState.wave, 'points:', initialState.playerStats.points)
+          }
+        }
+      }, 100)
+    }
+
+    initGame()
 
     // Listen for game events
     EventBus.on('wave-start', (wave: number) => {
       // Update wave number immediately when wave starts
       setWaveData(prev => ({ ...prev, wave }))
+      // Update ref with latest game state
+      lastGameStateRef.current = GameManager.getState()
     })
 
     EventBus.on('wave-complete', (data) => {
       setWaveData(data)
       setShowWaveComplete(true)
+      // Update ref with latest game state
+      lastGameStateRef.current = GameManager.getState()
     })
 
     EventBus.on('show-upgrades', () => {
@@ -52,6 +160,8 @@ export default function GamePage() {
     EventBus.on('player-stats-update', (stats) => {
       // console.log(`[GamePage] Stats update received - kills: ${stats.kills}`)
       setPlayerStats(stats)
+      // Update ref with latest game state to survive component destruction
+      lastGameStateRef.current = GameManager.getState()
     })
 
     EventBus.on('game-pause', () => setIsPaused(true))
@@ -69,13 +179,23 @@ export default function GamePage() {
 
     // Removed upgrade-applied listener - now handled by Start Wave button
 
+    // Add beforeunload handler to save on tab close
+    const handleBeforeUnload = () => {
+      saveCurrentGameState()
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
     return () => {
       clearInterval(abilityInterval)
+      // Save game state before unmounting
+      saveCurrentGameState()
+
       if (gameRef.current) {
         gameRef.current.destroy(true)
         gameRef.current = null
       }
       EventBus.removeAllListeners()
+      window.removeEventListener('beforeunload', handleBeforeUnload)
     }
   }, [])
 
@@ -109,8 +229,11 @@ export default function GamePage() {
 
       {isPaused && (
         <PauseMenu
-          onResume={() => GameManager.resume()}
-          onQuit={() => window.location.href = '/'}
+          onResume={() => EventBus.emit('game-resume')}
+          onQuit={async () => {
+            await saveCurrentGameState()
+            window.location.href = '/'
+          }}
         />
       )}
 
