@@ -467,7 +467,8 @@ class WaveService:
                 {
                     "total_kills": stats.total_kills + kills,
                     "total_damage_dealt": stats.total_damage_dealt + damage,
-                    "highest_wave_ever": max(stats.highest_wave_ever, wave)
+                    "highest_wave_ever": max(stats.highest_wave_ever, wave),
+                    "games_won": stats.games_won + 1
                 }
             )
 
