@@ -117,4 +117,64 @@ export class SaveGameService {
       wave: savedData?.wave
     }
   }
+
+  /**
+   * Save current game state to backend
+   */
+  static async saveCurrentGameState(): Promise<boolean> {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return false
+
+      const gameState = GameManager.getState()
+
+      // Don't save if we have no valid state
+      if (!gameState || !gameState.playerStats) {
+        console.log('Skipping save - no valid game state')
+        return false
+      }
+
+      const stats = gameState.playerStats
+
+      // Don't save if game hasn't been initialized yet
+      if (!gameState.wave || gameState.wave === 0) {
+        console.log('Skipping save - game not initialized yet (wave:', gameState.wave, ')')
+        return false
+      }
+
+      console.log('Saving game state with points:', stats.points)
+
+      await axios.post('/api/saves/', {
+        current_wave: gameState.wave,
+        current_points: stats.points,
+        seed: gameState.seed,
+        current_health: stats.health,
+        current_max_health: stats.maxHealth,
+        current_speed: stats.speed,
+        current_polygon_sides: stats.polygonSides,
+        current_kills: 0,
+        current_damage_dealt: 0,
+        current_upgrades: gameState.appliedUpgrades,
+        offered_upgrades: [],
+        attack_stats: {
+          bullet: {
+            damage: 10,
+            speed: 400,
+            cooldown: 200,
+            size: 1,
+            pierce: 0
+          }
+        },
+        unlocked_attacks: stats.unlockedAttacks || ['bullet']
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      console.log('Game state saved successfully')
+      return true
+    } catch (error) {
+      console.error('Failed to save game state:', error)
+      return false
+    }
+  }
 }

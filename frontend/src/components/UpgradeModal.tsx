@@ -7,6 +7,7 @@ import abilityUpgrades from '../game/data/upgrades/ability_upgrades.json'
 import { GameManager } from '../game/core/GameManager'
 import { EventBus } from '../game/core/EventBus'
 import { waveValidation } from '../game/services/WaveValidation'
+import { SaveGameService } from '../game/services/SaveGameService'
 
 /**
  * UPGRADE ARCHITECTURE:
@@ -130,12 +131,20 @@ export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModal
 
   const handleReroll = async () => {
     if (playerPoints >= rerollCost) {
+      // Save current game state first to sync points to backend
+      console.log('Saving game state before reroll...')
+      await SaveGameService.saveCurrentGameState()
+
       const currentWave = GameManager.getState().wave
 
       // Call backend to reroll upgrades
-      const newUpgrades = await waveValidation.rerollUpgrades(currentWave, rerollCost)
+      const result = await waveValidation.rerollUpgrades(currentWave, rerollCost)
 
-      if (newUpgrades) {
+      if (result) {
+        // Update GameManager with the new points from backend
+        GameManager.updatePlayerStats({ points: result.newPoints })
+        console.log('Updated points to:', result.newPoints)
+
         setSelectedIndices([])  // Reset selected indices for new roll
         setOptions([])  // Clear old options first
 
@@ -149,7 +158,7 @@ export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModal
         ] as Upgrade[]
 
         // Backend returns full upgrade objects, map them to frontend upgrade objects
-        const offeredUpgrades = newUpgrades
+        const offeredUpgrades = result.upgrades
           .map((backendUpgrade: any) => {
             const upgrade = allUpgrades.find(u => u.id === backendUpgrade.id)
             return upgrade
