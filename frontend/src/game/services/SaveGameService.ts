@@ -151,7 +151,7 @@ export class SaveGameService {
         current_max_health: stats.maxHealth,
         current_speed: stats.speed,
         current_polygon_sides: stats.polygonSides,
-        current_kills: 0,
+        current_kills: stats.kills,
         current_damage_dealt: 0,
         current_upgrades: gameState.appliedUpgrades,
         offered_upgrades: [],
