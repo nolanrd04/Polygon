@@ -62,6 +62,13 @@ export default function GamePage() {
         return
       }
 
+      // Don't save mid-wave to prevent exploit (replaying same wave for easy points)
+      if (gameState.isWaveActive) {
+        console.log('Skipping autosave - wave is active (prevents mid-wave save exploit)')
+        console.log('[DEBUG] Wave state: isWaveActive=' + gameState.isWaveActive + ', wave=' + gameState.wave + ', points=' + stats.points)
+        return
+      }
+
       console.log('Autosaving game state with points:', stats.points, '(from ref:', !!lastGameStateRef.current, ')')
       console.log('→ Sending to backend: wave =', gameState.wave, ', points =', stats.points)
 

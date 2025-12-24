@@ -90,8 +90,8 @@ export class SaveGameService {
       })
 
       if (response.data) {
-        console.log('Loaded saved game:', response.data)
-        console.log('→ Points from database:', response.data.current_points, ', Wave:', response.data.current_wave)
+        console.log('[LOAD] Loaded saved game from backend:', response.data)
+        console.log('[LOAD] → Current Points:', response.data.current_points, ', Wave:', response.data.current_wave, ', Health:', response.data.current_health)
         return this.transformBackendData(response.data)
       }
 
@@ -202,7 +202,7 @@ export class SaveGameService {
         headers: { Authorization: `Bearer ${token}` }
       })
 
-      console.log('Game state saved successfully')
+      console.log('[SAVE] Game state saved successfully with points:', stats.points)
       return true
     } catch (error) {
       console.error('Failed to save game state:', error)
