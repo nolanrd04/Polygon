@@ -193,13 +193,14 @@ export class WaveValidationService {
 
   /**
    * Select an upgrade (validates with backend)
+   * Returns the new points value from backend (authoritative)
    */
-  async selectUpgrade(upgradeId: string, waveNumber: number): Promise<boolean> {
+  async selectUpgrade(upgradeId: string, waveNumber: number): Promise<{success: boolean, newPoints?: number}> {
     try {
       const token = localStorage.getItem('token')
       if (!token) {
         console.error('No auth token found')
-        return false
+        return {success: false}
       }
 
       const response = await axios.post('/api/waves/select-upgrade', {
@@ -212,14 +213,17 @@ export class WaveValidationService {
       })
 
       if (response.data.success) {
-        console.log(`Upgrade ${upgradeId} applied and validated`)
-        return true
+        console.log(`Upgrade ${upgradeId} applied and validated, new points: ${response.data.current_points}`)
+        return {
+          success: true,
+          newPoints: response.data.current_points
+        }
       }
 
-      return false
+      return {success: false}
     } catch (error: any) {
       console.error('Failed to select upgrade:', error)
-      return false
+      return {success: false}
     }
   }
 

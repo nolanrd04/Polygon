@@ -12,6 +12,7 @@ import { Projectile } from '../entities/projectiles/Projectile'
 import { UpgradeSystem, UpgradeEffectSystem, registerEffectHandlers, type UpgradeDefinition } from '../systems/upgrades'
 import { TextureGenerator } from '../utils/TextureGenerator'
 import { waveValidation } from '../services/WaveValidation'
+import { SaveGameService } from '../services/SaveGameService'
 
 // Import all upgrade JSONs
 import statUpgrades from '../data/upgrades/stat_upgrades.json'
@@ -126,7 +127,7 @@ export class MainScene extends Phaser.Scene {
       UpgradeSystem.decrementUpgrade(upgradeId)
     })
     EventBus.on('evolution-milestone', () => {
-      this.applyUpgrade('polygon_upgrade', true) // Apply Evolution upgrade for free
+      this.applyUpgrade('polygon_upgrade', true, false) // Apply Evolution upgrade for free
     })
     EventBus.on('toggle-collision-boxes' as any, (show: boolean) => {
       this.showCollisionBoxes = show
@@ -270,7 +271,7 @@ export class MainScene extends Phaser.Scene {
         if (savedUpgrades.length > 0) {
           console.log(`Re-applying ${savedUpgrades.length} saved upgrades:`, savedUpgrades)
           for (const upgradeId of savedUpgrades) {
-            this.applyUpgrade(upgradeId, true) // Skip cost check - already paid for
+            this.applyUpgrade(upgradeId, true, true) // Skip cost, isRestore=true (don't add to array again)
           }
         } else {
           console.warn('WARNING: No saved upgrades to re-apply! This will lose effect state like shield charges.')
@@ -282,6 +283,13 @@ export class MainScene extends Phaser.Scene {
 
       console.log('Starting wave from MainScene:', waveNumber, 'with seed:', seed)
       await waveValidation.startWave(waveNumber, seed)
+
+      // For new games, save the starting points to backend after wave start creates the game save
+      if (!isLoadedGame) {
+        console.log('Saving starting points to backend...')
+        await SaveGameService.saveCurrentGameState()
+        console.log('Starting points synced to backend')
+      }
 
       // Show upgrade modal
       EventBus.emit('show-upgrades')
@@ -458,7 +466,7 @@ export class MainScene extends Phaser.Scene {
     })
   }
 
-  private applyUpgrade(upgradeId: string, skipCost: boolean = false): boolean {
+  private async applyUpgrade(upgradeId: string, skipCost: boolean = false, isRestore: boolean = false): Promise<boolean> {
     // Combine all upgrade sources
     const allUpgrades = [
       ...statUpgrades.upgrades,
@@ -492,27 +500,33 @@ export class MainScene extends Phaser.Scene {
       console.log(`Applied upgrade: ${upgrade.name}${skipCost ? ' (DEV - FREE)' : ''}`)
 
       // Add to GameManager's appliedUpgrades array for save/load
-      // (Only add if not already there - for loading saved games)
+      // Only skip adding if we're restoring from a saved game (already in array)
+      // Always add for new purchases (even duplicates - upgrades can stack!)
       const currentState = GameManager.getState()
-      if (!currentState.appliedUpgrades.includes(upgradeId)) {
+      if (!isRestore) {
         currentState.appliedUpgrades.push(upgradeId)
         console.log('Added to GameManager.appliedUpgrades:', upgradeId, '(total:', currentState.appliedUpgrades.length, ')')
       }
 
-      // VALIDATE WITH BACKEND (skip for dev tools)
+      // VALIDATE WITH BACKEND and sync points (skip for dev tools and saved upgrades)
       if (!skipCost) {
         const currentWave = GameManager.getState().wave
-        waveValidation.selectUpgrade(upgradeId, currentWave).then(validated => {
-          if (!validated) {
-            console.warn('Backend rejected upgrade selection - possible desync')
-          }
-        })
-      }
+        const result = await waveValidation.selectUpgrade(upgradeId, currentWave)
 
-      // Deduct points (skip for dev tools)
-      if (!skipCost && cost > 0) {
-        GameManager.addPoints(-cost)
+        if (!result.success) {
+          console.warn('Backend rejected upgrade selection - possible desync')
+          return false
+        }
+
+        // Sync points from backend (authoritative source)
+        if (result.newPoints !== undefined) {
+          console.log(`Syncing points from backend: ${stats.points} -> ${result.newPoints}`)
+          GameManager.updatePlayerStats({ points: result.newPoints })
+        }
       }
+      // When skipCost = true (dev tools or re-applying saved upgrades), don't deduct points
+      // - Dev tools: free upgrades for testing
+      // - Saved upgrades: already paid for, don't charge again
 
       // Apply player stat changes immediately
       if (upgrade.type === 'stat_modifier' && upgrade.target === 'player') {

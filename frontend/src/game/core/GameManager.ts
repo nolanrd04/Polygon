@@ -182,6 +182,11 @@ class GameManagerClass {
 
     this.addPoints(score)
 
+    // Save the updated points to backend before starting next wave
+    const { SaveGameService } = await import('../services/SaveGameService')
+    await SaveGameService.saveCurrentGameState()
+    console.log(`Saved game state after wave ${this.state.wave} completion, points: ${this.state.playerStats.points}`)
+
     // Pre-load upgrades for next wave so they're ready when modal is shown
     const nextWave = this.state.wave + 1
     const seed = Math.floor(Math.random() * 1000000)
