@@ -14,7 +14,7 @@ SetDefaults(): void {
     this.color = 0xff8b1f
     this.scoreChance = .4
     this.speedCap = 4.5
-    this.knockbackResistance = 0.9
+    this.knockbackResistance = 0.8
   }
 
   OnDeath(): void {

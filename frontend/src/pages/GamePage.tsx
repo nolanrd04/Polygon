@@ -11,7 +11,7 @@ import AbilityDisplay from '../components/AbilityDisplay'
 import { EventBus } from '../game/core/EventBus'
 import { SaveGameService } from '../game/services/SaveGameService'
 import { GameManager } from '../game/core/GameManager'
-import axios from 'axios'
+import axios from '../config/axios'
 
 export default function GamePage() {
   const navigate = useNavigate()
@@ -20,7 +20,7 @@ export default function GamePage() {
   const [isPaused, setIsPaused] = useState(false)
   const [showUpgrades, setShowUpgrades] = useState(false)
   const [showWaveComplete, setShowWaveComplete] = useState(false)
-  const [waveData, setWaveData] = useState({ wave: 0, score: 0, isPrime: false })
+  const [waveData, setWaveData] = useState({ wave: 1, score: 0, isPrime: false })
   const [playerStats, setPlayerStats] = useState({ health: 100, maxHealth: 100, points: 0, kills: 0 })
   const [selectedAttack, setSelectedAttack] = useState('bullet')
   const [showCollisionBoxes, setShowCollisionBoxes] = useState(false)

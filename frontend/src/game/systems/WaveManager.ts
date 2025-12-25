@@ -12,7 +12,7 @@ type EnemySpawnWeight = {
 export class WaveManager {
   private scene: Phaser.Scene
   private enemyManager: EnemyManager
-  private currentWave: number = 0
+  private currentWave: number = 1
   private waveActive: boolean = false
   private enemiesSpawned: number = 0
   private totalEnemiesToSpawn: number = 0
@@ -23,7 +23,7 @@ export class WaveManager {
   }
 
   async startNextWave(): Promise<void> {
-    this.currentWave++
+    // Wave number does NOT increment here - it increments after completing the wave
     this.waveActive = true
 
     // Sync GameManager's wave counter
@@ -349,10 +349,26 @@ export class WaveManager {
     // Clear all projectiles
     this.scene.events.emit('clear-projectiles')
 
-    await GameManager.completeWave()
+    // Check for evolution milestone BEFORE incrementing wave
     if (this.currentWave % 6 === 0 && this.currentWave > 0) {
       EventBus.emit('evolution-milestone', this.currentWave)
     }
+
+    // Complete wave (awards points, pre-loads upgrades, shows completion UI)
+    await GameManager.completeWave()
+
+    // NOW increment the wave number for next wave
+    this.currentWave++
+    GameManager.setWave(this.currentWave)
+    console.log(`Wave incremented to ${this.currentWave} after completion`)
+
+    // Emit wave-start to update UI immediately
+    EventBus.emit('wave-start', this.currentWave)
+
+    // Save the incremented wave to backend so reload works correctly
+    const { SaveGameService } = await import('../services/SaveGameService')
+    await SaveGameService.saveCurrentGameState()
+    console.log(`Saved incremented wave ${this.currentWave} to backend`)
   }
 
   getCurrentWave(): number {
@@ -380,7 +396,7 @@ export class WaveManager {
   }
 
   setWave(wave: number): void {
-    this.currentWave = wave - 1
+    this.currentWave = wave
     this.waveActive = false
     this.enemiesSpawned = 0
     this.totalEnemiesToSpawn = 0

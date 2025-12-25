@@ -16,8 +16,8 @@ class GameSaveCreate(BaseModel):
     current_wave: int = Field(..., ge=1)
     current_points: int = Field(..., ge=0)
     seed: int = Field(...)
-    current_health: int = Field(..., ge=0)
-    current_max_health: int = Field(..., ge=1)
+    current_health: float = Field(..., ge=0)
+    current_max_health: float = Field(..., ge=1)
     current_speed: int = Field(..., ge=0)
     current_polygon_sides: int = Field(..., ge=3, le=8)
     current_kills: int = Field(default=0, ge=0)
@@ -83,6 +83,7 @@ async def create_or_update_save(
         # 2. Select upgrade (marking as purchased)
         # 3. Wave completion (clearing after wave completes)
         update_data = {
+            "current_wave": save_data.current_wave,
             "current_points": save_data.current_points,
             "seed": save_data.seed,
             "current_health": save_data.current_health,
@@ -96,11 +97,6 @@ async def create_or_update_save(
             "unlocked_attacks": save_data.unlocked_attacks,
             "game_over": save_data.game_over
         }
-
-        # Only update current_wave if it's greater than existing (prevent going backwards)
-        # Wave progression should be driven by wave completion, not autosave
-        if save_data.current_wave > existing_save.current_wave:
-            update_data["current_wave"] = save_data.current_wave
 
         # Only update offered_upgrades if explicitly provided (not empty)
         # This prevents autosave from clearing the offered upgrades

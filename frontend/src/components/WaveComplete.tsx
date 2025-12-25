@@ -10,7 +10,7 @@ export default function WaveComplete({ wave, score, isPrime, onContinue }: WaveC
     <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-50">
       <div className="text-center">
         <h2 className="text-3xl font-bold text-polygon-primary mb-2">
-          WAVE {wave} COMPLETE
+          WAVE {wave-1} COMPLETE
         </h2>
 
         {isPrime && (
@@ -24,7 +24,7 @@ export default function WaveComplete({ wave, score, isPrime, onContinue }: WaveC
           <span className="text-2xl text-polygon-warning ml-2">PTS</span>
         </div>
 
-        {(wave + 1) % 10 === 0 && (
+        {(wave) % 10 === 0 && (
           <div className="text-polygon-danger text-xl mb-4 animate-pulse">
             WARNING: BOSS INCOMING
           </div>

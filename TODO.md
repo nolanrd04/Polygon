@@ -6,6 +6,19 @@
 8. Add difficulties
 9. Add leaderboard
 
+rework explosions:
+1. make both bullet and explosion do damage
+2. make the split of damage 60%/40% bullet explosion
+3. this makes explosion upgrades more valuable because you can independently increase its damage
+
+future bullet upgrades
+1. napalm (exploding bullets)
+2. after all exploding bullet upgrades -> unlock mini nuke upgrade
+3. after all homing upgrades -> unlock drone swarm upgrade
+
+create game database for tracking information
+1. game id, player upgrades (array in order), waves surivied, enemies killed, points earned, time spent total
+
 security:
 ---
   🚨 CRITICAL Security Issues

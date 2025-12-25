@@ -20,7 +20,7 @@ export class SuperSquare extends Enemy {
     this.color = 0x33ff33
     this.scoreChance = 0.5
     this.speedCap = 4.5
-    this.knockbackResistance = 0.5
+    this.knockbackResistance = 0.8
   }
 
   /**

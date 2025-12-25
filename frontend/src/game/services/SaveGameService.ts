@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from '../../config/axios'
 import { GameManager } from '../core/GameManager'
 
 // Backend response format
@@ -204,8 +204,10 @@ export class SaveGameService {
 
       console.log('[SAVE] Game state saved successfully with points:', stats.points)
       return true
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save game state:', error)
+      console.error('Error response data:', error.response?.data)
+      console.error('Error response status:', error.response?.status)
       return false
     }
   }

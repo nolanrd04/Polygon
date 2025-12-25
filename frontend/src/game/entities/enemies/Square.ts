@@ -13,6 +13,6 @@ export class Square extends Enemy {
     this.color = 0x33ff33
     this.scoreChance = 0.4
     this.speedCap = 4.5
-    this.knockbackResistance = 0.95
+    this.knockbackResistance = 0.9
   }
 }

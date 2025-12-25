@@ -20,7 +20,7 @@ export interface PlayerStats {
  * Represents the complete state of the game session
  */
 export interface GameState {
-  wave: number // Current wave number (starts at 0, increments with each wave)
+  wave: number // Current wave number (starts at 1, increments after completing each wave)
   isPaused: boolean // Whether game is currently paused
   isWaveActive: boolean // Whether a wave is currently in progress
   seed: number // Random seed for procedural generation
@@ -182,12 +182,15 @@ class GameManagerClass {
 
     this.addPoints(score)
 
-    // Save the updated points to backend before starting next wave
+    // Save the current wave completion to backend
+    // Wave will be incremented by WaveManager after this returns
     const { SaveGameService } = await import('../services/SaveGameService')
     await SaveGameService.saveCurrentGameState()
-    console.log(`Saved game state after wave ${this.state.wave} completion, points: ${this.state.playerStats.points}`)
 
-    // Pre-load upgrades for next wave so they're ready when modal is shown
+    console.log(`Saved game state after wave ${this.state.wave} completion, current wave: ${this.state.wave}, points: ${this.state.playerStats.points}`)
+
+    // Pre-load upgrades for NEXT wave (WaveManager will increment wave after this)
+    // So we pre-load for current wave + 1
     const nextWave = this.state.wave + 1
     const seed = Math.floor(Math.random() * 1000000)
     const { waveValidation } = await import('../services/WaveValidation')
@@ -258,7 +261,7 @@ class GameManagerClass {
    */
   reset(): void {
     this.state = {
-      wave: 0,
+      wave: 1,
       isPaused: false,
       isWaveActive: false,
       seed: Date.now(),

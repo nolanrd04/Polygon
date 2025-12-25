@@ -181,7 +181,9 @@ export class MainScene extends Phaser.Scene {
       const enemies = this.enemyManager.getEnemies()
       for (const enemy of enemies) {
         const dist = Phaser.Math.Distance.Between(data.x, data.y, enemy.x, enemy.y)
-        if (dist <= data.radius) {
+        // Check if explosion radius overlaps with enemy hitbox
+        // Damage is dealt if: distance <= explosion_radius + enemy_radius
+        if (dist <= data.radius + enemy.radius) {
           enemy.takeDamage(data.damage)
         }
       }
@@ -529,7 +531,8 @@ export class MainScene extends Phaser.Scene {
       // - Saved upgrades: already paid for, don't charge again
 
       // Apply player stat changes immediately
-      if (upgrade.type === 'stat_modifier' && upgrade.target === 'player') {
+      // Skip if restoring from save - saved stats already include these modifications
+      if (!isRestore && upgrade.type === 'stat_modifier' && upgrade.target === 'player') {
         if (upgrade.stat === 'maxHealth' && upgrade.value) {
           GameManager.updatePlayerStats({
             maxHealth: stats.maxHealth + upgrade.value,
@@ -543,6 +546,11 @@ export class MainScene extends Phaser.Scene {
           GameManager.updatePlayerStats({
             polygonSides: stats.polygonSides + upgrade.value
           })
+          this.player.updatePolygon()
+        }
+      } else if (isRestore && upgrade.type === 'stat_modifier' && upgrade.target === 'player') {
+        // When restoring, if it's a polygon upgrade, update the visual without changing the stat
+        if (upgrade.stat === 'polygonSides') {
           this.player.updatePolygon()
         }
       }

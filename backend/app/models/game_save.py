@@ -29,8 +29,8 @@ class GameSave(BaseMongoModel):
     seed: int = Field(...)
 
     # Current player stats for this run (temporary)
-    current_health: int = Field(default=100, ge=0)
-    current_max_health: int = Field(default=100, ge=1)
+    current_health: float = Field(default=100, ge=0)
+    current_max_health: float = Field(default=100, ge=1)
     current_speed: int = Field(default=200, ge=0)
     current_polygon_sides: int = Field(default=3, ge=3, le=8)
 
@@ -116,8 +116,8 @@ class GameSaveResponse(BaseMongoModel):
     current_wave: int
     current_points: int
     seed: int
-    current_health: int
-    current_max_health: int
+    current_health: float
+    current_max_health: float
     current_speed: int
     current_polygon_sides: int
     current_kills: int

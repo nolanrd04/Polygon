@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from '../../config/axios'
 import { GameManager } from '../core/GameManager'
 import { UpgradeSystem } from '../systems/upgrades'
 

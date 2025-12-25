@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import axios from '../config/axios'
 
 export default function MainMenu() {
   const navigate = useNavigate()

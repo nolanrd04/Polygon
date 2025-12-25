@@ -17,7 +17,7 @@ export class SuperTriangle extends Enemy {
     this.color = 0xff0000
     this.scoreChance = 0.5
     this.speedCap = 4.5
-    this.knockbackResistance = 0.4
+    this.knockbackResistance = 0.8
   }
 
   /**

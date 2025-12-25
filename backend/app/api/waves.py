@@ -41,7 +41,7 @@ class WaveCompleteRequest(BaseModel):
     wave: int
     kills: int
     total_damage: int
-    current_health: int
+    current_health: float
     damage_taken: int = Field(default=0, ge=0)
     frame_samples: List[FrameSample]
     enemy_deaths: List[EnemyDeath]
