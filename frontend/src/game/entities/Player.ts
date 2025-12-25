@@ -403,7 +403,7 @@ export class Player extends Phaser.GameObjects.Container {
     // Add to player's tracking
     this.projectiles.push(projectile)
 
-    console.log('Projectile damage after modifiers:', projectile.damage)
+    // console.log('Projectile damage after modifiers:', projectile.damage)
 
     return projectile
   }

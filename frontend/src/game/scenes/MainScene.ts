@@ -93,15 +93,16 @@ export class MainScene extends Phaser.Scene {
       D: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D)
     }
 
-    // Pause on ESC
-    this.input.keyboard!.on('keydown-ESC', () => {
-      const state = GameManager.getState()
-      if (state.isPaused) {
-        GameManager.resume()
-      } else {
-        GameManager.pause()
-      }
-    })
+    // Pause on ESC - NOW HANDLED AT DOM LEVEL IN GamePage.tsx
+    // (DOM handler works even when scene is paused, scene handler doesn't)
+    // this.input.keyboard!.on('keydown-ESC', () => {
+    //   const state = GameManager.getState()
+    //   if (state.isPaused) {
+    //     GameManager.resume()
+    //   } else {
+    //     GameManager.pause()
+    //   }
+    // })
 
     // Shield ability on E
     this.input.keyboard!.on('keydown-E', () => {

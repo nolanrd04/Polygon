@@ -235,6 +235,19 @@ export default function GamePage() {
 
     // Removed upgrade-applied listener - now handled by Start Wave button
 
+    // Add ESC key handler for pause/resume (DOM level, works even when scene is paused)
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        const state = GameManager.getState()
+        if (state.isPaused) {
+          GameManager.resume()
+        } else {
+          GameManager.pause()
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+
     // Add beforeunload handler to save on tab close
     const handleBeforeUnload = () => {
       // Don't save if death save already completed (prevents overwriting game_over flag)
@@ -260,6 +273,7 @@ export default function GamePage() {
         gameRef.current = null
       }
       EventBus.removeAllListeners()
+      window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
   }, [])
@@ -306,7 +320,7 @@ export default function GamePage() {
 
       {isPaused && (
         <PauseMenu
-          onResume={() => EventBus.emit('game-resume')}
+          onResume={() => GameManager.resume()}
           onQuit={async () => {
             // Don't save if death save already completed (prevents overwriting game_over flag)
             if (!deathSaveCompletedRef.current) {

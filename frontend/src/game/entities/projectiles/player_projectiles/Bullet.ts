@@ -209,7 +209,7 @@ export class HomingBullet extends Projectile {
     
     // Apply damage decay based on time alive
     this.damage = this.initialDamage * this.minimumDamageMultiplier
-    console.log('Collision damage (decayed):', this.damage)
+    // console.log('Collision damage (decayed):', this.damage)
     return true
   }
 

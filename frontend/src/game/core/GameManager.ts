@@ -111,7 +111,11 @@ class GameManagerClass {
    * Clamps health to minimum of 0 and emits player-death event if health reaches 0
    */
   takeDamage(amount: number): void {
-    const newHealth = Math.max(0, this.state.playerStats.health - amount)
+    const currentHealth = this.state.playerStats.health
+    const newHealth = Math.max(0, currentHealth - amount)
+
+    console.log(`[DEBUG] takeDamage: ${currentHealth} - ${amount} = ${newHealth}`)
+
     this.state.playerStats = {
       ...this.state.playerStats,
       health: newHealth
@@ -119,7 +123,8 @@ class GameManagerClass {
     EventBus.emit('player-stats-update', this.state.playerStats)
 
     // Trigger game over if health depleted
-    if (newHealth <= 0) {
+    if (newHealth <= 0 && !this.hasPlayerDied) {
+      console.log('[DEBUG] HEALTH REACHED 0 - Setting death flag and emitting player-death')
       this.hasPlayerDied = true
       EventBus.emit('player-death')
     }
