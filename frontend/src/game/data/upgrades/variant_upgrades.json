@@ -3,7 +3,7 @@
     {
       "id": "homing_bullets",
       "name": "Homing Bullets",
-      "description": "Bullets track nearest enemy with increased damage but decrease in damage over time.",
+      "description": "Bullets track nearest enemy with greatly reduced damage.",
       "rarity": "epic",
       "type": "variant",
       "target": "bullet",
@@ -16,7 +16,7 @@
     {
       "id": "explosive_bullets",
       "name": "Explosive Bullets",
-      "description": "Bullets explode on impact dealing area damage.",
+      "description": "Bullets explode on impact dealing collision and area damage.",
       "rarity": "epic",
       "type": "variant",
       "target": "bullet",

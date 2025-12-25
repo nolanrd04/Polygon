@@ -56,6 +56,9 @@ class GameManagerClass {
     appliedUpgrades: []
   }
 
+  // Flag to track if player has died this session (prevents overwriting death save)
+  private hasPlayerDied: boolean = false
+
   // ============================================================
   // ENTITY TRACKING - Projectiles, Enemies, and Bosses
   // ============================================================
@@ -117,6 +120,7 @@ class GameManagerClass {
 
     // Trigger game over if health depleted
     if (newHealth <= 0) {
+      this.hasPlayerDied = true
       EventBus.emit('player-death')
     }
   }
@@ -280,6 +284,16 @@ class GameManagerClass {
     // Clear entity tracking
     this.projectiles.clear()
     this.nextProjectileId = 1
+
+    // Reset death flag
+    this.hasPlayerDied = false
+  }
+
+  /**
+   * Check if player has died this session
+   */
+  hasPlayerDiedThisSession(): boolean {
+    return this.hasPlayerDied
   }
 
   /**

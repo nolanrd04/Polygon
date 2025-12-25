@@ -69,8 +69,8 @@ export default function GamePage() {
         return
       }
 
-      console.log('Autosaving game state with points:', stats.points, '(from ref:', !!lastGameStateRef.current, ')')
-      console.log('→ Sending to backend: wave =', gameState.wave, ', points =', stats.points)
+      console.log('Autosaving game state with points:', stats.points, 'kills:', stats.kills, '(from ref:', !!lastGameStateRef.current, ')')
+      console.log('→ Sending to backend: wave =', gameState.wave, ', points =', stats.points, ', kills =', stats.kills)
 
       // Save current game state to backend
       await axios.post('/api/saves/', {
@@ -81,7 +81,7 @@ export default function GamePage() {
         current_max_health: stats.maxHealth,
         current_speed: stats.speed,
         current_polygon_sides: stats.polygonSides,
-        current_kills: 0, // Accumulated kills tracked on wave completion
+        current_kills: stats.kills || 0,
         current_damage_dealt: 0, // Accumulated damage tracked on wave completion
         current_upgrades: gameState.appliedUpgrades,
         offered_upgrades: [], // Will be populated when starting next wave

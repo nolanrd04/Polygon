@@ -173,7 +173,7 @@ export class SaveGameService {
         return false
       }
 
-      console.log('Saving game state with points:', stats.points, allowMidWave ? '(death save)' : '', isGameOver ? '[GAME OVER]' : '')
+      console.log('Saving game state with points:', stats.points, 'kills:', stats.kills, allowMidWave ? '(death save)' : '', isGameOver ? '[GAME OVER]' : '')
 
       await axios.post('/api/saves/', {
         current_wave: gameState.wave,

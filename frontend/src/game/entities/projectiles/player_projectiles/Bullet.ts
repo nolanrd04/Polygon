@@ -187,19 +187,20 @@ export class HomingBullet extends Projectile {
       }
     }
   }
-  private getDamageMultiplier(): number {
-    const elapsedTime = this.scene.time.now - this.spawnTime
-    const progress = Math.min(1, elapsedTime / this.timeLeft)
 
-    // Only decay for first half of lifetime
-    if (progress > 0.5) {
-      return this.minimumDamageMultiplier
-    }
+  // private getDamageMultiplier(): number {
+  //   const elapsedTime = this.scene.time.now - this.spawnTime
+  //   const progress = Math.min(1, elapsedTime / this.timeLeft)
 
-    // Interpolate from max to min over first half
-    const halfLifeProgress = progress / 0.5 // Convert to 0-1 range for first half
-    return this.maximumSpawnDamageMultiplier - (halfLifeProgress * (this.maximumSpawnDamageMultiplier - this.minimumDamageMultiplier))
-  }
+  //   // Only decay for first half of lifetime
+  //   if (progress > 0.25) {
+  //     return this.minimumDamageMultiplier
+  //   }
+
+  //   // Interpolate from max to min over first half
+  //   const halfLifeProgress = progress / 0.25 // Convert to 0-1 range for first half
+  //   return this.maximumSpawnDamageMultiplier - (halfLifeProgress * (this.maximumSpawnDamageMultiplier - this.minimumDamageMultiplier))
+  // }
 
   OnHitNPC(_enemy: any): boolean {
     // Disable homing temporarily after hitting to prevent sticking
@@ -207,7 +208,7 @@ export class HomingBullet extends Projectile {
     this.homeDelay = this.scene.time.now + 500 // Re-enable homing after 500ms
     
     // Apply damage decay based on time alive
-    this.damage = this.initialDamage * this.getDamageMultiplier()
+    this.damage = this.initialDamage * this.minimumDamageMultiplier
     console.log('Collision damage (decayed):', this.damage)
     return true
   }

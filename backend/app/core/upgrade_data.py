@@ -31,7 +31,7 @@ UPGRADES: Dict[str, Dict[str, Any]] = {
 
     "bullet_speed_1": {"id": "bullet_speed_1", "name": "Velocity Boost", "description": "+5% bullet speed", "rarity": "common", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "speed", "value": 0.05, "isMultiplier": True, "stackable": True, "maxStacks": 5, "cost": 2},
 
-    "bullet_pierce_1": {"id": "bullet_pierce_1", "name": "Piercing Shot", "description": "Bullets pierce +1 enemy", "rarity": "rare", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "pierce", "value": 1, "stackable": True, "maxStacks": 3, "cost": 10},
+    "bullet_pierce_1": {"id": "bullet_pierce_1", "name": "Piercing Shot", "description": "Bullets pierce +1 enemy", "rarity": "rare", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "pierce", "value": 1, "stackable": True, "maxStacks": 2, "cost": 10},
 
     "bullet_size_1": {"id": "bullet_size_1", "name": "Heavy Rounds", "description": "+10% bullet size", "rarity": "uncommon", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "size", "value": 0.10, "isMultiplier": True, "stackable": True, "maxStacks": 3, "cost": 6},
     "bullet_size_2": {"id": "bullet_size_2", "name": "Heavy Rounds", "description": "+25% bullet size", "rarity": "rare", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "size", "value": 0.25, "isMultiplier": True, "stackable": True, "maxStacks": 2, "cost": 10},
@@ -83,8 +83,8 @@ UPGRADES: Dict[str, Dict[str, Any]] = {
     # NEW HOMING BULLET UPGRADES
     "homing_distance_1": {"id": "homing_distance_1", "name": "Enhanced Eyesight", "description": "+20 tracking distance for homing bullets", "rarity": "uncommon", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "trackingDistance", "value": 20, "stackable": True, "maxStacks": 6, "cost": 6, "dependentOn": ["homing_bullets"], "dependencyCount": 1},
     "homing_distance_2": {"id": "homing_distance_2", "name": "Enhanced Eyesight", "description": "+50 tracking distance for homing bullets", "rarity": "rare", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "trackingDistance", "value": 50, "stackable": True, "maxStacks": 4, "cost": 10, "dependentOn": ["homing_bullets"], "dependencyCount": 1},
-    "minimum_homing_damage_multiplier_1": {"id": "minimum_homing_damage_multiplier_1", "name": "Kinetic Sustainer", "description": "Increases the minimum possible damage of homing bullets by 5%", "rarity": "epic", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "minimumDamageMultiplier", "value": 0.05, "stackable": True, "maxStacks": 2, "cost": 20, "dependentOn": ["homing_bullets"], "dependencyCount": 1},
-    "minimum_homing_damage_multiplier_2": {"id": "minimum_homing_damage_multiplier_2", "name": "Kinetic Sustainer", "description": "Increases the minimum possible damage of homing bullets by 12%", "rarity": "legendary", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "minimumDamageMultiplier", "value": 0.12, "stackable": True, "maxStacks": 1, "cost": 40, "dependentOn": ["homing_bullets"], "dependencyCount": 1},
+    "minimum_homing_damage_multiplier_1": {"id": "minimum_homing_damage_multiplier_1", "name": "Kinetic Amplifier", "description": "Increases the possible damage of homing bullets by 2%", "rarity": "epic", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "minimumDamageMultiplier", "value": 0.02, "stackable": True, "maxStacks": 5, "cost": 20, "dependentOn": ["homing_bullets"], "dependencyCount": 1},
+    "minimum_homing_damage_multiplier_2": {"id": "minimum_homing_damage_multiplier_2", "name": "Kinetic Amplifier", "description": "Increases the possible damage of homing bullets by 5%", "rarity": "legendary", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "minimumDamageMultiplier", "value": 0.05, "stackable": True, "maxStacks": 2, "cost": 40, "dependentOn": ["homing_bullets"], "dependencyCount": 1},
 
     # NEW TENACITY (BULLET LIFESPAN) UPGRADES
     "tenacity_1": {"id": "tenacity_1", "name": "Tenacity", "description": "Increased the bullet lifespan by .15 seconds", "rarity": "rare", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "timeLeft", "value": 150, "stackable": True, "maxStacks": 6, "cost": 10},
@@ -92,8 +92,8 @@ UPGRADES: Dict[str, Dict[str, Any]] = {
     "tenacity_3": {"id": "tenacity_3", "name": "Tenacity", "description": "Increased the bullet lifespan by 1 second", "rarity": "legendary", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "timeLeft", "value": 1000, "stackable": True, "maxStacks": 1, "cost": 40},
 
     # VARIANT UPGRADES
-    "homing_bullets": {"id": "homing_bullets", "name": "Homing Bullets", "description": "Bullets track nearest enemy with reduced damage.", "rarity": "epic", "type": "variant", "target": "bullet", "attackType": "bullet", "variantClass": "HomingBullet", "replaces": ["explosive_bullets"], "stackable": False, "cost": 20},
-    "explosive_bullets": {"id": "explosive_bullets", "name": "Explosive Bullets", "description": "Bullets explode on impact", "rarity": "epic", "type": "variant", "target": "bullet", "attackType": "bullet", "variantClass": "ExplosiveBullet", "replaces": ["homing_bullets"], "stackable": False, "cost": 20},
+    "homing_bullets": {"id": "homing_bullets", "name": "Homing Bullets", "description": "Bullets track nearest enemy with greatly reduced damage.", "rarity": "epic", "type": "variant", "target": "bullet", "attackType": "bullet", "variantClass": "HomingBullet", "replaces": "explosive_bullets", "stackable": False, "cost": 20},
+    "explosive_bullets": {"id": "explosive_bullets", "name": "Explosive Bullets", "description": "Bullets explode on impact dealing area damage.", "rarity": "epic", "type": "variant", "target": "bullet", "attackType": "bullet", "variantClass": "ExplosiveBullet", "replaces": "homing_bullets", "stackable": False, "cost": 20},
 
     # VISUAL EFFECT UPGRADES
     "player_glow": {"id": "player_glow", "name": "Radiant Core", "description": "Player emits a glowing aura", "rarity": "uncommon", "type": "visual_effect", "target": "player", "effect": "glow", "color": 65535, "intensity": 0.5, "stackable": False, "cost": 0},
@@ -162,8 +162,22 @@ def can_apply_upgrade(
 
     # Check for conflicts (replaces)
     if upgrade.get("replaces"):
-        for replaced_id in upgrade["replaces"]:
-            if replaced_id in current_upgrades:
+        # Handle both string and list formats
+        replaces = upgrade["replaces"]
+        if isinstance(replaces, str):
+            # Single string
+            if replaces in current_upgrades:
+                return False
+        else:
+            # List of strings
+            for replaced_id in replaces:
+                if replaced_id in current_upgrades:
+                    return False
+
+    # Check for incompatibilities
+    if upgrade.get("incompatibleWith"):
+        for incompatible_id in upgrade["incompatibleWith"]:
+            if incompatible_id in current_upgrades:
                 return False
 
     return True

@@ -91,13 +91,8 @@ class WaveService:
                 )
             # Note: For wave 1, we'll save it when creating the game save below
 
-        # Create validation token
-        player_stats_dict = {
-            "health": 100,  # TODO: Get actual from player stats
-            "max_health": 100,
-            "speed": 200,
-            "damage": 10
-        }
+        # Create validation token with actual player stats based on upgrades
+        player_stats_dict = self._calculate_player_stats_from_upgrades(current_upgrades)
 
         token = WaveValidationToken.create_for_wave(
             user_id=user_id,
@@ -193,8 +188,11 @@ class WaveService:
         # Valid upgrades = previously allowed + newly offered this wave
         valid_upgrades = set(token.allowed_upgrades + token.offered_upgrades)
         print(f"Validating upgrades: {upgrades_used} vs valid: {valid_upgrades}")
+        print(f"DEBUG - Token allowed_upgrades: {token.allowed_upgrades}")
+        print(f"DEBUG - Token offered_upgrades: {token.offered_upgrades}")
         for upgrade_id in upgrades_used:
             if upgrade_id not in valid_upgrades:
+                print(f"DEBUG - Unauthorized upgrade '{upgrade_id}' - exists in UPGRADES: {upgrade_id in UPGRADES}")
                 flags.append(FlagReason(
                     category="upgrades",
                     severity="high",
@@ -356,6 +354,51 @@ class WaveService:
                 return rarity
 
         return "common"
+
+    def _calculate_player_stats_from_upgrades(self, current_upgrades: List[str]) -> Dict[str, float]:
+        """Calculate player stats based on applied upgrades"""
+        # Start with base stats
+        stats = {
+            "health": 100,
+            "max_health": 100,
+            "speed": 200,
+            "damage": 10
+        }
+
+        # Apply upgrades
+        for upgrade_id in current_upgrades:
+            upgrade = UPGRADES.get(upgrade_id)
+            if not upgrade:
+                continue
+
+            # Only handle stat modifiers
+            if upgrade.get("type") != "stat_modifier":
+                continue
+
+            # Only handle player stat upgrades
+            if upgrade.get("target") != "player":
+                continue
+
+            stat = upgrade.get("stat")
+            value = upgrade.get("value", 0)
+            is_multiplier = upgrade.get("isMultiplier", False)
+
+            # Map stat names to our dict keys
+            stat_mapping = {
+                "speed": "speed",
+                "maxHealth": "max_health",
+                "health": "health"
+            }
+
+            if stat in stat_mapping:
+                stat_key = stat_mapping[stat]
+                if is_multiplier:
+                    stats[stat_key] *= (1 + value)
+                else:
+                    stats[stat_key] += value
+
+        print(f"Calculated player stats from {len(current_upgrades)} upgrades: speed={stats['speed']}, max_health={stats['max_health']}")
+        return stats
 
     def _validate_damage(
         self,

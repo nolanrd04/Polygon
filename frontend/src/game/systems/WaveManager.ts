@@ -366,9 +366,14 @@ export class WaveManager {
     EventBus.emit('wave-start', this.currentWave)
 
     // Save the incremented wave to backend so reload works correctly
-    const { SaveGameService } = await import('../services/SaveGameService')
-    await SaveGameService.saveCurrentGameState()
-    console.log(`Saved incremented wave ${this.currentWave} to backend`)
+    // UNLESS player died during the wave - death save already marked it as game_over: true
+    if (!GameManager.hasPlayerDiedThisSession()) {
+      const { SaveGameService } = await import('../services/SaveGameService')
+      await SaveGameService.saveCurrentGameState()
+      console.log(`Saved incremented wave ${this.currentWave} to backend`)
+    } else {
+      console.log(`Skipping wave completion save - player died this session. Death save already marked as game_over.`)
+    }
   }
 
   getCurrentWave(): number {

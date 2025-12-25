@@ -82,6 +82,10 @@ async def create_or_update_save(
         # 1. Wave start (rolling new upgrades)
         # 2. Select upgrade (marking as purchased)
         # 3. Wave completion (clearing after wave completes)
+
+        # DEBUG: Log kills value being received
+        print(f"[SAVE DEBUG] Received current_kills: {save_data.current_kills}, wave: {save_data.current_wave}, points: {save_data.current_points}")
+
         update_data = {
             "current_wave": save_data.current_wave,
             "current_points": save_data.current_points,
