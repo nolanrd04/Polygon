@@ -65,7 +65,7 @@ export class HomingBullet extends Projectile {
   private directionIndicator?: Phaser.GameObjects.Sprite
   private trackingDistance: number = 200
   private maximumSpawnDamageMultiplier: number = 1
-  private minimumDamageMultiplier: number = 0.3
+  private minimumDamageMultiplier: number = 0.4
   private initialDamage: number = 0 // Will be set on first AI frame after upgrades applied
   private hasInitializedDamage: boolean = false
 
