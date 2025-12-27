@@ -21,7 +21,9 @@
       "Bash(mongosh:*)",
       "Bash(git merge-base:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(cat:*)",
+      "Bash(python -c:*)"
     ],
     "deny": [],
     "ask": []

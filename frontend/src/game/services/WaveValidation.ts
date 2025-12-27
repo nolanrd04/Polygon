@@ -35,6 +35,21 @@ export class WaveValidationService {
    * Start a new wave - get token and upgrades from backend
    */
   async startWave(waveNumber: number, seed: number): Promise<any[] | null> {
+    // GUARD: Don't sync wave start with backend after death
+    // Player can keep playing locally but won't get fresh upgrades from backend
+    if (GameManager.getPlayerStats().isDead) {
+      console.log('[WAVE VALIDATION] Skipping wave start sync - player is dead (sandbox mode)')
+      // Reset local state for sandbox play
+      this.waveStartTime = Date.now()
+      this.frameCount = 0
+      this.frameSamples = []
+      this.enemyDeaths = []
+      this.totalKills = 0
+      this.totalDamage = 0
+      this.damageTaken = 0
+      return this.offeredUpgrades // Return cached upgrades for sandbox play
+    }
+
     try {
       const token = localStorage.getItem('token')
       if (!token) {
@@ -152,6 +167,13 @@ export class WaveValidationService {
    * Complete wave and submit to backend for validation
    */
   async completeWave(waveNumber: number): Promise<{ success: boolean; errors?: string[] }> {
+    // GUARD: Don't submit wave completion to backend after death
+    // Player can keep playing for fun, but stats won't be saved
+    if (GameManager.getPlayerStats().isDead) {
+      console.log('[WAVE VALIDATION] Skipping wave completion - player is dead (sandbox mode)')
+      return { success: true } // Return success to not block game flow
+    }
+
     if (!this.waveToken) {
       console.error('No wave token - wave was not started properly')
       return { success: false, errors: ['No wave token'] }
@@ -210,6 +232,13 @@ export class WaveValidationService {
    * Returns the new points value from backend (authoritative)
    */
   async selectUpgrade(upgradeId: string, waveNumber: number): Promise<{success: boolean, newPoints?: number}> {
+    // GUARD: Don't sync upgrades with backend after death
+    // Player can still apply upgrades locally for fun
+    if (GameManager.getPlayerStats().isDead) {
+      console.log('[WAVE VALIDATION] Skipping upgrade sync - player is dead (sandbox mode)')
+      return { success: true } // Return success to allow local application
+    }
+
     try {
       const token = localStorage.getItem('token')
       if (!token) {
@@ -253,6 +282,12 @@ export class WaveValidationService {
    * Reroll upgrades for the current wave
    */
   async rerollUpgrades(wave: number, rerollCost: number): Promise<{ upgrades: any[], newPoints: number } | null> {
+    // GUARD: Don't sync rerolls with backend after death
+    if (GameManager.getPlayerStats().isDead) {
+      console.log('[WAVE VALIDATION] Skipping reroll sync - player is dead (sandbox mode)')
+      return null
+    }
+
     try {
       const token = localStorage.getItem('token')
       if (!token) {

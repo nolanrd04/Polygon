@@ -5,6 +5,7 @@
 7. improve waves/enemy spawns
 8. Add difficulties
 9. Add leaderboard
+10. Add visual indication for hexagon shields health.
 
 rework explosions:
 1. make both bullet and explosion do damage
