@@ -13,6 +13,7 @@ import { UpgradeSystem, UpgradeEffectSystem, registerEffectHandlers, type Upgrad
 import { TextureGenerator } from '../utils/TextureGenerator'
 import { waveValidation } from '../services/WaveValidation'
 import { SaveGameService } from '../services/SaveGameService'
+import { SaveManager } from '../services/SaveManager'
 
 // Import all upgrade JSONs
 import statUpgrades from '../data/upgrades/stat_upgrades.json'
@@ -246,6 +247,12 @@ export class MainScene extends Phaser.Scene {
       // Determine wave number
       const waveNumber = currentState.wave || 1
 
+      // CRITICAL: ALWAYS sync WaveManager with GameManager's wave
+      // This ensures the correct wave is used regardless of how the game was loaded
+      // WaveManager defaults to wave 1, so we must explicitly set it
+      this.waveManager.setWave(waveNumber)
+      console.log('Synced WaveManager to wave:', waveNumber)
+
       // Check if this is a loaded game by checking if GameManager already has points
       // SaveGameService restores points BEFORE MainScene runs, so if points > 0, it's a loaded game
       // Also check for wave > 1 or existing upgrades as fallback
@@ -258,18 +265,26 @@ export class MainScene extends Phaser.Scene {
       // If loading a saved game, points are already restored by SaveGameService
       if (!isLoadedGame) {
         console.log('New game detected - adding 70 starting points')
+        // CRITICAL: Initialize SaveManager for new game session
+        // This resets upgrade history and death state for fresh tracking
+        SaveManager.initialize()
         GameManager.addPoints(70)
       } else {
         console.log('Loaded game detected (points:', hasPoints, ', upgrades:', hasUpgrades, ', wave:', hasProgressedWaves, ') - keeping existing points:', currentState.playerStats.points)
-        // IMPORTANT: Sync WaveManager with loaded wave number
-        // WaveManager starts at 0, so we need to set it to the loaded wave
-        this.waveManager.setWave(waveNumber)
-        console.log('Synced WaveManager to wave:', waveNumber)
+
+        // CRITICAL: Restore SaveManager state for loaded games
+        // Convert the flat upgrade list to UpgradeEntry format for SaveManager
+        const savedUpgrades = currentState.appliedUpgrades || []
+        const upgradeHistory = savedUpgrades.map((upgradeId, index) => ({
+          upgradeId,
+          purchasedAt: Date.now() - (savedUpgrades.length - index) * 1000, // Preserve relative order
+          waveNumber: 1 // Unknown, use placeholder
+        }))
+        SaveManager.restoreFromLoad(upgradeHistory)
 
         // RE-APPLY SAVED UPGRADES
         // This restores effect system state (like shield charges) from saved game
         console.log('DEBUG: currentState.appliedUpgrades =', currentState.appliedUpgrades)
-        const savedUpgrades = currentState.appliedUpgrades || []
         console.log('DEBUG: savedUpgrades array:', savedUpgrades, 'length:', savedUpgrades.length)
         if (savedUpgrades.length > 0) {
           console.log(`Re-applying ${savedUpgrades.length} saved upgrades:`, savedUpgrades)
@@ -509,6 +524,11 @@ export class MainScene extends Phaser.Scene {
       if (!isRestore) {
         currentState.appliedUpgrades.push(upgradeId)
         console.log('Added to GameManager.appliedUpgrades:', upgradeId, '(total:', currentState.appliedUpgrades.length, ')')
+
+        // Record in SaveManager for ordered upgrade history
+        // This maintains the order of purchase for correct stat reconstruction on load
+        const currentWave = currentState.wave
+        SaveManager.recordUpgradePurchase(upgradeId, currentWave)
       }
 
       // VALIDATE WITH BACKEND and sync points (skip for dev tools and saved upgrades)

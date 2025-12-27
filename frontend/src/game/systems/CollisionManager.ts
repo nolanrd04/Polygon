@@ -127,10 +127,11 @@ export class CollisionManager {
     }
 
     if (killed) {
-      // Increment kill counter
+      // Award kill counter (blocked internally if player is dead)
       GameManager.addKill()
 
       // Award 1 point based on scoreChance (0 to 1)
+      // NOTE: Points continue after death for testing/fun
       if (Math.random() < enemy.scoreChance) {
         GameManager.addPoints(1)
       }

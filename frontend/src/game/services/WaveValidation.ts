@@ -1,6 +1,5 @@
 import axios from '../../config/axios'
 import { GameManager } from '../core/GameManager'
-import { UpgradeSystem } from '../systems/upgrades'
 
 export interface FrameSample {
   frame: number
@@ -104,6 +103,11 @@ export class WaveValidationService {
    * Record an enemy death
    */
   recordEnemyDeath(enemyType: string, x: number, y: number) {
+    // GUARD: Don't track wave stats after death
+    if (GameManager.getPlayerStats().isDead) {
+      return
+    }
+
     this.enemyDeaths.push({
       type: enemyType.toLowerCase(),
       x: Math.round(x),
@@ -117,6 +121,11 @@ export class WaveValidationService {
    * Record damage dealt
    */
   recordDamage(damage: number) {
+    // GUARD: Don't track wave stats after death
+    if (GameManager.getPlayerStats().isDead) {
+      return
+    }
+
     this.totalDamage += Math.round(damage)
   }
 
@@ -124,6 +133,11 @@ export class WaveValidationService {
    * Record damage taken by player
    */
   recordDamageTaken(damage: number) {
+    // GUARD: Don't track wave stats after death
+    if (GameManager.getPlayerStats().isDead) {
+      return
+    }
+
     this.damageTaken += Math.round(damage)
   }
 
@@ -150,8 +164,8 @@ export class WaveValidationService {
         return { success: false, errors: ['Not authenticated'] }
       }
 
-      // Get currently applied upgrades
-      const appliedUpgrades = UpgradeSystem.getAppliedUpgrades().map(u => u.id)
+      // Get currently applied upgrades (including duplicates for stackable upgrades)
+      const appliedUpgrades = GameManager.getState().appliedUpgrades
 
       // Get current player health
       const currentHealth = GameManager.getState().playerStats.health

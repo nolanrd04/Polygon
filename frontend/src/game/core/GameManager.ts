@@ -1,5 +1,6 @@
 import { EventBus } from './EventBus'
 import { Projectile } from '../entities/projectiles/Projectile'
+import { SaveManager } from '../services/SaveManager'
 
 /**
  * PlayerStats Interface
@@ -13,6 +14,7 @@ export interface PlayerStats {
   kills: number // Total enemies killed
   polygonSides: number // Number of sides on player's polygon shape (affects max unlocked attacks)
   unlockedAttacks: string[] // Attack types the player has unlocked
+  isDead: boolean // Flag that is set when player dies and stays set (prevents continue after healing)
 }
 
 /**
@@ -51,13 +53,19 @@ class GameManagerClass {
       points: 0,
       kills: 0,
       polygonSides: 3,
-      unlockedAttacks: ['bullet']
+      unlockedAttacks: ['bullet'],
+      isDead: false
     },
     appliedUpgrades: []
   }
 
   // Flag to track if player has died this session (prevents overwriting death save)
   private hasPlayerDied: boolean = false
+
+  // Death state - frozen values captured at moment of death
+  // UI shows current wave, but backend saves use these frozen values
+  private deathWave: number | null = null
+  private deathKills: number | null = null
 
   // ============================================================
   // ENTITY TRACKING - Projectiles, Enemies, and Bosses
@@ -97,6 +105,7 @@ class GameManagerClass {
   /**
    * Award points to the player (earned from killing enemies)
    * Points are used as currency for upgrades
+   * NOTE: Points continue to accumulate after death for testing/fun
    */
   addPoints(points: number): void {
     this.state.playerStats = {
@@ -109,6 +118,7 @@ class GameManagerClass {
   /**
    * Apply damage to the player
    * Clamps health to minimum of 0 and emits player-death event if health reaches 0
+   * Sets isDead flag permanently when player dies (prevents continue after healing)
    */
   takeDamage(amount: number): void {
     const currentHealth = this.state.playerStats.health
@@ -125,7 +135,23 @@ class GameManagerClass {
     // Trigger game over if health depleted
     if (newHealth <= 0 && !this.hasPlayerDied) {
       console.log('[DEBUG] HEALTH REACHED 0 - Setting death flag and emitting player-death')
+
+      // CRITICAL: Freeze death state in SaveManager FIRST before anything else
+      // This ensures the exact moment of death is captured
+      SaveManager.freezeDeathState()
+
       this.hasPlayerDied = true
+
+      // Capture death state (frozen values for backend saves)
+      this.deathWave = this.state.wave
+      this.deathKills = this.state.playerStats.kills
+      console.log(`[DEATH STATE CAPTURED] Wave: ${this.deathWave}, Kills: ${this.deathKills}`)
+
+      // Set isDead flag in player stats (persists through save/load)
+      this.state.playerStats = {
+        ...this.state.playerStats,
+        isDead: true
+      }
       EventBus.emit('player-death')
     }
   }
@@ -180,6 +206,7 @@ class GameManagerClass {
   /**
    * Complete the current wave
    * Calculates score (doubled for prime number waves), awards points, and shows completion screen
+   * NOTE: If player is dead, wave completion is allowed but NOT saved
    */
   async completeWave(): Promise<void> {
     this.state.isWaveActive = false
@@ -191,12 +218,17 @@ class GameManagerClass {
 
     this.addPoints(score)
 
-    // Save the current wave completion to backend
-    // Wave will be incremented by WaveManager after this returns
-    const { SaveGameService } = await import('../services/SaveGameService')
-    await SaveGameService.saveCurrentGameState()
-
-    console.log(`Saved game state after wave ${this.state.wave} completion, current wave: ${this.state.wave}, points: ${this.state.playerStats.points}`)
+    // GUARD: Don't save wave completion if player is dead
+    // Player can keep playing for fun, but wave progress won't be saved
+    if (!this.state.playerStats.isDead) {
+      // Save the current wave completion to backend
+      // Wave will be incremented by WaveManager after this returns
+      const { SaveGameService } = await import('../services/SaveGameService')
+      await SaveGameService.saveCurrentGameState()
+      console.log(`Saved game state after wave ${this.state.wave} completion, current wave: ${this.state.wave}, points: ${this.state.playerStats.points}`)
+    } else {
+      console.log(`[DEATH MODE] Wave ${this.state.wave} completed but NOT saved (player is dead)`)
+    }
 
     // Pre-load upgrades for NEXT wave (WaveManager will increment wave after this)
     // So we pre-load for current wave + 1
@@ -281,7 +313,8 @@ class GameManagerClass {
         points: 0,
         kills: 0,
         polygonSides: 3,
-        unlockedAttacks: ['bullet']
+        unlockedAttacks: ['bullet'],
+        isDead: false
       },
       appliedUpgrades: []
     }
@@ -290,8 +323,13 @@ class GameManagerClass {
     this.projectiles.clear()
     this.nextProjectileId = 1
 
-    // Reset death flag
+    // Reset death state
     this.hasPlayerDied = false
+    this.deathWave = null
+    this.deathKills = null
+
+    // Initialize SaveManager for new game session
+    SaveManager.initialize()
   }
 
   /**
@@ -302,10 +340,30 @@ class GameManagerClass {
   }
 
   /**
+   * Get frozen death state (wave and kills at moment of death)
+   * Returns null if player hasn't died
+   */
+  getDeathState(): { wave: number; kills: number } | null {
+    if (this.deathWave === null || this.deathKills === null) {
+      return null
+    }
+    return {
+      wave: this.deathWave,
+      kills: this.deathKills
+    }
+  }
+
+  /**
    * Increment kill counter
    * Called when an enemy is killed by the player
    */
   addKill(): void {
+    // GUARD: Prevent kill tracking after death
+    if (this.state.playerStats.isDead) {
+      console.log('[GameManager] Blocked addKill() - player is dead')
+      return
+    }
+
     this.state.playerStats = {
       ...this.state.playerStats,
       kills: this.state.playerStats.kills + 1

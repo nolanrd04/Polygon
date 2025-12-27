@@ -120,18 +120,8 @@ class WaveService:
                 current_speed=200,
                 current_polygon_sides=3,
                 current_kills=0,
-                current_damage_dealt=0,
                 current_upgrades=[],
                 offered_upgrades=offered_upgrade_objs,
-                attack_stats={
-                    "bullet": {
-                        "damage": 10,
-                        "speed": 400,
-                        "cooldown": 200,
-                        "size": 1,
-                        "pierce": 0
-                    }
-                },
                 unlocked_attacks=["bullet"]
             )
             await self.game_save_repo.create(new_save)
@@ -212,9 +202,12 @@ class WaveService:
         flags.extend(damage_flags)
 
         # 3. Validate movement (frame-by-frame)
+        # Recalculate player speed based on upgrades used (not token's initial speed)
+        actual_player_stats = self._calculate_player_stats_from_upgrades(upgrades_used)
+        print(f"DEBUG - Validating movement with speed: {actual_player_stats.get('speed', 200)} (from {len(upgrades_used)} upgrades)")
         movement_flags = self._validate_movement(
             wave_data.get("frame_samples", []),
-            token.expected_player_stats.get("speed", 200)
+            actual_player_stats.get("speed", 200)
         )
         print(f"Movement validation flags: {len(movement_flags)}")
         flags.extend(movement_flags)
@@ -573,12 +566,11 @@ class WaveService:
         existing_save = await self.game_save_repo.find_by_user_id(user_id)
 
         if existing_save:
-            # Update existing save - ACCUMULATE kills and damage
+            # Update existing save - ACCUMULATE kills
             # Increment to NEXT wave (after completing wave_number, player advances to wave_number + 1)
             save_data = {
                 "current_wave": wave_number + 1,
                 "current_kills": existing_save.current_kills + wave_data.get("kills", 0),
-                "current_damage_dealt": existing_save.current_damage_dealt + wave_data.get("total_damage", 0),
                 "current_upgrades": wave_data.get("upgrades_used", existing_save.current_upgrades),
                 "offered_upgrades": [],  # Clear offered upgrades after wave completion
                 # Keep other fields as-is - don't overwrite what autosave set
@@ -605,17 +597,7 @@ class WaveService:
                 "current_speed": 200,
                 "current_polygon_sides": 3,
                 "current_kills": wave_data.get("kills", 0),
-                "current_damage_dealt": wave_data.get("total_damage", 0),
                 "current_upgrades": wave_data.get("upgrades_used", []),
-                "attack_stats": {
-                    "bullet": {
-                        "damage": 10,
-                        "speed": 400,
-                        "cooldown": 200,
-                        "size": 1,
-                        "pierce": 0
-                    }
-                },
                 "unlocked_attacks": ["bullet"],
                 "seed": wave_data.get("seed", 0)
             }

@@ -10,6 +10,7 @@ import DevTools from '../components/DevTools'
 import AbilityDisplay from '../components/AbilityDisplay'
 import { EventBus } from '../game/core/EventBus'
 import { SaveGameService } from '../game/services/SaveGameService'
+import { SaveManager } from '../game/services/SaveManager'
 import { GameManager } from '../game/core/GameManager'
 import axios from '../config/axios'
 
@@ -138,10 +139,22 @@ export default function GamePage() {
             sessionStorage.removeItem('loadSavedGame')
             return
           }
-          
+
           // Restore game state before creating the game
           SaveGameService.restoreGameState(savedData)
           console.log('Loaded saved game from wave', savedData.wave)
+
+          // Update HUD to show the loaded wave immediately (don't wait for wave-start event)
+          setWaveData(prev => ({ ...prev, wave: savedData.wave }))
+
+          // Update player stats HUD to show loaded values immediately
+          setPlayerStats({
+            health: savedData.player_stats.health,
+            maxHealth: savedData.player_stats.maxHealth,
+            points: savedData.points,
+            kills: savedData.kills || 0
+          })
+
           // Initialize ref with restored state
           lastGameStateRef.current = GameManager.getState()
         }
@@ -204,22 +217,31 @@ export default function GamePage() {
     EventBus.on('game-pause', () => setIsPaused(true))
     EventBus.on('game-resume', () => setIsPaused(false))
 
-    // Save on player death (allows mid-wave save for death, marks as game over)
+    // Save on player death using modular SaveManager
     EventBus.on('player-death', () => {
       // Only save once on death (event fires every frame while dead)
       if (deathSaveCompletedRef.current) {
         return
       }
 
-      console.log('[DEATH] Event triggered - Saving final state as GAME OVER')
+      console.log('[DEATH] Event triggered - Using SaveManager.saveOnDeath()')
       const state = GameManager.getState()
       console.log('[DEATH] Current state:', { wave: state.wave, points: state.playerStats.points, kills: state.playerStats.kills })
-      SaveGameService.saveCurrentGameState(true, true).then(success => {
-        console.log('[DEATH] Save result:', success ? 'SUCCESS' : 'FAILED')
-        if (success) {
+
+      // Use modular SaveManager for death save
+      // This saves: DeathState (frozen) + Points (current) + Upgrades (ordered)
+      SaveManager.saveOnDeath().then(results => {
+        const allSuccessful = results.every(r => r.success)
+        console.log('[DEATH] SaveManager results:', results.map(r => `${r.category}:${r.success}`).join(', '))
+        if (allSuccessful || results.length > 0) {
           deathSaveCompletedRef.current = true
-          console.log('[DEATH] Death save completed - all future saves blocked')
+          console.log('[DEATH] Death save completed - game stats saves now blocked')
         }
+      })
+
+      // Also save using legacy endpoint for backward compatibility
+      SaveGameService.saveCurrentGameState(true, true).then(success => {
+        console.log('[DEATH] Legacy save result:', success ? 'SUCCESS' : 'FAILED')
       })
     })
 
@@ -250,7 +272,10 @@ export default function GamePage() {
 
     // Add beforeunload handler to save on tab close
     const handleBeforeUnload = () => {
-      // Don't save if death save already completed (prevents overwriting game_over flag)
+      // Use SaveManager for quit save (handles death state internally)
+      // Note: This is fire-and-forget since we can't await in beforeunload
+      SaveManager.saveOnQuit()
+      // Also use legacy save if not dead for backward compatibility
       if (!deathSaveCompletedRef.current) {
         saveCurrentGameState()
       }
@@ -260,12 +285,16 @@ export default function GamePage() {
     return () => {
       clearInterval(abilityInterval)
 
-      // Don't save if death save already completed (prevents overwriting game_over flag)
+      // Use SaveManager for quit save (handles death state internally)
+      console.log('[UNMOUNT] Using SaveManager.saveOnQuit()')
+      SaveManager.saveOnQuit()
+
+      // Also use legacy save if not dead for backward compatibility
       if (!deathSaveCompletedRef.current) {
-        console.log('[UNMOUNT] Saving game state')
+        console.log('[UNMOUNT] Also using legacy save')
         saveCurrentGameState()
       } else {
-        console.log('[UNMOUNT] Skipping save - death save already completed')
+        console.log('[UNMOUNT] Skipping legacy save - death save already completed')
       }
 
       if (gameRef.current) {
@@ -322,11 +351,15 @@ export default function GamePage() {
         <PauseMenu
           onResume={() => GameManager.resume()}
           onQuit={async () => {
-            // Don't save if death save already completed (prevents overwriting game_over flag)
+            // Use SaveManager for quit save (handles death state internally)
+            console.log('[QUIT] Using SaveManager.saveOnQuit()')
+            await SaveManager.saveOnQuit()
+
+            // Also use legacy save for backward compatibility if not dead
             if (!deathSaveCompletedRef.current) {
               await saveCurrentGameState()
             } else {
-              console.log('[QUIT] Skipping save - death save already completed')
+              console.log('[QUIT] Skipping legacy save - death save already completed')
             }
             window.location.href = '/'
           }}

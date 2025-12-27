@@ -109,7 +109,7 @@ export class SaveGameService {
     // Set the wave number
     GameManager.setWave(savedData.wave)
 
-    // Restore player stats (including kills)
+    // Restore player stats (including kills and death status)
     GameManager.updatePlayerStats({
       health: savedData.player_stats.health,
       maxHealth: savedData.player_stats.maxHealth,
@@ -117,7 +117,8 @@ export class SaveGameService {
       points: savedData.points,
       polygonSides: savedData.player_stats.polygonSides,
       kills: savedData.kills || 0,
-      unlockedAttacks: savedData.unlocked_attacks
+      unlockedAttacks: savedData.unlocked_attacks,
+      isDead: savedData.game_over || false // Restore death flag from backend
     })
 
     // Store applied upgrades and seed in GameManager
@@ -127,6 +128,7 @@ export class SaveGameService {
 
     console.log('Game state restored:', GameManager.getState())
     console.log('DEBUG: Verified currentState.appliedUpgrades after restore =', GameManager.getState().appliedUpgrades)
+    console.log('DEBUG: Restored isDead flag:', savedData.game_over)
   }
 
   /**
@@ -166,6 +168,13 @@ export class SaveGameService {
         return false
       }
 
+      // CRITICAL: If player is already dead, prevent all saves except the initial death save
+      // This preserves the final stats at moment of death
+      if (stats.isDead && !isGameOver) {
+        console.log('Skipping save - player is dead, only death save allowed')
+        return false
+      }
+
       // Don't save mid-wave to prevent exploit (replaying same wave for easy points)
       // Exception: Allow saving on death even if wave is active
       if (gameState.isWaveActive && !allowMidWave) {
@@ -173,17 +182,29 @@ export class SaveGameService {
         return false
       }
 
-      console.log('Saving game state with points:', stats.points, 'kills:', stats.kills, allowMidWave ? '(death save)' : '', isGameOver ? '[GAME OVER]' : '')
+      // Check if player is dead - if so, always mark as game over
+      const finalIsGameOver = isGameOver || stats.isDead
+
+      // If player is dead, use frozen death state for wave/kills
+      // Points continue to accumulate for testing, so use current points
+      const deathState = GameManager.getDeathState()
+      const waveToSave = deathState ? deathState.wave : gameState.wave
+      const killsToSave = deathState ? deathState.kills : stats.kills
+
+      console.log('Saving game state with points:', stats.points, 'kills:', killsToSave, 'wave:', waveToSave, allowMidWave ? '(death save)' : '', finalIsGameOver ? '[GAME OVER]' : '')
+      if (deathState) {
+        console.log('[DEATH SAVE] Using frozen values - Wave:', deathState.wave, 'Kills:', deathState.kills)
+      }
 
       await axios.post('/api/saves/', {
-        current_wave: gameState.wave,
+        current_wave: waveToSave, // Use frozen wave if dead
         current_points: stats.points,
         seed: gameState.seed,
         current_health: stats.health,
         current_max_health: stats.maxHealth,
         current_speed: stats.speed,
         current_polygon_sides: stats.polygonSides,
-        current_kills: stats.kills,
+        current_kills: killsToSave, // Use frozen kills if dead
         current_damage_dealt: 0,
         current_upgrades: gameState.appliedUpgrades,
         offered_upgrades: [],
@@ -197,7 +218,7 @@ export class SaveGameService {
           }
         },
         unlocked_attacks: stats.unlockedAttacks || ['bullet'],
-        game_over: isGameOver
+        game_over: finalIsGameOver
       }, {
         headers: { Authorization: `Bearer ${token}` }
       })
