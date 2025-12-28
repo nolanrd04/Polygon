@@ -23,31 +23,40 @@ export default function MainMenu() {
 
   const checkForSavedGame = async (token: string) => {
     try {
-      const response = await axios.get('/api/saves/', {
+      const response = await axios.get('/api/saves/full', {
         headers: { Authorization: `Bearer ${token}` }
       })
 
       if (response.data) {
         setHasSavedGame(true)
-        setSavedGameWave(response.data.current_wave)
+        setSavedGameWave(response.data.game_stats.current_wave)
 
-        // Check if save is marked as game over
-        console.log('[MAIN MENU] Checking game_over flag:', response.data.game_over)
-        if (response.data.game_over) {
+        // Check if save is marked as game over (death_state exists or can_continue is false)
+        const isGameOverState = !response.data.can_continue || response.data.death_state !== null
+        console.log('[MAIN MENU] Checking game over state:', isGameOverState)
+        if (isGameOverState) {
           console.log('[MAIN MENU] GAME OVER DETECTED - Hiding continue button')
           setIsGameOver(true)
+          // Use death_state values when available (captures exact moment of death)
+          // Fall back to game_stats for backward compatibility
+          const deathState = response.data.death_state
           setFinalStats({
-            wave: response.data.current_wave,
-            points: response.data.current_points,
-            kills: response.data.current_kills || 0
+            wave: deathState?.waves_completed ?? response.data.game_stats.current_wave,
+            points: deathState?.points_at_death ?? response.data.points.current_points,
+            kills: deathState?.enemies_killed ?? response.data.game_stats.current_kills ?? 0
           })
-          console.log('[MAIN MENU] Run ended - Wave:', response.data.current_wave, 'Points:', response.data.current_points, 'Kills:', response.data.current_kills)
+          console.log('[MAIN MENU] Run ended - Wave:', deathState?.waves_completed, 'Points:', deathState?.points_at_death, 'Kills:', deathState?.enemies_killed)
         } else {
           console.log('[MAIN MENU] Game is active - showing continue button')
         }
       }
-    } catch (error) {
-      console.error('Failed to check for saved game:', error)
+    } catch (error: any) {
+      // 404 means no save exists, which is expected for new users
+      if (error.response?.status === 404) {
+        console.log('[MAIN MENU] No saved game found')
+      } else {
+        console.error('Failed to check for saved game:', error)
+      }
     }
   }
 

@@ -223,8 +223,8 @@ class GameManagerClass {
     if (!this.state.playerStats.isDead) {
       // Save the current wave completion to backend
       // Wave will be incremented by WaveManager after this returns
-      const { SaveGameService } = await import('../services/SaveGameService')
-      await SaveGameService.saveCurrentGameState()
+      const { SaveManager } = await import('../services/SaveManager')
+      await SaveManager.saveOnWaveComplete()
       console.log(`Saved game state after wave ${this.state.wave} completion, current wave: ${this.state.wave}, points: ${this.state.playerStats.points}`)
     } else {
       console.log(`[DEATH MODE] Wave ${this.state.wave} completed but NOT saved (player is dead)`)

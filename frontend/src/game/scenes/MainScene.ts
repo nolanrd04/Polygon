@@ -12,7 +12,6 @@ import { Projectile } from '../entities/projectiles/Projectile'
 import { UpgradeSystem, UpgradeEffectSystem, registerEffectHandlers, type UpgradeDefinition } from '../systems/upgrades'
 import { TextureGenerator } from '../utils/TextureGenerator'
 import { waveValidation } from '../services/WaveValidation'
-import { SaveGameService } from '../services/SaveGameService'
 import { SaveManager } from '../services/SaveManager'
 
 // Import all upgrade JSONs
@@ -262,12 +261,12 @@ export class MainScene extends Phaser.Scene {
       const isLoadedGame = hasPoints || hasUpgrades || hasProgressedWaves
 
       // Only give starting points if this is a new game (no points yet)
-      // If loading a saved game, points are already restored by SaveGameService
+      // If loading a saved game, points are already restored by SaveManager
       if (!isLoadedGame) {
-        console.log('New game detected - adding 70 starting points')
-        // CRITICAL: Initialize SaveManager for new game session
-        // This resets upgrade history and death state for fresh tracking
-        SaveManager.initialize()
+        console.log('New game detected - resetting GameManager and adding 70 starting points')
+        // CRITICAL: Reset GameManager state for new game
+        // This clears isDead flag, kills, points, etc. from previous sessions
+        GameManager.reset()
         GameManager.addPoints(70)
       } else {
         console.log('Loaded game detected (points:', hasPoints, ', upgrades:', hasUpgrades, ', wave:', hasProgressedWaves, ') - keeping existing points:', currentState.playerStats.points)
@@ -305,7 +304,7 @@ export class MainScene extends Phaser.Scene {
       // For new games, save the starting points to backend after wave start creates the game save
       if (!isLoadedGame) {
         console.log('Saving starting points to backend...')
-        await SaveGameService.saveCurrentGameState()
+        await SaveManager.saveOnWaveComplete()
         console.log('Starting points synced to backend')
       }
 

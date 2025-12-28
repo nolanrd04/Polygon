@@ -1,5 +1,9 @@
 import axios from '../../config/axios'
 import { GameManager } from '../core/GameManager'
+import statUpgrades from '../data/upgrades/stat_upgrades.json'
+import effectUpgrades from '../data/upgrades/effect_upgrades.json'
+import variantUpgrades from '../data/upgrades/variant_upgrades.json'
+import abilityUpgrades from '../data/upgrades/ability_upgrades.json'
 
 export interface FrameSample {
   frame: number
@@ -233,10 +237,27 @@ export class WaveValidationService {
    */
   async selectUpgrade(upgradeId: string, waveNumber: number): Promise<{success: boolean, newPoints?: number}> {
     // GUARD: Don't sync upgrades with backend after death
-    // Player can still apply upgrades locally for fun
+    // Player can still apply upgrades locally for fun, but deduct points locally
     if (GameManager.getPlayerStats().isDead) {
-      console.log('[WAVE VALIDATION] Skipping upgrade sync - player is dead (sandbox mode)')
-      return { success: true } // Return success to allow local application
+      console.log('[WAVE VALIDATION] Player is dead - applying upgrade locally (sandbox mode)')
+
+      // Find the upgrade cost
+      const allUpgrades = [
+        ...statUpgrades.upgrades,
+        ...effectUpgrades.upgrades,
+        ...variantUpgrades.upgrades,
+        ...abilityUpgrades.upgrades
+      ]
+      const upgrade = allUpgrades.find((u: any) => u.id === upgradeId)
+      const cost = upgrade?.cost || 0
+
+      // Deduct points locally
+      const stats = GameManager.getPlayerStats()
+      const newPoints = stats.points - cost
+      GameManager.updatePlayerStats({ points: newPoints })
+
+      console.log(`[WAVE VALIDATION] Local upgrade purchase: ${upgradeId}, cost: ${cost}, new points: ${newPoints}`)
+      return { success: true, newPoints }
     }
 
     try {
@@ -282,10 +303,32 @@ export class WaveValidationService {
    * Reroll upgrades for the current wave
    */
   async rerollUpgrades(wave: number, rerollCost: number): Promise<{ upgrades: any[], newPoints: number } | null> {
-    // GUARD: Don't sync rerolls with backend after death
+    // After death, allow local rerolls (player can still spend points for fun)
     if (GameManager.getPlayerStats().isDead) {
-      console.log('[WAVE VALIDATION] Skipping reroll sync - player is dead (sandbox mode)')
-      return null
+      console.log('[WAVE VALIDATION] Player is dead - using local reroll (sandbox mode)')
+      // Deduct points locally
+      const stats = GameManager.getPlayerStats()
+      const newPoints = stats.points - rerollCost
+      if (newPoints < 0) {
+        console.log('[WAVE VALIDATION] Not enough points for reroll')
+        return null
+      }
+      GameManager.updatePlayerStats({ points: newPoints })
+
+      // Generate random upgrades from full upgrade pool
+      const allUpgrades = [
+        ...statUpgrades.upgrades,
+        ...effectUpgrades.upgrades,
+        ...variantUpgrades.upgrades,
+        ...abilityUpgrades.upgrades
+      ]
+
+      // Shuffle and pick 3 random upgrades
+      const shuffled = [...allUpgrades].sort(() => Math.random() - 0.5)
+      this.offeredUpgrades = shuffled.slice(0, 3).map((u: any) => ({ id: u.id, purchased: false }))
+
+      console.log('[WAVE VALIDATION] Local reroll - new upgrades:', this.offeredUpgrades)
+      return { upgrades: this.offeredUpgrades, newPoints }
     }
 
     try {

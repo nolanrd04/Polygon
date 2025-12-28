@@ -132,10 +132,14 @@ class SaveManagerClass {
     const stats = gameState.playerStats
     const timeSurvived = Math.floor((Date.now() - this.gameStartTime) / 1000)
 
+    // Use GameManager's frozen death state if available (captures exact moment of death)
+    // This prevents kills from projectiles in flight from being lost
+    const gmDeathState = GameManager.getDeathState()
+
     this.deathState = {
       frozenAt: Date.now(),
-      wavesCompleted: gameState.wave - 1, // Died during wave N, completed N-1
-      enemiesKilled: stats.kills,
+      wavesCompleted: gmDeathState?.wave ?? gameState.wave, // Use frozen wave or current-1
+      enemiesKilled: gmDeathState?.kills ?? stats.kills, // Use frozen kills or current
       timeSurvived,
       pointsAtDeath: stats.points
     }
@@ -648,6 +652,37 @@ class SaveManagerClass {
       console.error('[SaveManager] Failed to check saved game:', error)
       return { exists: false }
     }
+  }
+
+  /**
+   * Restore game state from loaded save data.
+   * Call this after loadFullGame() to apply the state to GameManager.
+   */
+  restoreGameState(savedData: FullGameSave): void {
+    // Set the wave number
+    GameManager.setWave(savedData.gameStats.currentWave)
+
+    // Restore player stats
+    GameManager.updatePlayerStats({
+      health: savedData.playerState.currentHealth,
+      maxHealth: savedData.playerState.currentMaxHealth,
+      speed: savedData.playerState.currentSpeed,
+      points: savedData.points.currentPoints,
+      polygonSides: savedData.playerState.currentPolygonSides,
+      kills: savedData.gameStats.currentKills,
+      unlockedAttacks: savedData.playerState.unlockedAttacks,
+      isDead: !savedData.canContinue
+    })
+
+    // Extract upgrade IDs from purchase history and store in GameManager
+    const appliedUpgrades = savedData.upgrades.purchaseHistory.map(u => u.upgradeId)
+    GameManager.setAppliedUpgrades(appliedUpgrades)
+    GameManager.setSeed(savedData.gameStats.seed)
+
+    // Initialize SaveManager with the loaded upgrade history
+    this.restoreFromLoad(savedData.upgrades.purchaseHistory)
+
+    console.log('[SaveManager] Game state restored:', GameManager.getState())
   }
 }
 

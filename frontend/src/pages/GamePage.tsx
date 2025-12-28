@@ -9,10 +9,8 @@ import PauseMenu from '../components/PauseMenu'
 import DevTools from '../components/DevTools'
 import AbilityDisplay from '../components/AbilityDisplay'
 import { EventBus } from '../game/core/EventBus'
-import { SaveGameService } from '../game/services/SaveGameService'
 import { SaveManager } from '../game/services/SaveManager'
 import { GameManager } from '../game/core/GameManager'
-import axios from '../config/axios'
 
 export default function GamePage() {
   const navigate = useNavigate()
@@ -33,90 +31,17 @@ export default function GamePage() {
   // Track if death save has been completed to prevent overwriting it
   const deathSaveCompletedRef = useRef(false)
 
-  // Autosave current game state to backend
-  const saveCurrentGameState = async () => {
-    try {
-      const token = localStorage.getItem('token')
-      if (!token) return
-
-      // Use ref state if available (survives game destruction), otherwise get from GameManager
-      const gameState = lastGameStateRef.current || GameManager.getState()
-
-      // Don't save if we have no valid state at all
-      if (!gameState || !gameState.playerStats) {
-        console.log('Skipping autosave - no valid game state')
-        return
-      }
-
-      const stats = gameState.playerStats
-
-      // Don't save if game hasn't been initialized yet (prevents saving 0 points on mount)
-      // Backend requires wave >= 1, so never save wave 0
-      if (!gameState.wave || gameState.wave === 0) {
-        console.log('Skipping autosave - game not initialized yet (wave:', gameState.wave, ')')
-        return
-      }
-
-      // Don't save if both ref is empty AND points are 0 (likely a mount/unmount cycle)
-      if (!lastGameStateRef.current && stats.points === 0) {
-        console.log('Skipping autosave - no ref and 0 points (likely initial mount)')
-        return
-      }
-
-      // Don't save mid-wave to prevent exploit (replaying same wave for easy points)
-      if (gameState.isWaveActive) {
-        console.log('Skipping autosave - wave is active (prevents mid-wave save exploit)')
-        console.log('[DEBUG] Wave state: isWaveActive=' + gameState.isWaveActive + ', wave=' + gameState.wave + ', points=' + stats.points)
-        return
-      }
-
-      console.log('Autosaving game state with points:', stats.points, 'kills:', stats.kills, '(from ref:', !!lastGameStateRef.current, ')')
-      console.log('→ Sending to backend: wave =', gameState.wave, ', points =', stats.points, ', kills =', stats.kills)
-
-      // Save current game state to backend
-      await axios.post('/api/saves/', {
-        current_wave: gameState.wave,
-        current_points: stats.points,
-        seed: gameState.seed,
-        current_health: stats.health,
-        current_max_health: stats.maxHealth,
-        current_speed: stats.speed,
-        current_polygon_sides: stats.polygonSides,
-        current_kills: stats.kills || 0,
-        current_damage_dealt: 0, // Accumulated damage tracked on wave completion
-        current_upgrades: gameState.appliedUpgrades,
-        offered_upgrades: [], // Will be populated when starting next wave
-        attack_stats: {
-          bullet: {
-            damage: 10,
-            speed: 400,
-            cooldown: 200,
-            size: 1,
-            pierce: 0
-          }
-        },
-        unlocked_attacks: stats.unlockedAttacks || ['bullet']
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-
-      console.log('Game state auto-saved successfully')
-    } catch (error) {
-      console.error('Failed to autosave game state:', error)
-    }
-  }
-
   useEffect(() => {
     const initGame = async () => {
       // Check if we're loading a saved game
       const loadSavedGame = sessionStorage.getItem('loadSavedGame')
 
       if (loadSavedGame === 'true') {
-        // Load saved game state
-        const savedData = await SaveGameService.loadSavedGame()
-        
+        // Load saved game state using SaveManager
+        const savedData = await SaveManager.loadFullGame()
+
         // If we tried to load but failed (returns null), it means the save was invalid/game_over
-        if (loadSavedGame === 'true' && !savedData) {
+        if (!savedData) {
           console.log('[LOAD] Failed to load save - save is marked as game over or invalid')
           setLoadError('This save has ended. Starting a new game...')
           // Redirect to main menu after a short delay so user can see the message
@@ -126,38 +51,25 @@ export default function GamePage() {
           sessionStorage.removeItem('loadSavedGame')
           return
         }
-        
-        if (savedData) {
-          // Check if the loaded save is marked as game over (prevents multi-tab exploit)
-          if (savedData.game_over) {
-            console.log('[LOAD] Save is marked as GAME OVER - cannot continue this run')
-            setLoadError('This save has ended. Starting a new game...')
-            // Redirect to main menu after a short delay so user can see the message
-            setTimeout(() => {
-              navigate('/')
-            }, 1500)
-            sessionStorage.removeItem('loadSavedGame')
-            return
-          }
 
-          // Restore game state before creating the game
-          SaveGameService.restoreGameState(savedData)
-          console.log('Loaded saved game from wave', savedData.wave)
+        // Restore game state before creating the game
+        SaveManager.restoreGameState(savedData)
+        console.log('Loaded saved game from wave', savedData.gameStats.currentWave)
 
-          // Update HUD to show the loaded wave immediately (don't wait for wave-start event)
-          setWaveData(prev => ({ ...prev, wave: savedData.wave }))
+        // Update HUD to show the loaded wave immediately (don't wait for wave-start event)
+        setWaveData(prev => ({ ...prev, wave: savedData.gameStats.currentWave }))
 
-          // Update player stats HUD to show loaded values immediately
-          setPlayerStats({
-            health: savedData.player_stats.health,
-            maxHealth: savedData.player_stats.maxHealth,
-            points: savedData.points,
-            kills: savedData.kills || 0
-          })
+        // Update player stats HUD to show loaded values immediately
+        setPlayerStats({
+          health: savedData.playerState.currentHealth,
+          maxHealth: savedData.playerState.currentMaxHealth,
+          points: savedData.points.currentPoints,
+          kills: savedData.gameStats.currentKills
+        })
 
-          // Initialize ref with restored state
-          lastGameStateRef.current = GameManager.getState()
-        }
+        // Initialize ref with restored state
+        lastGameStateRef.current = GameManager.getState()
+
         // Clear the flag
         sessionStorage.removeItem('loadSavedGame')
       }
@@ -239,10 +151,6 @@ export default function GamePage() {
         }
       })
 
-      // Also save using legacy endpoint for backward compatibility
-      SaveGameService.saveCurrentGameState(true, true).then(success => {
-        console.log('[DEATH] Legacy save result:', success ? 'SUCCESS' : 'FAILED')
-      })
     })
 
     // Listen for ability state updates
@@ -275,10 +183,6 @@ export default function GamePage() {
       // Use SaveManager for quit save (handles death state internally)
       // Note: This is fire-and-forget since we can't await in beforeunload
       SaveManager.saveOnQuit()
-      // Also use legacy save if not dead for backward compatibility
-      if (!deathSaveCompletedRef.current) {
-        saveCurrentGameState()
-      }
     }
     window.addEventListener('beforeunload', handleBeforeUnload)
 
@@ -288,14 +192,6 @@ export default function GamePage() {
       // Use SaveManager for quit save (handles death state internally)
       console.log('[UNMOUNT] Using SaveManager.saveOnQuit()')
       SaveManager.saveOnQuit()
-
-      // Also use legacy save if not dead for backward compatibility
-      if (!deathSaveCompletedRef.current) {
-        console.log('[UNMOUNT] Also using legacy save')
-        saveCurrentGameState()
-      } else {
-        console.log('[UNMOUNT] Skipping legacy save - death save already completed')
-      }
 
       if (gameRef.current) {
         gameRef.current.destroy(true)
@@ -354,13 +250,6 @@ export default function GamePage() {
             // Use SaveManager for quit save (handles death state internally)
             console.log('[QUIT] Using SaveManager.saveOnQuit()')
             await SaveManager.saveOnQuit()
-
-            // Also use legacy save for backward compatibility if not dead
-            if (!deathSaveCompletedRef.current) {
-              await saveCurrentGameState()
-            } else {
-              console.log('[QUIT] Skipping legacy save - death save already completed')
-            }
             window.location.href = '/'
           }}
         />

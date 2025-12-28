@@ -231,39 +231,3 @@ export interface WaveSnapshotBackend {
   is_locked: boolean
   is_completed: boolean
 }
-
-// ============================================================================
-// LEGACY INTERFACES (For backward compatibility during migration)
-// ============================================================================
-
-/** @deprecated Use FullGameSave instead */
-export interface ActiveGameState {
-  seed: number
-  canContinue: boolean
-  currentWave: number
-  currentPoints: number
-  currentHealth: number
-  currentMaxHealth: number
-  currentSpeed: number
-  currentPolygonSides: number
-  currentKills: number
-  currentUpgrades: string[]
-  unlockedAttacks: string[]
-  gameOver: boolean
-}
-
-/** @deprecated Use FullGameSaveBackend instead */
-export interface ActiveGameStateBackend {
-  seed: number
-  can_continue: boolean
-  current_wave: number
-  current_points: number
-  current_health: number
-  current_max_health: number
-  current_speed: number
-  current_polygon_sides: number
-  current_kills: number
-  current_upgrades: string[]
-  unlocked_attacks: string[]
-  game_over: boolean
-}

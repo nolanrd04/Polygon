@@ -7,7 +7,7 @@ import abilityUpgrades from '../game/data/upgrades/ability_upgrades.json'
 import { GameManager } from '../game/core/GameManager'
 import { EventBus } from '../game/core/EventBus'
 import { waveValidation } from '../game/services/WaveValidation'
-import { SaveGameService } from '../game/services/SaveGameService'
+import { SaveManager } from '../game/services/SaveManager'
 
 /**
  * UPGRADE ARCHITECTURE:
@@ -131,9 +131,9 @@ export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModal
 
   const handleReroll = async () => {
     if (playerPoints >= rerollCost) {
-      // Save current game state first to sync points to backend
-      console.log('Saving game state before reroll...')
-      await SaveGameService.saveCurrentGameState()
+      // Save current points to backend before reroll
+      console.log('Saving points before reroll...')
+      await SaveManager.savePoints()
 
       const currentWave = GameManager.getState().wave
 

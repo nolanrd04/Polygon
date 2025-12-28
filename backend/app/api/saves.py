@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Any
+from typing import List
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -7,7 +7,7 @@ from app.core.database import get_database
 from app.core.security import get_current_user
 from app.models.user import User
 from app.models.game_save import (
-    GameSave, GameSaveResponse, OfferedUpgrade, UpgradeEntry, DeathFrozenState,
+    UpgradeEntry, DeathFrozenState,
     GameStatsResponse, PointsResponse, UpgradesResponse, PlayerStateResponse,
     FullGameSaveResponse
 )
@@ -20,24 +20,6 @@ router = APIRouter()
 # ==========================================
 # REQUEST MODELS
 # ==========================================
-
-class GameSaveCreate(BaseModel):
-    """Legacy: Full save request"""
-    current_wave: int = Field(..., ge=1)
-    current_points: int = Field(..., ge=0)
-    seed: int = Field(...)
-    current_health: float = Field(..., ge=0)
-    current_max_health: float = Field(..., ge=1)
-    current_speed: int = Field(..., ge=0)
-    current_polygon_sides: int = Field(..., ge=3, le=12)
-    current_kills: int = Field(default=0, ge=0)
-    current_damage_dealt: int = Field(default=0, ge=0)  # Legacy, ignored
-    current_upgrades: List[str] = Field(default_factory=list)
-    offered_upgrades: List[OfferedUpgrade] = Field(default_factory=list)
-    attack_stats: Dict[str, Any] = Field(default_factory=dict)  # Legacy, ignored
-    unlocked_attacks: List[str] = Field(default_factory=list)
-    game_over: bool = Field(default=False)
-
 
 class PointsSaveRequest(BaseModel):
     """Save points only"""
@@ -73,113 +55,8 @@ class DeathStateSaveRequest(BaseModel):
 
 
 # ==========================================
-# LEGACY ENDPOINTS (For backward compatibility)
+# UTILITY ENDPOINTS
 # ==========================================
-
-@router.get("/", response_model=Optional[GameSaveResponse])
-async def get_save(
-    current_user: User = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
-):
-    """Get the game save for the current user (one save per user)"""
-    repo = GameSaveRepository(db)
-    save = await repo.find_by_user_id(current_user.id)
-
-    if not save:
-        return None
-
-    return GameSaveResponse(
-        id=save.id,
-        user_id=save.user_id,
-        current_wave=save.current_wave,
-        current_points=save.current_points,
-        seed=save.seed,
-        current_health=save.current_health,
-        current_max_health=save.current_max_health,
-        current_speed=save.current_speed,
-        current_polygon_sides=save.current_polygon_sides,
-        current_kills=save.current_kills,
-        current_upgrades=save.current_upgrades,
-        offered_upgrades=save.offered_upgrades,
-        unlocked_attacks=save.unlocked_attacks,
-        game_over=save.game_over,
-        created_at=save.created_at,
-        updated_at=save.updated_at
-    )
-
-
-@router.post("/", response_model=GameSaveResponse)
-async def create_or_update_save(
-    save_data: GameSaveCreate,
-    current_user: User = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
-):
-    """Create or update the game save for the current user (legacy endpoint)"""
-    repo = GameSaveRepository(db)
-
-    existing_save = await repo.find_by_user_id(current_user.id)
-
-    if existing_save:
-        print(f"[SAVE DEBUG] Received current_kills: {save_data.current_kills}, wave: {save_data.current_wave}, points: {save_data.current_points}")
-
-        update_data = {
-            "current_wave": save_data.current_wave,
-            "current_points": save_data.current_points,
-            "seed": save_data.seed,
-            "current_health": save_data.current_health,
-            "current_max_health": save_data.current_max_health,
-            "current_speed": save_data.current_speed,
-            "current_polygon_sides": save_data.current_polygon_sides,
-            "current_kills": save_data.current_kills,
-            "current_upgrades": save_data.current_upgrades,
-            "unlocked_attacks": save_data.unlocked_attacks,
-            "game_over": save_data.game_over,
-            "last_saved_at": datetime.utcnow()
-        }
-
-        if save_data.offered_upgrades:
-            update_data["offered_upgrades"] = save_data.offered_upgrades
-
-        updated_save = await repo.update_by_id(existing_save.id, update_data)
-        save = updated_save
-    else:
-        new_save = GameSave(
-            user_id=current_user.id,
-            current_wave=save_data.current_wave,
-            current_points=save_data.current_points,
-            seed=save_data.seed,
-            current_health=save_data.current_health,
-            current_max_health=save_data.current_max_health,
-            current_speed=save_data.current_speed,
-            current_polygon_sides=save_data.current_polygon_sides,
-            current_kills=save_data.current_kills,
-            current_upgrades=save_data.current_upgrades,
-            offered_upgrades=save_data.offered_upgrades,
-            unlocked_attacks=save_data.unlocked_attacks,
-            game_over=save_data.game_over,
-            last_saved_at=datetime.utcnow()
-        )
-        save = await repo.create(new_save)
-
-    return GameSaveResponse(
-        id=save.id,
-        user_id=save.user_id,
-        current_wave=save.current_wave,
-        current_points=save.current_points,
-        seed=save.seed,
-        current_health=save.current_health,
-        current_max_health=save.current_max_health,
-        current_speed=save.current_speed,
-        current_polygon_sides=save.current_polygon_sides,
-        current_kills=save.current_kills,
-        current_upgrades=save.current_upgrades,
-        offered_upgrades=save.offered_upgrades,
-        unlocked_attacks=save.unlocked_attacks,
-        game_over=save.game_over,
-        created_at=save.created_at,
-        updated_at=save.updated_at
-    )
-
 
 @router.delete("/")
 async def delete_save(
@@ -214,16 +91,6 @@ async def delete_save(
         )
 
     return {"message": "Save deleted successfully"}
-
-
-@router.post("/autosave", response_model=GameSaveResponse)
-async def autosave(
-    save_data: GameSaveCreate,
-    current_user: User = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
-):
-    """Autosave endpoint (legacy)"""
-    return await create_or_update_save(save_data, current_user, db)
 
 
 @router.get("/validate-load", response_model=dict)
