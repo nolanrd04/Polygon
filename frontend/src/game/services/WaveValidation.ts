@@ -39,10 +39,14 @@ export class WaveValidationService {
    * Start a new wave - get token and upgrades from backend
    */
   async startWave(waveNumber: number, seed: number): Promise<any[] | null> {
-    // GUARD: Don't sync wave start with backend after death
+    // Check for offline mode (no auth token)
+    const token = localStorage.getItem('token')
+    const isOfflineMode = !token
+
+    // GUARD: Don't sync wave start with backend after death or in offline mode
     // Player can keep playing locally but won't get fresh upgrades from backend
-    if (GameManager.getPlayerStats().isDead) {
-      console.log('[WAVE VALIDATION] Skipping wave start sync - player is dead (sandbox mode)')
+    if (GameManager.getPlayerStats().isDead || isOfflineMode) {
+      console.log('[WAVE VALIDATION] Skipping wave start sync - player is dead or offline (sandbox mode)')
       // Reset local state for sandbox play
       this.waveStartTime = Date.now()
       this.frameCount = 0
@@ -51,11 +55,93 @@ export class WaveValidationService {
       this.totalKills = 0
       this.totalDamage = 0
       this.damageTaken = 0
+
+      // Generate initial upgrades if we don't have any yet
+      if (this.offeredUpgrades.length === 0) {
+        const allUpgrades = [
+          ...statUpgrades.upgrades,
+          ...effectUpgrades.upgrades,
+          ...variantUpgrades.upgrades,
+          ...abilityUpgrades.upgrades
+        ]
+
+        // Get current state for filtering
+        const currentUpgrades = GameManager.getState().appliedUpgrades
+        const currentAttackType = GameManager.getState().playerStats.unlockedAttacks[0] || 'bullet'
+
+        // Filter upgrades: exclude incompatible, dependent, and mismatched attack types
+        const validUpgrades = allUpgrades.filter((upgrade: any) => {
+          if (!upgrade.stackable && currentUpgrades.includes(upgrade.id)) {
+            return false
+          }
+          if (upgrade.attackType && upgrade.attackType !== currentAttackType) {
+            return false
+          }
+          if (upgrade.dependentOn && upgrade.dependentOn.length > 0) {
+            const required = upgrade.dependencyCount || 1
+            const hasDeps = upgrade.dependentOn.filter((id: string) => currentUpgrades.includes(id)).length
+            if (hasDeps < required) {
+              return false
+            }
+          }
+          if (upgrade.replaces) {
+            const replaces = Array.isArray(upgrade.replaces) ? upgrade.replaces : [upgrade.replaces]
+            if (replaces.some((id: string) => currentUpgrades.includes(id))) {
+              return false
+            }
+          }
+          if (upgrade.incompatibleWith && upgrade.incompatibleWith.length > 0) {
+            if (upgrade.incompatibleWith.some((id: string) => currentUpgrades.includes(id))) {
+              return false
+            }
+          }
+          return true
+        })
+
+        // Pick 3 random valid upgrades using rarity weights
+        const rarity_weights = { 'common': 0.50, 'uncommon': 0.30, 'rare': 0.15, 'epic': 0.04, 'legendary': 0.01 }
+        const selected: any[] = []
+        const maxAttempts = 100
+
+        let attemptCount = 0
+        while (selected.length < 3 && validUpgrades.length > 0 && attemptCount < maxAttempts) {
+          const rand = Math.random()
+          let cumulative = 0
+          let pickedRarity = 'common'
+          for (const [rarity, weight] of Object.entries(rarity_weights)) {
+            cumulative += weight
+            if (rand < cumulative) {
+              pickedRarity = rarity
+              break
+            }
+          }
+
+          const rarityUpgrades = validUpgrades.filter((u: any) => u.rarity === pickedRarity)
+
+          if (rarityUpgrades.length > 0) {
+            const randomIdx = Math.floor(Math.random() * rarityUpgrades.length)
+            const upgrade = rarityUpgrades[randomIdx]
+
+            const alreadySelected = selected.some((u: any) => u.id === upgrade.id)
+            if (!alreadySelected || upgrade.stackable) {
+              selected.push(upgrade)
+              const poolIdx = validUpgrades.indexOf(upgrade)
+              if (poolIdx > -1) {
+                validUpgrades.splice(poolIdx, 1)
+              }
+            }
+          }
+
+          attemptCount++
+        }
+
+        this.offeredUpgrades = selected.map((u: any) => ({ id: u.id, purchased: false }))
+      }
+
       return this.offeredUpgrades // Return cached upgrades for sandbox play
     }
 
     try {
-      const token = localStorage.getItem('token')
       if (!token) {
         console.error('No auth token found')
         return null
@@ -171,10 +257,14 @@ export class WaveValidationService {
    * Complete wave and submit to backend for validation
    */
   async completeWave(waveNumber: number): Promise<{ success: boolean; errors?: string[] }> {
-    // GUARD: Don't submit wave completion to backend after death
+    // Check for offline mode (no auth token)
+    const token = localStorage.getItem('token')
+    const isOfflineMode = !token
+
+    // GUARD: Don't submit wave completion to backend after death or in offline mode
     // Player can keep playing for fun, but stats won't be saved
-    if (GameManager.getPlayerStats().isDead) {
-      console.log('[WAVE VALIDATION] Skipping wave completion - player is dead (sandbox mode)')
+    if (GameManager.getPlayerStats().isDead || isOfflineMode) {
+      console.log('[WAVE VALIDATION] Skipping wave completion - player is dead or offline (sandbox mode)')
       return { success: true } // Return success to not block game flow
     }
 
@@ -184,7 +274,6 @@ export class WaveValidationService {
     }
 
     try {
-      const token = localStorage.getItem('token')
       if (!token) {
         console.error('No auth token found')
         return { success: false, errors: ['Not authenticated'] }
@@ -236,10 +325,14 @@ export class WaveValidationService {
    * Returns the new points value from backend (authoritative)
    */
   async selectUpgrade(upgradeId: string, waveNumber: number): Promise<{success: boolean, newPoints?: number}> {
-    // GUARD: Don't sync upgrades with backend after death
+    // Check for offline mode (no auth token)
+    const token = localStorage.getItem('token')
+    const isOfflineMode = !token
+
+    // GUARD: Don't sync upgrades with backend after death or in offline mode
     // Player can still apply upgrades locally for fun, but deduct points locally
-    if (GameManager.getPlayerStats().isDead) {
-      console.log('[WAVE VALIDATION] Player is dead - applying upgrade locally (sandbox mode)')
+    if (GameManager.getPlayerStats().isDead || isOfflineMode) {
+      console.log('[WAVE VALIDATION] Player is dead or offline - applying upgrade locally (sandbox mode)')
 
       // Find the upgrade cost
       const allUpgrades = [
@@ -261,7 +354,6 @@ export class WaveValidationService {
     }
 
     try {
-      const token = localStorage.getItem('token')
       if (!token) {
         console.error('No auth token found')
         return {success: false}
@@ -303,8 +395,11 @@ export class WaveValidationService {
    * Reroll upgrades for the current wave
    */
   async rerollUpgrades(wave: number, rerollCost: number): Promise<{ upgrades: any[], newPoints: number } | null> {
-    // After death, allow local rerolls (player can still spend points for fun)
-    if (GameManager.getPlayerStats().isDead) {
+    // After death OR if offline (no auth token), use sandbox mode
+    const token = localStorage.getItem('token')
+    const isOfflineMode = !token
+
+    if (GameManager.getPlayerStats().isDead || isOfflineMode) {
       console.log('[WAVE VALIDATION] Player is dead - using local reroll (sandbox mode)')
       // Deduct points locally
       const stats = GameManager.getPlayerStats()
@@ -368,8 +463,7 @@ export class WaveValidationService {
 
       // Pick 3 random valid upgrades using rarity weights
       const rarity_weights = { 'common': 0.50, 'uncommon': 0.30, 'rare': 0.15, 'epic': 0.04, 'legendary': 0.01 }
-      const selected = []
-      const attempts = 0
+      const selected: any[] = []
       const maxAttempts = 100
 
       let attemptCount = 0

@@ -75,6 +75,16 @@ export default function MainMenu() {
     navigate('/game')
   }
 
+  const handlePlayOffline = () => {
+    // Mark that we're playing offline (sandbox mode from the start)
+    // Auto-select bullet attack and start game directly
+    sessionStorage.setItem('playOffline', 'true')
+    sessionStorage.setItem('selectedAttack', 'bullet')
+
+    // Navigate directly to game, skipping attack selection
+    navigate('/game')
+  }
+
   return (
     <div className="w-full h-full flex flex-col items-center justify-center bg-polygon-darker">
       <h1 className="text-6xl font-bold text-polygon-primary mb-4 tracking-wider">
@@ -127,14 +137,22 @@ export default function MainMenu() {
           {hasSavedGame ? 'NEW GAME' : 'PLAY'}
         </button>
 
-        {/* Only show LOGIN button if NOT logged in */}
+        {/* Only show PLAY OFFLINE and LOGIN buttons if NOT logged in */}
         {!isLoggedIn && (
-          <button
-            onClick={() => navigate('/login')}
-            className="px-8 py-3 border-2 border-polygon-secondary text-polygon-secondary font-semibold rounded hover:bg-polygon-secondary hover:text-black transition-all"
-          >
-            LOGIN
-          </button>
+          <>
+            <button
+              onClick={handlePlayOffline}
+              className="px-8 py-3 border-2 border-polygon-secondary text-polygon-secondary font-semibold rounded hover:bg-polygon-secondary hover:text-black transition-all"
+            >
+              PLAY OFFLINE
+            </button>
+            <button
+              onClick={() => navigate('/login')}
+              className="px-8 py-3 border-2 border-gray-500 text-gray-400 font-semibold rounded hover:border-gray-300 hover:text-white transition-all text-sm"
+            >
+              LOGIN
+            </button>
+          </>
         )}
 
         {/* Show LOGOUT button if logged in */}

@@ -33,6 +33,22 @@ export default function GamePage() {
 
   useEffect(() => {
     const initGame = async () => {
+      // Check if we're playing offline (sandbox mode)
+      const playOffline = sessionStorage.getItem('playOffline')
+
+      if (playOffline === 'true') {
+        console.log('[OFFLINE] Starting game in sandbox mode')
+        // Set the player as dead immediately to start in sandbox mode
+        const initialState = GameManager.getState()
+        GameManager.updatePlayerStats({
+          ...initialState.playerStats,
+          isDead: true
+        })
+
+        // Clear the flag
+        sessionStorage.removeItem('playOffline')
+      }
+
       // Check if we're loading a saved game
       const loadSavedGame = sessionStorage.getItem('loadSavedGame')
 
