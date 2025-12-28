@@ -323,9 +323,93 @@ export class WaveValidationService {
         ...abilityUpgrades.upgrades
       ]
 
-      // Shuffle and pick 3 random upgrades
-      const shuffled = [...allUpgrades].sort(() => Math.random() - 0.5)
-      this.offeredUpgrades = shuffled.slice(0, 3).map((u: any) => ({ id: u.id, purchased: false }))
+      // Get current state for filtering
+      const currentUpgrades = GameManager.getState().appliedUpgrades
+      const currentAttackType = GameManager.getState().playerStats.unlockedAttacks[0] || 'bullet'
+
+      // Filter upgrades: exclude incompatible, dependent, and mismatched attack types
+      const validUpgrades = allUpgrades.filter((upgrade: any) => {
+        // Check if already applied (non-stackable)
+        if (!upgrade.stackable && currentUpgrades.includes(upgrade.id)) {
+          return false
+        }
+
+        // Check attack type - if upgrade has attackType, must match current
+        if (upgrade.attackType && upgrade.attackType !== currentAttackType) {
+          return false
+        }
+
+        // Check dependencies - must have required upgrades
+        if (upgrade.dependentOn && upgrade.dependentOn.length > 0) {
+          const required = upgrade.dependencyCount || 1
+          const hasDeps = upgrade.dependentOn.filter((id: string) => currentUpgrades.includes(id)).length
+          if (hasDeps < required) {
+            return false
+          }
+        }
+
+        // Check replaces - can't offer if conflicting variant exists
+        if (upgrade.replaces) {
+          const replaces = Array.isArray(upgrade.replaces) ? upgrade.replaces : [upgrade.replaces]
+          if (replaces.some((id: string) => currentUpgrades.includes(id))) {
+            return false
+          }
+        }
+
+        // Check incompatibilities
+        if (upgrade.incompatibleWith && upgrade.incompatibleWith.length > 0) {
+          if (upgrade.incompatibleWith.some((id: string) => currentUpgrades.includes(id))) {
+            return false
+          }
+        }
+
+        return true
+      })
+
+      // Pick 3 random valid upgrades using rarity weights
+      const rarity_weights = { 'common': 0.50, 'uncommon': 0.30, 'rare': 0.15, 'epic': 0.04, 'legendary': 0.01 }
+      const selected = []
+      const attempts = 0
+      const maxAttempts = 100
+
+      let attemptCount = 0
+      while (selected.length < 3 && validUpgrades.length > 0 && attemptCount < maxAttempts) {
+        // Pick a rarity based on weights
+        const rand = Math.random()
+        let cumulative = 0
+        let pickedRarity = 'common'
+        for (const [rarity, weight] of Object.entries(rarity_weights)) {
+          cumulative += weight
+          if (rand < cumulative) {
+            pickedRarity = rarity
+            break
+          }
+        }
+
+        // Find upgrades with this rarity
+        const rarityUpgrades = validUpgrades.filter((u: any) => u.rarity === pickedRarity)
+
+        if (rarityUpgrades.length > 0) {
+          // Pick random upgrade from this rarity
+          const randomIdx = Math.floor(Math.random() * rarityUpgrades.length)
+          const upgrade = rarityUpgrades[randomIdx]
+
+          // Avoid duplicates unless stackable
+          const alreadySelected = selected.some((u: any) => u.id === upgrade.id)
+          if (!alreadySelected || upgrade.stackable) {
+            selected.push(upgrade)
+            // Remove from valid pool to avoid duplicates in selection
+            const poolIdx = validUpgrades.indexOf(upgrade)
+            if (poolIdx > -1) {
+              validUpgrades.splice(poolIdx, 1)
+            }
+          }
+        }
+
+        attemptCount++
+      }
+
+      this.offeredUpgrades = selected.map((u: any) => ({ id: u.id, purchased: false }))
 
       console.log('[WAVE VALIDATION] Local reroll - new upgrades:', this.offeredUpgrades)
       return { upgrades: this.offeredUpgrades, newPoints }
