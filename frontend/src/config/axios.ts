@@ -12,14 +12,20 @@ axiosInstance.interceptors.response.use(
   (error) => {
     // Handle 401 Unauthorized errors
     if (error.response && error.response.status === 401) {
-      // Clear the expired token
-      localStorage.removeItem('token')
+      // Don't auto-redirect on login/register endpoints (let them handle the error)
+      const url = error.config?.url || ''
+      const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register')
 
-      // Redirect to login page
-      window.location.href = '/login'
+      if (!isAuthEndpoint) {
+        // Clear the expired token
+        localStorage.removeItem('token')
 
-      // Optionally show a message (can be improved with a toast library)
-      console.warn('Session expired. Please log in again.')
+        // Redirect to login page for other 401 errors
+        window.location.href = '/login'
+
+        // Optionally show a message (can be improved with a toast library)
+        console.warn('Session expired. Please log in again.')
+      }
     }
 
     // Reject the promise so the calling code can still handle errors

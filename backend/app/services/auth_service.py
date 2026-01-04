@@ -1,4 +1,5 @@
 from datetime import timedelta
+import logging
 from fastapi import HTTPException, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pydantic import ValidationError
@@ -8,6 +9,8 @@ from app.repositories.user_repository import UserRepository
 from app.repositories.player_stats_repository import PlayerStatsRepository
 from app.models.user import User
 from app.models.player_stats import PlayerStats
+
+logger = logging.getLogger(__name__)
 
 
 class AuthService:
@@ -60,15 +63,27 @@ class AuthService:
 
     async def authenticate_user(self, username: str, password: str) -> str:
         """Authenticate user and return access token"""
+        logger.info(f"Login attempt for username: {username}")
+        
         user = await self.user_repo.find_by_username(username)
 
-        if not user or not verify_password(password, user.hashed_password):
+        if not user:
+            logger.warning(f"Login failed: User '{username}' not found")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        if not verify_password(password, user.hashed_password):
+            logger.warning(f"Login failed: Invalid password for user '{username}'")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid username or password",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+        logger.info(f"Login successful for user '{username}'")
         access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
         access_token = create_access_token(
             data={"sub": str(user.id)},
