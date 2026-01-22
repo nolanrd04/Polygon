@@ -8,10 +8,8 @@
   pip install -r requirements.txt
   uvicorn app.main:app --reload
   
-
-
-
-
+  # Database
+  docker-compose up
 
   Linux:
   source .venv/bin/activate

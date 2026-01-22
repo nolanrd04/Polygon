@@ -54,6 +54,27 @@ export class EnemyManager {
     enemy.maxHealth = enemy.health  // Update maxHealth to match scaled health
     // console.log(`Spawning enemy ${typeId} at (${x}, ${y}) with health ${enemy.health.toFixed(2)}`)
 
+
+    // Reduce diamond enemy dash cooldown time as waves progress
+    if (this.currentWave > 10) {
+      if (typeId === 'diamond')
+      {
+        (enemy as any).waitFrames = 210
+      }
+    }
+    else if (this.currentWave > 15) {
+      if (typeId === 'diamond')
+      {
+        (enemy as any).waitFrames = 180
+      }
+    }
+    else if (this.currentWave > 20) {
+      if (typeId === 'diamond')
+      {
+        (enemy as any).waitFrames = 120
+      }
+    }
+
     enemy._spawn(this.scene, x, y, this.nextId++)
 
     this.enemies.push(enemy)

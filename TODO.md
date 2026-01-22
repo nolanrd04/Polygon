@@ -1,7 +1,8 @@
 1. Add fixed progression for first 30 waves
 2. Add new enemies to add difficulty
+- Super pentagon (can sprint toward the player to expload and leave behind a fire pool)
+- Super hexagon (still shielded but sprays out magic in the direction of the player and explodes on death)
 3. implement flame, laser, spinner, and zapper.
-4. add upgrades for projectiles
 7. improve waves/enemy spawns
 8. Add difficulties
 9. Add leaderboard
@@ -19,6 +20,10 @@ future bullet upgrades
 
 create game database for tracking information
 1. game id, player upgrades (array in order), waves surivied, enemies killed, points earned, time spent total
+
+finish first boss:
+1. phase one: dashes -> idle movement -> bullet storm -> idle movement -> random location teleport
+2. Phase two: dashes -> idle movement -> Fixed direction rapid fire bullet storm -> dashes -> random location teleport -> death laser -> idle movement
 
 security:
 ---
