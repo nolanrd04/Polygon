@@ -1,7 +1,8 @@
 import { TextureGenerator } from '../../utils/TextureGenerator'
 import { Enemy } from './Enemy'
 import { TrailRenderer } from '../../utils/TrailRenderer'
-import { EnemyBullet } from '../projectiles/enemy_projectiles/EnemyBullet'
+// import { EnemyBullet } from '../projectiles/enemy_projectiles/EnemyBullet'
+import { DodecahedronBullet } from '../projectiles/enemy_projectiles/DodecahedronBullet'
 
 export class Dodecahedron extends Enemy {
   private invincible: boolean = false
@@ -40,8 +41,8 @@ export class Dodecahedron extends Enemy {
   private shotBulletCounter: number = 0
   private shotBulletInterval: number = 750 // milliseconds between shots in bullet storm
 
-  private maxTeleportDistance: number = 50
-  private minTeleportDistance: number = 10
+  private maxTeleportDistance: number = 300
+  private minTeleportDistance: number = 100
   private teleportWindUpDuration: number = 500 // milliseconds
   private teleportWindDownDuration: number = 500 // milliseconds
 
@@ -64,6 +65,7 @@ export class Dodecahedron extends Enemy {
     this.doOldRotationTracking = true
     this.oldTrackingCounter = 1
     this.oldTrackingInterval = 100
+    
   }
 
   AI(_playerX: number, _playerY: number): void {
@@ -211,6 +213,8 @@ export class Dodecahedron extends Enemy {
     }
     else if (this.phaseStyle === 4) // random teleport
     {
+
+      this.speed = 60 // reset speed
       const totalTeleportDuration = this.teleportWindUpDuration + this.teleportWindDownDuration
       const teleportStartScale = 0.7
       
@@ -227,30 +231,14 @@ export class Dodecahedron extends Enemy {
         if (phaseElapsed < this.teleportWindUpDuration + 50) {
           console.log('Executing teleport!')
           // Teleport to random location relative to player, within distance bounds
-          const padding = 50
           let teleportX: number
           let teleportY: number
-          let attempts = 0
-          const maxAttempts = 10
-
-          // Try to find a valid teleport position that stays on screen
-          do {
-            const angle = Math.random() * Math.PI * 2
-            const distance = Phaser.Math.Between(this.minTeleportDistance, this.maxTeleportDistance)
+          
+          const angle = Math.random() * Math.PI * 2
+          const distance = Phaser.Math.Between(this.minTeleportDistance, this.maxTeleportDistance)
             
-            teleportX = _playerX + Math.cos(angle) * distance
-            teleportY = _playerY + Math.sin(angle) * distance
-            
-            attempts++
-          } while (
-            (teleportX < padding || teleportX > this.scene.scale.width - padding ||
-             teleportY < padding || teleportY > this.scene.scale.height - padding) &&
-            attempts < maxAttempts
-          )
-
-          // If we couldn't find a valid position, clamp it
-          teleportX = Phaser.Math.Clamp(teleportX, padding, this.scene.scale.width - padding)
-          teleportY = Phaser.Math.Clamp(teleportY, padding, this.scene.scale.height - padding)
+          teleportX = _playerX + Math.cos(angle) * distance
+          teleportY = _playerY + Math.sin(angle) * distance
 
           this.container.x = teleportX
           this.container.y = teleportY
@@ -284,7 +272,7 @@ export class Dodecahedron extends Enemy {
     // Shoot from all 12 corners of the polygon
     for (let i = 0; i < this.sides; i++) {
       // Calculate angle for this corner
-      const cornerAngle = (i / this.sides) * Math.PI * 2
+      const cornerAngle = (i / this.sides) * Math.PI * 2 + this.rotation
       
       // Calculate corner position
       const cornerX = this.x + this.radius * Math.cos(cornerAngle)
@@ -296,7 +284,7 @@ export class Dodecahedron extends Enemy {
       const targetCornerY = cornerY + Math.sin(cornerAngle) * shootDistance
 
       // Create and spawn projectile using centralized method
-      const projectile = new EnemyBullet()
+      const projectile = new DodecahedronBullet()
       projectile.SetDefaults()
       // Scale damage based on enemy's damage stat
       projectile.damage = damage
