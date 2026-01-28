@@ -107,6 +107,13 @@ export class Player extends Phaser.GameObjects.Container {
   private dashCooldown: number = 1500 // milliseconds
   private lastDashTime: number = -1000
   private dashDirection: { x: number; y: number } = { x: 0, y: 0 }
+  
+  /** Dash charge system - sequential/queue-based recharge */
+  private maxDashCharges: number = 1 // Base is 1, increased by double_dash and triple_dash
+  private currentDashCharges: number = 1 // How many dashes are available (0 to maxDashCharges)
+  private dashChargeReadyTimes: number[] = [0] // When each charge will be ready (0 = ready now)
+  private dashChargeRechargeStartTimes: number[] = [0] // When each charge STARTED recharging (for accurate progress)
+  private lastChargeReadyTime: number = 0 // Track the latest ready time across all charges (for queue sequencing)
 
   // ============================================================
   // CONSTRUCTOR
@@ -622,10 +629,19 @@ export class Player extends Phaser.GameObjects.Container {
     // Check if dash ability is unlocked
     if (!UpgradeEffectSystem.hasAbility('dash')) return
 
-    // Check cooldown
     const now = this.scene.time.now
-    const modifiedCooldown = this.getModifiedDashCooldown()
-    if (now - this.lastDashTime < modifiedCooldown) return
+    
+    // Find the first charge that's ready (readyTime <= now)
+    let chargeIndexToUse = -1
+    for (let i = 0; i < this.maxDashCharges; i++) {
+      if (this.dashChargeReadyTimes[i] <= now) {
+        chargeIndexToUse = i
+        break
+      }
+    }
+
+    // No charge available
+    if (chargeIndexToUse === -1) return
 
     // Get current velocity direction or use rotation direction
     const velocityMagnitude = Phaser.Math.Distance.Between(0, 0, this.body.velocity.x, this.body.velocity.y)
@@ -643,6 +659,23 @@ export class Player extends Phaser.GameObjects.Container {
     this.isDashing = true
     this.dashEndTime = now + this.dashDuration
     this.lastDashTime = now
+
+    // Sequential queue: charges recharge in the order they are used
+    // Each charge must wait for the previous one to finish recharging
+    const modifiedCooldown = this.getModifiedDashCooldown()
+    
+    // This charge starts recharging when the current queue is free (but not before now)
+    const chargeStartTime = Math.max(now, this.lastChargeReadyTime)
+    const chargeReadyTime = chargeStartTime + modifiedCooldown
+    
+    // Update this charge's ready time and recharge start time
+    this.dashChargeReadyTimes[chargeIndexToUse] = chargeReadyTime
+    this.dashChargeRechargeStartTimes[chargeIndexToUse] = chargeStartTime
+    
+    // Update the global tracking of latest ready time
+    if (chargeReadyTime > this.lastChargeReadyTime) {
+      this.lastChargeReadyTime = chargeReadyTime
+    }
 
     // Apply dash velocity with modified speed
     const modifiedSpeed = this.getModifiedDashSpeed()
@@ -671,6 +704,16 @@ export class Player extends Phaser.GameObjects.Container {
     return this.attackType
   }
 
+  /** Set max dash charges (called when double_dash or triple_dash upgrades are applied) */
+  setMaxDashCharges(maxCharges: number): void {
+    this.maxDashCharges = maxCharges
+    // Fill charge array - all charges start ready
+    this.dashChargeReadyTimes = Array(maxCharges).fill(0)
+    this.dashChargeRechargeStartTimes = Array(maxCharges).fill(0)
+    this.lastChargeReadyTime = 0
+    this.currentDashCharges = maxCharges
+  }
+
   /** Get the player's radius in pixels */
   getRadius(): number {
     return this.radius
@@ -684,8 +727,65 @@ export class Player extends Phaser.GameObjects.Container {
   /** Get dash cooldown progress (0 to 1, where 1 means ready) */
   getDashCooldownProgress(): number {
     const now = this.scene.time.now
-    const timeSinceLastDash = now - this.lastDashTime
-    return Math.min(1, timeSinceLastDash / this.dashCooldown)
+    const modifiedCooldown = this.getModifiedDashCooldown()
+    
+    // Find the earliest charge that's still recharging
+    let earliestReadyTime = Infinity
+    for (let i = 0; i < this.maxDashCharges; i++) {
+      if (this.dashChargeReadyTimes[i] > now) {
+        // This charge is still recharging
+        if (this.dashChargeReadyTimes[i] < earliestReadyTime) {
+          earliestReadyTime = this.dashChargeReadyTimes[i]
+        }
+      }
+    }
+    
+    // If all charges are ready, return 1
+    if (earliestReadyTime === Infinity) return 1
+    
+    // Calculate progress for the earliest recharging charge
+    const timeSinceLastUse = earliestReadyTime - modifiedCooldown
+    const elapsedTime = now - timeSinceLastUse
+    return Math.min(1, elapsedTime / modifiedCooldown)
+  }
+
+  /** Get max dash charges */
+  getMaxDashCharges(): number {
+    return this.maxDashCharges
+  }
+
+  /** Get overall queue progress (0 to 1) for visual bar with multiple charges */
+  getDashQueueProgress(): number {
+    const now = this.scene.time.now
+    const modifiedCooldown = this.getModifiedDashCooldown()
+    
+    // Find the charge that's next in the queue (earliest ready time that hasn't happened yet)
+    let nextChargeIndex = -1
+    let earliestReadyTime = Infinity
+    
+    for (let i = 0; i < this.maxDashCharges; i++) {
+      if (this.dashChargeReadyTimes[i] > now && this.dashChargeReadyTimes[i] < earliestReadyTime) {
+        nextChargeIndex = i
+        earliestReadyTime = this.dashChargeReadyTimes[i]
+      }
+    }
+    
+    // If no charge is recharging, all are ready
+    if (nextChargeIndex === -1) {
+      return 1
+    }
+    
+    // Calculate progress for the charge next in queue
+    const chargeRechargeStart = this.dashChargeRechargeStartTimes[nextChargeIndex]
+    const elapsedInCharge = now - chargeRechargeStart
+    const progressInCharge = elapsedInCharge / modifiedCooldown
+    return Math.min(1, progressInCharge)
+  }
+
+  /** Get number of dash charges currently ready to use */
+  getReadyDashCharges(): number {
+    const now = this.scene.time.now
+    return this.dashChargeReadyTimes.filter(readyTime => readyTime <= now).length
   }
 
   /** Check if dash is ready to use */

@@ -195,11 +195,17 @@ export class MainScene extends Phaser.Scene {
       const shieldCharges = UpgradeEffectSystem.getEffectValue('shield')
       const hasDash = UpgradeEffectSystem.hasAbility('dash')
       const dashCooldownProgress = this.player.getDashCooldownProgress()
+      const maxDashCharges = this.player.getMaxDashCharges()
+      const dashQueueProgress = this.player.getDashQueueProgress()
+      const readyDashCharges = this.player.getReadyDashCharges()
 
       EventBus.emit('ability-state-update' as any, {
         shieldCharges,
         hasDash,
-        dashCooldownProgress
+        dashCooldownProgress,
+        maxDashCharges,
+        dashQueueProgress,
+        readyDashCharges
       })
     })
 
@@ -574,6 +580,16 @@ export class MainScene extends Phaser.Scene {
           this.player.updatePolygon()
         }
       }
+      
+      // Apply dash charge upgrades
+      if (upgrade.type === 'ability') {
+        if (upgrade.id === 'double_dash') {
+          this.player.setMaxDashCharges(2)
+        } else if (upgrade.id === 'triple_dash') {
+          this.player.setMaxDashCharges(3)
+        }
+      }
+      
       return true
     } else {
       console.warn(`Could not apply upgrade: ${upgrade.name}`)

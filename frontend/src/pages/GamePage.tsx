@@ -23,7 +23,7 @@ export default function GamePage() {
   const [playerStats, setPlayerStats] = useState({ health: 100, maxHealth: 100, points: 0, kills: 0 })
   const [selectedAttack, setSelectedAttack] = useState('bullet')
   const [showCollisionBoxes, setShowCollisionBoxes] = useState(false)
-  const [abilityState, setAbilityState] = useState({ shieldCharges: 0, hasDash: false, dashCooldownProgress: 1 })
+  const [abilityState, setAbilityState] = useState({ shieldCharges: 0, hasDash: false, dashCooldownProgress: 1, maxDashCharges: 1, dashQueueProgress: 1, readyDashCharges: 0 })
   const [loadError, setLoadError] = useState<string | null>(null)
 
   // Store last known game state in ref to survive game destruction
@@ -170,7 +170,7 @@ export default function GamePage() {
     })
 
     // Listen for ability state updates
-    EventBus.on('ability-state-update' as any, (state: { shieldCharges: number; hasDash: boolean; dashCooldownProgress: number }) => {
+    EventBus.on('ability-state-update' as any, (state: { shieldCharges: number; hasDash: boolean; dashCooldownProgress: number; maxDashCharges: number; dashQueueProgress: number; readyDashCharges: number }) => {
       setAbilityState(state)
     })
 
@@ -257,6 +257,9 @@ export default function GamePage() {
         shieldCharges={abilityState.shieldCharges}
         hasDash={abilityState.hasDash}
         dashCooldownProgress={abilityState.dashCooldownProgress}
+        maxDashCharges={abilityState.maxDashCharges}
+        dashQueueProgress={abilityState.dashQueueProgress}
+        readyDashCharges={abilityState.readyDashCharges}
       />
 
       {isPaused && (

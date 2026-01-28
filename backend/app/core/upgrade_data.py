@@ -112,6 +112,10 @@ UPGRADES: Dict[str, Dict[str, Any]] = {
     "dash_cooldown_1": {"id": "dash_cooldown_1", "name": "Swift Recovery", "description": "-30% dash cooldown", "rarity": "rare", "type": "stat_modifier", "target": "player", "stat": "dashCooldown", "value": -0.30, "isMultiplier": True, "stackable": True, "maxStacks": 5, "cost": 10, "dependentOn": ["dash_ability"], "dependencyCount": 1},
     "dash_cooldown_2": {"id": "dash_cooldown_2", "name": "Swift Recovery", "description": "-75% dash cooldown", "rarity": "epic", "type": "stat_modifier", "target": "player", "stat": "dashCooldown", "value": -0.75, "isMultiplier": True, "stackable": True, "maxStacks": 3, "cost": 20, "dependentOn": ["dash_ability"], "dependencyCount": 1},
     "dash_cooldown_3": {"id": "dash_cooldown_3", "name": "Swift Recovery", "description": "-90% dash cooldown", "rarity": "legendary", "type": "stat_modifier", "target": "player", "stat": "dashCooldown", "value": -0.90, "isMultiplier": True, "stackable": True, "maxStacks": 2, "cost": 40, "dependentOn": ["dash_ability"], "dependencyCount": 1},
+    
+    # DASH CHARGE UPGRADES
+    "double_dash": {"id": "double_dash", "name": "Double Dash", "description": "Store 2 dashes. Recharge one at a time.", "rarity": "epic", "type": "ability", "effect": "double_dash", "stackable": False, "cost": 20, "dependentOn": ["dash_ability"], "dependencyCount": 1},
+    "triple_dash": {"id": "triple_dash", "name": "Triple Dash", "description": "Store 3 dashes. Recharge one at a time.", "rarity": "legendary", "type": "ability", "effect": "triple_dash", "stackable": False, "cost": 40, "dependentOn": ["double_dash"], "dependencyCount": 1},
 }
 
 
