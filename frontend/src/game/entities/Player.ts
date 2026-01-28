@@ -102,9 +102,9 @@ export class Player extends Phaser.GameObjects.Container {
   /** Dash ability state */
   private isDashing: boolean = false
   private dashEndTime: number = 0
-  private dashSpeed: number = 600
+  private dashSpeed: number = 500
   private dashDuration: number = 200 // milliseconds
-  private dashCooldown: number = 500 // milliseconds
+  private dashCooldown: number = 1500 // milliseconds
   private lastDashTime: number = -1000
   private dashDirection: { x: number; y: number } = { x: 0, y: 0 }
 
