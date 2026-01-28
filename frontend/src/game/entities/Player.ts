@@ -591,13 +591,28 @@ export class Player extends Phaser.GameObjects.Container {
         this.isDashing = false
         this.body.setVelocity(0, 0)
       } else {
-        // Continue dash in the saved direction
+        // Continue dash in the saved direction with modified speed
+        const modifiedSpeed = this.getModifiedDashSpeed()
         this.body.setVelocity(
-          this.dashDirection.x * this.dashSpeed,
-          this.dashDirection.y * this.dashSpeed
+          this.dashDirection.x * modifiedSpeed,
+          this.dashDirection.y * modifiedSpeed
         )
       }
     }
+  }
+
+  /**
+   * Get the effective dash speed including upgrade modifiers.
+   */
+  private getModifiedDashSpeed(): number {
+    return UpgradeModifierSystem.applyModifiers('player', 'dashSpeed', this.dashSpeed)
+  }
+
+  /**
+   * Get the effective dash cooldown including upgrade modifiers.
+   */
+  private getModifiedDashCooldown(): number {
+    return UpgradeModifierSystem.applyModifiers('player', 'dashCooldown', this.dashCooldown)
   }
 
   /**
@@ -609,7 +624,8 @@ export class Player extends Phaser.GameObjects.Container {
 
     // Check cooldown
     const now = this.scene.time.now
-    if (now - this.lastDashTime < this.dashCooldown) return
+    const modifiedCooldown = this.getModifiedDashCooldown()
+    if (now - this.lastDashTime < modifiedCooldown) return
 
     // Get current velocity direction or use rotation direction
     const velocityMagnitude = Phaser.Math.Distance.Between(0, 0, this.body.velocity.x, this.body.velocity.y)
@@ -628,10 +644,11 @@ export class Player extends Phaser.GameObjects.Container {
     this.dashEndTime = now + this.dashDuration
     this.lastDashTime = now
 
-    // Apply dash velocity
+    // Apply dash velocity with modified speed
+    const modifiedSpeed = this.getModifiedDashSpeed()
     this.body.setVelocity(
-      this.dashDirection.x * this.dashSpeed,
-      this.dashDirection.y * this.dashSpeed
+      this.dashDirection.x * modifiedSpeed,
+      this.dashDirection.y * modifiedSpeed
     )
   }
 

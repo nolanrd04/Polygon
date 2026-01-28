@@ -102,6 +102,16 @@ UPGRADES: Dict[str, Dict[str, Any]] = {
     # ABILITY UPGRADES
     "dash_ability": {"id": "dash_ability", "name": "Dash", "description": "Press SPACE to dash", "rarity": "rare", "type": "ability", "effect": "dash", "stackable": False, "cost": 10},
     "shield_ability": {"id": "shield_ability", "name": "Energy Shield", "description": "Press E for temporary shield (consumable, stacks)", "rarity": "rare", "type": "effect", "effect": "shield", "value": 1, "stackable": True, "maxStacks": 5, "cost": 10},
+    
+    # DASH SPEED UPGRADES
+    "dash_speed_1": {"id": "dash_speed_1", "name": "Swift Escape", "description": "+30% dash speed", "rarity": "rare", "type": "stat_modifier", "target": "player", "stat": "dashSpeed", "value": 0.30, "isMultiplier": True, "stackable": True, "maxStacks": 5, "cost": 10, "dependentOn": ["dash_ability"], "dependencyCount": 1},
+    "dash_speed_2": {"id": "dash_speed_2", "name": "Swift Escape", "description": "+75% dash speed", "rarity": "epic", "type": "stat_modifier", "target": "player", "stat": "dashSpeed", "value": 0.75, "isMultiplier": True, "stackable": True, "maxStacks": 3, "cost": 20, "dependentOn": ["dash_ability"], "dependencyCount": 1},
+    "dash_speed_3": {"id": "dash_speed_3", "name": "Swift Escape", "description": "+150% dash speed", "rarity": "legendary", "type": "stat_modifier", "target": "player", "stat": "dashSpeed", "value": 1.50, "isMultiplier": True, "stackable": True, "maxStacks": 2, "cost": 40, "dependentOn": ["dash_ability"], "dependencyCount": 1},
+    
+    # DASH COOLDOWN REDUCTION UPGRADES
+    "dash_cooldown_1": {"id": "dash_cooldown_1", "name": "Swift Recovery", "description": "-30% dash cooldown", "rarity": "rare", "type": "stat_modifier", "target": "player", "stat": "dashCooldown", "value": -0.30, "isMultiplier": True, "stackable": True, "maxStacks": 5, "cost": 10, "dependentOn": ["dash_ability"], "dependencyCount": 1},
+    "dash_cooldown_2": {"id": "dash_cooldown_2", "name": "Swift Recovery", "description": "-75% dash cooldown", "rarity": "epic", "type": "stat_modifier", "target": "player", "stat": "dashCooldown", "value": -0.75, "isMultiplier": True, "stackable": True, "maxStacks": 3, "cost": 20, "dependentOn": ["dash_ability"], "dependencyCount": 1},
+    "dash_cooldown_3": {"id": "dash_cooldown_3", "name": "Swift Recovery", "description": "-90% dash cooldown", "rarity": "legendary", "type": "stat_modifier", "target": "player", "stat": "dashCooldown", "value": -0.90, "isMultiplier": True, "stackable": True, "maxStacks": 2, "cost": 40, "dependentOn": ["dash_ability"], "dependencyCount": 1},
 }
 
 
