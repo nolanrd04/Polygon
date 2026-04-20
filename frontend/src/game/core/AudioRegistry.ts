@@ -13,7 +13,8 @@ export const AUDIO_REGISTRY: AudioDefinition[] = [
   { key: 'bullet_tileCollide', path: 'assets/sounds/bullet_tileCollide.mp3', defaultVolume: 0.3 },
   { key: 'player_hurt', path: 'assets/sounds/player_hurt.mp3', defaultVolume: 1 },
   { key: 'enemy_hurt', path: 'assets/sounds/enemy_hurt.mp3', defaultVolume: 1 },
-  { key: 'enemy_killed', path: 'assets/sounds/enemy_killed.mp3', defaultVolume: 1 }
+  { key: 'enemy_killed', path: 'assets/sounds/enemy_killed.mp3', defaultVolume: 1 },
+  { key: 'player_dash', path: 'assets/sounds/player_dash.mp3', defaultVolume: 1 }
 ]
 
 const defaultVolumeByKey: Map<string, number> = new Map(

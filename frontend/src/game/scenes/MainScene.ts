@@ -33,6 +33,7 @@ export class MainScene extends Phaser.Scene {
   private wasdKeys!: Record<string, Phaser.Input.Keyboard.Key>
   private debugGraphics!: Phaser.GameObjects.Graphics
   private showCollisionBoxes: boolean = false
+  private upgradeMenuOpen: boolean = false
 
   constructor() {
     super({ key: 'MainScene' })
@@ -118,7 +119,11 @@ export class MainScene extends Phaser.Scene {
     // Listen for events
     EventBus.on('game-pause', () => this.scene.pause())
     EventBus.on('game-resume', () => this.scene.resume())
-    EventBus.on('start-next-wave', () => this.waveManager.startNextWave())
+    EventBus.on('start-next-wave', () => {
+      this.upgradeMenuOpen = false
+      this.input.activePointer.reset()
+      this.waveManager.startNextWave()
+    })
     EventBus.on('upgrade-selected', (upgradeId) => {
       this.applyUpgrade(upgradeId)
     })
@@ -316,6 +321,7 @@ export class MainScene extends Phaser.Scene {
       }
 
       // Show upgrade modal
+      this.upgradeMenuOpen = true
       EventBus.emit('show-upgrades')
     })
   }
@@ -366,7 +372,7 @@ export class MainScene extends Phaser.Scene {
     this.player.rotateTowards(worldPoint.x, worldPoint.y)
 
     // Handle shooting
-    if (pointer.isDown) {
+    if (pointer.isDown && !this.upgradeMenuOpen) {
       this.player.shoot(worldPoint.x, worldPoint.y)
     }
 

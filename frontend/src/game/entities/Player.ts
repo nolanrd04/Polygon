@@ -656,6 +656,9 @@ export class Player extends Phaser.GameObjects.Container {
     // No charge available
     if (chargeIndexToUse === -1) return
 
+    // play dash sound
+    this.scene.sound.play('player_dash', { volume: getDefaultVolume('player_dash') })
+
     // Get current velocity direction or use rotation direction
     const velocityMagnitude = Phaser.Math.Distance.Between(0, 0, this.body.velocity.x, this.body.velocity.y)
     if (velocityMagnitude > 0) {
