@@ -180,6 +180,9 @@ export abstract class Projectile {
   /** When this projectile was spawned (for timeLeft tracking) */
   spawnTime: number = 0
 
+  /** Sound to play when this projectile is spawned */
+  spawnSound: string = ''
+
   // ============================================================
   // LIFECYCLE HOOKS - Override these in your projectile class
   // ============================================================
@@ -290,7 +293,7 @@ export abstract class Projectile {
    * }
    * ```
    */
-  OnObstacleCollide(): void {}
+  OnObstacleCollide(_obstacle?: Phaser.GameObjects.GameObject): void {}
 
   /**
    * Called when projectile is destroyed (hit something, timed out, or left screen).
@@ -334,6 +337,7 @@ export abstract class Projectile {
 
     // Create the visual container
     this.container = scene.add.container(startX, startY)
+    this.container.setData('projectileInstance', this)
 
     // ============ CREATE SPRITE (Always) ============
     // Generate or get cached texture for this projectile
@@ -512,5 +516,60 @@ export abstract class Projectile {
     this.velocityY = Math.sin(angle) * this.speed
     this.rotation = angle
     this.container.rotation = angle
+  }
+
+  /**
+   * Reflects velocity off an obstacle using the surface normal from obstacle
+   * center to projectile center. Correct for circular obstacles; a good
+   * approximation for convex shapes. Increments pierce; destroys if exhausted.
+   */
+  ricochet(obstacle: Phaser.GameObjects.GameObject): void {
+    const ox = (obstacle as any).x
+    const oy = (obstacle as any).y
+    if (typeof ox !== 'number' || typeof oy !== 'number') return
+
+    const dx = this.positionX - ox
+    const dy = this.positionY - oy
+    const len = Math.sqrt(dx * dx + dy * dy)
+    if (len === 0) return
+
+    const nx = dx / len
+    const ny = dy / len
+    const dot = this.velocityX * nx + this.velocityY * ny
+
+    this.velocityX -= 2 * dot * nx
+    this.velocityY -= 2 * dot * ny
+    this.container.rotation = Math.atan2(this.velocityY, this.velocityX)
+
+    this.currentPierceCount++
+    if (this.currentPierceCount >= this.pierce) {
+      this._destroy()
+    }
+  }
+
+  /**
+   * Swaps the default white-circle sprite for a custom-colored/translucent
+   * circle texture. No-op if the sprite has already been swapped.
+   */
+  protected swapToCustomCircle(options: {
+    fillColor?: number
+    fillAlpha: number
+    radius?: number
+  }): void {
+    if (!this.sprite.texture.key.startsWith('circle_') ||
+        !this.sprite.texture.key.includes('_fffffff_1_s')) return
+
+    const textureKey = TextureGenerator.getOrCreateCircle(this.scene, {
+      radius: options.radius ?? this.size,
+      fillColor: options.fillColor ?? 0xffffff,
+      fillAlpha: options.fillAlpha,
+    })
+
+    const oldSprite = this.sprite
+    this.sprite = this.scene.add.sprite(0, 0, textureKey)
+    this.sprite.setTint(this.color)
+    this.sprite.setScale(TextureGenerator.getDisplayScale())
+    this.container.add(this.sprite)
+    oldSprite.destroy()
   }
 }

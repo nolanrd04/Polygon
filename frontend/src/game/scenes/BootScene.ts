@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import { preloadAllAudio } from '../core/AudioRegistry'
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -32,8 +33,7 @@ export class BootScene extends Phaser.Scene {
       loadingText.destroy()
     })
 
-    // Load any assets here in the future
-    // this.load.image('particle', 'assets/particle.png')
+    preloadAllAudio(this)
   }
 
   create(): void {

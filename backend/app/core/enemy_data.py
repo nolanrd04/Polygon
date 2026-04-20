@@ -44,26 +44,6 @@ def get_enemy_health(enemy_type: str, wave: int) -> int:
     return int(scaled_health)
 
 
-def get_expected_enemy_count(wave: int) -> int:
-    """
-    Get expected total enemy count for a wave.
-    Matches frontend WaveManager.calculateEnemyCount()
-    """
-    if wave == 1 or wave == 3:
-        return 30
-    elif wave == 2:
-        return 35
-    elif wave == 4 or wave == 5:
-        return 40
-    elif wave == 6:
-        return 50
-    elif wave == 7:
-        return 45
-    else:
-        # Wave 8+: Math.floor(45 + wave * 2 + Math.pow(wave, 1.2))
-        return int(45 + wave * 2 + math.pow(wave, 1.2))
-
-
 def calculate_minimum_damage_required(wave: int, enemy_counts: Dict[str, int]) -> int:
     """
     Calculate minimum damage required to clear a wave.
@@ -110,41 +90,3 @@ def validate_enemy_spawn(enemy_type: str, wave: int) -> bool:
     return True
 
 
-def get_expected_enemy_distribution(wave: int) -> Dict[str, int]:
-    """
-    Get expected enemy distribution for a wave (rough estimates).
-    This helps with validation - actual counts may vary slightly due to RNG.
-
-    Returns:
-        Dict mapping enemy_type -> approximate expected count
-    """
-    total_count = get_expected_enemy_count(wave)
-
-    # Early waves
-    if wave <= 2:
-        return {
-            "triangle": int(total_count * 0.7),
-            "square": int(total_count * 0.3),
-        }
-    elif wave <= 4:
-        return {
-            "triangle": int(total_count * 0.5),
-            "square": int(total_count * 0.3),
-            "shooter": int(total_count * 0.2),
-        }
-    elif wave <= 6:
-        return {
-            "triangle": int(total_count * 0.3),
-            "square": int(total_count * 0.3),
-            "pentagon": int(total_count * 0.2),
-            "shooter": int(total_count * 0.2),
-        }
-    else:
-        # Later waves have all enemy types
-        return {
-            "triangle": int(total_count * 0.25),
-            "square": int(total_count * 0.25),
-            "pentagon": int(total_count * 0.2),
-            "hexagon": int(total_count * 0.15),
-            "shooter": int(total_count * 0.15),
-        }

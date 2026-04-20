@@ -16,7 +16,7 @@ from app.models.game_save import GameSave
 from app.repositories.player_stats_repository import PlayerStatsRepository
 from app.repositories.game_save_repository import GameSaveRepository
 from app.core.upgrade_data import UPGRADES, RARITY_WEIGHTS, can_apply_upgrade, get_upgrade
-from app.core.enemy_data import calculate_minimum_damage_required, get_expected_enemy_count
+from app.core.enemy_data import calculate_minimum_damage_required
 
 
 class WaveService:
@@ -72,7 +72,7 @@ class WaveService:
             # Roll new upgrades (first time starting this wave)
             offered_upgrades = self._roll_upgrades(
                 current_upgrades=current_upgrades,
-                attack_type="bullet"  # TODO: Get from game save
+                attack_type=game_save.current_attack_type if game_save else "bullet"
             )
             print(f"Rolled new upgrades for wave {wave_number}: {[u['id'] for u in offered_upgrades]}")
 
@@ -400,7 +400,12 @@ class WaveService:
         enemy_deaths: List[Dict[str, Any]],
         wave: int
     ) -> List[FlagReason]:
-        """Validate damage dealt is reasonable"""
+        """
+        Validate damage dealt is reasonable.
+        NOTE: Currently assumes bullet attack type. When other attack types
+        (flame, laser, spinner, zapper) are added, minimum-damage calculation
+        will need to account for their damage profiles.
+        """
         flags = []
 
         # Calculate enemy type counts
@@ -474,19 +479,22 @@ class WaveService:
         return flags
 
     def _validate_kills(self, kills: int, wave: int) -> List[FlagReason]:
-        """Validate kill count is reasonable"""
+        """
+        Sanity-check kill count against a loose wave-scaled ceiling.
+        Per-wave spawn counts live in the frontend (Normal.ts); backend only
+        rejects obviously-impossible values.
+        """
         flags = []
 
-        expected_count = get_expected_enemy_count(wave)
-        max_reasonable = expected_count * 1.2  # Allow 20% variance
+        max_reasonable = wave * 50 + 200
 
         if kills > max_reasonable:
-            deviation = ((kills - expected_count) / expected_count) * 100
+            deviation = ((kills - max_reasonable) / max_reasonable) * 100
             flags.append(FlagReason(
                 category="kills",
                 severity="high",
-                description="Kill count exceeds expected enemy spawns",
-                expected=expected_count,
+                description="Kill count exceeds wave-scaled ceiling",
+                expected=max_reasonable,
                 actual=kills,
                 deviation_percent=deviation
             ))

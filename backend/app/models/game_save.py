@@ -98,6 +98,7 @@ class GameSave(BaseMongoModel):
     current_speed: int = Field(default=200, ge=0)
     current_polygon_sides: int = Field(default=3, ge=3, le=12)
     unlocked_attacks: List[str] = Field(default_factory=lambda: ["bullet"])
+    current_attack_type: str = Field(default="bullet")
 
     # ==========================================
     # DEATH STATE (null if alive, immutable once set)

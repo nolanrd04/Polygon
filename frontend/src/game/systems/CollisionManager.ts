@@ -94,8 +94,7 @@ export class CollisionManager {
 
     if (!projContainer.active || !enemyContainerObj.active) return
 
-    // Find the projectile instance that owns this container
-    const projectile = this.player.getProjectiles().find(p => p.getContainer() === projContainer)
+    const projectile = projContainer.getData('projectileInstance') as import('../entities/projectiles/Projectile').Projectile | undefined
     const enemy = enemyContainerObj.getData('enemyInstance') as Enemy
 
     if (!projectile || !enemy || projectile.isDestroyed || enemy.isDestroyed) return
@@ -168,8 +167,7 @@ export class CollisionManager {
 
     if (!projContainer.active) return
 
-    // Find the projectile instance that owns this container
-    const projectile = this.enemyManager.getProjectiles().find(p => p.getContainer() === projContainer)
+    const projectile = projContainer.getData('projectileInstance') as import('../entities/projectiles/Projectile').Projectile | undefined
 
     if (!projectile || projectile.isDestroyed) return
 
@@ -246,20 +244,15 @@ export class CollisionManager {
    */
   private processProjectileObstacleCollision(
     projectileContainer: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody,
-    _obstacle: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody
+    obstacle: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody
   ): boolean {
     const container = projectileContainer as Phaser.GameObjects.Container
-
-    // Find the projectile instance by matching container (same approach as enemy collision)
-    let projectile = this.player.getProjectiles().find(p => p.getContainer() === container)
-    if (!projectile) {
-      projectile = this.enemyManager.getProjectiles().find(p => p.getContainer() === container)
-    }
+    const projectile = container.getData('projectileInstance') as import('../entities/projectiles/Projectile').Projectile | undefined
 
     if (!projectile || projectile.isDestroyed) return false
 
-    // Trigger obstacle collision callback
-    projectile.OnObstacleCollide()
+    const obstacleGO = obstacle as Phaser.GameObjects.GameObject
+    projectile.OnObstacleCollide(obstacleGO)
 
     // If projectile can cut tiles, let it pass through but count pierce
     if (projectile.canCutTiles) {
@@ -267,17 +260,17 @@ export class CollisionManager {
       if (projectile.currentPierceCount >= projectile.pierce) {
         projectile._destroy()
       }
-      return false // Don't block - let it pass through
+      return false
     }
 
-    // If ricochet is active, don't destroy - let it bounce
+    // Ricochet: reflect off the obstacle surface normal instead of destroying
     if (UpgradeEffectSystem.hasEffect('ricochet')) {
-      return false // Let the projectile bounce back
+      projectile.ricochet(obstacleGO)
+      return false
     }
 
-    // Can't cut tiles and no ricochet - destroy immediately to prevent pass-through
     projectile._destroy()
-    return false // Return false to prevent collision response since projectile is destroyed
+    return false
   }
 
   /**

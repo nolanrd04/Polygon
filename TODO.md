@@ -1,84 +1,92 @@
-1. Add fixed progression for first 30 waves
-2. Add new enemies to add difficulty
-- Super pentagon (can sprint toward the player to expload and leave behind a fire pool)
-- Super hexagon (still shielded but sprays out magic in the direction of the player and explodes on death)
-3. implement flame, laser, spinner, and zapper.
-7. improve waves/enemy spawns
-8. Add difficulties
-9. Add leaderboard
-10. Add visual indication for hexagon shields health.
+# Gameplay
 
-rework explosions:
-1. make both bullet and explosion do damage
-2. make the split of damage 60%/40% bullet explosion
-3. this makes explosion upgrades more valuable because you can independently increase its damage
+## Waves & progression
+- [~] Fixed progression for first 30 waves — Normal.ts hardcodes 1-19; extend through 30
+- [ ] Add difficulties beyond Normal (Difficulty interface is in place in systems/difficulty/)
+- [ ] After wave 30 is complete, start adding bosses to the regular enemy pool
 
-future bullet upgrades
-1. napalm (exploding bullets)
-2. after all exploding bullet upgrades -> unlock mini nuke upgrade
-3. after all homing upgrades -> unlock drone swarm upgrade
+## Enemies
+- [ ] Super pentagon — sprints toward player, explodes, leaves behind a fire pool
+- [ ] Super hexagon — still shielded, sprays magic in direction of player, explodes on death
+- [ ] Hexagon: add visual indication for shield health
 
-create game database for tracking information
-1. game id, player upgrades (array in order), waves surivied, enemies killed, points earned, time spent total
+## Bosses
+- [x] First boss phase 1
+- [ ] First boss phase 2: dashes → idle → fixed-direction rapid-fire bullet storm → dashes → random teleport → death laser → idle
 
-finish first boss:
-1. phase one: dashes -> idle movement -> bullet storm -> idle movement -> random location teleport
-2. Phase two: dashes -> idle movement -> Fixed direction rapid fire bullet storm -> dashes -> random location teleport -> death laser -> idle movement
+## Attacks
+- [x] Flame / laser / spinner / zapper implementations
 
-security:
----
-  🚨 CRITICAL Security Issues
+## Bullet upgrades (future)
+- [ ] Napalm (exploding bullets)
+- [ ] Mini nuke — unlocks after all exploding-bullet upgrades
+- [ ] Drone swarm — unlocks after all homing upgrades
 
-  1. Hardcoded JWT Secret Key (backend/app/core/config.py:11)
+## Rework explosions
+- [~] Bullet + explosion both deal damage — still need to enforce the 60/40 split so explosion upgrades become independently valuable
 
-  secret_key: str = "your-secret-key-change-in-production"
-  Impact: Anyone can forge JWT tokens and impersonate users
-  Fix:
-  # In .env file:
-  JWT_SECRET_KEY=<generate-with: openssl rand -hex 32>
+# Systems
 
-  # In config.py:
-  secret_key: str = Field(..., env="JWT_SECRET_KEY")
+## Leaderboard
+- [~] Backend `PlayerStatsRepository.get_leaderboard` exists; frontend UI not built
 
-  2. No MongoDB Authentication (backend/.env:1)
+## Per-game database tracking
+- [~] PlayerStats + GameSave + ordered upgrade_history are live
+- [ ] Still missing per-game record: game id, full upgrade order for that run, waves survived, enemies killed, points earned, total time spent
 
-  MONGODB_URL=mongodb://localhost:27017
-  Impact: Database accessible without credentials
-  Fix: Enable MongoDB auth in docker-compose.yml and use authenticated connection string
+# Anti-cheat
+- Damage validation (`_validate_damage` in wave_service.py) currently assumes bullet attack type only. When flame/laser/spinner/zapper are implemented, each will need its own damage profile accounted for in `calculate_minimum_damage_required`.
 
-  3. Debug Mode Enabled (backend/app/core/config.py:16)
+# Security
 
-  debug: bool = True
-  Impact: Verbose error messages leak system information
-  Fix: Set debug: bool = False in production
+## Critical
+1. Hardcoded JWT Secret Key (backend/app/core/config.py:11)
 
-  4. No Rate Limiting
+   secret_key: str = "your-secret-key-change-in-production"
+   Impact: Anyone can forge JWT tokens and impersonate users
+   Fix:
+   # In .env file:
+   JWT_SECRET_KEY=<generate-with: openssl rand -hex 32>
 
-  Impact: Vulnerable to brute-force login attacks
-  Fix: Add slowapi or similar rate limiting middleware
+   # In config.py:
+   secret_key: str = Field(..., env="JWT_SECRET_KEY")
 
-  ---
-  ⚠️ High Priority Issues
+2. No MongoDB Authentication (backend/.env:1)
 
-  5. 24-hour JWT expiry (config.py:13) - Too long, use 1-2 hours + refresh tokens
-  6. CORS wildcards (main.py:19-20) - Restrict methods and headers in production
-  7. Weak password policy - Only 6 characters minimum, no complexity requirements
-  8. No HTTPS enforcement - Should redirect HTTP to HTTPS in production
-  9. Missing security headers - No CSP, HSTS, X-Frame-Options, etc.
-  10. No account lockout - Unlimited login attempts possible
+   MONGODB_URL=mongodb://localhost:27017
+   Impact: Database accessible without credentials
+   Fix: Enable MongoDB auth in docker-compose.yml and use authenticated connection string
 
-  ---
-  📊 Security Score Summary
+3. Debug Mode Enabled (backend/app/core/config.py:16)
 
-  | Category             | Score | Notes                                           |
-  |----------------------|-------|-------------------------------------------------|
-  | SQL/NoSQL Injection  | 9/10  | Excellent - parameterized queries throughout    |
-  | XSS Protection       | 8/10  | Good - React auto-escaping, no unsafe patterns  |
-  | Authentication       | 3/10  | CRITICAL - Hardcoded secret, weak policy        |
-  | Anti-Cheat           | 10/10 | Outstanding - multi-layered validation          |
-  | Input Validation     | 9/10  | Excellent - Pydantic models with validators     |
-  | Session Management   | 5/10  | Works but lacks refresh tokens, too long expiry |
-  | Database Security    | 4/10  | CRITICAL - No authentication enabled            |
-  | Production Hardening | 2/10  | CRITICAL - Debug mode, missing headers          |
+   debug: bool = True
+   Impact: Verbose error messages leak system information
+   Fix: Set debug: bool = False in production
 
-  Overall Score: 6.25/10
+4. No Rate Limiting
+
+   Impact: Vulnerable to brute-force login attacks
+   Fix: Add slowapi or similar rate limiting middleware
+
+## High priority
+5. 24-hour JWT expiry (config.py:13) — too long, use 1-2 hours + refresh tokens
+6. CORS wildcards (main.py:19-20) — restrict methods and headers in production
+7. Weak password policy — only 6 characters minimum, no complexity requirements
+8. No HTTPS enforcement — should redirect HTTP to HTTPS in production
+9. Missing security headers — no CSP, HSTS, X-Frame-Options, etc.
+10. No account lockout — unlimited login attempts possible
+
+## Security score summary
+
+| Category             | Score | Notes                                           |
+|----------------------|-------|-------------------------------------------------|
+| SQL/NoSQL Injection  | 9/10  | Excellent - parameterized queries throughout    |
+| XSS Protection       | 8/10  | Good - React auto-escaping, no unsafe patterns  |
+| Authentication       | 3/10  | CRITICAL - Hardcoded secret, weak policy        |
+| Anti-Cheat           | 10/10 | Outstanding - multi-layered validation          |
+| Input Validation     | 9/10  | Excellent - Pydantic models with validators     |
+| Session Management   | 5/10  | Works but lacks refresh tokens, too long expiry |
+| Database Security    | 4/10  | CRITICAL - No authentication enabled            |
+| Production Hardening | 2/10  | CRITICAL - Debug mode, missing headers          |
+
+Overall Score: 6.25/10

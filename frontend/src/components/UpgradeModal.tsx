@@ -183,6 +183,8 @@ export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModal
     // Try to apply the upgrade
     EventBus.emit('upgrade-selected', upgrade.id)
 
+    // this.scene.sound.play('upgrade_purchase', { volume: 0.3 })
+
     // Add index to selected list (not ID, to allow buying same upgrade twice)
     setSelectedIndices([...selectedIndices, index])
   }

@@ -2,6 +2,7 @@ import Phaser from 'phaser'
 import { DEV_SETTINGS } from '../../core/GameConfig'
 import { TextureGenerator } from '../../utils/TextureGenerator'
 import { EventBus } from '../../core/EventBus'
+import { getDefaultVolume } from '../../core/AudioRegistry'
 
 /**
  * Base class for all enemies.
@@ -116,6 +117,10 @@ export abstract class Enemy {
   isBoss: boolean = false
   private knockbackEndTime: number = 0 // When knockback effect expires
   lastHitPlayerTime: number = 0 // When this enemy last hit the player (for per-enemy damage cooldown)
+
+  // sounds
+  hitSound: string = 'enemy_hurt'
+  deathSound: string = 'enemy_killed'
 
   // ============ LIFECYCLE HOOKS (override these) ============
 
@@ -272,6 +277,7 @@ export abstract class Enemy {
    * Return false to prevent the damage.
    */
   OnHit(_damage: number, _source: any): boolean {
+    this.scene.sound.play(this.hitSound, { volume: getDefaultVolume(this.hitSound) })
     return true
   }
 
@@ -279,7 +285,9 @@ export abstract class Enemy {
    * Called when this enemy dies.
    * Use for death effects, drops, splitting, etc.
    */
-  OnDeath(): void {}
+  OnDeath(): void {
+    this.scene.sound.play(this.deathSound, { volume: getDefaultVolume(this.deathSound) })
+  }
 
   // ============ PUBLIC METHODS ============
 

@@ -13,6 +13,7 @@ import { UpgradeSystem, UpgradeEffectSystem, registerEffectHandlers, type Upgrad
 import { TextureGenerator } from '../utils/TextureGenerator'
 import { waveValidation } from '../services/WaveValidation'
 import { SaveManager } from '../services/SaveManager'
+import { getDefaultVolume } from '../core/AudioRegistry'
 
 // Import all upgrade JSONs
 import statUpgrades from '../data/upgrades/stat_upgrades.json'
@@ -417,6 +418,7 @@ export class MainScene extends Phaser.Scene {
     // Add to the appropriate group based on owner
     if (owner === 'player') {
       this.player.getProjectileGroup().add(container)
+      this.player.addProjectile(projectile)
     } else {
       this.enemyManager.addProjectile(projectile, container)
     }
@@ -521,6 +523,11 @@ export class MainScene extends Phaser.Scene {
 
     if (success) {
       console.log(`Applied upgrade: ${upgrade.name}${skipCost ? ' (DEV - FREE)' : ''}`)
+
+      // Play selection sound for live picks only — skip on save restore so loading doesn't replay it per upgrade
+      if (!isRestore) {
+        this.sound.play('select_upgrade', { volume: getDefaultVolume('select_upgrade') })
+      }
 
       // Add to GameManager's appliedUpgrades array for save/load
       // Only skip adding if we're restoring from a saved game (already in array)

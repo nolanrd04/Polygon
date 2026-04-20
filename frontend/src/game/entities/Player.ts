@@ -11,6 +11,7 @@ import { AttackType } from '../data/attackTypes'
 import { UpgradeSystem, UpgradeEffectSystem, UpgradeModifierSystem } from '../systems/upgrades'
 import { TextureGenerator } from '../utils/TextureGenerator'
 import { waveValidation } from '../services/WaveValidation'
+import { getDefaultVolume } from '../core/AudioRegistry'
 
 /**
  * The player character - a polygon that can move and shoot projectiles.
@@ -94,6 +95,9 @@ export class Player extends Phaser.GameObjects.Container {
 
   /** Reference to active flame projectile (continuous effect) */
   private activeFlame: Flame | null = null
+
+  /** Tracks whether the fire sound has already played for the current shoot() call */
+  private firedSoundThisShot: boolean = false
 
   /** Shield state */
   private shielded: boolean = false
@@ -295,6 +299,7 @@ export class Player extends Phaser.GameObjects.Container {
     if (now - this.lastFireTime < this.getCooldown()) return
 
     this.lastFireTime = now
+    this.firedSoundThisShot = false
 
     // Calculate all polygon vertices with their facing angles
     const vertices: { x: number; y: number; angle: number }[] = []
@@ -400,6 +405,12 @@ export class Player extends Phaser.GameObjects.Container {
     // Set default stats
     projectile.SetDefaults()
 
+    // play sound once per shoot() call so multishot/multi-vertex fires don't stack sounds
+    if (projectile.spawnSound && !this.firedSoundThisShot) {
+      this.scene.sound.play(projectile.spawnSound, { volume: getDefaultVolume(projectile.spawnSound) })
+      this.firedSoundThisShot = true
+    }
+
     // Apply upgrade modifiers (player-specific)
     this.applyUpgradeModifiers(projectile)
 
@@ -502,6 +513,8 @@ export class Player extends Phaser.GameObjects.Container {
       })
       this.sprite.setTexture(originalTexture)
     })
+
+    this.scene.sound.play('player_hurt', { volume: getDefaultVolume('player_hurt') })
   }
 
   /**
@@ -692,6 +705,11 @@ export class Player extends Phaser.GameObjects.Container {
   /** Get all active projectiles fired by this player */
   getProjectiles(): Projectile[] {
     return this.projectiles
+  }
+
+  /** Register a projectile for update tracking (used when spawning projectiles outside of Player.spawnProjectileOfType) */
+  addProjectile(projectile: Projectile): void {
+    this.projectiles.push(projectile)
   }
 
   /** Get the Phaser group containing all projectile containers (for collision detection) */

@@ -1,7 +1,8 @@
 import { Projectile } from '../Projectile'
 import { COLORS } from '../../../core/GameConfig'
-import { UpgradeEffectSystem, UpgradeModifierSystem } from '../../../systems/upgrades'
+import { UpgradeModifierSystem } from '../../../systems/upgrades'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
+import { getDefaultVolume } from '../../../core/AudioRegistry'
 
 /**
  * Standard bullet projectile.
@@ -17,24 +18,13 @@ export class Bullet extends Projectile {
     this.color = COLORS.bullet
     this.timeLeft = 3000 // milliseconds
     this.knockback = 7 // Push enemies back on hit
+    this.spawnSound = 'bullet_shot'
   }
 
-
-  OnObstacleCollide(): void {
-    if (UpgradeEffectSystem.hasEffect('ricochet') && !this.canCutTiles) {
-      this.currentPierceCount++
-      
-      // Simple bounce: reverse velocity on both axes
-      // The physics engine will handle the actual bouncing
-      this.velocityX = -this.velocityX
-      this.velocityY = -this.velocityY
-      
-      // Stop if we've bounced too many times
-      if (this.currentPierceCount >= this.pierce) {
-        this._destroy()
-      }
-    }
+  OnObstacleCollide(_obstacle?: Phaser.GameObjects.GameObject): void {
+    this.scene.sound.play('bullet_tileCollide', { volume: getDefaultVolume('bullet_tileCollide') })
   }
+
 }
 
 /**
@@ -49,6 +39,7 @@ export class HeavyBullet extends Projectile {
     this.size = 8
     this.pierce = 2
     this.color = 0xff6600
+    this.spawnSound = 'bullet_shot'
   }
 
 }
@@ -80,7 +71,7 @@ export class HomingBullet extends Projectile {
     this.color = 0x00ff00
     this.timeLeft = 3000 // Despawn after 3 seconds
     this.knockback = 1 // Push enemies back on hit
-    
+    this.spawnSound = 'bullet_shot'
     this.trackingDistance = UpgradeModifierSystem.applyModifiers('bullet', 'trackingDistance', this.trackingDistance)
     this.maximumSpawnDamageMultiplier = UpgradeModifierSystem.applyModifiers('bullet', 'maximumSpawnDamageMultiplier', this.maximumSpawnDamageMultiplier)
     this.minimumDamageMultiplier = UpgradeModifierSystem.applyModifiers('bullet', 'minimumDamageMultiplier', this.minimumDamageMultiplier)
@@ -89,34 +80,19 @@ export class HomingBullet extends Projectile {
   }
 
   PreDraw(): boolean {
-      if (this.sprite.texture.key.startsWith('circle_') && this.sprite.texture.key.includes('_fffffff_1_s')) {
+    this.swapToCustomCircle({ fillAlpha: 0.5 })
 
-      const textureKey = TextureGenerator.getOrCreateCircle(this.scene, {
-        radius: this.size,
-        fillColor: 0xffffff,
-        fillAlpha: 0.5  // Single semi-transparent circle, no glow
+    if (!this.directionIndicator) {
+      const triangleTexture = TextureGenerator.getOrCreatePolygon(this.scene, {
+        sides: 3,
+        radius: this.size * 0.9,
+        fillColor: this.color,
+        fillAlpha: 1.0,
+        rotation: 0
       })
-
-      const oldSprite = this.sprite
-      this.sprite = this.scene.add.sprite(0, 0, textureKey)
-      this.sprite.setTint(this.color)
-      this.sprite.setScale(TextureGenerator.getDisplayScale())  // Scale down high-res texture
-      this.container.add(this.sprite)
-      oldSprite.destroy()
-
-      // Add direction indicator (solid triangle pointing right)
-      if (!this.directionIndicator) {
-        const triangleTexture = TextureGenerator.getOrCreatePolygon(this.scene, {
-          sides: 3,
-          radius: this.size * 0.9,  // Smaller than the circle
-          fillColor: this.color,
-          fillAlpha: 1.0,  // Solid
-          rotation: 0  // Point to the right
-        })
-        this.directionIndicator = this.scene.add.sprite(0, 0, triangleTexture)
-        this.directionIndicator.setScale(TextureGenerator.getDisplayScale())
-        this.container.add(this.directionIndicator)
-      }
+      this.directionIndicator = this.scene.add.sprite(0, 0, triangleTexture)
+      this.directionIndicator.setScale(TextureGenerator.getDisplayScale())
+      this.container.add(this.directionIndicator)
     }
     return true
   }
@@ -172,22 +148,6 @@ export class HomingBullet extends Projectile {
     }
   }
 
-  OnObstacleCollide(): void {
-    if (UpgradeEffectSystem.hasEffect('ricochet') && !this.canCutTiles) {
-      this.currentPierceCount++
-      
-      // Simple bounce: reverse velocity on both axes
-      // The physics engine will handle the actual bouncing
-      this.velocityX = -this.velocityX
-      this.velocityY = -this.velocityY
-      
-      // Stop if we've bounced too many times
-      if (this.currentPierceCount >= this.pierce) {
-        this._destroy()
-      }
-    }
-  }
-
   // private getDamageMultiplier(): number {
   //   const elapsedTime = this.scene.time.now - this.spawnTime
   //   const progress = Math.min(1, elapsedTime / this.timeLeft)
@@ -213,96 +173,72 @@ export class HomingBullet extends Projectile {
     return true
   }
 
+  OnObstacleCollide(_obstacle?: Phaser.GameObjects.GameObject): void {
+    this.scene.sound.play('bullet_tileCollide', { volume: getDefaultVolume('bullet_tileCollide') })
+  }
+
 }
 
 /**
- * EXAMPLE
- * Explosive bullet - explodes on death dealing AOE damage.
+ * Explosive bullet - deals normal bullet damage on direct hit, then spawns a
+ * BulletExplosion at the impact point for AOE damage.
  */
 export class ExplosiveBullet extends Projectile {
-  private explosionRadius: number = 50
-  private explosionDamage: number = 0 // Additional damage on top of bullet damage
-
   SetDefaults(): void {
-    this.damage = 20
+    this.damage = 10
     this.speed = 350
     this.size = 7
     this.pierce = 1
     this.color = 0xff4400
     this.knockback = 75
-
-    this.explosionRadius = UpgradeModifierSystem.applyModifiers('bullet', 'explosionRadius', this.explosionRadius)
-    this.explosionDamage = UpgradeModifierSystem.applyModifiers('bullet', 'explosionDamage', 0)
+    this.spawnSound = 'bullet_shot'
   }
 
-  OnObstacleCollide(): void {
-    this.DoExplosionDamage()
-    if (UpgradeEffectSystem.hasEffect('ricochet') && !this.canCutTiles) {
-      this.currentPierceCount++
-      
-      // Simple bounce: reverse velocity on both axes
-      // The physics engine will handle the actual bouncing
-      this.velocityX = -this.velocityX
-      this.velocityY = -this.velocityY
-      
-      
-      
-      // Stop if we've bounced too many times
-      if (this.currentPierceCount >= this.pierce) {
-        this._destroy()
-      }
-    }
+  private spawnExplosion(): void {
+    const scene = this.scene as Phaser.Scene & { spawnProjectile: Function }
+    const explosion = new BulletExplosion()
+    explosion.SetDefaults()
+    this.scene.sound.play('explosion', { volume: getDefaultVolume('explosion') })
+    scene.spawnProjectile(explosion, this.positionX, this.positionY, this.positionX, this.positionY, 'player', this.ownerId)
   }
 
   OnHitNPC(_enemy: any): boolean {
-    // Explode on every hit (important for pierce - should explode each time it hits)
-    this.DoExplosionDamage()
-    return false // Don't apply normal bullet damage since explosion handles it
+    this.spawnExplosion()
+    return true
   }
 
-  OnKill(): void {
-    // Don't explode on kill - we already exploded on hit
-    // This prevents double explosion when projectile is finally destroyed
+  OnObstacleCollide(): void {
+    this.spawnExplosion()
+  }
+}
+
+/**
+ * Stationary AOE explosion spawned by ExplosiveBullet on impact.
+ * Hits all enemies within its radius once, then fades out.
+ */
+export class BulletExplosion extends Projectile {
+  SetDefaults(): void {
+    this.damage = UpgradeModifierSystem.applyModifiers('bullet', 'explosionDamage', 10)
+    this.speed = 0
+    this.size = UpgradeModifierSystem.applyModifiers('bullet', 'explosionRadius', 50)
+    this.pierce = 999999
+    this.color = 0xff4400
+    this.timeLeft = 200
+    this.hitEnemyCooldown = 500 // longer than timeLeft so each enemy is only hit once
+    this.canCutTiles = true
   }
 
-  // class specific explosion damage logic
-  DoExplosionDamage(): void {
-    // Use this.damage directly - it's already been modified by Player.applyUpgradeModifiers()
-    // Add the explosionDamage modifier on top (both additive and multiplicative mods)
-    const baseDamage = this.damage + this.explosionDamage
-    
-    // Apply explosionDamage multiplicative modifiers if they exist
-    const multiplicativeBonus = UpgradeModifierSystem.getMultiplicativeModifier('bullet', 'explosionDamage')
-    const explosionDamage = baseDamage * (1 + multiplicativeBonus)
-
-    // console.log('Explosive bullet explosion damage:', explosionDamage)
-
-    // Create explosion visual using TextureGenerator
-    const explosionTexture = TextureGenerator.getOrCreateCircle(this.scene, {
-      radius: this.explosionRadius,
-      fillColor: 0xffffff,
-      fillAlpha: 0.4
-    })
-
-    const explosion = this.scene.add.sprite(this.positionX, this.positionY, explosionTexture)
-    explosion.setTint(this.color)
-    explosion.setScale(TextureGenerator.getDisplayScale())
-
-    // Fade out
-    this.scene.tweens.add({
-      targets: explosion,
-      alpha: 0,
-      duration: 200,
-      onComplete: () => explosion.destroy()
-    })
-
-    // Emit explosion event for AOE damage
-    this.scene.events.emit('explosion-damage', {
-      x: this.positionX,
-      y: this.positionY,
-      radius: this.explosionRadius,
-      damage: explosionDamage
-    })
+  PreDraw(): boolean {
+    this.swapToCustomCircle({ fillAlpha: 0.4 })
+    return true
   }
 
+  Draw(): void {
+    const elapsed = this.scene.time.now - this.spawnTime
+    this.sprite.setAlpha(Math.max(0, 1 - elapsed / this.timeLeft))
+  }
+
+  OnHitNPC(_enemy: any): boolean {
+    return true
+  }
 }
