@@ -22,9 +22,6 @@
 - [ ] Mini nuke — unlocks after all exploding-bullet upgrades
 - [ ] Drone swarm — unlocks after all homing upgrades
 
-## Rework explosions
-- [~] Bullet + explosion both deal damage — still need to enforce the 60/40 split so explosion upgrades become independently valuable
-
 # Systems
 
 ## Leaderboard
