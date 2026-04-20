@@ -17,6 +17,17 @@
 ## Attacks
 - [x] Flame / laser / spinner / zapper implementations
 
+## Sounds
+- [ ] Ability sound effects (dash, shield, etc)
+- [ ] Special attack sound effects
+- [ ] Enemy attack sound effects
+- [ ] Boss sound effects
+
+## Visuals
+- [ ] Implement 'dusts' (see terraria)
+- [ ] Ensure settings actually work
+- [ ] Add color customization
+
 ## Bullet upgrades (future)
 - [ ] Napalm (exploding bullets)
 - [ ] Mini nuke — unlocks after all exploding-bullet upgrades
