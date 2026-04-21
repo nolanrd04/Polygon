@@ -206,7 +206,7 @@ export class Dodecahedron extends Enemy {
         if (shotElapsed >= this.shotBulletInterval * this.shotBulletCounter)
         {
           // Shoot bullet towards player
-          this.ShootProjectileAtPlayer(this.damage * 3)
+          this.ShootProjectileAtPlayer(this.damage)
           this.shotBulletCounter++
         }
       }
