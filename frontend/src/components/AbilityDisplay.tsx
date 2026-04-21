@@ -7,11 +7,10 @@ interface AbilityDisplayProps {
   readyDashCharges: number
 }
 
-export default function AbilityDisplay({ shieldCharges, hasDash, dashCooldownProgress, maxDashCharges = 1, dashQueueProgress = 1, readyDashCharges = 0 }: AbilityDisplayProps) {
+export default function AbilityDisplay({ shieldCharges, hasDash, maxDashCharges = 1, dashQueueProgress = 1, readyDashCharges = 0 }: AbilityDisplayProps) {
   // Don't render if no abilities are active
   if (shieldCharges === 0 && !hasDash) return null
 
-  const dashReady = dashCooldownProgress >= 1
 
   return (
     <div className="absolute top-24 left-4 pointer-events-none">

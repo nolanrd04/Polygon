@@ -109,12 +109,10 @@ export class Player extends Phaser.GameObjects.Container {
   private dashSpeed: number = 500
   private dashDuration: number = 200 // milliseconds
   private dashCooldown: number = 1500 // milliseconds
-  private lastDashTime: number = -1000
   private dashDirection: { x: number; y: number } = { x: 0, y: 0 }
   
   /** Dash charge system - sequential/queue-based recharge */
   private maxDashCharges: number = 1 // Base is 1, increased by double_dash and triple_dash
-  private currentDashCharges: number = 1 // How many dashes are available (0 to maxDashCharges)
   private dashChargeReadyTimes: number[] = [0] // When each charge will be ready (0 = ready now)
   private dashChargeRechargeStartTimes: number[] = [0] // When each charge STARTED recharging (for accurate progress)
   private lastChargeReadyTime: number = 0 // Track the latest ready time across all charges (for queue sequencing)
@@ -674,7 +672,6 @@ export class Player extends Phaser.GameObjects.Container {
     // Start dash
     this.isDashing = true
     this.dashEndTime = now + this.dashDuration
-    this.lastDashTime = now
 
     // Sequential queue: charges recharge in the order they are used
     // Each charge must wait for the previous one to finish recharging
@@ -732,7 +729,6 @@ export class Player extends Phaser.GameObjects.Container {
     this.dashChargeReadyTimes = Array(maxCharges).fill(0)
     this.dashChargeRechargeStartTimes = Array(maxCharges).fill(0)
     this.lastChargeReadyTime = 0
-    this.currentDashCharges = maxCharges
   }
 
   /** Get the player's radius in pixels */
