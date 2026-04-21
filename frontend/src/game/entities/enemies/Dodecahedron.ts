@@ -287,7 +287,7 @@ export class Dodecahedron extends Enemy {
       const projectile = new DodecahedronBullet()
       projectile.SetDefaults()
       // Scale damage based on enemy's damage stat
-      projectile.damage = damage
+      projectile.damage = damage / 2
       // console.log(`Shooter spawning projectile with damage: ${projectile.damage} (enemy damage: ${this.damage})`)
 
       const scene = this.scene as Phaser.Scene & { spawnProjectile: Function }

@@ -14,7 +14,7 @@ export class DodecahedronBullet extends Projectile {
     this.doOldPositionTracking = true
     this.oldTrackingCounter = 4
     this.oldTrackingInterval = 20
-    this.canCutTiles = true
+    this.canCutTiles = false
   }
 
   /**
