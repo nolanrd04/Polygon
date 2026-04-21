@@ -470,7 +470,7 @@ export abstract class Enemy {
 
       if (this.doOldRotationTracking)
       {
-        //  this.oldRotations.shift()
+        this.oldRotations.shift()
         this.oldRotations.push(this.rotation)
       }
     }
