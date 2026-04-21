@@ -227,6 +227,7 @@ export default function GamePage() {
   const handleWaveCompleteContinue = () => {
     setShowWaveComplete(false)
     setShowUpgrades(true)
+    EventBus.emit('show-upgrades')
   }
 
   return (

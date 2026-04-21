@@ -141,6 +141,8 @@ export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModal
       const result = await waveValidation.rerollUpgrades(currentWave, rerollCost)
 
       if (result) {
+        EventBus.emit('upgrade-rerolled')
+
         // Update GameManager with the new points from backend
         GameManager.updatePlayerStats({ points: result.newPoints })
         console.log('Updated points to:', result.newPoints)

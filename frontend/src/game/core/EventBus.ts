@@ -20,6 +20,7 @@ export interface GameEvents {
   'start-next-wave': void
   'upgrade-selected': string
   'upgrade-applied': string
+  'upgrade-rerolled': void
   'enemy-explode': { x: number; y: number; radius: number; damage: number }
   'enemy-split': { x: number; y: number; config: unknown; velocityAngle: number }
   'enemy-shoot': { x: number; y: number; targetX: number; targetY: number; damage: number; speed: number; color: number }

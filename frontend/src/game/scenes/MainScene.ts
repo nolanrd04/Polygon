@@ -127,6 +127,12 @@ export class MainScene extends Phaser.Scene {
     EventBus.on('upgrade-selected', (upgradeId) => {
       this.applyUpgrade(upgradeId)
     })
+    EventBus.on('upgrade-rerolled', () => {
+      this.sound.play('upgrade_reroll', { volume: getDefaultVolume('upgrade_reroll') })
+    })
+    EventBus.on('show-upgrades', () => {
+      this.upgradeMenuOpen = true
+    })
     EventBus.on('dev-apply-upgrade', (upgradeId) => {
       this.applyUpgrade(upgradeId, true) // Skip cost check for dev tools
     })
@@ -321,7 +327,6 @@ export class MainScene extends Phaser.Scene {
       }
 
       // Show upgrade modal
-      this.upgradeMenuOpen = true
       EventBus.emit('show-upgrades')
     })
   }

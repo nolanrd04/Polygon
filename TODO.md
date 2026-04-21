@@ -18,7 +18,7 @@
 - [x] Flame / laser / spinner / zapper implementations
 
 ## Sounds
-- [ ] Ability sound effects (dash, shield, etc)
+- [~] Ability sound effects (dash, shield, etc)
 - [ ] Special attack sound effects
 - [ ] Enemy attack sound effects
 - [ ] Boss sound effects
