@@ -37,6 +37,8 @@
 - [ ] Remove Fullscreen button
 - [ ] improve joystick padding
 - [ ] remove slow movement capabilities for left joystick
+- [ ] improve zoom
+- [ ] add button layout customization
 
 # Systems
 
