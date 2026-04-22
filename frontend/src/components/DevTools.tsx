@@ -13,8 +13,12 @@ interface DevToolsProps {
   showCollisionBoxes: boolean
 }
 
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
 export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }: DevToolsProps) {
   const [isOpen, setIsOpen] = useState(false)
+
+  if (isMobile) return null
   const [selectedCategory, setSelectedCategory] = useState<'stat' | 'effect' | 'variant' | 'visual' | 'ability' | 'enemies'>('stat')
   const [selectedAttack, setSelectedAttack] = useState<AttackType>('bullet')
   const [waveInput, setWaveInput] = useState('1')

@@ -23,8 +23,10 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   },
   scene: [BootScene, MainScene],
   scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH
+    mode: Phaser.Scale.RESIZE,
+    // No autoCenter — it adds CSS margins to the canvas which offset
+    // pointer coordinates from visual positions, breaking touch detection.
+    // No min/max — let the canvas match the device viewport exactly.
   }
 }
 

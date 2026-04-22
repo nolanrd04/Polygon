@@ -6,7 +6,7 @@ import { CollisionManager } from '../systems/CollisionManager'
 import { MapManager } from '../systems/MapManager'
 import { EventBus } from '../core/EventBus'
 import { GameManager } from '../core/GameManager'
-import { /*GAME_WIDTH,*/ GAME_HEIGHT, WORLD_WIDTH, WORLD_HEIGHT } from '../core/GameConfig'
+import { GAME_HEIGHT, WORLD_WIDTH, WORLD_HEIGHT } from '../core/GameConfig'
 import { AttackType } from '../data/attackTypes'
 import { Projectile } from '../entities/projectiles/Projectile'
 import { UpgradeSystem, UpgradeEffectSystem, registerEffectHandlers, type UpgradeDefinition } from '../systems/upgrades'
@@ -14,6 +14,7 @@ import { TextureGenerator } from '../utils/TextureGenerator'
 import { waveValidation } from '../services/WaveValidation'
 import { SaveManager } from '../services/SaveManager'
 import { getDefaultVolume } from '../core/AudioRegistry'
+import { TouchControlManager } from '../systems/TouchControlManager'
 
 // Import all upgrade JSONs
 import statUpgrades from '../data/upgrades/stat_upgrades.json'
@@ -34,6 +35,7 @@ export class MainScene extends Phaser.Scene {
   private debugGraphics!: Phaser.GameObjects.Graphics
   private showCollisionBoxes: boolean = false
   private upgradeMenuOpen: boolean = false
+  private touchControls!: TouchControlManager
 
   constructor() {
     super({ key: 'MainScene' })
@@ -251,6 +253,22 @@ export class MainScene extends Phaser.Scene {
       waveValidation.recordDamage(damage)
     })
 
+    // Enable multi-touch (allow 4 simultaneous pointers for both joysticks + 2 ability buttons)
+    this.input.addPointer(3)
+
+    // No camera zoom - let the canvas fill the screen naturally with Scale.RESIZE
+    // This keeps joystick positioning predictable in screen space
+
+    // Initialize touch controls (mobile)
+    this.touchControls = new TouchControlManager(this, this.player)
+
+    // Clean up touch controls on shutdown
+    this.events.on('shutdown', () => {
+      if (this.touchControls) {
+        this.touchControls.destroy()
+      }
+    })
+
     // Start with initial upgrade phase
     this.time.delayedCall(500, async () => {
       const currentState = GameManager.getState()
@@ -334,6 +352,11 @@ export class MainScene extends Phaser.Scene {
   update(_time: number, delta: number): void {
     if (GameManager.getState().isPaused) return
 
+    // UPDATE TOUCH CONTROLS
+    if (this.touchControls) {
+      this.touchControls.update()
+    }
+
     // INCREMENT FRAME COUNTER FOR WAVE VALIDATION
     waveValidation.incrementFrame()
 
@@ -352,33 +375,42 @@ export class MainScene extends Phaser.Scene {
     // Update effect system (for regeneration, etc.)
     UpgradeEffectSystem.onUpdate(delta)
 
-    // Handle movement input
-    let velocityX = 0
-    let velocityY = 0
+    // Handle movement input (skip if left joystick is active)
+    if (!this.touchControls.isLeftJoystickActive()) {
+      let velocityX = 0
+      let velocityY = 0
 
-    if (this.cursors.left.isDown || this.wasdKeys.A.isDown) {
-      velocityX = -1
-    } else if (this.cursors.right.isDown || this.wasdKeys.D.isDown) {
-      velocityX = 1
+      if (this.cursors.left.isDown || this.wasdKeys.A.isDown) {
+        velocityX = -1
+      } else if (this.cursors.right.isDown || this.wasdKeys.D.isDown) {
+        velocityX = 1
+      }
+
+      if (this.cursors.up.isDown || this.wasdKeys.W.isDown) {
+        velocityY = -1
+      } else if (this.cursors.down.isDown || this.wasdKeys.S.isDown) {
+        velocityY = 1
+      }
+
+      this.player.move(velocityX, velocityY)
     }
 
-    if (this.cursors.up.isDown || this.wasdKeys.W.isDown) {
-      velocityY = -1
-    } else if (this.cursors.down.isDown || this.wasdKeys.S.isDown) {
-      velocityY = 1
-    }
+    // On mobile, only allow joystick input - disable direct touch control
+    if (!this.touchControls.isMobile()) {
+      // Update player rotation to face mouse (updates every frame)
+      // Manually calculate world position from screen position to handle camera movement
+      const pointer = this.input.activePointer
+      const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y)
 
-    this.player.move(velocityX, velocityY)
+      // Skip rotation if touching joystick
+      if (!this.touchControls.isTouchingJoystick(pointer)) {
+        this.player.rotateTowards(worldPoint.x, worldPoint.y)
+      }
 
-    // Update player rotation to face mouse (updates every frame)
-    // Manually calculate world position from screen position to handle camera movement
-    const pointer = this.input.activePointer
-    const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y)
-    this.player.rotateTowards(worldPoint.x, worldPoint.y)
-
-    // Handle shooting
-    if (pointer.isDown && !this.upgradeMenuOpen) {
-      this.player.shoot(worldPoint.x, worldPoint.y)
+      // Handle shooting (skip if touching joystick)
+      if (pointer.isDown && !this.upgradeMenuOpen && !this.touchControls.isTouchingJoystick(pointer)) {
+        this.player.shoot(worldPoint.x, worldPoint.y)
+      }
     }
 
     // Update player (for attack animations like spinner/flamer)
