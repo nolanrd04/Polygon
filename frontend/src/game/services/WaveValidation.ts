@@ -74,6 +74,10 @@ export class WaveValidationService {
           if (!upgrade.stackable && currentUpgrades.includes(upgrade.id)) {
             return false
           }
+          if (upgrade.stackable && upgrade.maxStacks) {
+            const currentStacks = currentUpgrades.filter((id: string) => id === upgrade.id).length
+            if (currentStacks >= upgrade.maxStacks) return false
+          }
           if (upgrade.attackType && upgrade.attackType !== currentAttackType) {
             return false
           }
@@ -427,6 +431,10 @@ export class WaveValidationService {
         // Check if already applied (non-stackable)
         if (!upgrade.stackable && currentUpgrades.includes(upgrade.id)) {
           return false
+        }
+        if (upgrade.stackable && upgrade.maxStacks) {
+          const currentStacks = currentUpgrades.filter((id: string) => id === upgrade.id).length
+          if (currentStacks >= upgrade.maxStacks) return false
         }
 
         // Check attack type - if upgrade has attackType, must match current
