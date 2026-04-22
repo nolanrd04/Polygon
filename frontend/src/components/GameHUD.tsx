@@ -1,3 +1,5 @@
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
 interface GameHUDProps {
   health: number
   maxHealth: number
@@ -13,7 +15,7 @@ export default function GameHUD({ health, maxHealth, points, kills, wave }: Game
     <div className="absolute top-0 left-0 right-0 p-4 pointer-events-none">
       <div className="flex justify-between items-start">
         {/* Health Bar */}
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1" style={isMobile ? { transform: 'scale(0.5)', transformOrigin: 'top left' } : undefined}>
           <div className="text-sm text-gray-400">HEALTH</div>
           <div className="w-48 h-4 bg-gray-800 rounded-full overflow-hidden border border-gray-700">
             <div
@@ -25,7 +27,7 @@ export default function GameHUD({ health, maxHealth, points, kills, wave }: Game
         </div>
 
         {/* Wave & Points */}
-        <div className="flex flex-col items-end gap-1">
+        <div className="flex flex-col items-end gap-1" style={isMobile ? { transform: 'scale(0.5)', transformOrigin: 'top right' } : undefined}>
           <div className="text-polygon-primary text-2xl font-bold">
             WAVE {wave}
           </div>

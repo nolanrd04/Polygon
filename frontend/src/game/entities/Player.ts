@@ -248,13 +248,12 @@ export class Player extends Phaser.GameObjects.Container {
     const stats = GameManager.getPlayerStats()
     const speed = stats.speed
 
-    // Normalize diagonal movement so it's not faster
-    if (velocityX !== 0 && velocityY !== 0) {
-      velocityX *= 0.707
-      velocityY *= 0.707
+    const magnitude = Math.hypot(velocityX, velocityY)
+    if (magnitude > 0) {
+      this.body.setVelocity((velocityX / magnitude) * speed, (velocityY / magnitude) * speed)
+    } else {
+      this.body.setVelocity(0, 0)
     }
-
-    this.body.setVelocity(velocityX * speed, velocityY * speed)
   }
 
   /**

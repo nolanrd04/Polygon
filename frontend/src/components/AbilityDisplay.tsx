@@ -1,3 +1,5 @@
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
 interface AbilityDisplayProps {
   shieldCharges: number
   hasDash: boolean
@@ -13,7 +15,7 @@ export default function AbilityDisplay({ shieldCharges, hasDash, maxDashCharges 
 
 
   return (
-    <div className="absolute top-24 left-4 pointer-events-none">
+    <div className="absolute top-24 left-4 pointer-events-none" style={isMobile ? { transform: 'scale(0.5)', transformOrigin: 'top left' } : undefined}>
       <div className="flex flex-col gap-2">
         {/* Shield Ability */}
         {shieldCharges > 0 && (

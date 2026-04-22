@@ -71,6 +71,8 @@ const rarityTextColors = {
   legendary: 'text-yellow-400'
 }
 
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
 export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModalProps) {
   const [options, setOptions] = useState<Upgrade[]>([])
   const [selectedIndices, setSelectedIndices] = useState<number[]>([])  // Track by index, not ID
@@ -226,15 +228,20 @@ export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModal
   }
 
   return (
-    <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-50">
-      <h2 className="text-3xl font-bold text-polygon-primary mb-8">
+    <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-50" style={isMobile ? { padding: '0 env(safe-area-inset-right, 20px) 0 env(safe-area-inset-left, 20px)' } : undefined}>
+      <h2 className={`font-bold text-polygon-primary ${isMobile ? 'text-xl mb-2' : 'text-3xl mb-8'}`}>
         SELECT AN UPGRADE
       </h2>
 
-      <div className="flex gap-6 mb-8">
+      {isMobile && (
+        <p className="text-polygon-warning font-bold text-sm mb-3">
+          {playerPoints.toLocaleString()} PTS
+        </p>
+      )}
+
+      <div className={`flex mb-${isMobile ? '4' : '8'} ${isMobile ? 'gap-2 w-full' : 'gap-6'}`}>
         {options.map((upgrade, index) => {
           const isDisabled = isUpgradeDisabled(upgrade, index)
-          // Check if purchased from backend OR selected in current session
           const isPurchasedFromBackend = (upgrade as any).purchased === true
           const isPurchasedThisSession = selectedIndices.includes(index)
           const isPurchased = isPurchasedFromBackend || isPurchasedThisSession
@@ -246,57 +253,59 @@ export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModal
               key={`${upgrade.id}-${index}`}
               onClick={() => !isDisabled && !isPurchased && handleUpgradeClick(upgrade, index)}
               disabled={isDisabled || isPurchased}
-              className={`w-64 p-6 rounded-lg border-2 ${rarityColors[upgrade.rarity]} ${
+              className={`rounded-lg border-2 ${rarityColors[upgrade.rarity]} ${
                 isPurchased ? 'bg-green-900/50 border-green-500' : ''
               } ${
                 !isDisabled && !isPurchased ? 'hover:scale-105 cursor-pointer' : 'opacity-50 cursor-not-allowed'
-              } transition-all flex flex-col`}
+              } transition-all flex flex-col text-left ${isMobile ? 'flex-1 min-w-0 p-2' : 'w-64 p-6'}`}
             >
-              <div className={`text-sm font-bold uppercase ${rarityTextColors[upgrade.rarity]}`}>
+              <div className={`font-bold uppercase ${rarityTextColors[upgrade.rarity]} ${isMobile ? 'text-[10px]' : 'text-sm'}`}>
                 {upgrade.rarity}
               </div>
-              <h3 className="text-xl font-bold text-white mt-2 mb-2">
+              <h3 className={`font-bold text-white ${isMobile ? 'text-xs mt-1 mb-1' : 'text-xl mt-2 mb-2'}`}>
                 {upgrade.name}
               </h3>
-              <p className="text-gray-400 text-sm flex-grow">
+              <p className={`text-gray-400 flex-grow ${isMobile ? 'text-[10px] leading-tight' : 'text-sm'}`}>
                 {upgrade.description}
               </p>
               {upgrade.attackType && (
-                <div className="mt-3 text-xs text-polygon-secondary">
+                <div className={`text-polygon-secondary text-[10px] ${isMobile ? 'mt-1' : 'mt-3'}`}>
                   {upgrade.attackType.toUpperCase()}
                 </div>
               )}
-              <div className={`mt-3 font-bold ${
+              <div className={`font-bold ${isMobile ? 'text-[10px] mt-1' : 'text-base mt-3'} ${
                 isPurchased ? 'text-green-400' :
                 canAfford && !isDisabled ? 'text-polygon-warning' : 'text-red-500'
               }`}>
-                {isPurchased ? 'PURCHASED' : `${upgrade.cost} PTS ${!canAfford ? '(Cannot Afford)' : isDisabled ? '(Conflicts)' : ''}`}
+                {isPurchased ? 'PURCHASED' : `${upgrade.cost} PTS${!canAfford ? ' (Can\'t Afford)' : isDisabled ? ' (Conflicts)' : ''}`}
               </div>
             </button>
           )
         })}
       </div>
 
-      <div className="flex gap-4 items-center mb-4">
+      <div className={`flex items-center ${isMobile ? 'gap-3 mb-2' : 'gap-4 mb-4'}`}>
         <button
           onClick={handleReroll}
           disabled={playerPoints < rerollCost}
-          className="px-6 py-2 border border-gray-600 text-gray-400 rounded hover:border-polygon-warning hover:text-polygon-warning transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`border border-gray-600 text-gray-400 rounded hover:border-polygon-warning hover:text-polygon-warning transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isMobile ? 'px-3 py-1.5 text-xs' : 'px-6 py-2'}`}
         >
           REROLL ({rerollCost} PTS)
         </button>
 
         <button
           onClick={handleStartWave}
-          className="px-8 py-3 bg-polygon-primary text-black font-bold text-lg rounded hover:bg-green-400 transition-all"
+          className={`bg-polygon-primary text-black font-bold rounded hover:bg-green-400 transition-all ${isMobile ? 'px-5 py-1.5 text-sm' : 'px-8 py-3 text-lg'}`}
         >
           START WAVE
         </button>
       </div>
 
-      <p className="mt-2 text-gray-600 text-sm">
-        Your Points: {playerPoints.toLocaleString()}
-      </p>
+      {!isMobile && (
+        <p className="mt-2 text-gray-600 text-sm">
+          Your Points: {playerPoints.toLocaleString()}
+        </p>
+      )}
 
       {selectedIndices.length > 0 && (
         <p className="text-green-400 text-sm mt-1">

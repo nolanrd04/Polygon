@@ -39,6 +39,7 @@
 - [ ] remove slow movement capabilities for left joystick
 - [ ] improve zoom
 - [ ] add button layout customization
+- [ ] per-device button size and spacing
 
 # Systems
 

@@ -35,11 +35,14 @@ export class TouchControlManager {
   private static readonly JOYSTICK_RADIUS = 55
   private static readonly JOYSTICK_INNER_RADIUS = 30
   // Distance from screen edge to joystick center (x and y independently)
-  private static readonly JOYSTICK_PAD_X = 100  // 55 radius + 45px side buffer
-  private static readonly JOYSTICK_PAD_Y = 77   // 55 radius + 22px bottom buffer
+  private static readonly JOYSTICK_PAD_X = 100      // landscape / short screen
+  private static readonly JOYSTICK_PAD_X_TALL = 70  // portrait / tall screen — tune this
+  private static readonly JOYSTICK_PAD_Y = 77        // 55 radius + 22px bottom buffer
+  private static readonly JOYSTICK_PAD_Y_TALL = 140  // extra upward shift on tall screens
   private static readonly BUTTON_SIZE = 65
   private static readonly PAUSE_BUTTON_SIZE = 52
   private static readonly EDGE_PAD = 14
+  private static readonly ABILITY_SIDE_PAD = 25  // X distance from edge for ability buttons on tall screens
 
   constructor(scene: Phaser.Scene, player: Player) {
     this.scene = scene
@@ -74,10 +77,13 @@ export class TouchControlManager {
   private get H(): number { return this.scene.scale.height }
 
   private joystickPositions() {
+    const tall = this.H > 500
+    const padX = tall ? TouchControlManager.JOYSTICK_PAD_X_TALL : TouchControlManager.JOYSTICK_PAD_X
+    const padY = tall ? TouchControlManager.JOYSTICK_PAD_Y_TALL : TouchControlManager.JOYSTICK_PAD_Y
     return {
-      leftX: TouchControlManager.JOYSTICK_PAD_X,
-      rightX: this.W - TouchControlManager.JOYSTICK_PAD_X,
-      bottomY: this.H - TouchControlManager.JOYSTICK_PAD_Y,
+      leftX: padX,
+      rightX: this.W - padX,
+      bottomY: this.H - padY,
     }
   }
 
@@ -94,18 +100,27 @@ export class TouchControlManager {
     const p = TouchControlManager.EDGE_PAD
     const sz = TouchControlManager.PAUSE_BUTTON_SIZE
     const btnSize = TouchControlManager.BUTTON_SIZE
-    const spacing = 50
-    const y = p + sz / 2
+    const bottomY = this.joystickPositions().bottomY
+    const r = TouchControlManager.JOYSTICK_RADIUS
 
-    // Shield: 50px to the left of the FS button
-    const fsX = this.W / 2 - p / 2 - sz / 2
-    const shieldX = fsX - sz / 2 - spacing - btnSize / 2
-
-    // Dash: 50px to the right of the Pause button
-    const pauseX = this.W / 2 + p / 2 + sz / 2
-    const dashX = pauseX + sz / 2 + spacing + btnSize / 2
-
-    return { dashX, dashY: y, shieldX, shieldY: y }
+    if (this.H > 500) {
+      // Tall screen (portrait phone or any tablet): place above joysticks
+      const sidePad = TouchControlManager.ABILITY_SIDE_PAD
+      const y = bottomY - r - 250 - btnSize / 2
+      return {
+        shieldX: sidePad + btnSize / 2,          shieldY: y,
+        dashX:   this.W - sidePad - btnSize / 2, dashY:   y,
+      }
+    } else {
+      // Short screen (landscape phone): place beside joysticks
+      const spacing = 50
+      const fsX = this.W / 2 - p / 2 - sz / 2
+      const shieldX = fsX - sz / 2 - spacing - btnSize / 2
+      const pauseX = this.W / 2 + p / 2 + sz / 2
+      const dashX = pauseX + sz / 2 + spacing + btnSize / 2
+      const y = p + sz / 2
+      return { dashX, dashY: y, shieldX, shieldY: y }
+    }
   }
 
   private createAbilityButtons(): void {
