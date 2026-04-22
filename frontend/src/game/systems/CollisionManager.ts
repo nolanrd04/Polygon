@@ -263,8 +263,8 @@ export class CollisionManager {
       return false
     }
 
-    // Ricochet: reflect off the obstacle surface normal instead of destroying
-    if (UpgradeEffectSystem.hasEffect('ricochet')) {
+    // Ricochet: reflect off the obstacle surface normal instead of destroying (player projectiles only)
+    if (projectile.owner === 'player' && UpgradeEffectSystem.hasEffect('ricochet')) {
       projectile.ricochet(obstacleGO)
       return false
     }
