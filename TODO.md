@@ -33,6 +33,11 @@
 - [ ] Mini nuke — unlocks after all exploding-bullet upgrades
 - [ ] Drone swarm — unlocks after all homing upgrades
 
+## MOBILE
+- [ ] Remove Fullscreen button
+- [ ] improve joystick padding
+- [ ] remove slow movement capabilities for left joystick
+
 # Systems
 
 ## Leaderboard
