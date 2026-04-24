@@ -26,8 +26,8 @@ export class TouchControlManager {
   // Pause and fullscreen buttons
   private pauseButton: Phaser.GameObjects.Rectangle | null = null
   private pauseSymbolLines: Phaser.GameObjects.Rectangle[] = []
-  private fullscreenButton: Phaser.GameObjects.Rectangle | null = null
-  private fullscreenText: Phaser.GameObjects.Text | null = null
+  // private fullscreenButton: Phaser.GameObjects.Rectangle | null = null
+  // private fullscreenText: Phaser.GameObjects.Text | null = null
 
   private resizeCallback: () => void = () => {}
 
@@ -65,7 +65,7 @@ export class TouchControlManager {
     this.createJoysticks()
     this.createAbilityButtons()
     this.createPauseButton()
-    this.createFullscreenButton()
+    // this.createFullscreenButton()
     this.setupTouchHandlers()
 
     // Reposition everything when orientation changes
@@ -145,12 +145,13 @@ export class TouchControlManager {
     return { x: this.W / 2 + p / 2 + sz / 2, y: p + sz / 2 }
   }
 
+  /*
   private fullscreenButtonPosition() {
     const p = TouchControlManager.EDGE_PAD
     const sz = TouchControlManager.PAUSE_BUTTON_SIZE
     // FS: center-top, slightly left of center
     return { x: this.W / 2 - p / 2 - sz / 2, y: p + sz / 2 }
-  }
+  } */
 
   private createPauseButton(): void {
     const { x, y } = this.pauseButtonPosition()
@@ -175,6 +176,7 @@ export class TouchControlManager {
     })
   }
 
+  /*
   private createFullscreenButton(): void {
     const { x, y } = this.fullscreenButtonPosition()
     const sz = TouchControlManager.PAUSE_BUTTON_SIZE
@@ -195,7 +197,7 @@ export class TouchControlManager {
     this.fullscreenButton.on('pointerdown', () => {
       this.toggleBrowserFullscreen()
     })
-  }
+  }*/
 
   private setupTouchHandlers(): void {
     // Touch handlers managed by joysticks
@@ -205,7 +207,7 @@ export class TouchControlManager {
     const { leftX, rightX, bottomY } = this.joystickPositions()
     const { dashX, dashY, shieldX, shieldY } = this.abilityButtonPositions()
     const pause = this.pauseButtonPosition()
-    const fs = this.fullscreenButtonPosition()
+    // const fs = this.fullscreenButtonPosition()
 
     this.leftJoystick?.reposition(leftX, bottomY)
     this.rightJoystick?.reposition(rightX, bottomY)
@@ -218,8 +220,8 @@ export class TouchControlManager {
       this.pauseSymbolLines[i].setPosition(pause.x, pause.y - 11 + i * 11)
     }
 
-    if (this.fullscreenButton) this.fullscreenButton.setPosition(fs.x, fs.y)
-    if (this.fullscreenText) this.fullscreenText.setPosition(fs.x, fs.y)
+    // if (this.fullscreenButton) this.fullscreenButton.setPosition(fs.x, fs.y)
+    // if (this.fullscreenText) this.fullscreenText.setPosition(fs.x, fs.y)
   }
 
   isTouchingJoystick(_pointer: Phaser.Input.Pointer): boolean {
@@ -240,6 +242,7 @@ export class TouchControlManager {
     return this.isMobileDevice
   }
 
+  /*
   private toggleBrowserFullscreen(): void {
     const doc = document.documentElement
     const isFullscreen = !!(document.fullscreenElement || (document as any).webkitFullscreenElement)
@@ -257,7 +260,7 @@ export class TouchControlManager {
         (doc as any).webkitRequestFullscreen()
       }
     }
-  }
+  }*/
 
   private updateJoystickInput(): void {
     if (!this.leftJoystick || !this.rightJoystick) return
@@ -294,8 +297,8 @@ export class TouchControlManager {
     for (const line of this.pauseSymbolLines) {
       line.destroy()
     }
-    if (this.fullscreenButton) this.fullscreenButton.destroy()
-    if (this.fullscreenText) this.fullscreenText.destroy()
+    // if (this.fullscreenButton) this.fullscreenButton.destroy()
+    // if (this.fullscreenText) this.fullscreenText.destroy()
     this.scene.scale.off('resize', this.resizeCallback)
   }
 }
