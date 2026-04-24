@@ -1,0 +1,15 @@
+************ Effect Upgrades ************
+Dpuble Tap
+    {
+      "id": "multishot_1",
+      "name": "Double Tap",
+      "description": "Fire +1 additional projectile",
+      "rarity": "legendary",
+      "type": "effect",
+      "effect": "multishot",
+      "attackType": "bullet",
+      "effectValue": 1,
+      "stackable": true,
+      "maxStacks": 2,
+      "cost": 40
+    },
