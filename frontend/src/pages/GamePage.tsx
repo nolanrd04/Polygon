@@ -49,6 +49,23 @@ export default function GamePage() {
         sessionStorage.removeItem('playOffline')
       }
 
+      // Check if we're loading a sandbox save (MainMenu has already restored state in memory)
+      const loadLocalSave = sessionStorage.getItem('loadLocalSave')
+
+      if (loadLocalSave === 'true') {
+        console.log('[LOCAL LOAD] Syncing HUD from restored sandbox state')
+        const state = GameManager.getState()
+        setWaveData(prev => ({ ...prev, wave: state.wave }))
+        setPlayerStats({
+          health: state.playerStats.health,
+          maxHealth: state.playerStats.maxHealth,
+          points: state.playerStats.points,
+          kills: state.playerStats.kills
+        })
+        lastGameStateRef.current = state
+        sessionStorage.removeItem('loadLocalSave')
+      }
+
       // Check if we're loading a saved game
       const loadSavedGame = sessionStorage.getItem('loadSavedGame')
 

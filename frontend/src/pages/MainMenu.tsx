@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import axios from '../config/axios'
+import LoadGameModal from '../components/LoadGameModal'
 
 export default function MainMenu() {
   const navigate = useNavigate()
@@ -9,6 +10,7 @@ export default function MainMenu() {
   const [savedGameWave, setSavedGameWave] = useState(0)
   const [isGameOver, setIsGameOver] = useState(false)
   const [finalStats, setFinalStats] = useState({ wave: 0, points: 0, kills: 0 })
+  const [showLoadModal, setShowLoadModal] = useState(false)
 
   useEffect(() => {
     // Check if user is logged in
@@ -147,6 +149,12 @@ export default function MainMenu() {
               PLAY OFFLINE
             </button>
             <button
+              onClick={() => setShowLoadModal(true)}
+              className="px-8 py-3 border-2 border-polygon-secondary text-polygon-secondary font-semibold rounded hover:bg-polygon-secondary hover:text-black transition-all"
+            >
+              LOAD FROM SAVE
+            </button>
+            <button
               onClick={() => navigate('/login')}
               className="px-8 py-3 border-2 border-gray-500 text-gray-400 font-semibold rounded hover:border-gray-300 hover:text-white transition-all text-sm"
             >
@@ -176,6 +184,10 @@ export default function MainMenu() {
       <div className="absolute bottom-8 text-gray-600 text-sm">
         v0.1.0 - Early Development
       </div>
+
+      {showLoadModal && (
+        <LoadGameModal onClose={() => setShowLoadModal(false)} />
+      )}
     </div>
   )
 }
