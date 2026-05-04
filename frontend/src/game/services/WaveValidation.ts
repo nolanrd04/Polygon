@@ -4,6 +4,7 @@ import statUpgrades from '../data/upgrades/stat_upgrades.json'
 import effectUpgrades from '../data/upgrades/effect_upgrades.json'
 import variantUpgrades from '../data/upgrades/variant_upgrades.json'
 import abilityUpgrades from '../data/upgrades/ability_upgrades.json'
+import { NormalDifficulty } from '../systems/difficulty/Normal'
 
 export interface FrameSample {
   frame: number
@@ -102,8 +103,8 @@ export class WaveValidationService {
           return true
         })
 
-        // Pick 3 random valid upgrades using rarity weights
-        const rarity_weights = { 'common': 0.50, 'uncommon': 0.30, 'rare': 0.15, 'epic': 0.04, 'legendary': 0.01 }
+        // Pick 3 random valid upgrades using per-wave rarity weights
+        const rarityWeights = NormalDifficulty.getRarityWeights(waveNumber)
         const selected: any[] = []
         const maxAttempts = 100
 
@@ -112,7 +113,7 @@ export class WaveValidationService {
           const rand = Math.random()
           let cumulative = 0
           let pickedRarity = 'common'
-          for (const [rarity, weight] of Object.entries(rarity_weights)) {
+          for (const [rarity, weight] of Object.entries(rarityWeights)) {
             cumulative += weight
             if (rand < cumulative) {
               pickedRarity = rarity
@@ -469,8 +470,8 @@ export class WaveValidationService {
         return true
       })
 
-      // Pick 3 random valid upgrades using rarity weights
-      const rarity_weights = { 'common': 0.50, 'uncommon': 0.30, 'rare': 0.15, 'epic': 0.04, 'legendary': 0.01 }
+      // Pick 3 random valid upgrades using per-wave rarity weights
+      const rarityWeights = NormalDifficulty.getRarityWeights(wave)
       const selected: any[] = []
       const maxAttempts = 100
 
@@ -480,7 +481,7 @@ export class WaveValidationService {
         const rand = Math.random()
         let cumulative = 0
         let pickedRarity = 'common'
-        for (const [rarity, weight] of Object.entries(rarity_weights)) {
+        for (const [rarity, weight] of Object.entries(rarityWeights)) {
           cumulative += weight
           if (rand < cumulative) {
             pickedRarity = rarity

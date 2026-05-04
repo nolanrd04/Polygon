@@ -1,27 +1,74 @@
 """
 Enemy health and spawn data for wave validation.
-This data matches the frontend enemy definitions exactly.
+
+This data matches the frontend enemy definitions exactly:
+- Base stats: frontend/src/game/entities/enemies/*.ts (each enemy's SetDefaults())
+- Wave scaling: frontend/src/game/systems/EnemyManager.ts (Math.exp(wave / 8))
+- Spawn rules: frontend/src/game/systems/difficulty/Normal.ts (SPAWN_WEIGHTS / SCHEDULED_BOSS_SPAWNS)
+
+Keep this file in sync with the frontend whenever enemy values change.
 """
 
 from typing import Dict, Any
 import math
 
-# Base enemy health values (matches frontend SetDefaults())
+# Base enemy health values (matches each Enemy class's SetDefaults())
 ENEMY_BASE_HEALTH: Dict[str, int] = {
     "triangle": 70,
-    "square": 110,
-    "pentagon": 250,
-    "hexagon": 575,
-    "shooter": 45,
+    "square": 200,
+    "super_triangle": 120,
+    "super_square": 230,
+    "pentagon": 550,
+    "hexagon": 800,
+    "diamond": 250,
+    "octogon": 1500,
+    "dodecahedron": 16000,
 }
+
+# Base contact damage per enemy (currently unused for validation, kept for parity).
+ENEMY_BASE_DAMAGE: Dict[str, int] = {
+    "triangle": 35,
+    "square": 75,
+    "super_triangle": 50,
+    "super_square": 30,
+    "pentagon": 80,
+    "hexagon": 100,
+    "diamond": 65,
+    "octogon": 100,
+    "dodecahedron": 130,
+}
+
+# Hexagon's shield is sized as a fraction of its (scaled) health.
+# Source: frontend/src/game/entities/enemies/Hexagon.ts (this.maxShieldHealth = this.health * 0.65)
+HEXAGON_SHIELD_RATIO: float = 0.65
+
+# Earliest wave each enemy can spawn on. Boss-only enemies use the boss-wave value.
+# Source: SPAWN_WEIGHTS / SCHEDULED_BOSS_SPAWNS in Normal.ts.
+ENEMY_MIN_WAVE: Dict[str, int] = {
+    "triangle": 1,
+    "square": 3,
+    "super_triangle": 5,
+    "pentagon": 7,
+    "diamond": 8,
+    "hexagon": 10,        # boss waves 10/20/30, regular pool from wave 11
+    "octogon": 15,
+    "super_square": 17,
+    "dodecahedron": 10,   # boss-only on waves 10, 20, 30
+}
+
+# Waves on which boss-only enemies are scheduled.
+# Source: SCHEDULED_BOSS_SPAWNS in Normal.ts.
+BOSS_WAVES = {10, 20, 30}
+BOSS_ONLY_ENEMIES = {"dodecahedron"}
+
 
 def get_wave_multiplier(wave: int) -> float:
     """
     Calculate wave multiplier for enemy stats.
-    Matches frontend: Math.exp(wave / 6)
-    Note: wave parameter should be (currentWave - 1) as done in WaveManager.ts:32
+    Matches frontend EnemyManager.ts:206  ->  Math.exp(wave / 8)
+    Note: wave parameter should be (currentWave - 1) as done in WaveManager.ts:31.
     """
-    return math.exp(wave / 6)
+    return math.exp(wave / 8)
 
 
 def get_enemy_health(enemy_type: str, wave: int) -> int:
@@ -37,7 +84,7 @@ def get_enemy_health(enemy_type: str, wave: int) -> int:
     """
     base_health = ENEMY_BASE_HEALTH.get(enemy_type, 70)
 
-    # Wave multiplier is calculated with (wave - 1) as per WaveManager.ts:32
+    # Wave multiplier is calculated with (wave - 1) per WaveManager.ts:31
     multiplier = get_wave_multiplier(wave - 1)
 
     scaled_health = base_health * multiplier
@@ -60,10 +107,9 @@ def calculate_minimum_damage_required(wave: int, enemy_counts: Dict[str, int]) -
     for enemy_type, count in enemy_counts.items():
         enemy_health = get_enemy_health(enemy_type, wave)
 
-        # Special case for hexagon - they have shields
+        # Hexagons must also break their shield before the body is vulnerable.
         if enemy_type == "hexagon":
-            # Shield health is 65% of base health (from Hexagon.ts:72)
-            shield_health = int(enemy_health * 0.65)
+            shield_health = int(enemy_health * HEXAGON_SHIELD_RATIO)
             total_damage += (enemy_health + shield_health) * count
         else:
             total_damage += enemy_health * count
@@ -74,19 +120,17 @@ def calculate_minimum_damage_required(wave: int, enemy_counts: Dict[str, int]) -
 def validate_enemy_spawn(enemy_type: str, wave: int) -> bool:
     """
     Validate that an enemy type can spawn on a given wave.
-    Based on frontend spawn rules.
+    Based on the frontend SPAWN_WEIGHTS / SCHEDULED_BOSS_SPAWNS tables.
     """
     if enemy_type not in ENEMY_BASE_HEALTH:
         return False
 
-    # Basic validation - hexagons and shooters spawn later
-    # TODO: Add more specific spawn rules based on WaveManager if needed
-    if enemy_type == "hexagon" and wave < 5:
+    # Boss-only enemies can only appear on scheduled boss waves.
+    if enemy_type in BOSS_ONLY_ENEMIES:
+        return wave in BOSS_WAVES
+
+    min_wave = ENEMY_MIN_WAVE.get(enemy_type)
+    if min_wave is None:
         return False
 
-    if enemy_type == "shooter" and wave < 3:
-        return False
-
-    return True
-
-
+    return wave >= min_wave

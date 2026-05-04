@@ -15,7 +15,7 @@ from app.models.flagged_wave import FlaggedWave, FlagReason
 from app.models.game_save import GameSave
 from app.repositories.player_stats_repository import PlayerStatsRepository
 from app.repositories.game_save_repository import GameSaveRepository
-from app.core.upgrade_data import UPGRADES, RARITY_WEIGHTS, can_apply_upgrade, get_upgrade
+from app.core.upgrade_data import UPGRADES, get_rarity_weights, can_apply_upgrade, get_upgrade
 from app.core.enemy_data import calculate_minimum_damage_required
 
 
@@ -72,7 +72,8 @@ class WaveService:
             # Roll new upgrades (first time starting this wave)
             offered_upgrades = self._roll_upgrades(
                 current_upgrades=current_upgrades,
-                attack_type=game_save.current_attack_type if game_save else "bullet"
+                attack_type=game_save.current_attack_type if game_save else "bullet",
+                wave_number=wave_number
             )
             print(f"Rolled new upgrades for wave {wave_number}: {[u['id'] for u in offered_upgrades]}")
 
@@ -274,7 +275,8 @@ class WaveService:
         self,
         user_id: ObjectId,
         current_upgrades: List[str],
-        attack_type: str
+        attack_type: str,
+        wave_number: int
     ) -> Dict[str, Any]:
         """
         Reroll upgrades for the current wave.
@@ -283,7 +285,8 @@ class WaveService:
         # Roll new upgrades
         offered_upgrades = self._roll_upgrades(
             current_upgrades=current_upgrades,
-            attack_type=attack_type
+            attack_type=attack_type,
+            wave_number=wave_number
         )
         print(f"Rerolled upgrades for user {user_id}: {[u['id'] for u in offered_upgrades]}")
 
@@ -303,9 +306,10 @@ class WaveService:
         self,
         current_upgrades: List[str],
         attack_type: str,
+        wave_number: int,
         count: int = 3
     ) -> List[Dict[str, Any]]:
-        """Roll random upgrades based on rarity weights"""
+        """Roll random upgrades based on per-wave rarity weights"""
         available_upgrades = [
             upgrade for upgrade in UPGRADES.values()
             if can_apply_upgrade(upgrade["id"], current_upgrades, attack_type)
@@ -320,7 +324,7 @@ class WaveService:
 
         while len(selected) < count and attempts < max_attempts:
             # Pick rarity
-            rarity = self._pick_rarity()
+            rarity = self._pick_rarity(wave_number)
 
             # Filter by rarity
             rarity_upgrades = [u for u in available_upgrades if u["rarity"] == rarity]
@@ -336,12 +340,13 @@ class WaveService:
 
         return selected[:count]
 
-    def _pick_rarity(self) -> str:
-        """Pick a rarity based on weights"""
+    def _pick_rarity(self, wave_number: int) -> str:
+        """Pick a rarity based on the per-wave rarity weights"""
+        weights = get_rarity_weights(wave_number)
         rand = random.random()
         cumulative = 0.0
 
-        for rarity, weight in RARITY_WEIGHTS.items():
+        for rarity, weight in weights.items():
             cumulative += weight
             if rand < cumulative:
                 return rarity

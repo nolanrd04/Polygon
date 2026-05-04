@@ -291,7 +291,8 @@ async def reroll_upgrades(
     new_upgrades = await wave_service.reroll_upgrades(
         user_id=current_user.id,
         current_upgrades=game_save.current_upgrades,
-        attack_type=game_save.current_attack_type
+        attack_type=game_save.current_attack_type,
+        wave_number=game_save.current_wave
     )
 
     # Update game save with new points and new offered upgrades

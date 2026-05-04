@@ -4,6 +4,7 @@
 - [~] Fixed progression for first 30 waves — Normal.ts hardcodes 1-19; extend through 30
 - [ ] Add difficulties beyond Normal (Difficulty interface is in place in systems/difficulty/)
 - [ ] After wave 30 is complete, start adding bosses to the regular enemy pool
+- [ ] Make upgrade rarity chances dynamic. For exampke it starts only being able to get common, uncommon, and rare, but the chances change depending on wave level.
 
 ## Enemies
 - [ ] Super pentagon — sprints toward player, explodes, leaves behind a fire pool
@@ -22,6 +23,14 @@
 - [ ] Special attack sound effects
 - [ ] Enemy attack sound effects
 - [ ] Boss sound effects
+
+## Curses
+- [ ] Similar to upgrades but give a negative effect
+
+## Upgrades/Bundles
+- [ ] Make enemies drop upgrade bundles
+- [ ] Upgrade bundles give random upgrades of the rarity with a chance to give a curse
+- [ ] New upgrade to remove a curse
 
 ## Visuals
 - [ ] Implement 'dusts' (see terraria)

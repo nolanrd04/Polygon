@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import SaveGameModal from './SaveGameModal'
+import ViewUpgrades from './ViewUpgrades'
 
 interface PauseMenuProps {
   onResume: () => void
@@ -9,8 +10,13 @@ interface PauseMenuProps {
 export default function PauseMenu({ onResume, onQuit }: PauseMenuProps) {
   // export saves
   const [showSaveModal, setShowSaveModal] = useState(false)
+  const [showUpgrades, setShowUpgrades] = useState(false)
   const isSandbox = !localStorage.getItem('token')
   //
+
+  if (showUpgrades) {
+    return <ViewUpgrades onBack={() => setShowUpgrades(false)} />
+  }
 
   return (
     <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-[100]">
@@ -24,7 +30,13 @@ export default function PauseMenu({ onResume, onQuit }: PauseMenuProps) {
           RESUME
         </button>
 
-        
+        <button
+          onClick={() => setShowUpgrades(true)}
+          className="px-8 py-3 border-2 border-polygon-secondary text-polygon-secondary font-semibold rounded hover:bg-polygon-secondary hover:text-black transition-all"
+        >
+          VIEW UPGRADES
+        </button>
+
         {isSandbox && (
           <button
             onClick={() => setShowSaveModal(true)}

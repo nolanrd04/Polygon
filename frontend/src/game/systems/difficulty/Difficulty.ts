@@ -3,6 +3,10 @@ export type EnemySpawnWeight = {
   weight: number
 }
 
+export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary'
+
+export type RarityWeights = Record<Rarity, number>
+
 /**
  * A Difficulty owns all per-wave game-pacing data: how many enemies spawn,
  * which types, how fast, and what (if anything) is a scheduled boss spawn.
@@ -27,4 +31,13 @@ export interface Difficulty {
    * runs in parallel; this is just the "scripted" boss spawn.
    */
   getScheduledBossSpawns(wave: number): string[] | null
+
+  /**
+   * Returns the rarity weights used when rolling offered upgrades for the
+   * given wave. Weights should sum to 1. Earlier waves typically favor common;
+   * later waves shift probability toward higher rarities.
+   *
+   * Mirrored on the backend in app/core/upgrade_data.py — keep them in sync.
+   */
+  getRarityWeights(wave: number): RarityWeights
 }
