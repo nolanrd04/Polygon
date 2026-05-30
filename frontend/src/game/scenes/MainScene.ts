@@ -13,7 +13,7 @@ import { UpgradeSystem, UpgradeEffectSystem, registerEffectHandlers, type Upgrad
 import { TextureGenerator } from '../utils/TextureGenerator'
 import { waveValidation } from '../services/WaveValidation'
 import { SaveManager } from '../services/SaveManager'
-import { getDefaultVolume, playBackgroundMusic } from '../core/AudioRegistry'
+import { getDefaultVolume, pauseBackgroundMusic, resumeBackgroundMusic, preloadAllAudio } from '../core/AudioRegistry'
 import { TouchControlManager } from '../systems/TouchControlManager'
 
 // Import all upgrade JSONs
@@ -44,6 +44,9 @@ export class MainScene extends Phaser.Scene {
   create(): void {
     // Register effect handlers (once at game start)
     registerEffectHandlers()
+
+    // Load audio assets
+    preloadAllAudio(this)
 
     // Generate common sprite textures (MUST be done before creating entities)
     TextureGenerator.generateCommonTextures(this)
@@ -119,8 +122,15 @@ export class MainScene extends Phaser.Scene {
     })
 
     // Listen for events
-    EventBus.on('game-pause', () => this.scene.pause())
-    EventBus.on('game-resume', () => this.scene.resume())
+    EventBus.on('game-pause', () => {
+      this.scene.pause()
+      // Pause background music when game is paused
+      pauseBackgroundMusic(this)
+    })
+    EventBus.on('game-resume', () => {
+      this.scene.resume()
+      resumeBackgroundMusic(this)
+    })
     EventBus.on('start-next-wave', () => {
       this.upgradeMenuOpen = false
       this.input.activePointer.reset()
@@ -345,10 +355,10 @@ export class MainScene extends Phaser.Scene {
       }
 
       // Play looping background music
-      // Start with volume at 30%
+      // Start with volume at 75%
       this.time.delayedCall(10, () => {
-        // Unmute the music after 0.01 seconds for audio context initialization
-        playBackgroundMusic(this)
+        // Play the background music with volume and loop
+        this.sound.play('background_music', { volume: getDefaultVolume('background_music'), loop: true })
       })
 
       // Show upgrade modal

@@ -46,11 +46,19 @@ export function playBackgroundMusic(
   volume?: number
 ): void {
   const bgmVolume = volume ?? getDefaultVolume('background_music')
-  // Phaser allows overlapping sounds, so we can just play it again if it's already playing
-  scene.sound.play('background_music', {
-    volume: bgmVolume,
-    loop: true
-  })
+  const bgm = scene.sound.get('background_music')
+  if (bgm) {
+    bgm.play({ volume: bgmVolume})
+  }
+}
+
+/**
+ * Gets the background music sound object
+ * @param scene The Phaser scene
+ * @returns The background music sound object or undefined
+ */
+export function getBackgroundMusic(scene: Phaser.Scene): Phaser.Sound.BaseSound | undefined {
+  return scene.sound.get('background_music')
 }
 
 /**
@@ -73,6 +81,17 @@ export function stopBackgroundMusic(scene: Phaser.Scene): void {
   const bgm = scene.sound.get('background_music')
   if (bgm) {
     bgm.stop()
+  }
+}
+
+/**
+ * Resumes paused background music from where it left off
+ * @param scene The Phaser scene
+ */
+export function resumeBackgroundMusic(scene: Phaser.Scene): void {
+  const bgm = scene.sound.get('background_music')
+  if (bgm) {
+    bgm.resume()
   }
 }
 
