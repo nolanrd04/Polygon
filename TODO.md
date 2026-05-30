@@ -9,6 +9,7 @@
 ## Enemies
 - [ ] Super pentagon — sprints toward player, explodes, leaves behind a fire pool
 - [ ] Super hexagon — still shielded, sprays magic in direction of player, explodes on death
+- [ ] Octogon - Stars 95% opac. Moves towards the player and through walls. Stays 95% opac until within a certain distance, then it will become less opac. Within 15 units it will be 0% opac.
 - [ ] Hexagon: add visual indication for shield health
 
 ## Bosses
@@ -38,15 +39,14 @@
 - [ ] Add color customization
 
 ## Bullet upgrades (future)
+- [ ] Maybe make homing bullets do 50% less damage each time it pierces an enemy?
 - [ ] Napalm (exploding bullets)
-- [ ] Mini nuke — unlocks after all exploding-bullet upgrades
-- [ ] Drone swarm — unlocks after all homing upgrades
+- [ ] Burst variant - bullets come out in a burst with a longer cooldown. upgrades to decrease the burst interval and decrease burst cooldown.
 
 ## MOBILE
 - [ ] Remove Fullscreen button
 - [ ] improve zoom
 - [ ] add button layout customization
-- [ ] per-device button size and spacing
 
 # Systems
 
