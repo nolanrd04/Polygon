@@ -13,7 +13,7 @@ import { UpgradeSystem, UpgradeEffectSystem, registerEffectHandlers, type Upgrad
 import { TextureGenerator } from '../utils/TextureGenerator'
 import { waveValidation } from '../services/WaveValidation'
 import { SaveManager } from '../services/SaveManager'
-import { getDefaultVolume } from '../core/AudioRegistry'
+import { getDefaultVolume, playBackgroundMusic } from '../core/AudioRegistry'
 import { TouchControlManager } from '../systems/TouchControlManager'
 
 // Import all upgrade JSONs
@@ -343,6 +343,13 @@ export class MainScene extends Phaser.Scene {
         await SaveManager.saveOnWaveComplete()
         console.log('Starting points synced to backend')
       }
+
+      // Play looping background music
+      // Start with volume at 30%
+      this.time.delayedCall(10, () => {
+        // Unmute the music after 0.01 seconds for audio context initialization
+        playBackgroundMusic(this)
+      })
 
       // Show upgrade modal
       EventBus.emit('show-upgrades')

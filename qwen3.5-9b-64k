@@ -1,0 +1,131 @@
+ ▐▛███▜▌   Claude Code v2.1.136
+▝▜█████▛▘  qwen3.5:9b · API Usage Billing
+  ▘▘ ▝▝    ~\Desktop\RandomProjects\Polygon
+
+❯ I want you to go through the files and contents of @frontend\ Do not right    
+  any code or files or make any changes. You are functioning as a summarization 
+   to tool to tell me what is going on in the project.                          
+  ⎿  Listed directory frontend\
+
+● I'll read through the frontend files to understand what's happening in this
+  project.
+
+  Read 3 files (ctrl+o to expand)
+
+● Let me read more of the project structure:
+
+  Searched for 2 patterns, read 4 files (ctrl+o to expand)
+
+● Let me read the core files to give you a complete picture:
+
+  Read 3 files (ctrl+o to expand)
+  ⎿  Loaded backend\CLAUDE.md
+
+● ---
+  Polygon Game — Project Summary
+
+  Polygon is a web-based action/tower-defense game where you play as a polygon
+  character fighting waves of geometric enemies. It's a client-server game with
+  a sophisticated anti-cheat system.
+
+  ---
+  Tech Stack
+
+  Frontend (React + Vite + TypeScript):
+  - React Router for navigation (login, game, settings pages)
+  - Phaser 3 game engine embedded in React
+  - Tailwind CSS for styling
+  - Mobile touch controls (custom implementation, not Phaser native)
+  - Attack types: Flame, Laser, Spinner, Zapper
+
+  Backend (FastAPI + MongoDB):
+  - JWT authentication (bcrypt)
+  - Anti-cheat wave validation system
+  - Upgrade system (~100 upgrades)
+  - Run/save management
+
+  ---
+  Core Architecture
+
+  Frontend (http://localhost:3000)
+    ↓ HTTP API
+  Backend (FastAPI on port 8000)
+    ↓ MongoDB
+    - player_stats
+    - game_saves
+    - runs (canonical saves)
+    - flagged_waves (anti-cheat flags)
+
+  ---
+  Key Systems
+
+  1. Wave Validation / Anti-Cheat:
+  - Server generates 30-second wave start tokens
+  - Client uploads frame data, kills, damage, enemy deaths
+  - Backend validates: movement, damage, kills, upgrade usage
+  - Flags suspicious activity with severity levels (LOW → CRITICAL)
+  - Critical flags trigger auto-ban
+
+  2. Upgrade System:
+  - Types: stat modifiers, effects, variants, abilities
+  - Dependencies, conflicts, stackability rules
+  - Backend validates upgrade selection
+
+  3. Enemy Types:
+  - Triangle, Square, Pentagon, Hexagon, Octagon, Dodecahedron
+  - Super variants (sprint, shield, spray attacks)
+  - Boss enemies (phases: dash → idle → storm → death)
+
+  ---
+  Current State / TODO Items
+
+  Gameplay:
+  - Progression fixed for first 30 waves
+  - Bosses added to first phase, need phase 2 implementation
+  - Bosses start appearing regularly after wave 30
+  - Special attacks (flame, laser, spinner, zapper) implemented
+  - Sound effects for abilities need work
+
+  Mobile:
+  - Touch controls in TouchControlManager.ts
+  - Layout adapts to portrait/landscape (H > 500 threshold)
+  - Needs: remove fullscreen button, improve zoom, button layout customization
+
+  Security (Critical Issues):
+  - Hardcoded JWT secret key (needs env var)
+  - No MongoDB authentication enabled
+  - Debug mode enabled in production
+  - Weak password policy (6 chars minimum)
+  - 24-hour JWT expiry (too long)
+
+  Features Pending:
+  - Leaderboard UI (backend exists, frontend not built)
+  - Per-game record: game ID, full upgrade order, enemies killed, total time
+  - Additional difficulties beyond Normal
+  - Settings system implementation
+  - Visual polish: dust effects, color customization
+
+  ---
+  Files of Note
+
+  Frontend:
+  - TouchControlManager.ts — mobile touch input (not Phaser native)
+  - WaveValidation.ts — client-side anti-cheat data collection
+  - MainScene.ts — main game scene with wave validation integration
+  - UpgradeSystem.ts — upgrade logic
+
+  Backend:
+  - app/services/wave_service.py — wave validation business logic
+  - app/core/upgrade_data.py — upgrade definitions (~100)
+  - app/core/enemy_data.py — enemy health/spawn rules
+  - app/api/waves.py — wave API endpoints
+
+  Documentation:
+  - MAINSCENE_INTEGRATION_PATCH.md — how wave validation integrates into
+  MainScene
+  - backend/ANTI_CHEAT_SYSTEM.md — complete anti-cheat documentation
+  - backend/IMPLEMENTATION_GUIDE.md — setup instructions
+
+✻ Cooked for 39s
+
+※ recap: Summarizing the Polygon game project — a Phaser/React action game with a FastAPI backend and anti-cheat wave validation. No active task; the user just wants an overview of what's going on. (disable recaps in /config)
