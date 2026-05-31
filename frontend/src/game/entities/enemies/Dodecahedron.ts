@@ -41,8 +41,8 @@ export class Dodecahedron extends Enemy {
   private shotBulletCounter: number = 0
   private shotBulletInterval: number = 750 // milliseconds between shots in bullet storm
 
-  private maxTeleportDistance: number = 300
-  private minTeleportDistance: number = 100
+  private maxTeleportDistance: number = 400
+  private minTeleportDistance: number = 200
   private teleportWindUpDuration: number = 500 // milliseconds
   private teleportWindDownDuration: number = 500 // milliseconds
 
