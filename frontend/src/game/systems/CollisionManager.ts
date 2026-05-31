@@ -105,7 +105,7 @@ export class CollisionManager {
     // Trigger onHit effects (lifesteal, etc.)
     UpgradeEffectSystem.onProjectileHit(projectile, enemy)
 
-    // Check if projectile wants to handle damage (e.g., ExplosiveBullet returns false to handle via explosion)
+    // Check if projectile wants to handle damage
     const shouldApplyCollisionDamage = projectile.OnHitNPC(enemy)
 
     // Deal damage if projectile allows it

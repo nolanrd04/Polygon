@@ -192,6 +192,7 @@ export class ExplosiveBullet extends Projectile {
     this.color = 0xff4400
     this.knockback = 75
     this.spawnSound = 'bullet_shot'
+    this.hitEnemyCooldown = 250
   }
 
   private spawnExplosion(): void {

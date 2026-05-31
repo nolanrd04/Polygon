@@ -48,7 +48,7 @@ export class Dodecahedron extends Enemy {
 
 
   SetDefaults(): void {
-    this.health = 16000
+    this.health = 8000
     this.speed = 60
     this.damage = 130
     this.sides = 12
@@ -65,6 +65,7 @@ export class Dodecahedron extends Enemy {
     this.doOldRotationTracking = true
     this.oldTrackingCounter = 1
     this.oldTrackingInterval = 100
+    this.defense = 25
     
   }
 

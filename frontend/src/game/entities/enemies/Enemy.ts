@@ -60,6 +60,7 @@ export abstract class Enemy {
   maxHealth: number = 50
   speed: number = 60
   damage: number = 10
+  defense: number = 0 // how much damage (int) is reduced when hit
   sides: number = 4
   radius: number = 20
   color: number = 0xff0000
@@ -335,7 +336,8 @@ export abstract class Enemy {
       return false
     }
 
-    this.health -= amount
+    const effectiveAmount = Math.max(1, amount - this.defense)
+    this.health -= effectiveAmount
     this.drawHealthBar()
 
     // Flash white using sprite tint
