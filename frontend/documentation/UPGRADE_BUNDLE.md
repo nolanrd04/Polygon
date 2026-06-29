@@ -252,8 +252,6 @@ A forced rarity implies a guaranteed spawn. If you want a forced rarity that sti
 
 ## Known Issues / Follow-up Work
 
-- **No sound on pickup.** Floating pickup text exists but there is no audio feedback. A short chime keyed to rarity would feel good.
-- **Bundles are not cleared between waves.** Bundles on the ground when a wave ends persist into the next wave. The fix is to call `bundle.destroy()` on each entry in `activeBundles` and clear the array in the wave-completion flow.
 - **Backend sync gap.** `applyUpgrade(id, true)` skips `waveValidation.selectUpgrade()`. Bundle-applied upgrades go into `GameManager.appliedUpgrades` locally but are not validated server-side. This could be a desync vector if backend validation is strict.
 - **`replaces` field type mismatch.** In `variant_upgrades.json`, `replaces` is typed as `string[]` in `UpgradeDefinition` but stored as a plain string in the JSON. `applyVariant()` does `for...of` on it, which iterates characters rather than IDs. The variant swap logic in the post-wave modal is effectively broken but unnoticed because both upgrades overwrite `activeVariants` by target anyway.
 - **Only one curse type exists.** `curses.json` has only Weakness (damage reduction). Future curses using additive values would exercise the `UpgradeModifierSystem.addModifier` curse guard that currently has no real callers.
