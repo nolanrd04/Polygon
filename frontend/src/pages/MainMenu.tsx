@@ -179,6 +179,13 @@ export default function MainMenu() {
         >
           SETTINGS
         </button>
+
+        <button
+          onClick={() => navigate('/update-notes')}
+          className="px-8 py-3 border-2 border-gray-600 text-gray-400 font-semibold rounded hover:border-gray-400 hover:text-white transition-all"
+        >
+          UPDATE NOTES
+        </button>
       </div>
 
       <div className="absolute bottom-8 text-gray-600 text-sm">

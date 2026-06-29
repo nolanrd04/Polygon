@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import SettingsPage from './pages/SettingsPage'
 import AttackSelectPage from './pages/AttackSelectPage'
+import UpdateNotesPage from './pages/UpdateNotesPage'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/select-attack" element={<AttackSelectPage />} />
         <Route path="/game" element={<GamePage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/update-notes" element={<UpdateNotesPage />} />
       </Routes>
     </BrowserRouter>
   )
