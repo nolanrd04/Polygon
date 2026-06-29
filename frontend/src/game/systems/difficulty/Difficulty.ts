@@ -40,4 +40,16 @@ export interface Difficulty {
    * Mirrored on the backend in app/core/upgrade_data.py — keep them in sync.
    */
   getRarityWeights(wave: number): RarityWeights
+
+  /**
+   * Chance (0–1) that any enemy drops an upgrade bundle on death for the
+   * given wave. Enemies may override this with their own bundleDropChance.
+   */
+  getBundleDropChance(wave: number): number
+
+  /**
+   * Rarity weights used when rolling the tier of a dropped upgrade bundle.
+   * Separate from getRarityWeights so bundle drops can be tuned independently.
+   */
+  getBundleRarityWeights(wave: number): RarityWeights
 }

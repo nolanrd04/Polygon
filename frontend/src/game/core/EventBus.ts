@@ -29,6 +29,7 @@ export interface GameEvents {
   'evolution-milestone': number  // Emitted every 6 waves with the current wave number
   'enemy-killed': { type: string; x: number; y: number }  // Wave validation tracking
   'damage-dealt': number  // Wave validation tracking
+  'upgrade-bundle': { x: number; y: number; bundleDropChance: number; forcedRarity?: number }
 }
 
 type EventCallback<T = void> = T extends void ? () => void : (data: T) => void

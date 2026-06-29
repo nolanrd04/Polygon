@@ -9,9 +9,9 @@ export interface AudioDefinition {
 
 export const AUDIO_REGISTRY: AudioDefinition[] = [
   { key: 'bullet_shot', path: 'assets/sounds/bullet_shot.mp3', defaultVolume: 1 },
-  { key: 'explosion',   path: 'assets/sounds/explosion.mp3',   defaultVolume: 0.4 },
+  { key: 'explosion',   path: 'assets/sounds/explosion.mp3',   defaultVolume: 0.6 },
   { key: 'select_upgrade', path: 'assets/sounds/upgrade_select.mp3', defaultVolume: 1 },
-  { key: 'bullet_tileCollide', path: 'assets/sounds/bullet_tileCollide.mp3', defaultVolume: 0.3 },
+  { key: 'bullet_tileCollide', path: 'assets/sounds/bullet_tileCollide.mp3', defaultVolume: 0.5 },
   { key: 'player_hurt', path: 'assets/sounds/player_hurt.mp3', defaultVolume: 1 },
   { key: 'enemy_hurt', path: 'assets/sounds/enemy_hurt.mp3', defaultVolume: 1 },
   { key: 'enemy_killed', path: 'assets/sounds/enemy_killed.mp3', defaultVolume: 1 },

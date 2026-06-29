@@ -137,6 +137,9 @@ export class CollisionManager {
 
       // Trigger onKill effects (explode on kill, etc.)
       UpgradeEffectSystem.onEnemyKill(enemy)
+
+      // Let the enemy decide how many bundles drop and their rarities
+      enemy.DropBundles()
     }
 
     // Record hit (handles pierce logic and may destroy projectile)

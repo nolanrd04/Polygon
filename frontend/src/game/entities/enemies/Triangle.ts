@@ -14,5 +14,6 @@ export class Triangle extends Enemy {
     this.scoreChance = 0.3
     this.speedCap = 4.5
     this.hitboxSize = 0.8  // Smaller hitbox for triangles (easier to dodge)
+    this.bundleDropChance = 0.08
   }
 }

@@ -21,8 +21,16 @@ export class Bullet extends Projectile {
     this.spawnSound = 'bullet_shot'
   }
 
-  OnObstacleCollide(_obstacle?: Phaser.GameObjects.GameObject): void {
+  OnObstacleCollide(_obstacle?: Phaser.GameObjects.GameObject): void 
+  {
+    // all sound calls should have this check to prevent "sound stacking"
+    //
+    if (this.scene.sound.isPlaying('bullet_tileCollide'))
+    {
+      this.scene.sound.stopByKey('bullet_tileCollide')
+    }
     this.scene.sound.play('bullet_tileCollide', { volume: getDefaultVolume('bullet_tileCollide') })
+    //
   }
 
 }
@@ -197,9 +205,18 @@ export class ExplosiveBullet extends Projectile {
 
   private spawnExplosion(): void {
     const scene = this.scene as Phaser.Scene & { spawnProjectile: Function }
-    const explosion = new BulletExplosion()
+    const explosion = new BulletExplosion()  
     explosion.SetDefaults()
+
+    // all sound calls should have this check to prevent "sound stacking"
+    //
+    if (this.scene.sound.isPlaying('explosion'))
+    {
+      this.scene.sound.stopByKey('explosion')
+    }
     this.scene.sound.play('explosion', { volume: getDefaultVolume('explosion') })
+    //
+
     scene.spawnProjectile(explosion, this.positionX, this.positionY, this.positionX, this.positionY, 'player', this.ownerId)
   }
 

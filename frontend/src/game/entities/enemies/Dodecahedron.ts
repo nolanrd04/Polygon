@@ -3,6 +3,7 @@ import { Enemy } from './Enemy'
 import { TrailRenderer } from '../../utils/TrailRenderer'
 // import { EnemyBullet } from '../projectiles/enemy_projectiles/EnemyBullet'
 import { DodecahedronBullet } from '../projectiles/enemy_projectiles/DodecahedronBullet'
+import { BundleRarity } from '../../data/ID'
 
 export class Dodecahedron extends Enemy {
   private invincible: boolean = false
@@ -66,7 +67,11 @@ export class Dodecahedron extends Enemy {
     this.oldTrackingCounter = 1
     this.oldTrackingInterval = 100
     this.defense = 25
-    
+    this.bundleDropChance = 1
+  }
+
+  DropBundles(): void {
+    this.dropBundle(BundleRarity.Legendary)
   }
 
   AI(_playerX: number, _playerY: number): void {

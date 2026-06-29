@@ -18,6 +18,7 @@ export class SuperTriangle extends Enemy {
     this.scoreChance = 0.5
     this.speedCap = 4.5
     this.knockbackResistance = 0.8
+    this.bundleDropChance = 0.1
   }
 
   /**

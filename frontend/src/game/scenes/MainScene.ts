@@ -15,6 +15,8 @@ import { waveValidation } from '../services/WaveValidation'
 import { SaveManager } from '../services/SaveManager'
 import { getDefaultVolume, pauseBackgroundMusic, resumeBackgroundMusic, preloadAllAudio } from '../core/AudioRegistry'
 import { TouchControlManager } from '../systems/TouchControlManager'
+import { DroppedUpgradeBundle } from '../entities/upgrades/DroppedUpgradeBundle'
+import type { Rarity, RarityWeights } from '../systems/difficulty/Difficulty'
 
 // Import all upgrade JSONs
 import statUpgrades from '../data/upgrades/stat_upgrades.json'
@@ -22,6 +24,7 @@ import effectUpgrades from '../data/upgrades/effect_upgrades.json'
 import variantUpgrades from '../data/upgrades/variant_upgrades.json'
 import visualUpgrades from '../data/upgrades/visual_upgrades.json'
 import abilityUpgrades from '../data/upgrades/ability_upgrades.json'
+import curses from '../data/upgrades/curses.json'
 
 export class MainScene extends Phaser.Scene {
   player!: Player
@@ -37,11 +40,16 @@ export class MainScene extends Phaser.Scene {
   private upgradeMenuOpen: boolean = false
   private touchControls!: TouchControlManager
 
+  private bundleGroup!: Phaser.GameObjects.Group
+  private activeBundles: DroppedUpgradeBundle[] = []
+
   constructor() {
     super({ key: 'MainScene' })
   }
 
   create(): void {
+
+    // -------- INITIALIZATION -------- //
     // Register effect handlers (once at game start)
     registerEffectHandlers()
 
@@ -51,7 +59,7 @@ export class MainScene extends Phaser.Scene {
     // Generate common sprite textures (MUST be done before creating entities)
     TextureGenerator.generateCommonTextures(this)
 
-    // Initialize debug graphics
+    // Initialize debug graphics (such as hitbox visuals)
     this.debugGraphics = this.add.graphics()
     this.debugGraphics.setDepth(1000) // Render on top
 
@@ -90,7 +98,84 @@ export class MainScene extends Phaser.Scene {
       this.enemyManager,
       this.mapManager.getObstacles() // Pass obstacles for collision detection
     )
+    
+    // -------- -------- -------- //
 
+    // -------- UPGRADE BUNDLES -------- //
+    // Upgrade Bundle group and player-bundle overlap
+    this.bundleGroup = this.add.group()
+
+    this.physics.add.overlap(
+      this.player,
+      this.bundleGroup,
+      (_player, bundleContainer) => {
+        const bundle = (bundleContainer as Phaser.GameObjects.Container).getData('bundleInstance') as DroppedUpgradeBundle
+        if (!bundle || bundle.isDestroyed) return
+
+        const { x, y } = bundle.getContainer()
+        const upgradeValue = bundle.upgradeValue
+        bundle.destroy()
+
+        // Roll how many upgrades/curses this bundle contains (1–4).
+        // All upgrades are picked now so canApply() reflects current state.
+        const count = Math.floor(Math.random() * 4) + 1
+
+        // Build rarity weights capped at the bundle's tier and re-normalized.
+        // e.g. a rare bundle on wave 25 strips epic+legendary then rescales common/uncommon/rare to sum to 1.
+        const rarityOrder: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary']
+        const rawWeights = this.waveManager.getRarityWeights()
+        let weightSum = 0
+        for (let tier = 0; tier <= upgradeValue; tier++) weightSum += rawWeights[rarityOrder[tier]]
+        const rollItemRarity = (): number => {
+          let roll = Math.random() * weightSum
+          for (let tier = 0; tier <= upgradeValue; tier++) {
+            roll -= rawWeights[rarityOrder[tier]]
+            if (roll <= 0) return tier
+          }
+          return 0
+        }
+
+        const pickedIds: string[] = []
+
+        // First slot is always a regular upgrade at the bundle's rarity — guarantees
+        // at least one matching-tier item per bundle. Falls back to lower tiers only
+        // if the pool at that tier is exhausted.
+        const firstId = this.pickRegularUpgrade(upgradeValue, pickedIds)
+        if (firstId) pickedIds.push(firstId)
+
+        // Remaining slots (if any) are each 50/50 curse or regular, no duplicates.
+        for (let i = 1; i < count; i++) {
+          const id = Math.random() < 0.5
+            ? this.pickCurse(rollItemRarity(), pickedIds)
+            : this.pickRegularUpgrade(rollItemRarity(), pickedIds)
+          if (id) pickedIds.push(id)
+        }
+
+        if (pickedIds.length === 0) return
+
+        const allUpgradeDefs = [
+          ...statUpgrades.upgrades,
+          ...effectUpgrades.upgrades,
+          ...variantUpgrades.upgrades,
+          ...visualUpgrades.upgrades,
+          ...abilityUpgrades.upgrades,
+          ...curses.curses,
+        ] as UpgradeDefinition[]
+
+        pickedIds.forEach((upgradeId, i) => {
+          this.applyUpgrade(upgradeId, true)
+
+          const def = allUpgradeDefs.find(u => u.id === upgradeId)
+          if (def) {
+            const rarityIndex = rarityOrder.indexOf(def.rarity as Rarity)
+            this.showBundlePickupText(x, y, def.name, rarityIndex, def.curse, i * 220)
+          }
+        })
+      }
+    )
+    // -------- -------- -------- //
+
+    // -------- CONTROLS -------- //
     // Set up input
     this.cursors = this.input.keyboard!.createCursorKeys()
     this.wasdKeys = {
@@ -121,6 +206,9 @@ export class MainScene extends Phaser.Scene {
       this.player.dash()
     })
 
+    // -------- -------- -------- //
+
+    // -------- EVENTS -------- //
     // Listen for events
     EventBus.on('game-pause', () => {
       this.scene.pause()
@@ -253,6 +341,30 @@ export class MainScene extends Phaser.Scene {
       }
     })
 
+    // Upgrade bundle drop rolls
+    EventBus.on('upgrade-bundle', (data: { x: number; y: number; bundleDropChance: number; forcedRarity?: number }) => {
+      // forcedRarity bypasses drop chance and rarity roll — always spawns at the given tier
+      if (data.forcedRarity !== undefined) {
+        const bundle = new DroppedUpgradeBundle(this, data.x, data.y, data.forcedRarity)
+        this.activeBundles.push(bundle)
+        this.bundleGroup.add(bundle.getContainer())
+        return
+      }
+
+      const dropChance = data.bundleDropChance > 0
+        ? data.bundleDropChance
+        : this.waveManager.getBundleDropChance()
+
+      if (Math.random() > dropChance) return
+
+      const rarityWeights = this.waveManager.getBundleRarityWeights()
+      const upgradeValue = this.rollBundleRarity(rarityWeights)
+
+      const bundle = new DroppedUpgradeBundle(this, data.x, data.y, upgradeValue)
+      this.activeBundles.push(bundle)
+      this.bundleGroup.add(bundle.getContainer())
+    })
+
     // WAVE VALIDATION: Track enemy deaths
     EventBus.on('enemy-killed', (data: { type: string; x: number; y: number }) => {
       waveValidation.recordEnemyDeath(data.type, data.x, data.y)
@@ -262,6 +374,10 @@ export class MainScene extends Phaser.Scene {
     EventBus.on('damage-dealt', (damage: number) => {
       waveValidation.recordDamage(damage)
     })
+
+    // -------- -------- -------- //
+
+    // -------- TOUCH CONTROLS -------- //
 
     // Enable multi-touch (allow 4 simultaneous pointers for both joysticks + 2 ability buttons)
     this.input.addPointer(3)
@@ -279,6 +395,9 @@ export class MainScene extends Phaser.Scene {
       }
     })
 
+    // -------- -------- -------- //
+
+    // -------- GAME START -------- //
     // Start with initial upgrade phase
     this.time.delayedCall(500, async () => {
       const currentState = GameManager.getState()
@@ -364,9 +483,13 @@ export class MainScene extends Phaser.Scene {
       // Show upgrade modal
       EventBus.emit('show-upgrades')
     })
+
+    // -------- -------- -------- //
   }
 
   update(_time: number, delta: number): void {
+
+    // DONT UPDATE IF PAUSED
     if (GameManager.getState().isPaused) return
 
     // UPDATE TOUCH CONTROLS
@@ -432,6 +555,16 @@ export class MainScene extends Phaser.Scene {
 
     // Update player (for attack animations like spinner/flamer)
     this.player.update()
+
+    // Update active bundles; prune destroyed ones
+    for (let i = this.activeBundles.length - 1; i >= 0; i--) {
+      const bundle = this.activeBundles[i]
+      if (bundle.isDestroyed) {
+        this.activeBundles.splice(i, 1)
+      } else {
+        bundle._update()
+      }
+    }
 
     // Update managers
     this.enemyManager.update(this.player.x, this.player.y)
@@ -551,6 +684,99 @@ export class MainScene extends Phaser.Scene {
     })
   }
 
+  // Text shown when the player picks up an upgrade bundle
+  private showBundlePickupText(x: number, y: number, upgradeName: string, upgradeValue: number, curse?: boolean, delay: number = 0): void {
+    const spawn = () => {
+      const colors = ['#aaaaaa', '#44cc66', '#4488ff', '#cc44ff', '#ffaa00']
+      let color = colors[Math.max(0, Math.min(4, upgradeValue))]
+      if (curse) color = '#ff0000'
+
+      const text = this.add.text(x, y, upgradeName, {
+        fontFamily: 'Orbitron',
+        fontSize: '17px',
+        color,
+        stroke: '#ffffff',
+        strokeThickness: 1,
+      })
+      text.setOrigin(0.5, 1)
+      text.setDepth(10000)
+
+      this.tweens.add({
+        targets: text,
+        y: y - 60,
+        alpha: 0,
+        duration: 1800,
+        ease: 'Cubic.easeOut',
+        onComplete: () => text.destroy(),
+      })
+    }
+
+    if (delay > 0) {
+      this.time.delayedCall(delay, spawn)
+    } else {
+      spawn()
+    }
+  }
+
+  /** Weighted-random rarity roll. Returns upgradeValue 0–4.  FOR BUNDLES*/
+  private rollBundleRarity(weights: RarityWeights): number {
+    const order: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary']
+    const total = order.reduce((sum, r) => sum + weights[r], 0)
+    let roll = Math.random() * total
+    for (let i = 0; i < order.length; i++) {
+      roll -= weights[order[i]]
+      if (roll <= 0) return i
+    }
+    return 0
+  }
+
+  /** Picks a random curse at or below maxRarity (0–4). Falls back to lower tiers. Skips IDs in exclude. */
+  private pickCurse(maxRarity: number, exclude: string[] = []): string | null {
+    const rarityOrder: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary']
+    for (let tier = maxRarity; tier >= 0; tier--) {
+      const rarity = rarityOrder[tier]
+      const candidates = (curses.curses as UpgradeDefinition[]).filter(
+        u => u.rarity === rarity && !exclude.includes(u.id) && UpgradeSystem.canApply(u)
+      )
+      if (candidates.length > 0) {
+        return candidates[Math.floor(Math.random() * candidates.length)].id
+      }
+    }
+    return null
+  }
+
+  /** Picks a random non-curse upgrade at or below maxRarity (0–4). Falls back to lower tiers. Skips IDs in exclude. */
+  private pickRegularUpgrade(maxRarity: number, exclude: string[] = []): string | null {
+    const allRegular = [
+      ...statUpgrades.upgrades,
+      ...effectUpgrades.upgrades,
+      ...variantUpgrades.upgrades,
+      ...visualUpgrades.upgrades,
+      ...abilityUpgrades.upgrades,
+    ] as UpgradeDefinition[]
+
+    const rarityOrder: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary']
+
+    for (let tier = maxRarity; tier >= 0; tier--) {
+      const rarity = rarityOrder[tier]
+      const candidates = allRegular.filter(u => {
+        if (u.rarity !== rarity) return false
+        if (exclude.includes(u.id)) return false
+        if (!UpgradeSystem.canApply(u)) return false
+        // Bundles must not silently replace an already-active variant.
+        if (u.type === 'variant' && u.target) {
+          const activeVariant = UpgradeSystem.getVariant(u.target)
+          if (activeVariant !== null && activeVariant !== u.variantClass) return false
+        }
+        return true
+      })
+      if (candidates.length > 0) {
+        return candidates[Math.floor(Math.random() * candidates.length)].id
+      }
+    }
+    return null
+  }
+
   private async applyUpgrade(upgradeId: string, skipCost: boolean = false, isRestore: boolean = false): Promise<boolean> {
     // Combine all upgrade sources
     const allUpgrades = [
@@ -558,7 +784,8 @@ export class MainScene extends Phaser.Scene {
       ...effectUpgrades.upgrades,
       ...variantUpgrades.upgrades,
       ...visualUpgrades.upgrades,
-      ...abilityUpgrades.upgrades
+      ...abilityUpgrades.upgrades,
+      ...curses.curses
     ] as UpgradeDefinition[]
 
     // Find the upgrade

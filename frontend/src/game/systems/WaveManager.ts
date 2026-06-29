@@ -3,7 +3,7 @@ import { EnemyManager } from './EnemyManager'
 import { GameManager } from '../core/GameManager'
 import { EventBus } from '../core/EventBus'
 import { waveValidation } from '../services/WaveValidation'
-import type { Difficulty, EnemySpawnWeight } from './difficulty/Difficulty'
+import type { Difficulty, EnemySpawnWeight, RarityWeights } from './difficulty/Difficulty'
 import { NormalDifficulty } from './difficulty/Normal'
 
 export class WaveManager {
@@ -158,6 +158,18 @@ export class WaveManager {
 
   isBossWave(): boolean {
     return this.difficulty.getScheduledBossSpawns(this.currentWave) !== null
+  }
+
+  getBundleDropChance(): number {
+    return this.difficulty.getBundleDropChance(this.currentWave)
+  }
+
+  getBundleRarityWeights(): RarityWeights {
+    return this.difficulty.getBundleRarityWeights(this.currentWave)
+  }
+
+  getRarityWeights(): RarityWeights {
+    return this.difficulty.getRarityWeights(this.currentWave)
   }
 
   setWave(wave: number): void {

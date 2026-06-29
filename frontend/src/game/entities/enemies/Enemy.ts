@@ -65,6 +65,9 @@ export abstract class Enemy {
   radius: number = 20
   color: number = 0xff0000
   scoreChance: number = 0.5  // Chance to drop score on death (0 to 1)
+  bundleDropChance: number = 0  // 0 = use difficulty default; override per enemy type
+  bundleDropMin: number = 1  // Minimum bundles to drop on death
+  bundleDropMax: number = 1  // Maximum bundles to drop on death
   speedCap: number = 2  // Maximum speed multiplier (default 2x)
   scale: number = 1.0  // Visual scale multiplier (0.8 = 80%, 1.0 = 100%, 1.2 = 120%)
   hitboxSize: number = 1.0  // Collision radius multiplier relative to visual radius (0.8 = 80%, 1.0 = 100%)
@@ -277,8 +280,16 @@ export abstract class Enemy {
    * Called when this enemy takes damage.
    * Return false to prevent the damage.
    */
-  OnHit(_damage: number, _source: any): boolean {
+  OnHit(_damage: number, _source: any): boolean 
+  {
+    // all sound calls should have this check to prevent "sound stacking"
+    //
+    if (this.scene.sound.isPlaying(this.hitSound))
+    {
+      this.scene.sound.stopByKey(this.hitSound)
+    }
     this.scene.sound.play(this.hitSound, { volume: getDefaultVolume(this.hitSound) })
+    //
     return true
   }
 
@@ -286,8 +297,44 @@ export abstract class Enemy {
    * Called when this enemy dies.
    * Use for death effects, drops, splitting, etc.
    */
-  OnDeath(): void {
+  OnDeath(): void
+  {
+    // all sound calls should have this check to prevent "sound stacking"
+    //
+    if (this.scene.sound.isPlaying(this.deathSound))
+    {
+      this.scene.sound.stopByKey(this.deathSound)
+    }
     this.scene.sound.play(this.deathSound, { volume: getDefaultVolume(this.deathSound) })
+    //
+  }
+
+  /**
+   * Spawns a single upgrade bundle at this enemy's position.
+   * @param forcedRarity  0–4 to guarantee a specific rarity tier; omit for a normal random roll.
+   * @param offsetX       Optional X offset from the enemy's position.
+   * @param offsetY       Optional Y offset from the enemy's position.
+   */
+  protected dropBundle(forcedRarity?: number, offsetX = 0, offsetY = 0): void {
+    EventBus.emit('upgrade-bundle', {
+      x: this.x + offsetX,
+      y: this.y + offsetY,
+      bundleDropChance: this.bundleDropChance,
+      forcedRarity,
+    })
+  }
+
+  /**
+   * Called on death to drop upgrade bundles. Override to customize count and rarities.
+   * Default: drops bundleDropMin..bundleDropMax bundles, scattered when count > 1.
+   */
+  DropBundles(): void {
+    const count = Phaser.Math.Between(this.bundleDropMin, this.bundleDropMax)
+    for (let i = 0; i < count; i++) {
+      const offsetX = count > 1 ? (Math.random() - 0.5) * 40 : 0
+      const offsetY = count > 1 ? (Math.random() - 0.5) * 40 : 0
+      this.dropBundle(undefined, offsetX, offsetY)
+    }
   }
 
   // ============ PUBLIC METHODS ============

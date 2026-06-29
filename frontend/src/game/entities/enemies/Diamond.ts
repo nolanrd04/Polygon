@@ -28,6 +28,7 @@ export class Diamond extends Enemy {
     this.baseSpeed = this.speed
     this.frameCounter = 0
     this.knockbackResistance = .95
+    this.bundleDropChance = 0.1
   }
 
   PreAI(): boolean {

@@ -41,6 +41,9 @@ export interface UpgradeDefinition {
 
   // Cost
   cost?: number
+
+  // Curse
+  curse?: boolean
 }
 
 /**
@@ -63,7 +66,7 @@ class UpgradeSystemClass {
       return false
     }
 
-    // Handle based on upgrade type
+    // Handle based on upgrade type and curse logic
     switch (upgrade.type) {
       case 'stat_modifier':
         this.applyStatModifier(upgrade)
@@ -191,11 +194,16 @@ class UpgradeSystemClass {
       modifierValue = modifierValue
     }
 
+    if (upgrade.curse)
+    {
+      console.log("Applying curse of value: " + modifierValue)
+    }
     UpgradeModifierSystem.addModifier(
       upgrade.target,
       upgrade.stat,
       modifierValue,
-      upgrade.isMultiplier || false
+      upgrade.isMultiplier || false,
+      upgrade.curse || false
     )
   }
 

@@ -14,5 +14,6 @@ export class Square extends Enemy {
     this.scoreChance = 0.4
     this.speedCap = 4.5
     this.knockbackResistance = 0.9
+    this.bundleDropChance = 0.1
   }
 }

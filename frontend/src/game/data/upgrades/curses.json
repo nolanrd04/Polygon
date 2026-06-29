@@ -1,0 +1,79 @@
+{
+  "curses": [
+    {
+      "id": "damage_reduc_1",
+      "name": "Weaknes 1",
+      "description": "-0.1% damage.",
+      "rarity": "common",
+      "type": "stat_modifier",
+      "target": "attack",
+      "stat": "damage",
+      "value": -0.001,
+      "isMultiplier": true,
+      "stackable": true,
+      "maxStacks": 99999,
+      "cost": 0,
+      "curse": true
+    },
+    {
+      "id": "damage_reduc_2",
+      "name": "Weakness 2",
+      "description": "-0.4% damage.",
+      "rarity": "uncommon",
+      "type": "stat_modifier",
+      "target": "attack",
+      "stat": "damage",
+      "value": -0.004,
+      "isMultiplier": true,
+      "stackable": true,
+      "maxStacks": 99999,
+      "cost": 0,
+      "curse": true
+    },
+    {
+      "id": "damage_reduc_3",
+      "name": "Weakness 3",
+      "description": "-0.8% damage.",
+      "rarity": "rare",
+      "type": "stat_modifier",
+      "target": "attack",
+      "stat": "damage",
+      "value": -0.008,
+      "isMultiplier": true,
+      "stackable": true,
+      "maxStacks": 99999,
+      "cost": 0,
+      "curse": true
+    },
+    {
+      "id": "damage_reduc_4",
+      "name": "Weakness 4",
+      "description": "-1.75% damage.",
+      "rarity": "epic",
+      "type": "stat_modifier",
+      "target": "attack",
+      "stat": "damage",
+      "value": -0.0175,
+      "isMultiplier": true,
+      "stackable": true,
+      "maxStacks": 99999,
+      "cost": 0,
+      "curse": true
+    },
+    {
+      "id": "damage_reduc_5",
+      "name": "Weakness 5",
+      "description": "-3.75% damage.",
+      "rarity": "legendary",
+      "type": "stat_modifier",
+      "target": "attack",
+      "stat": "damage",
+      "value": -0.0375,
+      "isMultiplier": true,
+      "stackable": true,
+      "maxStacks": 99999,
+      "cost": 0,
+      "curse": true
+    }
+    ]
+}

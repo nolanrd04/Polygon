@@ -14,8 +14,9 @@ class UpgradeModifierSystemClass {
    * @param stat - What stat to modify (e.g., 'damage', 'speed', 'health')
    * @param value - The value to add or multiply
    * @param isMultiplier - If true, value is a multiplier (1.2 = +20%). If false, it's additive (+5)
+   * @param curse - If true, need to prevent decrementing values from giong below 0
    */
-  addModifier(target: string, stat: string, value: number, isMultiplier: boolean = false): void {
+  addModifier(target: string, stat: string, value: number, isMultiplier: boolean = false, curse?: boolean): void {
     const modifiers = isMultiplier ? this.multiplicativeModifiers : this.additiveModifiers
 
     if (!modifiers.has(target)) {
@@ -28,7 +29,18 @@ class UpgradeModifierSystemClass {
     if (isMultiplier) {
       // Add to existing multiplier (so 5% + 5% = 10%, not 10.25%)
       targetModifiers.set(stat, current + value)
-    } else {
+    } 
+    else
+    {
+      // apply curse edge cases for additive values
+      if (curse && current + value < 0)
+      {
+        // If already at or below 1, don't let it go negative — do nothing.
+        if (current <= 1) return
+        // Otherwise clamp to 1 instead of going negative.
+        targetModifiers.set(stat, 1)
+        return
+      }
       // Add to existing value
       targetModifiers.set(stat, current + value)
     }

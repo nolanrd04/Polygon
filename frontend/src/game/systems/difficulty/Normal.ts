@@ -94,6 +94,38 @@ const FALLBACK_RARITY_WEIGHTS: RarityWeights = {
 }
 
 /**
+ * Rarity weights for bundle drops. Slightly more common-heavy than the
+ * post-wave modal weights since bundles are bonus mid-combat loot.
+ */
+const BUNDLE_RARITY_WEIGHTS_BY_WAVE: Record<number, RarityWeights> = {
+  1:  { common: 0.65, uncommon: 0.25, rare: 0.09, epic: 0.01, legendary: 0.0 },
+  2:  { common: 0.64, uncommon: 0.26, rare: 0.09, epic: 0.01, legendary: 0.0 },
+  3:  { common: 0.62, uncommon: 0.27, rare: 0.09, epic: 0.01, legendary: 0.0 },
+  4:  { common: 0.60, uncommon: 0.28, rare: 0.10, epic: 0.02, legendary: 0.0 },
+  5:  { common: 0.58, uncommon: 0.30, rare: 0.10, epic: 0.02, legendary: 0.00 },
+  6:  { common: 0.55, uncommon: 0.32, rare: 0.11, epic: 0.02, legendary: 0.00 },
+  7:  { common: 0.53, uncommon: 0.32, rare: 0.12, epic: 0.03, legendary: 0.00 },
+  8:  { common: 0.52, uncommon: 0.33, rare: 0.12, epic: 0.03, legendary: 0.00 },
+  9:  { common: 0.50, uncommon: 0.33, rare: 0.13, epic: 0.04, legendary: 0.00 },
+  10: { common: 0.48, uncommon: 0.34, rare: 0.14, epic: 0.04, legendary: 0.00 },
+
+  11: { common: 0.46, uncommon: 0.35, rare: 0.14, epic: 0.04, legendary: 0.01 },
+  12: { common: 0.44, uncommon: 0.35, rare: 0.16, epic: 0.04, legendary: 0.01 },
+  13: { common: 0.43, uncommon: 0.35, rare: 0.16, epic: 0.05, legendary: 0.01 },
+  14: { common: 0.42, uncommon: 0.35, rare: 0.17, epic: 0.05, legendary: 0.01 },
+  15: { common: 0.40, uncommon: 0.36, rare: 0.17, epic: 0.05, legendary: 0.02 },
+  16: { common: 0.39, uncommon: 0.36, rare: 0.18, epic: 0.05, legendary: 0.02 },
+  17: { common: 0.38, uncommon: 0.36, rare: 0.18, epic: 0.06, legendary: 0.02 },
+  18: { common: 0.37, uncommon: 0.36, rare: 0.19, epic: 0.06, legendary: 0.02 },
+  19: { common: 0.36, uncommon: 0.36, rare: 0.19, epic: 0.07, legendary: 0.02 },
+  20: { common: 0.35, uncommon: 0.36, rare: 0.20, epic: 0.07, legendary: 0.02 },
+}
+
+const FALLBACK_BUNDLE_RARITY_WEIGHTS: RarityWeights = {
+  common: 0.33, uncommon: 0.36, rare: 0.20, epic: 0.08, legendary: 0.03,
+}
+
+/**
  * Waves 10/20/30 schedule a boss spawn in addition to the normal spawn pool.
  * Each entry is the ordered list of enemy type IDs to drop when the boss
  * trigger fires.
@@ -131,5 +163,17 @@ export const NormalDifficulty: Difficulty = {
 
   getRarityWeights(wave: number): RarityWeights {
     return RARITY_WEIGHTS_BY_WAVE[wave] ?? FALLBACK_RARITY_WEIGHTS
+  },
+
+  getBundleDropChance(wave: number): number {
+    if (wave <= 4)  return 0.5
+    if (wave <= 9)  return 0.07
+    if (wave <= 14) return 0.09
+    if (wave <= 19) return 0.10
+    return 0.12
+  },
+
+  getBundleRarityWeights(wave: number): RarityWeights {
+    return BUNDLE_RARITY_WEIGHTS_BY_WAVE[wave] ?? FALLBACK_BUNDLE_RARITY_WEIGHTS
   },
 }
