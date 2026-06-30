@@ -24,6 +24,7 @@ import { SuperSquare } from './SuperSquare'
 import { Dodecahedron } from './Dodecahedron'
 // import { Exploder } from './Exploder'
 import type { Enemy } from './Enemy'
+import { SuperPentagon } from './SuperPentagon'
 
 export type EnemyType = {
   id: string
@@ -45,6 +46,7 @@ export const ENEMY_TYPES: EnemyType[] = [
   { id: 'octogon', class: Octogon },
   { id: 'dodecahedron', class: Dodecahedron },
   { id: 'super_square', class: SuperSquare },
+  { id: 'super_pentagon', class: SuperPentagon },
   // { id: 'exploder', class: Exploder },
 ]
 
