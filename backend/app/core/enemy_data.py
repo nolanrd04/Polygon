@@ -22,7 +22,7 @@ ENEMY_BASE_HEALTH: Dict[str, int] = {
     "hexagon": 800,
     "diamond": 250,
     "octogon": 1500,
-    "dodecahedron": 16000,
+    "dodecahedron": 8000,
 }
 
 # Base contact damage per enemy (currently unused for validation, kept for parity).
@@ -41,6 +41,34 @@ ENEMY_BASE_DAMAGE: Dict[str, int] = {
 # Hexagon's shield is sized as a fraction of its (scaled) health.
 # Source: frontend/src/game/entities/enemies/Hexagon.ts (this.maxShieldHealth = this.health * 0.65)
 HEXAGON_SHIELD_RATIO: float = 0.65
+
+# Enemy defense values — reduce incoming damage by this flat amount (minimum 1 damage per hit).
+# Source: frontend/src/game/entities/enemies/Enemy.ts + subclasses
+ENEMY_BASE_DEFENSE: Dict[str, int] = {
+    "triangle": 0,
+    "square": 0,
+    "super_triangle": 0,
+    "super_square": 0,
+    "pentagon": 0,
+    "hexagon": 0,
+    "diamond": 0,
+    "octogon": 0,
+    "dodecahedron": 25,  # Boss has defensive armor
+}
+
+# Upgrade bundle drop chance on death (0.0 = 0%, 1.0 = 100%).
+# Source: frontend/src/game/entities/enemies/Enemy.ts (bundleDropChance property)
+ENEMY_BUNDLE_DROP_CHANCE: Dict[str, float] = {
+    "triangle": 0.08,
+    "square": 0.1,
+    "super_triangle": 0.1,
+    "super_square": 0.15,
+    "pentagon": 0.12,
+    "hexagon": 0.16,
+    "diamond": 0.1,
+    "octogon": 0.12,
+    "dodecahedron": 1.0,  # Boss always drops bundles (custom DropBundles() on frontend)
+}
 
 # Earliest wave each enemy can spawn on. Boss-only enemies use the boss-wave value.
 # Source: SPAWN_WEIGHTS / SCHEDULED_BOSS_SPAWNS in Normal.ts.

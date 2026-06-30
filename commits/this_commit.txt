@@ -1,0 +1,1 @@
+Added more curses. Nerfed dash upgrades. Changes curses to be a 30% chance. Changed octogon to blue. Changed pentagon to orange and teleports when close to the player.

@@ -110,13 +110,12 @@ UPGRADES: Dict[str, Dict[str, Any]] = {
     "tenacity_3": {"id": "tenacity_3", "name": "Tenacity", "description": "Increased the bullet lifespan by 1 second", "rarity": "legendary", "type": "stat_modifier", "target": "bullet", "attackType": "bullet", "stat": "timeLeft", "value": 1000, "stackable": True, "maxStacks": 1, "cost": 40},
 
     # DASH SPEED
-    "dash_speed_1": {"id": "dash_speed_1", "name": "Swift Escape", "description": "+40% dash speed", "rarity": "rare", "type": "stat_modifier", "target": "player", "stat": "dashSpeed", "value": 0.40, "isMultiplier": True, "stackable": True, "maxStacks": 3, "cost": 10, "dependentOn": ["dash_ability"], "dependencyCount": 1},
-    "dash_speed_2": {"id": "dash_speed_2", "name": "Swift Escape", "description": "+75% dash speed", "rarity": "epic", "type": "stat_modifier", "target": "player", "stat": "dashSpeed", "value": 0.75, "isMultiplier": True, "stackable": True, "maxStacks": 2, "cost": 20, "dependentOn": ["dash_ability"], "dependencyCount": 1},
+    "dash_speed_1": {"id": "dash_speed_1", "name": "Swift Escape", "description": "+15% dash speed", "rarity": "rare", "type": "stat_modifier", "target": "player", "stat": "dashSpeed", "value": 0.15, "isMultiplier": True, "stackable": True, "maxStacks": 3, "cost": 10, "dependentOn": ["dash_ability"], "dependencyCount": 1},
+    "dash_speed_2": {"id": "dash_speed_2", "name": "Swift Escape", "description": "+32% dash speed", "rarity": "epic", "type": "stat_modifier", "target": "player", "stat": "dashSpeed", "value": 0.32, "isMultiplier": True, "stackable": True, "maxStacks": 2, "cost": 20, "dependentOn": ["dash_ability"], "dependencyCount": 1},
 
     # DASH COOLDOWN REDUCTION
-    "dash_cooldown_1": {"id": "dash_cooldown_1", "name": "Swift Recovery", "description": "-30% dash cooldown", "rarity": "rare", "type": "stat_modifier", "target": "player", "stat": "dashCooldown", "value": -0.30, "isMultiplier": True, "stackable": True, "maxStacks": 5, "cost": 10, "dependentOn": ["dash_ability"], "dependencyCount": 1},
-    "dash_cooldown_2": {"id": "dash_cooldown_2", "name": "Swift Recovery", "description": "-75% dash cooldown", "rarity": "epic", "type": "stat_modifier", "target": "player", "stat": "dashCooldown", "value": -0.75, "isMultiplier": True, "stackable": True, "maxStacks": 3, "cost": 20, "dependentOn": ["dash_ability"], "dependencyCount": 1},
-    "dash_cooldown_3": {"id": "dash_cooldown_3", "name": "Swift Recovery", "description": "-90% dash cooldown", "rarity": "legendary", "type": "stat_modifier", "target": "player", "stat": "dashCooldown", "value": -0.90, "isMultiplier": True, "stackable": True, "maxStacks": 2, "cost": 40, "dependentOn": ["dash_ability"], "dependencyCount": 1},
+    "dash_cooldown_1": {"id": "dash_cooldown_1", "name": "Swift Recovery", "description": "-5% dash cooldown", "rarity": "rare", "type": "stat_modifier", "target": "player", "stat": "dashCooldown", "value": -0.05, "isMultiplier": True, "stackable": True, "maxStacks": 5, "cost": 10, "dependentOn": ["dash_ability"], "dependencyCount": 1},
+    "dash_cooldown_2": {"id": "dash_cooldown_2", "name": "Swift Recovery", "description": "-15% dash cooldown", "rarity": "epic", "type": "stat_modifier", "target": "player", "stat": "dashCooldown", "value": -0.15, "isMultiplier": True, "stackable": True, "maxStacks": 3, "cost": 20, "dependentOn": ["dash_ability"], "dependencyCount": 1},
 
     # EFFECT UPGRADES
     "vampirism_1": {"id": "vampirism_1", "name": "Vampirism", "description": "Heal for 2% of damage dealt", "rarity": "rare", "type": "effect", "effect": "lifesteal", "effectValue": 0.02, "stackable": False, "maxStacks": 1, "cost": 10, "tier": 1, "upgradesTo": "vampirism_2"},
@@ -125,8 +124,8 @@ UPGRADES: Dict[str, Dict[str, Any]] = {
 
     "regeneration": {"id": "regeneration", "name": "Auto Repair", "description": "Regenerate 1 HP/sec", "rarity": "epic", "type": "effect", "effect": "regen", "effectValue": 1, "stackable": True, "maxStacks": 3, "cost": 20},
 
-    "armor": {"id": "armor", "name": "Hardened Shell", "description": "Reduce incoming damage by 2.5%", "rarity": "rare", "type": "effect", "effect": "armor", "effectValue": 0.025, "multipler": True, "stackable": True, "maxStacks": 5, "cost": 10},
-    "armor_2": {"id": "armor_2", "name": "Hardened Shell", "description": "Reduce incoming damage by 6%", "rarity": "epic", "type": "effect", "effect": "armor", "effectValue": 0.06, "multipler": True, "stackable": True, "maxStacks": 3, "cost": 20},
+    "armor": {"id": "armor", "name": "Hardened Shell", "description": "Reduce incoming damage by 2.5%", "rarity": "rare", "type": "effect", "effect": "protection", "effectValue": 0.025, "multipler": True, "stackable": True, "maxStacks": 5, "cost": 10},
+    "armor_2": {"id": "armor_2", "name": "Hardened Shell", "description": "Reduce incoming damage by 6%", "rarity": "epic", "type": "effect", "effect": "protection", "effectValue": 0.06, "multipler": True, "stackable": True, "maxStacks": 3, "cost": 20},
 
     "thorns": {"id": "thorns", "name": "Thorns", "description": "Reflect 10% of damage taken", "rarity": "epic", "type": "effect", "effect": "thorns", "effectValue": 0.1, "stackable": True, "maxStacks": 3, "cost": 20},
 
@@ -135,7 +134,7 @@ UPGRADES: Dict[str, Dict[str, Any]] = {
     "ricochet": {"id": "ricochet", "name": "Ricochet Rounds", "description": "Projectiles bounce off surfaces.", "rarity": "epic", "type": "effect", "effect": "ricochet", "effectValue": 1, "stackable": True, "maxStacks": 2, "cost": 20, "dependentOn": ["bullet_pierce_1"], "dependencyCount": 1, "incompatibleWith": ["homing_bullets"]},
 
     # VARIANT UPGRADES
-    "homing_bullets": {"id": "homing_bullets", "name": "Homing Bullets", "description": "Bullets track nearest enemy with greatly reduced damage.", "rarity": "epic", "type": "variant", "target": "bullet", "attackType": "bullet", "variantClass": "HomingBullet", "replaces": "explosive_bullets", "stackable": False, "cost": 20},
+    "homing_bullets": {"id": "homing_bullets", "name": "Homing Bullets", "description": "Bullets track nearest enemy with 60% reduced damage.", "rarity": "epic", "type": "variant", "target": "bullet", "attackType": "bullet", "variantClass": "HomingBullet", "replaces": "explosive_bullets", "stackable": False, "cost": 20},
     "explosive_bullets": {"id": "explosive_bullets", "name": "Explosive Bullets", "description": "Bullets explode on impact dealing collision and area damage.", "rarity": "epic", "type": "variant", "target": "bullet", "attackType": "bullet", "variantClass": "ExplosiveBullet", "replaces": "homing_bullets", "stackable": False, "cost": 20},
 
     # VISUAL EFFECT UPGRADES
@@ -149,6 +148,23 @@ UPGRADES: Dict[str, Dict[str, Any]] = {
     # DASH CHARGE UPGRADES
     "double_dash": {"id": "double_dash", "name": "Double Dash", "description": "Store 2 dashes.", "rarity": "epic", "type": "ability", "effect": "double_dash", "stackable": False, "cost": 20, "dependentOn": ["dash_ability"], "dependencyCount": 1},
     "triple_dash": {"id": "triple_dash", "name": "Triple Dash", "description": "Store 3 dashes.", "rarity": "legendary", "type": "ability", "effect": "triple_dash", "stackable": False, "cost": 40, "dependentOn": ["double_dash"], "dependencyCount": 1},
+
+    # CURSE UPGRADES
+    "damage_reduc_1": {"id": "damage_reduc_1", "name": "Weakness 1", "description": "-0.1% damage.", "rarity": "common", "type": "stat_modifier", "target": "attack", "stat": "damage", "value": -0.001, "isMultiplier": True, "stackable": True, "maxStacks": 99999, "cost": 0, "curse": True},
+    "damage_reduc_2": {"id": "damage_reduc_2", "name": "Weakness 2", "description": "-0.4% damage.", "rarity": "uncommon", "type": "stat_modifier", "target": "attack", "stat": "damage", "value": -0.004, "isMultiplier": True, "stackable": True, "maxStacks": 99999, "cost": 0, "curse": True},
+    "damage_reduc_3": {"id": "damage_reduc_3", "name": "Weakness 3", "description": "-0.8% damage.", "rarity": "rare", "type": "stat_modifier", "target": "attack", "stat": "damage", "value": -0.008, "isMultiplier": True, "stackable": True, "maxStacks": 99999, "cost": 0, "curse": True},
+    "damage_reduc_4": {"id": "damage_reduc_4", "name": "Weakness 4", "description": "-1.75% damage.", "rarity": "epic", "type": "stat_modifier", "target": "attack", "stat": "damage", "value": -0.0175, "isMultiplier": True, "stackable": True, "maxStacks": 99999, "cost": 0, "curse": True},
+    "damage_reduc_5": {"id": "damage_reduc_5", "name": "Weakness 5", "description": "-3.75% damage.", "rarity": "legendary", "type": "stat_modifier", "target": "attack", "stat": "damage", "value": -0.0375, "isMultiplier": True, "stackable": True, "maxStacks": 99999, "cost": 0, "curse": True},
+    "shattered_bullet_1": {"id": "shattered_bullet_1", "name": "Shattered Bullet 1", "description": "-1 bullet damage.", "rarity": "uncommon", "type": "stat_modifier", "target": "bullet", "stat": "damage", "value": -1, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 0, "curse": True},
+    "shattered_bullet_2": {"id": "shattered_bullet_2", "name": "Shattered Bullet 2", "description": "-3 bullet damage.", "rarity": "rare", "type": "stat_modifier", "target": "bullet", "stat": "damage", "value": -3, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 0, "curse": True},
+    "shattered_bullet_3": {"id": "shattered_bullet_3", "name": "Shattered Bullet 3", "description": "-5 bullet damage.", "rarity": "epic", "type": "stat_modifier", "target": "bullet", "stat": "damage", "value": -5, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 0, "curse": True},
+    "health_reduc_1": {"id": "health_reduc_1", "name": "Reduced Health 1", "description": "-5 max health.", "rarity": "common", "type": "stat_modifier", "target": "player", "stat": "maxHealth", "value": -5, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 0, "curse": True},
+    "health_reduc_2": {"id": "health_reduc_2", "name": "Reduced Health 2", "description": "-10 max health.", "rarity": "uncommon", "type": "stat_modifier", "target": "player", "stat": "maxHealth", "value": -10, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 0, "curse": True},
+    "health_reduc_3": {"id": "health_reduc_3", "name": "Reduced Health 3", "description": "-20 max health.", "rarity": "rare", "type": "stat_modifier", "target": "player", "stat": "maxHealth", "value": -20, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 0, "curse": True},
+    "health_reduc_4": {"id": "health_reduc_4", "name": "Reduced Health 4", "description": "-40 max health.", "rarity": "epic", "type": "stat_modifier", "target": "player", "stat": "maxHealth", "value": -40, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 0, "curse": True},
+    "health_reduc_5": {"id": "health_reduc_5", "name": "Reduced Health 5", "description": "-80 max health.", "rarity": "legendary", "type": "stat_modifier", "target": "player", "stat": "maxHealth", "value": -80, "isMultiplier": False, "stackable": True, "maxStacks": 99999, "cost": 0, "curse": True},
+    "fragility_1": {"id": "fragility_1", "name": "Fragility 1", "description": "Increased damage taken by 1.25%", "rarity": "rare", "type": "effect", "effect": "protection", "effectValue": 0.0125, "isMultiplier": True, "stackable": True, "maxStacks": 3, "cost": 0, "curse": True},
+    "fragility_2": {"id": "fragility_2", "name": "Fragility 2", "description": "Increased damage taken by 3.5%", "rarity": "epic", "type": "effect", "effect": "protection", "effectValue": 0.035, "isMultiplier": True, "stackable": True, "maxStacks": 1, "cost": 0, "curse": True},
 }
 
 
