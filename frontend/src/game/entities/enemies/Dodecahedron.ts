@@ -3,7 +3,7 @@ import { Enemy } from './Enemy'
 import { TrailRenderer } from '../../utils/TrailRenderer'
 // import { EnemyBullet } from '../projectiles/enemy_projectiles/EnemyBullet'
 import { DodecahedronBullet } from '../projectiles/enemy_projectiles/DodecahedronBullet'
-import { BundleRarity } from '../../data/ID'
+import { BundleRarity, DifficultyID } from '../../data/ID'
 
 export class Dodecahedron extends Enemy {
   private invincible: boolean = false
@@ -71,7 +71,33 @@ export class Dodecahedron extends Enemy {
   }
 
   DropBundles(): void {
-    this.dropBundle(BundleRarity.Legendary)
+    const waveManager = (this.scene as any).waveManager
+    const difficultyId = waveManager.getDifficultyId()
+
+    if (difficultyId === DifficultyID.Normal) {
+      const legendaryCount = Phaser.Math.Between(1, 2)
+      const epicCount = Phaser.Math.Between(2, 4)
+      const rareCount = Phaser.Math.Between(3, 4)
+      const uncommonCount = Phaser.Math.Between(4, 6)
+      const commonCount = Phaser.Math.Between(4, 6)
+
+      const dropWithRadius = (count: number, rarity: number, minRadius: number, maxRadius: number) => {
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2
+          const distance = Phaser.Math.Between(minRadius, maxRadius)
+          const offsetX = Math.cos(angle) * distance
+          const offsetY = Math.sin(angle) * distance
+          // console.log(`Rarity: ${rarity}, Angle: ${angle}, Distance: ${distance}, OffsetX: ${offsetX}, OffsetY: ${offsetY}`)
+          this.dropBundle(rarity, offsetX, offsetY)
+        }
+      }
+
+      dropWithRadius(legendaryCount, BundleRarity.Legendary, 10, 30)
+      dropWithRadius(epicCount, BundleRarity.Epic, 20, 50)
+      dropWithRadius(rareCount, BundleRarity.Rare, 30, 60)
+      dropWithRadius(uncommonCount, BundleRarity.Uncommon, 50, 80)
+      dropWithRadius(commonCount, BundleRarity.Common, 70, 100)
+    }
   }
 
   AI(_playerX: number, _playerY: number): void {

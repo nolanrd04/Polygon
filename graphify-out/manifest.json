@@ -1,0 +1,937 @@
+{
+  "/Users/nolan/Desktop/Polygon/.claude/settings.local.json": {
+    "mtime": 1778284796.6244013,
+    "ast_hash": "88030d9a994a32c18044fcf2fe31d9e2",
+    "semantic_hash": "88030d9a994a32c18044fcf2fe31d9e2"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/__init__.py": {
+    "mtime": 1767500844.4137266,
+    "ast_hash": "3c4ecde3808f70d0f6aea7429fa4fb9b",
+    "semantic_hash": "3c4ecde3808f70d0f6aea7429fa4fb9b"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/api/__init__.py": {
+    "mtime": 1767500844.4138322,
+    "ast_hash": "6740829c78f82bb4cb5108156094d038",
+    "semantic_hash": "6740829c78f82bb4cb5108156094d038"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/api/auth.py": {
+    "mtime": 1767500844.4139018,
+    "ast_hash": "d5e317c9d8417b39f40e01a81a086c82",
+    "semantic_hash": "d5e317c9d8417b39f40e01a81a086c82"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/api/runs.py": {
+    "mtime": 1767500844.4139771,
+    "ast_hash": "1f9a8cc8c11a2168b16f0f20494b0880",
+    "semantic_hash": "1f9a8cc8c11a2168b16f0f20494b0880"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/api/saves.py": {
+    "mtime": 1767500844.4140697,
+    "ast_hash": "03987794343dfe2fbf575b50aadaba41",
+    "semantic_hash": "03987794343dfe2fbf575b50aadaba41"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/api/users.py": {
+    "mtime": 1767500844.414132,
+    "ast_hash": "2785c57ab52beb76de1b8f4c49a8030a",
+    "semantic_hash": "2785c57ab52beb76de1b8f4c49a8030a"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/api/waves.py": {
+    "mtime": 1777863601.8427444,
+    "ast_hash": "826303f1fbfa87803fe51a0d1fbac760",
+    "semantic_hash": "826303f1fbfa87803fe51a0d1fbac760"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/core/__init__.py": {
+    "mtime": 1767500844.4143183,
+    "ast_hash": "465779b129b335d6257871e66a984539",
+    "semantic_hash": "465779b129b335d6257871e66a984539"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/core/config.py": {
+    "mtime": 1767500844.4143865,
+    "ast_hash": "7dc36d8065470ac223351310d66fbd4d",
+    "semantic_hash": "7dc36d8065470ac223351310d66fbd4d"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/core/database.py": {
+    "mtime": 1767500844.4144492,
+    "ast_hash": "8c5f9fe4aac3eb66c192c85b490a422e",
+    "semantic_hash": "8c5f9fe4aac3eb66c192c85b490a422e"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/core/enemy_data.py": {
+    "mtime": 1777863601.8430762,
+    "ast_hash": "95dc725665fdf0fc014e4488bc38e33a",
+    "semantic_hash": "95dc725665fdf0fc014e4488bc38e33a"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/core/security.py": {
+    "mtime": 1767500844.4145877,
+    "ast_hash": "9322fd671f20e4f0412f5468a1ab16c3",
+    "semantic_hash": "9322fd671f20e4f0412f5468a1ab16c3"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/core/upgrade_data.py": {
+    "mtime": 1777863601.8434231,
+    "ast_hash": "8e4027dbc0cfb18fdbdecfa4a3c46050",
+    "semantic_hash": "8e4027dbc0cfb18fdbdecfa4a3c46050"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/main.py": {
+    "mtime": 1767500844.4147878,
+    "ast_hash": "59fb69a641736f7fe6e05b68a7b00e97",
+    "semantic_hash": "59fb69a641736f7fe6e05b68a7b00e97"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/models/__init__.py": {
+    "mtime": 1767500844.4148881,
+    "ast_hash": "a9f9debc5366ad26d1fa7b9be09b2f13",
+    "semantic_hash": "a9f9debc5366ad26d1fa7b9be09b2f13"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/models/base.py": {
+    "mtime": 1767500844.4149451,
+    "ast_hash": "c57fc337fb14c9ede324fb0891b322fe",
+    "semantic_hash": "c57fc337fb14c9ede324fb0891b322fe"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/models/flagged_wave.py": {
+    "mtime": 1767500844.4150064,
+    "ast_hash": "20035bcaf841b1c099568f7918959b99",
+    "semantic_hash": "20035bcaf841b1c099568f7918959b99"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/models/game_save.py": {
+    "mtime": 1776728349.4172764,
+    "ast_hash": "facaac93b945d3b96e332300e727031b",
+    "semantic_hash": "facaac93b945d3b96e332300e727031b"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/models/player_stats.py": {
+    "mtime": 1767500844.4151542,
+    "ast_hash": "b6ec5139b0660a4f71329c35981297fb",
+    "semantic_hash": "b6ec5139b0660a4f71329c35981297fb"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/models/run.py": {
+    "mtime": 1767500844.4152255,
+    "ast_hash": "4ef273f510c15e4e9e1466ab42a931d0",
+    "semantic_hash": "4ef273f510c15e4e9e1466ab42a931d0"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/models/user.py": {
+    "mtime": 1767500844.415295,
+    "ast_hash": "697f30856f1e6d4d2bc2fab6c4cf7f17",
+    "semantic_hash": "697f30856f1e6d4d2bc2fab6c4cf7f17"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/repositories/__init__.py": {
+    "mtime": 1767500844.4154994,
+    "ast_hash": "680c9a5de681640e2a4e5442359f5d2d",
+    "semantic_hash": "680c9a5de681640e2a4e5442359f5d2d"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/repositories/base.py": {
+    "mtime": 1767500844.4155574,
+    "ast_hash": "31ba0b25809787e6715cce84835f46c0",
+    "semantic_hash": "31ba0b25809787e6715cce84835f46c0"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/repositories/game_save_repository.py": {
+    "mtime": 1767500844.4156353,
+    "ast_hash": "0c0c2485d4ec59bc815af935d80a30aa",
+    "semantic_hash": "0c0c2485d4ec59bc815af935d80a30aa"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/repositories/player_stats_repository.py": {
+    "mtime": 1767500844.4157138,
+    "ast_hash": "2bec875da607f3535dfebfbe84de9c2c",
+    "semantic_hash": "2bec875da607f3535dfebfbe84de9c2c"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/repositories/run_repository.py": {
+    "mtime": 1767500844.4157825,
+    "ast_hash": "6cc0cb397a675a50a5c9398427054c91",
+    "semantic_hash": "6cc0cb397a675a50a5c9398427054c91"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/repositories/user_repository.py": {
+    "mtime": 1767500844.4158533,
+    "ast_hash": "db5f077b8573b712a7f24f8a61a93f59",
+    "semantic_hash": "db5f077b8573b712a7f24f8a61a93f59"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/services/__init__.py": {
+    "mtime": 1767500844.4159553,
+    "ast_hash": "458d5498cdd8d39f522533b1fd9f5915",
+    "semantic_hash": "458d5498cdd8d39f522533b1fd9f5915"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/services/auth_service.py": {
+    "mtime": 1767503134.0676653,
+    "ast_hash": "39b48df5237f4bdf2b0eae24719d9707",
+    "semantic_hash": "39b48df5237f4bdf2b0eae24719d9707"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/services/run_service.py": {
+    "mtime": 1767500844.4160962,
+    "ast_hash": "374a51fad94987dda0ec8d1759d13aae",
+    "semantic_hash": "374a51fad94987dda0ec8d1759d13aae"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/services/user_service.py": {
+    "mtime": 1767500844.416166,
+    "ast_hash": "e36831e811a2018172a38ba4d1359b40",
+    "semantic_hash": "e36831e811a2018172a38ba4d1359b40"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/app/services/wave_service.py": {
+    "mtime": 1777863601.8437455,
+    "ast_hash": "e9816198d078a708d354299f873ec54d",
+    "semantic_hash": "e9816198d078a708d354299f873ec54d"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/start.sh": {
+    "mtime": 1776728349.4177275,
+    "ast_hash": "b1081eea9af8a02155422eb75a692068",
+    "semantic_hash": "b1081eea9af8a02155422eb75a692068"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/package.json": {
+    "mtime": 1767500844.4171488,
+    "ast_hash": "fbe5ceb4ab1b3ecda1628336dfd37065",
+    "semantic_hash": "fbe5ceb4ab1b3ecda1628336dfd37065"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/postcss.config.js": {
+    "mtime": 1767500844.417229,
+    "ast_hash": "ef3ba2a81ba19f8ea5ddf625521e96f0",
+    "semantic_hash": "ef3ba2a81ba19f8ea5ddf625521e96f0"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/App.tsx": {
+    "mtime": 1782776012.430392,
+    "ast_hash": "157c65d53749e0e4a2c6893527630a85",
+    "semantic_hash": "157c65d53749e0e4a2c6893527630a85"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/components/AbilityDisplay.tsx": {
+    "mtime": 1777863601.8445048,
+    "ast_hash": "8f96c6787caf1c277e525a2afecddc48",
+    "semantic_hash": "8f96c6787caf1c277e525a2afecddc48"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/components/DevTools.tsx": {
+    "mtime": 1777863601.8448567,
+    "ast_hash": "7c286f41911bb702e84764bb52f641b6",
+    "semantic_hash": "7c286f41911bb702e84764bb52f641b6"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/components/GameHUD.tsx": {
+    "mtime": 1777863601.8451588,
+    "ast_hash": "23e2e4146ca207c0596d4f33472c2b4e",
+    "semantic_hash": "23e2e4146ca207c0596d4f33472c2b4e"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/components/LoadGameModal.tsx": {
+    "mtime": 1777863601.845452,
+    "ast_hash": "8a55a7c637989a2cd21408da11daab27",
+    "semantic_hash": "8a55a7c637989a2cd21408da11daab27"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/components/PauseMenu.tsx": {
+    "mtime": 1777863601.8456755,
+    "ast_hash": "a937e336d69f8f9e5cb09db63c15e39d",
+    "semantic_hash": "a937e336d69f8f9e5cb09db63c15e39d"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/components/SaveGameModal.tsx": {
+    "mtime": 1777863601.8458283,
+    "ast_hash": "265ca4b7a4c873a3dc325a23becbf088",
+    "semantic_hash": "265ca4b7a4c873a3dc325a23becbf088"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/components/UpgradeModal.tsx": {
+    "mtime": 1777863601.8461425,
+    "ast_hash": "04fab8f79db62f80f32a764c2f7710bc",
+    "semantic_hash": "04fab8f79db62f80f32a764c2f7710bc"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/components/ViewUpgrades.tsx": {
+    "mtime": 1777863601.8464513,
+    "ast_hash": "ae5069e142f69900385bb59214e8a8b3",
+    "semantic_hash": "ae5069e142f69900385bb59214e8a8b3"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/components/WaveComplete.tsx": {
+    "mtime": 1767500844.4179487,
+    "ast_hash": "65490b9e9d67acb7ae828fe2931fffbd",
+    "semantic_hash": "65490b9e9d67acb7ae828fe2931fffbd"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/config/axios.ts": {
+    "mtime": 1767503803.916803,
+    "ast_hash": "20e3d98e55e9a1d1a3f2b045c426cbd5",
+    "semantic_hash": "20e3d98e55e9a1d1a3f2b045c426cbd5"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/core/AudioRegistry.ts": {
+    "mtime": 1782368424.479248,
+    "ast_hash": "02f822c4d156dd1229e0f1bff0cc385f",
+    "semantic_hash": "02f822c4d156dd1229e0f1bff0cc385f"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/core/EventBus.ts": {
+    "mtime": 1782763927.5784204,
+    "ast_hash": "bd0d5c08d3ef24c3d33ddefb15c4060a",
+    "semantic_hash": "bd0d5c08d3ef24c3d33ddefb15c4060a"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/core/GameConfig.ts": {
+    "mtime": 1777863601.8467553,
+    "ast_hash": "468275d90799a0ec6dfb736c8b32c4ad",
+    "semantic_hash": "468275d90799a0ec6dfb736c8b32c4ad"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/core/GameManager.ts": {
+    "mtime": 1767500844.4183843,
+    "ast_hash": "def2898c4e5f65245a8f50e2a04a12d4",
+    "semantic_hash": "def2898c4e5f65245a8f50e2a04a12d4"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/data/ID.ts": {
+    "mtime": 1782764659.1208344,
+    "ast_hash": "35fec652b18c4d1220410683c74e745b",
+    "semantic_hash": "35fec652b18c4d1220410683c74e745b"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/data/attackTypes.ts": {
+    "mtime": 1767500844.418513,
+    "ast_hash": "3309647d99dbfc601270ffbba6816b03",
+    "semantic_hash": "3309647d99dbfc601270ffbba6816b03"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/data/upgrades/ability_upgrades.json": {
+    "mtime": 1769728292.3570063,
+    "ast_hash": "88d228f138a831591bc0f318ff3c7f3c",
+    "semantic_hash": "88d228f138a831591bc0f318ff3c7f3c"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/data/upgrades/curses.json": {
+    "mtime": 1782543243.1638758,
+    "ast_hash": "bd152b8d2c90d3082ed47eb6d2b85be9",
+    "semantic_hash": "bd152b8d2c90d3082ed47eb6d2b85be9"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/data/upgrades/effect_upgrades.json": {
+    "mtime": 1777863601.847004,
+    "ast_hash": "bd43e082baf82c48df12b5501063691f",
+    "semantic_hash": "bd43e082baf82c48df12b5501063691f"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/data/upgrades/stat_upgrades.json": {
+    "mtime": 1777863601.8475363,
+    "ast_hash": "a161b7b42e2a6de62b6bdc1ad41d88e3",
+    "semantic_hash": "a161b7b42e2a6de62b6bdc1ad41d88e3"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/data/upgrades/variant_upgrades.json": {
+    "mtime": 1781380461.658155,
+    "ast_hash": "86b447ef6984e3576dcfe2c9aa93af74",
+    "semantic_hash": "86b447ef6984e3576dcfe2c9aa93af74"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/data/upgrades/visual_upgrades.json": {
+    "mtime": 1767500844.418914,
+    "ast_hash": "16ab18b69de50b967e5039e029102d4f",
+    "semantic_hash": "16ab18b69de50b967e5039e029102d4f"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/enemyAbilities/Ability.ts": {
+    "mtime": 1767500844.4190187,
+    "ast_hash": "27c0f7255875d667bd55e4ef8665ae9e",
+    "semantic_hash": "27c0f7255875d667bd55e4ef8665ae9e"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/enemyAbilities/DashAbility.ts": {
+    "mtime": 1767500844.4190893,
+    "ast_hash": "37a3f7af498116518af297a3f32144b8",
+    "semantic_hash": "37a3f7af498116518af297a3f32144b8"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/enemyAbilities/ExplodeAbility.ts": {
+    "mtime": 1767500844.4191535,
+    "ast_hash": "a1d29f91f929e35b21031ae5d84a2e78",
+    "semantic_hash": "a1d29f91f929e35b21031ae5d84a2e78"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/enemyAbilities/ShieldAbility.ts": {
+    "mtime": 1767500844.419223,
+    "ast_hash": "aafeb875eada2765f37545a8ad8efe1d",
+    "semantic_hash": "aafeb875eada2765f37545a8ad8efe1d"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/enemyAbilities/ShootAbility.ts": {
+    "mtime": 1767500844.4192858,
+    "ast_hash": "605fe4daa404ef085382b3d63e9bc495",
+    "semantic_hash": "605fe4daa404ef085382b3d63e9bc495"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/enemyAbilities/SplitAbility.ts": {
+    "mtime": 1767500844.4193444,
+    "ast_hash": "303a39aa0b094b1e969ed5f7bbf19791",
+    "semantic_hash": "303a39aa0b094b1e969ed5f7bbf19791"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/enemyAbilities/index.ts": {
+    "mtime": 1767500844.4194055,
+    "ast_hash": "37c44d5cf32b276b87494dc4d7922f50",
+    "semantic_hash": "37c44d5cf32b276b87494dc4d7922f50"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/Player.ts": {
+    "mtime": 1777863601.8478372,
+    "ast_hash": "23cd733f3a2ab9eaf0a1737f620ddc40",
+    "semantic_hash": "23cd733f3a2ab9eaf0a1737f620ddc40"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/enemies/Diamond.ts": {
+    "mtime": 1782454692.938502,
+    "ast_hash": "7de19229282be77ee09cb47e6b865f65",
+    "semantic_hash": "7de19229282be77ee09cb47e6b865f65"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/enemies/Dodecahedron.ts": {
+    "mtime": 1782764682.6815903,
+    "ast_hash": "8b0116fab999efbd31866722d0408719",
+    "semantic_hash": "8b0116fab999efbd31866722d0408719"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/enemies/Enemy.ts": {
+    "mtime": 1782764136.9813647,
+    "ast_hash": "ef8ee851030971d1a94acbfa20fb78b7",
+    "semantic_hash": "ef8ee851030971d1a94acbfa20fb78b7"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/enemies/Hexagon.ts": {
+    "mtime": 1782454661.6882584,
+    "ast_hash": "bb8913ffa6a73df10137bad55260523d",
+    "semantic_hash": "bb8913ffa6a73df10137bad55260523d"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/enemies/Octogon.ts": {
+    "mtime": 1782454635.5179012,
+    "ast_hash": "01d58454fa74e82601d79d7014cb5b0c",
+    "semantic_hash": "01d58454fa74e82601d79d7014cb5b0c"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/enemies/Pentagon.ts": {
+    "mtime": 1782454647.347332,
+    "ast_hash": "16cd4e30554bde736cb8e71de612e415",
+    "semantic_hash": "16cd4e30554bde736cb8e71de612e415"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/enemies/Square.ts": {
+    "mtime": 1782454619.190213,
+    "ast_hash": "e19103d3bd70da691439cd2a45e033eb",
+    "semantic_hash": "e19103d3bd70da691439cd2a45e033eb"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/enemies/SuperSquare.ts": {
+    "mtime": 1782454607.2328794,
+    "ast_hash": "970bdbd7685b9874e144c8eeeabc75f4",
+    "semantic_hash": "970bdbd7685b9874e144c8eeeabc75f4"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/enemies/SuperTriangle.ts": {
+    "mtime": 1782454594.6471062,
+    "ast_hash": "41df036ff4d4de71c7fa287aa7a1d42e",
+    "semantic_hash": "41df036ff4d4de71c7fa287aa7a1d42e"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/enemies/Triangle.ts": {
+    "mtime": 1782454578.6179564,
+    "ast_hash": "eab131ea5b9db8f991d4f833f96f8703",
+    "semantic_hash": "eab131ea5b9db8f991d4f833f96f8703"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/enemies/index.ts": {
+    "mtime": 1767500844.4204245,
+    "ast_hash": "e867881c74fbae54052716906ea28910",
+    "semantic_hash": "e867881c74fbae54052716906ea28910"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/index.ts": {
+    "mtime": 1767500844.4204905,
+    "ast_hash": "61b4da585305f08329c6945452d5b0af",
+    "semantic_hash": "61b4da585305f08329c6945452d5b0af"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/particles/Particle.ts": {
+    "mtime": 1767500844.4205863,
+    "ast_hash": "13581c84726ab58b022994f50c9d0c92",
+    "semantic_hash": "13581c84726ab58b022994f50c9d0c92"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/projectiles/Projectile.ts": {
+    "mtime": 1776728349.4195688,
+    "ast_hash": "9648602818b039cebe7ce3520b5fb17f",
+    "semantic_hash": "9648602818b039cebe7ce3520b5fb17f"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/projectiles/enemy_projectiles/AcidBullet.ts": {
+    "mtime": 1767500844.4209087,
+    "ast_hash": "0882747598244bf780ecf6a63e5ad5b8",
+    "semantic_hash": "0882747598244bf780ecf6a63e5ad5b8"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/projectiles/enemy_projectiles/AcidExplosion.ts": {
+    "mtime": 1767500844.4209769,
+    "ast_hash": "db771a529233d46e85da222c4dcfbdb9",
+    "semantic_hash": "db771a529233d46e85da222c4dcfbdb9"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/projectiles/enemy_projectiles/DodecahedronBullet.ts": {
+    "mtime": 1776730513.5599756,
+    "ast_hash": "a624e8b168f78157505a73a72aa715a1",
+    "semantic_hash": "a624e8b168f78157505a73a72aa715a1"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/projectiles/enemy_projectiles/EnemyBullet.ts": {
+    "mtime": 1767500844.4210362,
+    "ast_hash": "164eb6fba0bfc96d9fc1e0e90726de2f",
+    "semantic_hash": "164eb6fba0bfc96d9fc1e0e90726de2f"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/projectiles/enemy_projectiles/index.ts": {
+    "mtime": 1767500844.4210918,
+    "ast_hash": "df2300cbaab2149377663edc28e5345f",
+    "semantic_hash": "df2300cbaab2149377663edc28e5345f"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/projectiles/player_projectiles/Bullet.ts": {
+    "mtime": 1782368405.4010623,
+    "ast_hash": "5abd8f187f4f10f0925d60d7699e6a22",
+    "semantic_hash": "5abd8f187f4f10f0925d60d7699e6a22"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/projectiles/player_projectiles/Flame.ts": {
+    "mtime": 1767500844.421272,
+    "ast_hash": "e44a1560de00c839ec7acdcaece2c664",
+    "semantic_hash": "e44a1560de00c839ec7acdcaece2c664"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/projectiles/player_projectiles/Laser.ts": {
+    "mtime": 1767500844.4213314,
+    "ast_hash": "bf1d4304faee42b7d9c8fc437643bb21",
+    "semantic_hash": "bf1d4304faee42b7d9c8fc437643bb21"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/projectiles/player_projectiles/Spinner.ts": {
+    "mtime": 1767500844.4213936,
+    "ast_hash": "562e51c15632ce75447dfc6395478531",
+    "semantic_hash": "562e51c15632ce75447dfc6395478531"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/projectiles/player_projectiles/Zapper.ts": {
+    "mtime": 1767500844.4214673,
+    "ast_hash": "6ebaebf9be31a441171480221b176ada",
+    "semantic_hash": "6ebaebf9be31a441171480221b176ada"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/projectiles/player_projectiles/index.ts": {
+    "mtime": 1767500844.4215286,
+    "ast_hash": "b4f1711f8763b0ec638a473d31ec048b",
+    "semantic_hash": "b4f1711f8763b0ec638a473d31ec048b"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/upgrades/DroppedUpgradeBundle.ts": {
+    "mtime": 1782764703.5170588,
+    "ast_hash": "ee4d4ce8243760107ccf1ce7a4917f90",
+    "semantic_hash": "ee4d4ce8243760107ccf1ce7a4917f90"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/scenes/BootScene.ts": {
+    "mtime": 1776728349.4199615,
+    "ast_hash": "7cab78d6c71bdcf83f23200491606a52",
+    "semantic_hash": "7cab78d6c71bdcf83f23200491606a52"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/scenes/MainScene.ts": {
+    "mtime": 1782765799.1552784,
+    "ast_hash": "b8c12339f4975225577250db7e43e77e",
+    "semantic_hash": "b8c12339f4975225577250db7e43e77e"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/services/LocalSaveManager.ts": {
+    "mtime": 1777863601.8485575,
+    "ast_hash": "89b29cbe417a9130a711c7d14b438383",
+    "semantic_hash": "89b29cbe417a9130a711c7d14b438383"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/services/SaveManager.ts": {
+    "mtime": 1767500844.421904,
+    "ast_hash": "12a4499f94f46ac83b7f280d929643fa",
+    "semantic_hash": "12a4499f94f46ac83b7f280d929643fa"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/services/SaveTypes.ts": {
+    "mtime": 1767500844.421994,
+    "ast_hash": "31d975e34a1cae272dd1cd2ddc64a02e",
+    "semantic_hash": "31d975e34a1cae272dd1cd2ddc64a02e"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/services/WaveValidation.ts": {
+    "mtime": 1777863601.848765,
+    "ast_hash": "6056b1573a728e42c62a171dca2f7cb8",
+    "semantic_hash": "6056b1573a728e42c62a171dca2f7cb8"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/systems/CollisionManager.ts": {
+    "mtime": 1782763830.3692696,
+    "ast_hash": "34711dbe26771d08ea09a0b14c24466e",
+    "semantic_hash": "34711dbe26771d08ea09a0b14c24466e"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/systems/EnemyManager.ts": {
+    "mtime": 1768687885.2173803,
+    "ast_hash": "09323987358c643818b510c12bc5d836",
+    "semantic_hash": "09323987358c643818b510c12bc5d836"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/systems/MapManager.ts": {
+    "mtime": 1767500844.42236,
+    "ast_hash": "460e7843d18fadfd89be8309879a395c",
+    "semantic_hash": "460e7843d18fadfd89be8309879a395c"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/systems/ProjectileManager.ts": {
+    "mtime": 1767500844.4224257,
+    "ast_hash": "4437db2252a39003c6ce782f362bb2b7",
+    "semantic_hash": "4437db2252a39003c6ce782f362bb2b7"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/systems/TouchControlManager.ts": {
+    "mtime": 1777863601.8495698,
+    "ast_hash": "9f5cfe11a947eed0c2aa52d9e891821d",
+    "semantic_hash": "9f5cfe11a947eed0c2aa52d9e891821d"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/systems/WaveManager.ts": {
+    "mtime": 1782751672.804626,
+    "ast_hash": "18c937eeab9866f26be68a3c23e78213",
+    "semantic_hash": "18c937eeab9866f26be68a3c23e78213"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/systems/difficulty/Difficulty.ts": {
+    "mtime": 1782243715.601847,
+    "ast_hash": "f0f5a0389e635f2266bf3b57617820d4",
+    "semantic_hash": "f0f5a0389e635f2266bf3b57617820d4"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/systems/difficulty/Normal.ts": {
+    "mtime": 1782454106.5225224,
+    "ast_hash": "693034e360a20a262f5b5f832dd46193",
+    "semantic_hash": "693034e360a20a262f5b5f832dd46193"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/systems/upgrades/EffectHandlers.ts": {
+    "mtime": 1767500844.4226134,
+    "ast_hash": "5180c3e75470213915d7663323859d79",
+    "semantic_hash": "5180c3e75470213915d7663323859d79"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/systems/upgrades/UpgradeEffectSystem.ts": {
+    "mtime": 1767500844.4227538,
+    "ast_hash": "577c8f8624c4766685b68f04d6a2fc63",
+    "semantic_hash": "577c8f8624c4766685b68f04d6a2fc63"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/systems/upgrades/UpgradeModifierSystem.ts": {
+    "mtime": 1782749560.4917881,
+    "ast_hash": "e2147da1d02b203acec6603212f66af8",
+    "semantic_hash": "e2147da1d02b203acec6603212f66af8"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/systems/upgrades/UpgradeSystem.ts": {
+    "mtime": 1782572701.0160875,
+    "ast_hash": "c1a1fca3a9479c1f43c3ce77361cf002",
+    "semantic_hash": "c1a1fca3a9479c1f43c3ce77361cf002"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/systems/upgrades/index.ts": {
+    "mtime": 1767500844.4229517,
+    "ast_hash": "6d29e5475949ef15aba88ed2deab4095",
+    "semantic_hash": "6d29e5475949ef15aba88ed2deab4095"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/utils/TextureGenerator.ts": {
+    "mtime": 1767500844.4230742,
+    "ast_hash": "4c1d7f7f5fad8bfa6c5b6faf17f07b29",
+    "semantic_hash": "4c1d7f7f5fad8bfa6c5b6faf17f07b29"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/utils/TrailRenderer.ts": {
+    "mtime": 1767500844.423154,
+    "ast_hash": "a9bb7f6f1bbe4eab1dd2b5bf212f925f",
+    "semantic_hash": "a9bb7f6f1bbe4eab1dd2b5bf212f925f"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/main.tsx": {
+    "mtime": 1767500844.423273,
+    "ast_hash": "42c0b1d9c2751a5e4e55876cee46fc57",
+    "semantic_hash": "42c0b1d9c2751a5e4e55876cee46fc57"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/pages/AttackSelectPage.tsx": {
+    "mtime": 1767500844.423377,
+    "ast_hash": "d87b35f24626b7afbef0b1f05c210b11",
+    "semantic_hash": "d87b35f24626b7afbef0b1f05c210b11"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/pages/GamePage.tsx": {
+    "mtime": 1777863601.8504345,
+    "ast_hash": "24b483e48b9a3b874deed4ccbd3132af",
+    "semantic_hash": "24b483e48b9a3b874deed4ccbd3132af"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/pages/LoginPage.tsx": {
+    "mtime": 1767500844.423555,
+    "ast_hash": "0d1aa5e8a8cf6929eb1db8068eba9490",
+    "semantic_hash": "0d1aa5e8a8cf6929eb1db8068eba9490"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/pages/MainMenu.tsx": {
+    "mtime": 1782776138.202398,
+    "ast_hash": "34778f6a2772caa2405020e4eaab22ba",
+    "semantic_hash": "34778f6a2772caa2405020e4eaab22ba"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/pages/RegisterPage.tsx": {
+    "mtime": 1767500844.4237084,
+    "ast_hash": "2290161802026a1342652e681d291d81",
+    "semantic_hash": "2290161802026a1342652e681d291d81"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/pages/SettingsPage.tsx": {
+    "mtime": 1767500844.4237764,
+    "ast_hash": "8549bf93668a6af7ff6ae920eebbda35",
+    "semantic_hash": "8549bf93668a6af7ff6ae920eebbda35"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/pages/UpdateNotesPage.tsx": {
+    "mtime": 1782776196.6174552,
+    "ast_hash": "a20cc4c3f33657c3cf20c614305e73b1",
+    "semantic_hash": "a20cc4c3f33657c3cf20c614305e73b1"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/tailwind.config.js": {
+    "mtime": 1767500844.4238355,
+    "ast_hash": "263317bd199fabd917282aa2aaaaf993",
+    "semantic_hash": "263317bd199fabd917282aa2aaaaf993"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/tsconfig.json": {
+    "mtime": 1767500844.4239113,
+    "ast_hash": "5ff9ed0bcd38529a6f8f9e23a9b2d64f",
+    "semantic_hash": "5ff9ed0bcd38529a6f8f9e23a9b2d64f"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/tsconfig.node.json": {
+    "mtime": 1767500844.4239862,
+    "ast_hash": "767b2e9abe6452170cdc399ca052cfbc",
+    "semantic_hash": "767b2e9abe6452170cdc399ca052cfbc"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/vite.config.ts": {
+    "mtime": 1767500844.4240675,
+    "ast_hash": "1f3b4fdb328d8080f7a1c87be61fb878",
+    "semantic_hash": "1f3b4fdb328d8080f7a1c87be61fb878"
+  },
+  "/Users/nolan/Desktop/Polygon/vercel.json": {
+    "mtime": 1767500844.4244645,
+    "ast_hash": "8a6997056bbd4b867df662abbfb54029",
+    "semantic_hash": "8a6997056bbd4b867df662abbfb54029"
+  },
+  "/Users/nolan/Desktop/Polygon/GameDescription.md": {
+    "mtime": 1767500844.4132438,
+    "ast_hash": "ca076fc0672836520623af7458287043",
+    "semantic_hash": "ca076fc0672836520623af7458287043"
+  },
+  "/Users/nolan/Desktop/Polygon/INTEGRATION_COMPLETE.md": {
+    "mtime": 1767500844.4133189,
+    "ast_hash": "baee5bf04c874922304f6c43b5745536",
+    "semantic_hash": "baee5bf04c874922304f6c43b5745536"
+  },
+  "/Users/nolan/Desktop/Polygon/TODO.md": {
+    "mtime": 1778283758.1538656,
+    "ast_hash": "22dcef3cb7f2e91819fcd8e641d41bf2",
+    "semantic_hash": "22dcef3cb7f2e91819fcd8e641d41bf2"
+  },
+  "/Users/nolan/Desktop/Polygon/UpgradeBundlePlan.md": {
+    "mtime": 1778286451.0035186,
+    "ast_hash": "d1e039211969921fb65dc1df3212735e",
+    "semantic_hash": "d1e039211969921fb65dc1df3212735e"
+  },
+  "/Users/nolan/Desktop/Polygon/UpgradeBundlePlanSteps.md": {
+    "mtime": 1778287276.288539,
+    "ast_hash": "f24aa41369d873d560af1823ecb76ec7",
+    "semantic_hash": "f24aa41369d873d560af1823ecb76ec7"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/ANTI_CHEAT_SYSTEM.md": {
+    "mtime": 1767500844.4135711,
+    "ast_hash": "d6754d13d775005c893b703692558dbf",
+    "semantic_hash": "d6754d13d775005c893b703692558dbf"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/IMPLEMENTATION_GUIDE.md": {
+    "mtime": 1767500844.413631,
+    "ast_hash": "b66164d5df83ee6e8196d48858fe2675",
+    "semantic_hash": "b66164d5df83ee6e8196d48858fe2675"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/docker-compose.yml": {
+    "mtime": 1767500844.416391,
+    "ast_hash": "cac8fd44db98039722fbd75e19f47481",
+    "semantic_hash": "cac8fd44db98039722fbd75e19f47481"
+  },
+  "/Users/nolan/Desktop/Polygon/backend/requirements.txt": {
+    "mtime": 1767500844.4165738,
+    "ast_hash": "ec47bfc7f00e689d8425a294bc5a67e8",
+    "semantic_hash": "ec47bfc7f00e689d8425a294bc5a67e8"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/MAINSCENE_INTEGRATION_PATCH.md": {
+    "mtime": 1767500844.4166834,
+    "ast_hash": "f951103498776f2d42ba0b4dc14ad1f7",
+    "semantic_hash": "f951103498776f2d42ba0b4dc14ad1f7"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/BACKEND_CONNECTION.md": {
+    "mtime": 1778295294.17839,
+    "ast_hash": "4e073201a38c97d2ef3901c5cb7bed5f",
+    "semantic_hash": "4e073201a38c97d2ef3901c5cb7bed5f"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/COLLISION_MANAGER.md": {
+    "mtime": 1778294883.2125492,
+    "ast_hash": "9a10fd7e7fc3bf343f09e6cf2e286678",
+    "semantic_hash": "9a10fd7e7fc3bf343f09e6cf2e286678"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/COMPONENTS.md": {
+    "mtime": 1778294528.1358619,
+    "ast_hash": "b4721fedb39f003bcda75268771a8531",
+    "semantic_hash": "b4721fedb39f003bcda75268771a8531"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/CORE.md": {
+    "mtime": 1778294581.4614365,
+    "ast_hash": "07635989ecf5386c1d5bd9838c9d33ad",
+    "semantic_hash": "07635989ecf5386c1d5bd9838c9d33ad"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/DATA.md": {
+    "mtime": 1778294611.3039396,
+    "ast_hash": "ffb18a2233228e8f3d23e69345952927",
+    "semantic_hash": "ffb18a2233228e8f3d23e69345952927"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/DIFFICULTY.md": {
+    "mtime": 1778295014.726406,
+    "ast_hash": "a70143e91cb39c5be78d3c58239fbc1b",
+    "semantic_hash": "a70143e91cb39c5be78d3c58239fbc1b"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/ENEMY.md": {
+    "mtime": 1778294698.6436846,
+    "ast_hash": "816829c8e6109ae88b8f3fd8660aecf3",
+    "semantic_hash": "816829c8e6109ae88b8f3fd8660aecf3"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/ENEMY_MANAGER.md": {
+    "mtime": 1778294905.7636771,
+    "ast_hash": "3d77d1f007021a7a528734c31f9013a4",
+    "semantic_hash": "3d77d1f007021a7a528734c31f9013a4"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/ENTITIES.md": {
+    "mtime": 1778294625.278508,
+    "ast_hash": "c7abb1cf8ae26001c01b8541c01c211d",
+    "semantic_hash": "c7abb1cf8ae26001c01b8541c01c211d"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/MAP_MANAGER.md": {
+    "mtime": 1778294926.7157314,
+    "ast_hash": "7fbdfa6f02ddcc2334c23b3b839f35ac",
+    "semantic_hash": "7fbdfa6f02ddcc2334c23b3b839f35ac"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/OFFLINE_MODE.md": {
+    "mtime": 1778295327.4546742,
+    "ast_hash": "a727f13cdf77d209b6b2e883cd7a9d84",
+    "semantic_hash": "a727f13cdf77d209b6b2e883cd7a9d84"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/ONLINE_MODE.md": {
+    "mtime": 1778295374.2381911,
+    "ast_hash": "092dceac240f5105aa56be234ae81c1f",
+    "semantic_hash": "092dceac240f5105aa56be234ae81c1f"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/PAGES.md": {
+    "mtime": 1778294504.7683268,
+    "ast_hash": "e5eef70b20eb1fe56ba417a402d8f218",
+    "semantic_hash": "e5eef70b20eb1fe56ba417a402d8f218"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/PARTICLE.md": {
+    "mtime": 1778294749.5858915,
+    "ast_hash": "02ab1c98ecd8c45a986bdea4e78df9bd",
+    "semantic_hash": "02ab1c98ecd8c45a986bdea4e78df9bd"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/PLAYER.md": {
+    "mtime": 1778294661.9756525,
+    "ast_hash": "6ce7eeddbf22b42f6c0bda29ac0dee8a",
+    "semantic_hash": "6ce7eeddbf22b42f6c0bda29ac0dee8a"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/PROJECTILE.md": {
+    "mtime": 1778294736.0979567,
+    "ast_hash": "752771f7ba88fd146c483741c343f0ea",
+    "semantic_hash": "752771f7ba88fd146c483741c343f0ea"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/PROJECTILE_MANAGER.md": {
+    "mtime": 1778294938.920756,
+    "ast_hash": "db2067d3da14f8b5240de3769c595f48",
+    "semantic_hash": "db2067d3da14f8b5240de3769c595f48"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/README.md": {
+    "mtime": 1778294455.1276896,
+    "ast_hash": "062d3bffd5a82f37948c258e9b3e981a",
+    "semantic_hash": "062d3bffd5a82f37948c258e9b3e981a"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/SCENES.md": {
+    "mtime": 1778294788.7969952,
+    "ast_hash": "8c0d4e3afceb7d2aa3aaa9a2185027b1",
+    "semantic_hash": "8c0d4e3afceb7d2aa3aaa9a2185027b1"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/SERVICES.md": {
+    "mtime": 1778294830.8727036,
+    "ast_hash": "9a76fd20d7c66b416e7bb0d0d69a17d4",
+    "semantic_hash": "9a76fd20d7c66b416e7bb0d0d69a17d4"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/SYSTEMS.md": {
+    "mtime": 1778294857.7211423,
+    "ast_hash": "e72499296ff45a5901933b9f35f0970f",
+    "semantic_hash": "e72499296ff45a5901933b9f35f0970f"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/TEXTURE_GENERATOR.md": {
+    "mtime": 1778295095.3040972,
+    "ast_hash": "738820c826c8fc5dad6117c7bdc7f501",
+    "semantic_hash": "738820c826c8fc5dad6117c7bdc7f501"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/TOUCH_CONTROL_MANAGER.md": {
+    "mtime": 1778294961.432917,
+    "ast_hash": "1edc6572cbfced122b8a85f368cea0e1",
+    "semantic_hash": "1edc6572cbfced122b8a85f368cea0e1"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/TRAIL_RENDERER.md": {
+    "mtime": 1778295120.4143476,
+    "ast_hash": "8be659f52931e83d3cfd0ebfb6a63666",
+    "semantic_hash": "8be659f52931e83d3cfd0ebfb6a63666"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/UPGRADE_BUNDLE.md": {
+    "mtime": 1782775820.3539128,
+    "ast_hash": "e1371ddf6ded4e77b77e5affd3d1cbc7",
+    "semantic_hash": "e1371ddf6ded4e77b77e5affd3d1cbc7"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/UPGRADE_MANAGER.md": {
+    "mtime": 1778295053.8676562,
+    "ast_hash": "a4134581ebaa4dff4d9dfedb08e2d773",
+    "semantic_hash": "a4134581ebaa4dff4d9dfedb08e2d773"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/UTILS.md": {
+    "mtime": 1778295064.5339036,
+    "ast_hash": "51d3856803f3f45ce3fc6a1a97a45b4a",
+    "semantic_hash": "51d3856803f3f45ce3fc6a1a97a45b4a"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/documentation/WAVE_MANAGER.md": {
+    "mtime": 1778294989.0245352,
+    "ast_hash": "7f1553b0dfaf76b59d0ff20a90a84493",
+    "semantic_hash": "7f1553b0dfaf76b59d0ff20a90a84493"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/index.html": {
+    "mtime": 1777863601.8442028,
+    "ast_hash": "ec612d89a218330742d471672bdcfd8b",
+    "semantic_hash": "ec612d89a218330742d471672bdcfd8b"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/data/upgrades/removed_upgrades.txt": {
+    "mtime": 1777863601.8471735,
+    "ast_hash": "d368ff468ae4307992dd069e8c3c0c20",
+    "semantic_hash": "d368ff468ae4307992dd069e8c3c0c20"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/entities/projectiles/ProjectileREADME.md": {
+    "mtime": 1767500844.4208066,
+    "ast_hash": "971634df4b727d81e27c1dbaf22a49b4",
+    "semantic_hash": "971634df4b727d81e27c1dbaf22a49b4"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/systems/TOUCH_INTEGRATION_GUIDE.md": {
+    "mtime": 1777863601.8492935,
+    "ast_hash": "4bf5515d7aeee87612325a788d6c68db",
+    "semantic_hash": "4bf5515d7aeee87612325a788d6c68db"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/src/game/systems/upgrades/README.md": {
+    "mtime": 1767500844.4226859,
+    "ast_hash": "e8a31e96b568a5265fcc94b2c6fa35a0",
+    "semantic_hash": "e8a31e96b568a5265fcc94b2c6fa35a0"
+  },
+  "/Users/nolan/Desktop/Polygon/manual_saves/save1.txt": {
+    "mtime": 1782542357.4282603,
+    "ast_hash": "56d9c2ecd7d5322933a88247c095e308",
+    "semantic_hash": "56d9c2ecd7d5322933a88247c095e308"
+  },
+  "/Users/nolan/Desktop/Polygon/manual_saves/save2.txt": {
+    "mtime": 1782574299.198656,
+    "ast_hash": "000c985802e45a07a1c744208fdd401b",
+    "semantic_hash": "000c985802e45a07a1c744208fdd401b"
+  },
+  "/Users/nolan/Desktop/Polygon/plans/collisions.txt": {
+    "mtime": 1767500844.424249,
+    "ast_hash": "0b0a78fe387adebe3f234d43578462af",
+    "semantic_hash": "0b0a78fe387adebe3f234d43578462af"
+  },
+  "/Users/nolan/Desktop/Polygon/plans/mobile.txt": {
+    "mtime": 1767500844.4243233,
+    "ast_hash": "96d869d94695b7798a19f70b38dd4d6c",
+    "semantic_hash": "96d869d94695b7798a19f70b38dd4d6c"
+  },
+  "/Users/nolan/Desktop/Polygon/starting_the_app.txt": {
+    "mtime": 1768686601.3830438,
+    "ast_hash": "60f0a4602a1938d386dbf5cb59ce529c",
+    "semantic_hash": "60f0a4602a1938d386dbf5cb59ce529c"
+  },
+  "/Users/nolan/Desktop/Polygon/syncing_data.md": {
+    "mtime": 1777863601.8515594,
+    "ast_hash": "446fe216cbf96570d402da322adaf6e3",
+    "semantic_hash": "446fe216cbf96570d402da322adaf6e3"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/BulletShotOLD1.mp3": {
+    "mtime": 1776728349.417947,
+    "ast_hash": "0e794a67b1a24f69f7a91f49b79a3915",
+    "semantic_hash": "0e794a67b1a24f69f7a91f49b79a3915"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/background_music.mp3": {
+    "mtime": 1781380461.6572223,
+    "ast_hash": "ebaccddcd3ecb2bc7594bb7c60bfea7a",
+    "semantic_hash": "ebaccddcd3ecb2bc7594bb7c60bfea7a"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/bullet_shot.mp3": {
+    "mtime": 1776728349.4180598,
+    "ast_hash": "c618870478d2a35835a22336e7e71c97",
+    "semantic_hash": "c618870478d2a35835a22336e7e71c97"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/bullet_tileCollide.mp3": {
+    "mtime": 1776728349.4181712,
+    "ast_hash": "d6f56f445f7e5dabd168ffca4d5eb739",
+    "semantic_hash": "d6f56f445f7e5dabd168ffca4d5eb739"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/enemy_hurt.mp3": {
+    "mtime": 1776728349.4182742,
+    "ast_hash": "ca9638bbc356b3620f88c798c2e8fd28",
+    "semantic_hash": "ca9638bbc356b3620f88c798c2e8fd28"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/enemy_killed.mp3": {
+    "mtime": 1776728349.4183874,
+    "ast_hash": "2eb6a837be09a1482e8fe6bf39c3f2d5",
+    "semantic_hash": "2eb6a837be09a1482e8fe6bf39c3f2d5"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/explosion.mp3": {
+    "mtime": 1776728349.4185627,
+    "ast_hash": "cc6a9cf80afd1b88d22cd85ee59cd993",
+    "semantic_hash": "cc6a9cf80afd1b88d22cd85ee59cd993"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/player_dash.mp3": {
+    "mtime": 1776728657.840389,
+    "ast_hash": "d42b5203a6c7b6b519c529f78a8c6bac",
+    "semantic_hash": "d42b5203a6c7b6b519c529f78a8c6bac"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/player_hurt.mp3": {
+    "mtime": 1776728349.4186823,
+    "ast_hash": "566839add5080f237911296101b66597",
+    "semantic_hash": "566839add5080f237911296101b66597"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/upgrade_reroll.mp3": {
+    "mtime": 1776729466.7407281,
+    "ast_hash": "25f7be26f9f74c6b12357b50c53e2d9a",
+    "semantic_hash": "25f7be26f9f74c6b12357b50c53e2d9a"
+  },
+  "/Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/upgrade_select.mp3": {
+    "mtime": 1776728349.4187992,
+    "ast_hash": "47ff8fe220a81277db1fa8520a658beb",
+    "semantic_hash": "47ff8fe220a81277db1fa8520a658beb"
+  }
+}

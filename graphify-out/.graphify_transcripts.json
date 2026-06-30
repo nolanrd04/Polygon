@@ -1,0 +1,13 @@
+Transcribing 11 audio files...
+  warning: could not transcribe /Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/BulletShotOLD1.mp3: Video transcription requires faster-whisper. Run: pip install 'graphifyy[video]'
+  warning: could not transcribe /Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/background_music.mp3: Video transcription requires faster-whisper. Run: pip install 'graphifyy[video]'
+  warning: could not transcribe /Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/bullet_shot.mp3: Video transcription requires faster-whisper. Run: pip install 'graphifyy[video]'
+  warning: could not transcribe /Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/bullet_tileCollide.mp3: Video transcription requires faster-whisper. Run: pip install 'graphifyy[video]'
+  warning: could not transcribe /Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/enemy_hurt.mp3: Video transcription requires faster-whisper. Run: pip install 'graphifyy[video]'
+  warning: could not transcribe /Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/enemy_killed.mp3: Video transcription requires faster-whisper. Run: pip install 'graphifyy[video]'
+  warning: could not transcribe /Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/explosion.mp3: Video transcription requires faster-whisper. Run: pip install 'graphifyy[video]'
+  warning: could not transcribe /Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/player_dash.mp3: Video transcription requires faster-whisper. Run: pip install 'graphifyy[video]'
+  warning: could not transcribe /Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/player_hurt.mp3: Video transcription requires faster-whisper. Run: pip install 'graphifyy[video]'
+  warning: could not transcribe /Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/upgrade_reroll.mp3: Video transcription requires faster-whisper. Run: pip install 'graphifyy[video]'
+  warning: could not transcribe /Users/nolan/Desktop/Polygon/frontend/public/assets/sounds/upgrade_select.mp3: Video transcription requires faster-whisper. Run: pip install 'graphifyy[video]'
+[]

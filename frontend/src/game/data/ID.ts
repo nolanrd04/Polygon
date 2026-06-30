@@ -5,3 +5,7 @@ export const enum BundleRarity {
   Epic      = 3,
   Legendary = 4,
 }
+
+export const enum DifficultyID {
+  Normal = 'normal',
+}

@@ -172,6 +172,10 @@ export class WaveManager {
     return this.difficulty.getRarityWeights(this.currentWave)
   }
 
+  getDifficultyId(): string {
+    return this.difficulty.id
+  }
+
   setWave(wave: number): void {
     this.currentWave = wave
     this.waveActive = false

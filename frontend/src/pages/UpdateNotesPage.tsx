@@ -10,6 +10,15 @@ interface UpdateNote {
 // Add new updates at the top of this array
 const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: 'v0.1.3',
+    date: '2026-07-01',
+    title: 'More Boss Drops',
+    changes: [
+      'Boss drops multuple bundles on death',
+      'Added a DifficultID enum to compare against'
+    ]
+  },
+  {
     version: 'v0.1.2',
     date: '2026-06-29',
     title: 'Added Update Notes Page',
@@ -35,7 +44,7 @@ const UPDATE_NOTES: UpdateNote[] = [
     title: 'Initial Release',
     changes: [
       'Core gameplay loop: survive waves of polygon enemies',
-      'Multiple attack types: bullet, laser, flame, spinner, zapper',
+      'Multiple attack types to be added',
       'Upgrade system with stat, effect, ability, and visual upgrades',
       'Online save system with account login',
       'Offline play mode',
