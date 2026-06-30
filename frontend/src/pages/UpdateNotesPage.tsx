@@ -10,6 +10,18 @@ interface UpdateNote {
 // Add new updates at the top of this array
 const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: 'v0.1.4',
+    date: '2026-07-01',
+    title: 'minor enemy and upgrade changes',
+    changes: [
+      'Added more curses.',
+      'Nerfed dash upgrades.',
+      'Changes curses to be a 30% chance.',
+      'Changed octogon to blue.',
+      'Changed pentagon to orange and teleports when close to the player.'
+    ]
+  },
+  {
     version: 'v0.1.3',
     date: '2026-07-01',
     title: 'More Boss Drops',
