@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import axios from '../config/axios'
+import { useBackendConnection } from '../hooks/useBackendConnection'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const isBackendConnected = useBackendConnection()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -34,6 +36,12 @@ export default function LoginPage() {
       <h1 className="text-4xl font-bold text-polygon-primary mb-8">LOGIN</h1>
 
       <form onSubmit={handleSubmit} className="w-80 flex flex-col gap-4">
+        {!isBackendConnected && (
+          <div className="bg-yellow-900/40 border-2 border-yellow-600 text-yellow-400 px-4 py-2 rounded text-center text-sm">
+            Backend unavailable - login is disabled
+          </div>
+        )}
+
         {error && (
           <div className="bg-red-900/50 border border-red-500 text-red-300 px-4 py-2 rounded">
             {error}
@@ -60,8 +68,8 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          disabled={loading}
-          className="px-8 py-3 bg-polygon-primary text-black font-bold rounded hover:bg-green-400 transition-all disabled:opacity-50"
+          disabled={loading || !isBackendConnected}
+          className="px-8 py-3 bg-polygon-primary text-black font-bold rounded hover:bg-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-polygon-primary"
         >
           {loading ? 'LOGGING IN...' : 'LOGIN'}
         </button>

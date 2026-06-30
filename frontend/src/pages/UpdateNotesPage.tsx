@@ -56,7 +56,7 @@ export default function UpdateNotesPage() {
   const navigate = useNavigate()
 
   return (
-    <div className="w-full min-h-full flex flex-col items-center py-16 px-4 bg-polygon-darker">
+    <div className="w-full h-screen flex flex-col items-center py-16 px-4 bg-polygon-darker overflow-y-auto">
       <h1 className="text-4xl font-bold text-polygon-primary mb-2 tracking-wider">UPDATE NOTES</h1>
       <p className="text-gray-500 text-sm mb-10">Polygon development changelog</p>
 

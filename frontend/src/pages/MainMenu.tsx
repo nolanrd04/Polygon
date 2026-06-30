@@ -1,10 +1,12 @@
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import axios from '../config/axios'
+import { useBackendConnection } from '../hooks/useBackendConnection'
 import LoadGameModal from '../components/LoadGameModal'
 
 export default function MainMenu() {
   const navigate = useNavigate()
+  const isBackendConnected = useBackendConnection()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [hasSavedGame, setHasSavedGame] = useState(false)
   const [savedGameWave, setSavedGameWave] = useState(0)
@@ -95,6 +97,13 @@ export default function MainMenu() {
       <p className="text-gray-400 mb-12 text-lg">Survive. Evolve. Dominate.</p>
 
       <div className="flex flex-col gap-4 w-64">
+        {/* Show backend connection status warning */}
+        {!isBackendConnected && (
+          <div className="px-4 py-3 bg-yellow-900/40 border-2 border-yellow-600 text-yellow-400 rounded text-center text-sm">
+           Server unavailable - online features disabled
+          </div>
+        )}
+
         {/* Show final stats if game is over */}
         {isLoggedIn && hasSavedGame && isGameOver && (
           <div className="px-8 py-6 bg-red-900/30 border-2 border-red-500 rounded mb-2">
@@ -119,6 +128,7 @@ export default function MainMenu() {
         )}
 
         <button
+          disabled={!isBackendConnected}
           onClick={async () => {
             // If user has a saved game, delete it (starting fresh)
             if (hasSavedGame && isLoggedIn) {
@@ -134,7 +144,7 @@ export default function MainMenu() {
             }
             navigate('/select-attack')
           }}
-          className="px-8 py-4 bg-polygon-primary text-black font-bold text-xl rounded hover:bg-green-400 transition-all transform hover:scale-105"
+          className="px-8 py-4 bg-polygon-primary text-black font-bold text-xl rounded hover:bg-green-400 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-polygon-primary disabled:hover:scale-100"
         >
           {hasSavedGame ? 'NEW GAME' : 'PLAY'}
         </button>
@@ -155,8 +165,9 @@ export default function MainMenu() {
               LOAD FROM SAVE
             </button>
             <button
+              disabled={!isBackendConnected}
               onClick={() => navigate('/login')}
-              className="px-8 py-3 border-2 border-gray-500 text-gray-400 font-semibold rounded hover:border-gray-300 hover:text-white transition-all text-sm"
+              className="px-8 py-3 border-2 border-gray-500 text-gray-400 font-semibold rounded hover:border-gray-300 hover:text-white transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-500 disabled:hover:text-gray-400"
             >
               LOGIN
             </button>
