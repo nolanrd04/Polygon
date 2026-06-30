@@ -143,9 +143,9 @@ export class MainScene extends Phaser.Scene {
         const firstId = this.pickRegularUpgrade(upgradeValue, pickedIds)
         if (firstId) pickedIds.push(firstId)
 
-        // Remaining slots (if any) are each 50/50 curse or regular, no duplicates.
+        // Remaining slots (if any) are each 30%/70% curse or regular, no duplicates.
         for (let i = 1; i < count; i++) {
-          const id = Math.random() < 0.5
+          const id = Math.random() < 0.3
             ? this.pickCurse(rollItemRarity(), pickedIds)
             : this.pickRegularUpgrade(rollItemRarity(), pickedIds)
           if (id) pickedIds.push(id)

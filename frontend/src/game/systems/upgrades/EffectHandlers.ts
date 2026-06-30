@@ -31,11 +31,11 @@ export function registerEffectHandlers(): void {
   })
 
   // ============================================================
-  // ARMOR - Reduce incoming damage
+  // PROTECTION - Reduce incoming damage
   // ============================================================
-  UpgradeEffectSystem.registerEffect('armor', {
+  UpgradeEffectSystem.registerEffect('protection', {
     onDamage: (amount: number) => {
-      const reduction = UpgradeEffectSystem.getEffectValue('armor')
+      const reduction = UpgradeEffectSystem.getEffectValue('protection')
       return Math.max(1, amount * (1 - reduction)) // Always deal at least 1 damage
     }
   })
