@@ -1,0 +1,41 @@
+{
+  "by_wave": {
+    "1": {"common": 0.50, "uncommon": 0.35, "rare": 0.15, "epic": 0.00, "legendary": 0.00},
+    "2": {"common": 0.50, "uncommon": 0.35, "rare": 0.15, "epic": 0.00, "legendary": 0.00},
+    "3": {"common": 0.48, "uncommon": 0.36, "rare": 0.16, "epic": 0.00, "legendary": 0.00},
+    "4": {"common": 0.45, "uncommon": 0.38, "rare": 0.17, "epic": 0.00, "legendary": 0.00},
+    "5": {"common": 0.44, "uncommon": 0.36, "rare": 0.16, "epic": 0.04, "legendary": 0.00},
+    "6": {"common": 0.42, "uncommon": 0.36, "rare": 0.18, "epic": 0.04, "legendary": 0.00},
+    "7": {"common": 0.41, "uncommon": 0.37, "rare": 0.18, "epic": 0.04, "legendary": 0.00},
+    "8": {"common": 0.40, "uncommon": 0.38, "rare": 0.18, "epic": 0.04, "legendary": 0.00},
+    "9": {"common": 0.38, "uncommon": 0.38, "rare": 0.19, "epic": 0.05, "legendary": 0.00},
+    "10": {"common": 0.37, "uncommon": 0.38, "rare": 0.19, "epic": 0.05, "legendary": 0.01},
+    "11": {"common": 0.34, "uncommon": 0.40, "rare": 0.20, "epic": 0.05, "legendary": 0.01},
+    "12": {"common": 0.32, "uncommon": 0.41, "rare": 0.21, "epic": 0.05, "legendary": 0.01},
+    "13": {"common": 0.31, "uncommon": 0.42, "rare": 0.21, "epic": 0.05, "legendary": 0.01},
+    "14": {"common": 0.29, "uncommon": 0.42, "rare": 0.22, "epic": 0.06, "legendary": 0.01},
+    "15": {"common": 0.28, "uncommon": 0.43, "rare": 0.22, "epic": 0.06, "legendary": 0.01},
+    "16": {"common": 0.28, "uncommon": 0.41, "rare": 0.23, "epic": 0.06, "legendary": 0.02},
+    "17": {"common": 0.28, "uncommon": 0.40, "rare": 0.23, "epic": 0.07, "legendary": 0.02},
+    "18": {"common": 0.26, "uncommon": 0.41, "rare": 0.24, "epic": 0.07, "legendary": 0.02},
+    "19": {"common": 0.25, "uncommon": 0.41, "rare": 0.25, "epic": 0.07, "legendary": 0.02},
+    "20": {"common": 0.24, "uncommon": 0.40, "rare": 0.25, "epic": 0.08, "legendary": 0.03},
+    "21": {"common": 0.24, "uncommon": 0.39, "rare": 0.26, "epic": 0.08, "legendary": 0.03},
+    "22": {"common": 0.24, "uncommon": 0.38, "rare": 0.27, "epic": 0.08, "legendary": 0.03},
+    "23": {"common": 0.23, "uncommon": 0.37, "rare": 0.28, "epic": 0.09, "legendary": 0.03},
+    "24": {"common": 0.22, "uncommon": 0.37, "rare": 0.29, "epic": 0.09, "legendary": 0.03},
+    "25": {"common": 0.22, "uncommon": 0.36, "rare": 0.30, "epic": 0.09, "legendary": 0.03},
+    "26": {"common": 0.21, "uncommon": 0.36, "rare": 0.30, "epic": 0.09, "legendary": 0.04},
+    "27": {"common": 0.20, "uncommon": 0.35, "rare": 0.31, "epic": 0.10, "legendary": 0.04},
+    "28": {"common": 0.20, "uncommon": 0.34, "rare": 0.32, "epic": 0.10, "legendary": 0.04},
+    "29": {"common": 0.20, "uncommon": 0.33, "rare": 0.32, "epic": 0.11, "legendary": 0.04},
+    "30": {"common": 0.20, "uncommon": 0.31, "rare": 0.33, "epic": 0.11, "legendary": 0.05}
+  },
+  "fallback": {
+    "common": 0.20,
+    "uncommon": 0.31,
+    "rare": 0.33,
+    "epic": 0.11,
+    "legendary": 0.05
+  }
+}

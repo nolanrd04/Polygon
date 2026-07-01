@@ -6,88 +6,59 @@ This data matches the frontend enemy definitions exactly:
 - Wave scaling: frontend/src/game/systems/EnemyManager.ts (Math.exp(wave / 8))
 - Spawn rules: frontend/src/game/systems/difficulty/Normal.ts (SPAWN_WEIGHTS / SCHEDULED_BOSS_SPAWNS)
 
-Keep this file in sync with the frontend whenever enemy values change.
+Game data is loaded from JSON files in app/core/data/ for better modularity.
+Keep these data files in sync with the frontend whenever enemy values change.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Set
+import json
 import math
+from pathlib import Path
 
-# Base enemy health values (matches each Enemy class's SetDefaults())
-ENEMY_BASE_HEALTH: Dict[str, int] = {
-    "triangle": 70,
-    "square": 200,
-    "super_triangle": 120,
-    "super_square": 230,
-    "pentagon": 550,
-    "hexagon": 800,
-    "diamond": 250,
-    "octogon": 1500,
-    "dodecahedron": 8000,
-}
+def _load_enemy_data() -> tuple[
+    Dict[str, int],
+    Dict[str, int],
+    Dict[str, int],
+    Dict[str, float],
+    Dict[str, int],
+    float,
+    Set[int],
+    Set[str]
+]:
+    data_path = Path(__file__).parent / "data" / "enemies.json"
+    with open(data_path) as f:
+        data = json.load(f)
 
-# Base contact damage per enemy (currently unused for validation, kept for parity).
-ENEMY_BASE_DAMAGE: Dict[str, int] = {
-    "triangle": 35,
-    "square": 75,
-    "super_triangle": 50,
-    "super_square": 30,
-    "pentagon": 80,
-    "hexagon": 100,
-    "diamond": 65,
-    "octogon": 100,
-    "dodecahedron": 130,
-}
+    base_health = data["base_health"]
+    base_damage = data["base_damage"]
+    base_defense = data["base_defense"]
+    bundle_drop = data["bundle_drop_chance"]
+    min_wave = data["min_wave"]
+    hexagon_ratio = data["hexagon_shield_ratio"]
+    boss_waves = set(data["boss_waves"])
+    boss_only = set(data["boss_only_enemies"])
 
-# Hexagon's shield is sized as a fraction of its (scaled) health.
-# Source: frontend/src/game/entities/enemies/Hexagon.ts (this.maxShieldHealth = this.health * 0.65)
-HEXAGON_SHIELD_RATIO: float = 0.65
+    return (
+        base_health,
+        base_damage,
+        base_defense,
+        bundle_drop,
+        min_wave,
+        hexagon_ratio,
+        boss_waves,
+        boss_only,
+    )
 
-# Enemy defense values — reduce incoming damage by this flat amount (minimum 1 damage per hit).
-# Source: frontend/src/game/entities/enemies/Enemy.ts + subclasses
-ENEMY_BASE_DEFENSE: Dict[str, int] = {
-    "triangle": 0,
-    "square": 0,
-    "super_triangle": 0,
-    "super_square": 0,
-    "pentagon": 0,
-    "hexagon": 0,
-    "diamond": 0,
-    "octogon": 0,
-    "dodecahedron": 25,  # Boss has defensive armor
-}
-
-# Upgrade bundle drop chance on death (0.0 = 0%, 1.0 = 100%).
-# Source: frontend/src/game/entities/enemies/Enemy.ts (bundleDropChance property)
-ENEMY_BUNDLE_DROP_CHANCE: Dict[str, float] = {
-    "triangle": 0.08,
-    "square": 0.1,
-    "super_triangle": 0.1,
-    "super_square": 0.15,
-    "pentagon": 0.12,
-    "hexagon": 0.16,
-    "diamond": 0.1,
-    "octogon": 0.12,
-    "dodecahedron": 1.0,  # Boss always drops bundles (custom DropBundles() on frontend)
-}
-
-# Earliest wave each enemy can spawn on. Boss-only enemies use the boss-wave value.
-# Source: SPAWN_WEIGHTS / SCHEDULED_BOSS_SPAWNS in Normal.ts.
-ENEMY_MIN_WAVE: Dict[str, int] = {
-    "triangle": 1,
-    "square": 3,
-    "super_triangle": 5,
-    "pentagon": 7,
-    "diamond": 8,
-    "hexagon": 10,        # boss waves 10/20/30, regular pool from wave 11
-    "octogon": 15,
-    "super_square": 17,
-    "dodecahedron": 10,   # boss-only on waves 10, 20, 30
-}
-
-# Waves on which boss-only enemies are scheduled.
-# Source: SCHEDULED_BOSS_SPAWNS in Normal.ts.
-BOSS_WAVES = {10, 20, 30}
-BOSS_ONLY_ENEMIES = {"dodecahedron"}
+(
+    ENEMY_BASE_HEALTH,
+    ENEMY_BASE_DAMAGE,
+    ENEMY_BASE_DEFENSE,
+    ENEMY_BUNDLE_DROP_CHANCE,
+    ENEMY_MIN_WAVE,
+    HEXAGON_SHIELD_RATIO,
+    BOSS_WAVES,
+    BOSS_ONLY_ENEMIES,
+) = _load_enemy_data()
 
 
 def get_wave_multiplier(wave: int) -> float:

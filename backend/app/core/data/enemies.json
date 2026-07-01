@@ -1,0 +1,60 @@
+{
+  "base_health": {
+    "triangle": 70,
+    "square": 200,
+    "super_triangle": 120,
+    "super_square": 230,
+    "pentagon": 550,
+    "hexagon": 800,
+    "diamond": 250,
+    "octogon": 1500,
+    "dodecahedron": 8000
+  },
+  "base_damage": {
+    "triangle": 35,
+    "square": 75,
+    "super_triangle": 50,
+    "super_square": 30,
+    "pentagon": 80,
+    "hexagon": 100,
+    "diamond": 65,
+    "octogon": 100,
+    "dodecahedron": 130
+  },
+  "base_defense": {
+    "triangle": 0,
+    "square": 0,
+    "super_triangle": 0,
+    "super_square": 0,
+    "pentagon": 0,
+    "hexagon": 0,
+    "diamond": 0,
+    "octogon": 0,
+    "dodecahedron": 25
+  },
+  "bundle_drop_chance": {
+    "triangle": 0.08,
+    "square": 0.1,
+    "super_triangle": 0.1,
+    "super_square": 0.15,
+    "pentagon": 0.12,
+    "hexagon": 0.16,
+    "diamond": 0.1,
+    "octogon": 0.12,
+    "dodecahedron": 1.0
+  },
+  "min_wave": {
+    "triangle": 1,
+    "square": 3,
+    "super_triangle": 5,
+    "pentagon": 7,
+    "diamond": 8,
+    "hexagon": 10,
+    "octogon": 15,
+    "super_square": 17,
+    "dodecahedron": 10
+  },
+  "hexagon_shield_ratio": 0.65,
+  "boss_waves": [10, 20, 30],
+  "boss_only_enemies": ["dodecahedron"]
+}
