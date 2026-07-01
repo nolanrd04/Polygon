@@ -1,10 +1,11 @@
-import { TextureGenerator } from '@/game/utils/TextureGenerator'
+import { TextureGenerator } from '../../utils/TextureGenerator'
+import { SuperPentagonExplosionDetonation } from '../projectiles/enemy_projectiles/SuperPentagonExplosionDetonation'
 import { Enemy } from './Enemy'
 
 export class SuperPentagon extends Enemy {
-  private teleportTimer: number = 3000 // milliseconds
-  private teleportWindUpDuration: number = 300 // milliseconds
-  private teleportWindDownDuration: number = 300 // milliseconds
+  private teleportTimer: number = 1500 // milliseconds
+  private teleportWindUpDuration: number = 100 // milliseconds
+  private teleportWindDownDuration: number = 100 // milliseconds
   private teleportStartScale = 0.7
   private isTeleporting: boolean = false
   private teleportStartTime: number = 0
@@ -18,9 +19,9 @@ export class SuperPentagon extends Enemy {
     this.radius = 20
     this.color = 0xff8b1f
     this.scoreChance = 0.5
-    this.speedCap = 1.5
-    this.knockbackResistance = 0.8
-    this.bundleDropChance = 0.12
+    this.speedCap = 2.5
+    this.knockbackResistance = 0.5
+    this.bundleDropChance = 0.1
   }
 
   AI(_playerX: number, _playerY: number): void
@@ -32,7 +33,7 @@ export class SuperPentagon extends Enemy {
     this.moveTowards(_playerX, _playerY)
 
     // Teleport countdown and logic
-    if (distance < 400)
+    if (distance < 600)
     {
       if (!this.isTeleporting)
       {
@@ -47,7 +48,7 @@ export class SuperPentagon extends Enemy {
     else
     {
       // Reset timer when out of range
-      this.teleportTimer = 3000
+      this.teleportTimer = 1500
     }
 
     // Handle teleport animation
@@ -92,11 +93,22 @@ export class SuperPentagon extends Enemy {
       else if (teleportElapsed >= totalTeleportDuration) {
         this.container.scale = 1.0
         this.isTeleporting = false
-        this.teleportTimer = 3000 // Reset timer
+        this.teleportTimer = 1500 // Reset timer
       }
     }
     
   }
+
+  OnDeath(): void {
+    const projectile = new SuperPentagonExplosionDetonation()
+    projectile.SetDefaults()
+    // Scale damage based on enemy's damage stat
+    projectile.damage = this.damage
+
+    const scene = this.scene as Phaser.Scene & { spawnProjectile: Function }
+    scene.spawnProjectile(projectile, this.x, this.y, 0, 0, 'enemy', this.id)
+  }
+
   Draw(): void {
       super.Draw()
   

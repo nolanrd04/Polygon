@@ -52,4 +52,22 @@ export interface Difficulty {
    * Separate from getRarityWeights so bundle drops can be tuned independently.
    */
   getBundleRarityWeights(wave: number): RarityWeights
+
+  /**
+   * Multiplier for enemy health scaling for the given wave.
+   * Applied to each enemy's base health from SetDefaults().
+   */
+  getHealthMultiplier(wave: number): number
+
+  /**
+   * Multiplier for enemy damage scaling for the given wave.
+   * Applied to each enemy's base damage from SetDefaults().
+   */
+  getDamageMultiplier(wave: number): number
+
+  /**
+   * Multiplier for enemy speed scaling for the given wave.
+   * Capped by each enemy's individual speedCap property.
+   */
+  getSpeedMultiplier(wave: number, speedCap: number): number
 }

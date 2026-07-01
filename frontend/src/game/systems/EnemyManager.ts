@@ -3,6 +3,8 @@ import { getEnemyRegistry } from '../entities/enemies'
 import type { Enemy } from '../entities/enemies/Enemy'
 import { Projectile } from '../entities/projectiles/Projectile'
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../core/GameConfig'
+import type { Difficulty } from './difficulty/Difficulty'
+import { NormalDifficulty } from './difficulty/Normal'
 
 // Get the registry from the centralized enemies/index.ts
 // Now to add a new enemy, just edit enemies/index.ts!
@@ -10,16 +12,17 @@ const EnemyRegistry = getEnemyRegistry()
 
 export class EnemyManager {
   private scene: Phaser.Scene
+  private difficulty: Difficulty
   private enemies: Enemy[] = []
   private enemyGroup: Phaser.GameObjects.Group
   private projectiles: Projectile[] = []
   private enemyProjectileGroup: Phaser.GameObjects.Group
   private nextId: number = 1
   private currentWave: number = 0
-  private waveMultiplier: number = 1
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, difficulty: Difficulty = NormalDifficulty) {
     this.scene = scene
+    this.difficulty = difficulty
     this.enemyGroup = scene.add.group()
     this.enemyProjectileGroup = scene.add.group()
 
@@ -47,13 +50,11 @@ export class EnemyManager {
     const enemy = new EnemyClass()
     enemy.SetDefaults()
 
-    // Apply wave scaling
-    enemy.health *= this.waveMultiplier
-    enemy.damage *= this.waveMultiplier
-    enemy.speed *= this.getSpeedMultiplier(this.currentWave, enemy.speedCap)
+    // Apply wave scaling from difficulty
+    enemy.health *= this.difficulty.getHealthMultiplier(this.currentWave)
+    enemy.damage *= this.difficulty.getDamageMultiplier(this.currentWave)
+    enemy.speed *= this.difficulty.getSpeedMultiplier(this.currentWave, enemy.speedCap)
     enemy.maxHealth = enemy.health  // Update maxHealth to match scaled health
-    // console.log(`Spawning enemy ${typeId} at (${x}, ${y}) with health ${enemy.health.toFixed(2)}`)
-
 
     // Reduce diamond enemy dash cooldown time as waves progress
     if (this.currentWave > 10) {
@@ -155,71 +156,10 @@ export class EnemyManager {
   }
 
   /**
-   * Scale enemy stats based on wave number.
-   * Uses exponential scaling: e^(wave/8)
-   * At wave 1: multiplier = 1
-   * Increases gradually but exponentially with each wave
+   * Set the current wave for enemy scaling.
    */
-  scaleEnemyStats(wave: number): void {
-    // if (this.currentWave == 2)
-    // {
-    //   this.waveMultiplier = 1 + (wave * .15)
-    //   return
-    // }
-    // else if (this.currentWave == 3 || this.currentWave == 4)
-    // {
-    //   this.waveMultiplier = 1 + (wave * .20)
-    // }
-    // else if (this.currentWave < 7)
-    // {
-    //   this.waveMultiplier = 1 + (wave * .35)
-    //   return
-    // }
-    // else if (this.currentWave < 9)
-    // {
-    //   this.waveMultiplier = 1 + (wave * .85)
-    // }
-    // else if (this.currentWave < 11)
-    // {
-    //   this.waveMultiplier = 1 + (wave * 1.65)
-    // }
-    // else if (this.currentWave < 14)
-    // {
-    //   this.waveMultiplier = 1 + (wave * 3.0)
-    //   return
-    // }
-    // else if (this.currentWave < 17)
-    // {
-    //   this.waveMultiplier = 1 + (wave * 5.2)
-    //   return
-    // }
-    // else if (this.currentWave < 21)
-    // {
-    //   this.waveMultiplier = 1 + (wave * 8.0)
-    //   return
-    // }
-    // else
-    // {
-    //   this.waveMultiplier = Math.exp((wave-19) / 6)
-    // }
-
-    this.waveMultiplier = Math.exp(wave / 8)
-  }
-
-  /**
-   * Get the speed multiplier for the current wave.
-   * Respects each enemy's individual speedCap.
-   */
-  private getSpeedMultiplier(wave: number, speedCap: number): number {
-    const speedMult = 1 + (wave * 0.1) // +10% speed per wave
-    return Math.min(speedCap, speedMult)
-  }
-
-  /**
-   * Get the current wave multiplier for enemy stats.
-   */
-  getWaveMultiplier(): number {
-    return this.waveMultiplier
+  setCurrentWave(wave: number): void {
+    this.currentWave = wave
   }
 
   /**

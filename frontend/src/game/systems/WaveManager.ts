@@ -28,7 +28,7 @@ export class WaveManager {
 
     console.log(`Wave ${this.currentWave} starting with pre-loaded upgrades`)
 
-    this.enemyManager.scaleEnemyStats(this.currentWave - 1)
+    this.enemyManager.setCurrentWave(this.currentWave - 1)
 
     const bossSpawns = this.difficulty.getScheduledBossSpawns(this.currentWave)
     if (bossSpawns) {

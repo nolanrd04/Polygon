@@ -17,6 +17,7 @@ import { getDefaultVolume, pauseBackgroundMusic, resumeBackgroundMusic, preloadA
 import { TouchControlManager } from '../systems/TouchControlManager'
 import { DroppedUpgradeBundle } from '../entities/upgrades/DroppedUpgradeBundle'
 import type { Rarity, RarityWeights } from '../systems/difficulty/Difficulty'
+import { NormalDifficulty } from '../systems/difficulty/Normal'
 
 // Import all upgrade JSONs
 import statUpgrades from '../data/upgrades/stat_upgrades.json'
@@ -90,8 +91,8 @@ export class MainScene extends Phaser.Scene {
     this.input.mouse!.disableContextMenu()
 
     // Initialize managers
-    this.enemyManager = new EnemyManager(this)
-    this.waveManager = new WaveManager(this, this.enemyManager)
+    this.enemyManager = new EnemyManager(this, NormalDifficulty)
+    this.waveManager = new WaveManager(this, this.enemyManager, NormalDifficulty)
     this.collisionManager = new CollisionManager(
       this,
       this.player,

@@ -34,17 +34,23 @@ const SPAWN_WEIGHTS: Record<number, EnemySpawnWeight[]> = {
   17: [{ type: 'triangle', weight: 20 }, { type: 'square', weight: 35 }, { type: 'super_triangle', weight: 15 }, { type: 'octogon', weight: 5 }, { type: 'super_square', weight: 25 }],
   18: [{ type: 'square', weight: 40 }, { type: 'super_triangle', weight: 15 }, { type: 'octogon', weight: 10 }, { type: 'super_square', weight: 35 }],
   19: [{ type: 'square', weight: 20 }, { type: 'super_triangle', weight: 10 }, { type: 'pentagon', weight: 5 }, { type: 'diamond', weight: 15 }, { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 15 }, { type: 'super_square', weight: 25 }],
+  20: [{ type: 'square', weight: 20 }, { type: 'super_triangle', weight: 10 }, { type: 'pentagon', weight: 5 }, { type: 'diamond', weight: 15 }, { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 15 }, { type: 'super_square', weight: 25 }],
+  21: [{ type: 'pentagon', weight: 10 }, { type: 'super_triangle', weight: 10 }, { type: 'diamond', weight: 25 }, { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 10 }, { type: 'super_square', weight: 10 }, { type: 'super_pentagon', weight: 25 }],
+  22: [{ type: 'pentagon', weight: 5 }, { type: 'super_triangle', weight: 10 }, { type: 'diamond', weight: 35 }, { type: 'octogon', weight: 5 }, { type: 'super_square', weight: 10 }, { type: 'super_pentagon', weight: 35 }],
+
+
 }
 
 const FALLBACK_WEIGHTS: EnemySpawnWeight[] = [
   { type: 'triangle', weight: 5 },
-  { type: 'square', weight: 10 },
-  { type: 'super_triangle', weight: 20 },
+  { type: 'square', weight: 5 },
+  { type: 'super_triangle', weight: 15 },
   { type: 'pentagon', weight: 10 },
   { type: 'hexagon', weight: 10 },
   { type: 'diamond', weight: 20 },
   { type: 'octogon', weight: 15 },
   { type: 'super_square', weight: 10 },
+  { type: 'super_pentagon', weight: 10 },
 ]
 
 /**
@@ -175,5 +181,18 @@ export const NormalDifficulty: Difficulty = {
 
   getBundleRarityWeights(wave: number): RarityWeights {
     return BUNDLE_RARITY_WEIGHTS_BY_WAVE[wave] ?? FALLBACK_BUNDLE_RARITY_WEIGHTS
+  },
+
+  getHealthMultiplier(wave: number): number {
+    return Math.exp(wave / 8)
+  },
+
+  getDamageMultiplier(wave: number): number {
+    return Math.exp(wave / 8)
+  },
+
+  getSpeedMultiplier(wave: number, speedCap: number): number {
+    const speedMult = 1 + (wave * 0.05)
+    return Math.min(speedCap, speedMult)
   },
 }
