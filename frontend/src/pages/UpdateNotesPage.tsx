@@ -10,6 +10,15 @@ interface UpdateNote {
 // Add new updates at the top of this array
 const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: 'v0.1.5',
+    date: '2026-07-02',
+    title: 'Enemy changes',
+    changes: [
+      'Changed how enemies scale throughout waves.',
+      'Super pentagon now detonates on death.'
+    ]
+  },
+  {
     version: 'v0.1.4',
     date: '2026-07-01',
     title: 'minor enemy and upgrade changes',
