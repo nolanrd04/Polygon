@@ -24,7 +24,6 @@ export interface GameEvents {
   'enemy-explode': { x: number; y: number; radius: number; damage: number }
   'enemy-split': { x: number; y: number; config: unknown; velocityAngle: number }
   'enemy-shoot': { x: number; y: number; targetX: number; targetY: number; damage: number; speed: number; color: number }
-  'thorns-reflect': { damage: number }
   'dev-apply-upgrade': string  // Dev-only: apply upgrade without cost
   'evolution-milestone': number  // Emitted every 6 waves with the current wave number
   'enemy-killed': { type: string; x: number; y: number }  // Wave validation tracking

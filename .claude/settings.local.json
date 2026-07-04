@@ -26,7 +26,9 @@
       "Bash(python -c:*)",
       "Bash(xargs grep *)",
       "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
-      "Bash(grep -E \"\\\\.py$\")"
+      "Bash(grep -E \"\\\\.py$\")",
+      "Bash(bash sync-check.sh)",
+      "Bash(python3 -c ' *)"
     ],
     "deny": [],
     "ask": []

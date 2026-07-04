@@ -3,8 +3,9 @@ import { Player } from '../entities/Player'
 import { Enemy } from '../entities/enemies/Enemy'
 import { EnemyManager } from './EnemyManager'
 import { GameManager } from '../core/GameManager'
-import { UpgradeEffectSystem, UpgradeModifierSystem } from './upgrades'
+import { UpgradeSystem, UpgradeEffectSystem, UpgradeModifierSystem } from './upgrades'
 import { EventBus } from '../core/EventBus'
+import { UpgradeTargetID, UpgradeStatID } from '../data/ID'
 
 export class CollisionManager {
   private scene: Phaser.Scene
@@ -102,25 +103,31 @@ export class CollisionManager {
     // Check if this projectile already hit this enemy (for pierce)
     if (!projectile._canHitEnemy(enemy.id)) return
 
-    // Trigger onHit effects (lifesteal, etc.)
-    UpgradeEffectSystem.onProjectileHit(projectile, enemy)
-
     // Check if projectile wants to handle damage
     const shouldApplyCollisionDamage = projectile.OnHitNPC(enemy)
 
     // Deal damage if projectile allows it
     let killed = false
     if (shouldApplyCollisionDamage) {
-      // Apply damage modifiers and round up to nearest whole number
+      // Apply damage modifiers (attack-specific, then global "attack") and round up to
+      // nearest whole number. This is the single point where Damage upgrades are applied —
+      // see Player.applyUpgradeModifiers for why it's not also done at spawn time.
       const baseDamage = projectile.damage
-      const modifiedDamage = UpgradeModifierSystem.applyModifiers('bullet', 'damage', baseDamage)
-      const multipliedDamage = modifiedDamage * projectile.damageMultiplier
-      const finalDamage = Math.ceil(multipliedDamage)
+      let modifiedDamage = UpgradeModifierSystem.applyModifiers(UpgradeTargetID.Bullet, UpgradeStatID.Damage, baseDamage)
+      modifiedDamage = UpgradeModifierSystem.applyModifiers(UpgradeTargetID.Attack, UpgradeStatID.Damage, modifiedDamage)
+
+      // Let owned upgrades mutate the hit before it lands
+      const damage = { amount: modifiedDamage * projectile.damageMultiplier }
+      UpgradeSystem.dispatchModifyHitEnemy(projectile, enemy, damage)
+      const finalDamage = Math.ceil(damage.amount)
 
       console.log(`Collision damage: base=${baseDamage}, modified=${modifiedDamage}, final=${finalDamage}`)
       killed = enemy.takeDamage(finalDamage)
       // Emit damage event for wave validation
       EventBus.emit('damage-dealt', finalDamage)
+
+      // React to the landed hit (lifesteal, etc.)
+      UpgradeSystem.dispatchOnHitEnemy(projectile, enemy, finalDamage)
     } else {
       console.log('Collision damage skipped (projectile OnHitNPC returned false)')
     }
@@ -135,8 +142,8 @@ export class CollisionManager {
         GameManager.addPoints(1)
       }
 
-      // Trigger onKill effects (explode on kill, etc.)
-      UpgradeEffectSystem.onEnemyKill(enemy)
+      // On-kill upgrade hooks (explode on kill, etc.)
+      UpgradeSystem.dispatchOnEnemyKilled(enemy)
 
       // Let the enemy decide how many bundles drop and their rarities
       enemy.DropBundles()
@@ -147,7 +154,7 @@ export class CollisionManager {
     // Apply knockback to enemy
     if (projectile.knockback > 0) {
       const baseKnockback = projectile.knockback
-      const modifiedKnockback = UpgradeModifierSystem.applyModifiers('attack', 'knockback', baseKnockback)
+      const modifiedKnockback = UpgradeModifierSystem.applyModifiers(UpgradeTargetID.Attack, UpgradeStatID.Knockback, baseKnockback)
       const angle = Phaser.Math.Angle.Between(
         projectile.positionX,
         projectile.positionY,
@@ -215,16 +222,11 @@ export class CollisionManager {
     const now = this.scene.time.now
     if (now - enemy.lastHitPlayerTime < this.playerDamageCooldown) return
 
-    // Damage player (round up to nearest whole number)
+    // Damage player (round up to nearest whole number). The enemy is passed
+    // as the hit source so upgrade hooks like Thorns can react to it.
     const damageAmount = Math.ceil(enemy.damage)
-    this.player.takeDamage(damageAmount)
+    this.player.takeDamage(damageAmount, enemy)
     enemy.lastHitPlayerTime = now
-
-    // Handle thorns - damage the enemy that hit the player
-    if (UpgradeEffectSystem.hasEffect('thorns')) {
-      const thornsDamage = damageAmount * UpgradeEffectSystem.getEffectValue('thorns')
-      enemy.takeDamage(thornsDamage)
-    }
 
     // Push player away
     const angle = Phaser.Math.Angle.Between(

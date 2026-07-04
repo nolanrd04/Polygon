@@ -1,11 +1,13 @@
+import { UpgradeTargetID, UpgradeStatID } from '../../data/ID'
+
 /**
  * Manages stat modifiers from upgrades.
  * Modifiers are additive or multiplicative changes to stats.
  */
 class UpgradeModifierSystemClass {
   // target -> stat -> total modifier value
-  private additiveModifiers: Map<string, Map<string, number>> = new Map()
-  private multiplicativeModifiers: Map<string, Map<string, number>> = new Map()
+  private additiveModifiers: Map<UpgradeTargetID, Map<UpgradeStatID, number>> = new Map()
+  private multiplicativeModifiers: Map<UpgradeTargetID, Map<UpgradeStatID, number>> = new Map()
 
   /**
    * Add a modifier to a target's stat.
@@ -16,7 +18,7 @@ class UpgradeModifierSystemClass {
    * @param isMultiplier - If true, value is a multiplier (1.2 = +20%). If false, it's additive (+5)
    * @param curse - If true, need to prevent decrementing values from giong below 0
    */
-  addModifier(target: string, stat: string, value: number, isMultiplier: boolean = false, curse?: boolean): void {
+  addModifier(target: UpgradeTargetID, stat: UpgradeStatID, value: number, isMultiplier: boolean = false, curse?: boolean): void {
     const modifiers = isMultiplier ? this.multiplicativeModifiers : this.additiveModifiers
 
     if (!modifiers.has(target)) {
@@ -47,22 +49,13 @@ class UpgradeModifierSystemClass {
   }
 
   /**
-   * Remove a modifier (used when an upgrade is removed).
-   * Note: This removes ALL modifiers for a stat, so it's best used with non-stackable upgrades.
-   */
-  removeModifier(target: string, stat: string): void {
-    this.additiveModifiers.get(target)?.delete(stat)
-    this.multiplicativeModifiers.get(target)?.delete(stat)
-  }
-
-  /**
    * Get the total additive modifier for a stat.
    *
    * @param target - The entity type (e.g., 'bullet')
    * @param stat - The stat name (e.g., 'damage')
    * @returns The total additive value (e.g., +15 damage from multiple upgrades)
    */
-  getAdditiveModifier(target: string, stat: string): number {
+  getAdditiveModifier(target: UpgradeTargetID, stat: UpgradeStatID): number {
     return this.additiveModifiers.get(target)?.get(stat) || 0
   }
 
@@ -73,7 +66,7 @@ class UpgradeModifierSystemClass {
    * @param stat - The stat name (e.g., 'speed')
    * @returns The total multiplier (e.g., 1.5 = 150% = +50%)
    */
-  getMultiplicativeModifier(target: string, stat: string): number {
+  getMultiplicativeModifier(target: UpgradeTargetID, stat: UpgradeStatID): number {
     return this.multiplicativeModifiers.get(target)?.get(stat) || 0
   }
 
@@ -92,7 +85,7 @@ class UpgradeModifierSystemClass {
    * @param baseValue - The original value before modifiers
    * @returns The modified value
    */
-  applyModifiers(target: string, stat: string, baseValue: number): number {
+  applyModifiers(target: UpgradeTargetID, stat: UpgradeStatID, baseValue: number): number {
     const additive = this.getAdditiveModifier(target, stat)
     const multiplicative = this.getMultiplicativeModifier(target, stat)
 
@@ -100,39 +93,16 @@ class UpgradeModifierSystemClass {
   }
 
   /**
-   * Get all modifiers for a target as a Map.
-   * Useful for applying all modifiers at once to an entity.
-   *
-   * @param target - The entity type
-   * @returns Map of stat -> final modifier value (additive only, for simplicity)
-   */
-  getModifiers(target: string): Map<string, number> {
-    const result = new Map<string, number>()
-
-    const additive = this.additiveModifiers.get(target)
-    if (additive) {
-      for (const [stat, value] of additive) {
-        result.set(stat, value)
-      }
-    }
-
-    // Note: Multiplicative modifiers need the base value to apply,
-    // so they're not included here. Use applyModifiers() instead.
-
-    return result
-  }
-
-  /**
    * Get all additive modifiers for a target.
    */
-  getAllAdditiveModifiers(target: string): Map<string, number> {
+  getAllAdditiveModifiers(target: UpgradeTargetID): Map<UpgradeStatID, number> {
     return this.additiveModifiers.get(target) || new Map()
   }
 
   /**
    * Get all multiplicative modifiers for a target.
    */
-  getAllMultiplicativeModifiers(target: string): Map<string, number> {
+  getAllMultiplicativeModifiers(target: UpgradeTargetID): Map<UpgradeStatID, number> {
     return this.multiplicativeModifiers.get(target) || new Map()
   }
 

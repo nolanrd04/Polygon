@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
-import statUpgrades from '../game/data/upgrades/stat_upgrades.json'
-import effectUpgrades from '../game/data/upgrades/effect_upgrades.json'
-import variantUpgrades from '../game/data/upgrades/variant_upgrades.json'
-import visualUpgrades from '../game/data/upgrades/visual_upgrades.json'
-import abilityUpgrades from '../game/data/upgrades/ability_upgrades.json'
+import { getAllUpgrades } from '../game/upgrades'
+import type { UpgradeDef } from '../game/upgrades/Upgrade'
+import { RarityID } from '../game/data/ID'
 import { GameManager } from '../game/core/GameManager'
 import { EventBus } from '../game/core/EventBus'
 import { waveValidation } from '../game/services/WaveValidation'
@@ -20,8 +18,10 @@ import { SaveManager } from '../game/services/SaveManager'
  * - Validates upgrade selection (dependencies, max stacks, cost)
  * - Returns only upgrade IDs to the frontend
  *
- * FRONTEND (frontend/src/game/data/upgrades/*.json):
+ * FRONTEND (frontend/src/game/upgrades/): def/ctor registry (UPGRADE_REGISTRY)
  * - Contains a copy of the same upgrade data for display purposes
+ * - UI code consumes the plain UpgradeDef half only — behavior classes are
+ *   instantiated by the game engine, never by components
  * - Used to look up full upgrade details (name, description, rarity) based on IDs from backend
  * - Enables rendering upgrade cards in the UI
  * - Used by DevTools for development upgrade selection
@@ -29,25 +29,7 @@ import { SaveManager } from '../game/services/SaveManager'
  * This architecture prevents client-side manipulation while keeping UI rendering fast.
  */
 
-interface Upgrade {
-  id: string
-  name: string
-  description: string
-  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary'
-  cost: number
-  attackType?: string
-  stat?: string
-  value?: number
-  stackable?: boolean
-  maxStacks?: number
-  replaces?: string[]
-  type?: string
-  target?: string
-  variantClass?: string
-  dependentOn?: string[]
-  dependencyCount?: number
-  incompatibleWith?: string[]
-}
+type Upgrade = UpgradeDef & { purchased?: boolean }
 
 interface UpgradeModalProps {
   onStartWave: () => void
@@ -55,7 +37,7 @@ interface UpgradeModalProps {
   selectedAttack?: string // The attack type the player is using
 }
 
-const rarityColors = {
+const rarityColors: Record<RarityID, string> = {
   common: 'border-gray-500 bg-gray-900',
   uncommon: 'border-green-500 bg-green-900/30',
   rare: 'border-blue-500 bg-blue-900/30',
@@ -63,7 +45,7 @@ const rarityColors = {
   legendary: 'border-yellow-500 bg-yellow-900/30'
 }
 
-const rarityTextColors = {
+const rarityTextColors: Record<RarityID, string> = {
   common: 'text-gray-400',
   uncommon: 'text-green-400',
   rare: 'text-blue-400',
@@ -80,13 +62,7 @@ export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModal
 
   const loadBackendUpgrades = () => {
     // Get all available upgrades
-    const allUpgrades = [
-      ...statUpgrades.upgrades,
-      ...effectUpgrades.upgrades,
-      ...variantUpgrades.upgrades,
-      ...visualUpgrades.upgrades,
-      ...abilityUpgrades.upgrades
-    ] as Upgrade[]
+    const allUpgrades = getAllUpgrades().filter(u => !u.curse) as Upgrade[]
 
     // Get upgrade IDs from backend (rolled server-side)
     const offeredUpgradeIds = waveValidation.getOfferedUpgrades()
@@ -153,13 +129,7 @@ export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModal
         setOptions([])  // Clear old options first
 
         // Load the new upgrades from the backend response
-        const allUpgrades = [
-          ...statUpgrades.upgrades,
-          ...effectUpgrades.upgrades,
-          ...variantUpgrades.upgrades,
-          ...visualUpgrades.upgrades,
-          ...abilityUpgrades.upgrades
-        ] as Upgrade[]
+        const allUpgrades = getAllUpgrades().filter(u => !u.curse) as Upgrade[]
 
         // Backend returns full upgrade objects, map them to frontend upgrade objects
         const offeredUpgrades = result.upgrades
@@ -242,7 +212,7 @@ export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModal
       <div className={`flex mb-${isMobile ? '4' : '8'} ${isMobile ? 'gap-2 w-full' : 'gap-6'}`}>
         {options.map((upgrade, index) => {
           const isDisabled = isUpgradeDisabled(upgrade, index)
-          const isPurchasedFromBackend = (upgrade as any).purchased === true
+          const isPurchasedFromBackend = upgrade.purchased === true
           const isPurchasedThisSession = selectedIndices.includes(index)
           const isPurchased = isPurchasedFromBackend || isPurchasedThisSession
           const stats = GameManager.getPlayerStats()
@@ -268,9 +238,9 @@ export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModal
               <p className={`text-gray-400 flex-grow ${isMobile ? 'text-[10px] leading-tight' : 'text-sm'}`}>
                 {upgrade.description}
               </p>
-              {upgrade.attackType && (
+              {upgrade.specificAttackType && (
                 <div className={`text-polygon-secondary text-[10px] ${isMobile ? 'mt-1' : 'mt-3'}`}>
-                  {upgrade.attackType.toUpperCase()}
+                  {upgrade.specificAttackType.toUpperCase()}
                 </div>
               )}
               <div className={`font-bold ${isMobile ? 'text-[10px] mt-1' : 'text-base mt-3'} ${

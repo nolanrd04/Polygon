@@ -1,33 +1,19 @@
-import { UpgradeDefinition } from './UpgradeSystem'
+import type { UpgradeDef } from '../../upgrades/Upgrade'
 
 /**
- * Effect handler function signature
- */
-export interface EffectHandler {
-  onHit?: (projectile: any, enemy: any) => void
-  onKill?: (enemy: any) => void
-  onUpdate?: (deltaTime: number) => void
-  onDamage?: (amount: number) => number // Modifies incoming damage
-  onSpawn?: (entity: any) => void
-}
-
-/**
- * Manages gameplay effects from upgrades.
- * Effects are behaviors that trigger on events (onHit, onUpdate, etc.)
+ * Stores upgrade-granted counters and flags that other systems poll:
+ * - effect counters (shield charges, ricochet, multishot, ...)
+ * - abilities (dash)
+ * - visual effect flags (currently inert — nothing renders them)
+ *
+ * Event-driven behavior (lifesteal, regen, protection, thorns, explode on
+ * kill) no longer lives here — each upgrade class implements it as engine
+ * hooks dispatched by UpgradeSystem in ledger order.
  */
 class UpgradeEffectSystemClass {
-  private effectHandlers: Map<string, EffectHandler> = new Map()
   private activeEffects: Map<string, number> = new Map() // effectId -> total value
-  private visualEffects: Map<string, UpgradeDefinition> = new Map()
+  private visualEffects: Map<string, UpgradeDef> = new Map()
   private activeAbilities: Set<string> = new Set()
-
-  /**
-   * Register an effect handler.
-   * This should be called once at game initialization.
-   */
-  registerEffect(effectId: string, handler: EffectHandler): void {
-    this.effectHandlers.set(effectId, handler)
-  }
 
   /**
    * Add an effect with a value (can be called multiple times to stack).
@@ -61,7 +47,7 @@ class UpgradeEffectSystemClass {
   /**
    * Add a visual effect.
    */
-  addVisualEffect(effectId: string, upgrade: UpgradeDefinition): void {
+  addVisualEffect(effectId: string, upgrade: UpgradeDef): void {
     this.visualEffects.set(effectId, upgrade)
   }
 
@@ -82,7 +68,7 @@ class UpgradeEffectSystemClass {
   /**
    * Get visual effect data.
    */
-  getVisualEffect(effectId: string): UpgradeDefinition | undefined {
+  getVisualEffect(effectId: string): UpgradeDef | undefined {
     return this.visualEffects.get(effectId)
   }
 
@@ -105,85 +91,6 @@ class UpgradeEffectSystemClass {
    */
   hasAbility(abilityId: string): boolean {
     return this.activeAbilities.has(abilityId)
-  }
-
-  // ============================================================
-  // EVENT TRIGGERS - Called by game systems
-  // ============================================================
-
-  /**
-   * Trigger onHit effects when a projectile hits an enemy.
-   */
-  onProjectileHit(projectile: any, enemy: any): void {
-    for (const [effectId, value] of this.activeEffects) {
-      if (value <= 0) continue
-
-      const handler = this.effectHandlers.get(effectId)
-      if (handler?.onHit) {
-        handler.onHit(projectile, enemy)
-      }
-    }
-  }
-
-  /**
-   * Trigger onKill effects when an enemy is killed.
-   */
-  onEnemyKill(enemy: any): void {
-    for (const [effectId, value] of this.activeEffects) {
-      if (value <= 0) continue
-
-      const handler = this.effectHandlers.get(effectId)
-      if (handler?.onKill) {
-        handler.onKill(enemy)
-      }
-    }
-  }
-
-  /**
-   * Trigger onUpdate effects every frame.
-   */
-  onUpdate(deltaTime: number): void {
-    for (const [effectId, value] of this.activeEffects) {
-      if (value <= 0) continue
-
-      const handler = this.effectHandlers.get(effectId)
-      if (handler?.onUpdate) {
-        handler.onUpdate(deltaTime)
-      }
-    }
-  }
-
-  /**
-   * Trigger onDamage effects when player takes damage.
-   * Returns the modified damage amount.
-   */
-  onPlayerDamage(amount: number): number {
-    let modifiedAmount = amount
-
-    for (const [effectId, value] of this.activeEffects) {
-      if (value <= 0) continue
-
-      const handler = this.effectHandlers.get(effectId)
-      if (handler?.onDamage) {
-        modifiedAmount = handler.onDamage(modifiedAmount)
-      }
-    }
-
-    return modifiedAmount
-  }
-
-  /**
-   * Trigger onSpawn effects when an entity is spawned.
-   */
-  onEntitySpawn(entity: any): void {
-    for (const [effectId, value] of this.activeEffects) {
-      if (value <= 0) continue
-
-      const handler = this.effectHandlers.get(effectId)
-      if (handler?.onSpawn) {
-        handler.onSpawn(entity)
-      }
-    }
   }
 
   /**

@@ -1,11 +1,11 @@
+import { RarityID } from '../../data/ID'
+
 export type EnemySpawnWeight = {
   type: string
   weight: number
 }
 
-export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary'
-
-export type RarityWeights = Record<Rarity, number>
+export type RarityWeights = Record<RarityID, number>
 
 /**
  * A Difficulty owns all per-wave game-pacing data: how many enemies spawn,

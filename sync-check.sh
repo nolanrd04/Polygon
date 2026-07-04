@@ -30,8 +30,78 @@ YELLOW = '\033[1;33m'
 BLUE = '\033[0;34m'
 NC = '\033[0m'
 
+def find_class_based_upgrades():
+    """Find all class-based upgrade implementations"""
+    frontend_upgrades = {}
+    backend_upgrades = {}
+
+    # Frontend: find all .ts files in upgrades/ subdirectories
+    frontend_dir = REPO_ROOT / "frontend/src/game/upgrades"
+    if frontend_dir.exists():
+        for ts_file in frontend_dir.rglob("*.ts"):
+            # Skip base class and index files
+            if ts_file.name in ("Upgrade.ts", "index.ts"):
+                continue
+            # Extract upgrade ID from filename (e.g., damage_1.ts -> damage_1)
+            upgrade_id = ts_file.stem
+            frontend_upgrades[upgrade_id] = ts_file.relative_to(REPO_ROOT)
+
+    # Backend: find all .py files in upgrades/ subdirectories
+    backend_dir = REPO_ROOT / "backend/app/core/upgrades"
+    if backend_dir.exists():
+        for py_file in backend_dir.rglob("*.py"):
+            # Skip base class and __init__ files
+            if py_file.name in ("upgrade_implementation.py", "__init__.py"):
+                continue
+            # Extract upgrade ID from filename (e.g., damage_1.py -> damage_1)
+            upgrade_id = py_file.stem
+            backend_upgrades[upgrade_id] = py_file.relative_to(REPO_ROOT)
+
+    return frontend_upgrades, backend_upgrades
+
+def check_class_based_coverage():
+    """Check if all class-based upgrades are synced between frontend and backend"""
+    frontend, backend = find_class_based_upgrades()
+    issues = []
+
+    print(f"\n{BLUE}=== Class-Based Upgrade System Status ==={NC}")
+    print(f"Frontend class-based upgrades: {len(frontend)}")
+    print(f"Backend class-based upgrades: {len(backend)}")
+
+    if len(frontend) == 0 and len(backend) == 0:
+        print(f"\n{YELLOW}No class-based upgrades found yet.${NC}")
+        print(f"Migration in progress. Class-based upgrades will be added in Phase 2+.")
+        return []
+
+    # Check for mismatches
+    frontend_only = set(frontend.keys()) - set(backend.keys())
+    backend_only = set(backend.keys()) - set(frontend.keys())
+
+    if frontend_only:
+        print(f"\n{RED}✗ Missing in backend ({len(frontend_only)}):${NC}")
+        for upgrade_id in sorted(frontend_only):
+            print(f"    {upgrade_id} ({frontend[upgrade_id]})")
+        issues.append(f"Frontend upgrades missing in backend: {frontend_only}")
+
+    if backend_only:
+        print(f"\n{RED}✗ Missing in frontend ({len(backend_only)}):${NC}")
+        for upgrade_id in sorted(backend_only):
+            print(f"    {upgrade_id} ({backend[upgrade_id]})")
+        issues.append(f"Backend upgrades missing in frontend: {backend_only}")
+
+    if not frontend_only and not backend_only and len(frontend) > 0:
+        print(f"\n{GREEN}✓ All class-based upgrades are synced!${NC}")
+        for upgrade_id in sorted(frontend.keys()):
+            print(f"    ✓ {upgrade_id}")
+
+    return issues
+
+# First check class-based system
+class_issues = check_class_based_coverage()
+
+# Also run legacy JSON analysis for now (during migration)
 def load_frontend_upgrades():
-    """Load all frontend upgrade files"""
+    """Load all frontend upgrade files (legacy JSON)"""
     upgrades = {}
     upgrade_dir = REPO_ROOT / "frontend/src/game/data/upgrades"
 
@@ -49,144 +119,21 @@ def load_frontend_upgrades():
 
     return upgrades
 
-def load_backend_upgrades():
-    """Load backend upgrades from JSON"""
-    upgrades = {}
-    upgrade_file = REPO_ROOT / "backend/app/core/data/upgrades.json"
+print(f"\n{BLUE}=== Legacy JSON Upgrade System Status ==={NC}")
+frontend_json = load_frontend_upgrades()
+print(f"Legacy JSON upgrades: {len(frontend_json)}")
+print(f"Status: {YELLOW}Currently in use during migration phase.${NC}")
+print(f"Plan: Delete these files once all upgrades are migrated to class-based system.")
 
-    with open(upgrade_file) as f:
-        upgrades = json.load(f)
-
-    return upgrades
-
-def load_backend_config():
-    """Load backend configuration to see what it knows about"""
-    # Read wave_service.py to understand what the backend validates
-    wave_service = REPO_ROOT / "backend/app/services/wave_service.py"
-    with open(wave_service) as f:
-        content = f.read()
-
-    # Parse what stats the backend knows about
-    if "stat_mapping = {" in content:
-        start = content.find("stat_mapping = {")
-        end = content.find("}", start) + 1
-        mapping_str = content[start:end]
-        # Extract stat names (simple heuristic)
-        known_stats = []
-        for line in mapping_str.split('\n'):
-            if ':' in line and '"' in line:
-                parts = line.split(':')
-                if len(parts) >= 2:
-                    stat = parts[0].strip().strip('"').strip("'")
-                    known_stats.append(stat)
-        return known_stats
-
-    return ["speed", "maxHealth", "health"]  # Defaults
-
-def check_upgrade_coverage():
-    """Check if backend can handle all frontend upgrades"""
-    frontend = load_frontend_upgrades()
-    backend = load_backend_upgrades()
-    known_stats = load_backend_config()
-
-    issues = []
-
-    print(f"\n{BLUE}=== Upgrade System Coverage Analysis ==={NC}")
-    print(f"Frontend upgrades: {len(frontend)}")
-    print(f"Backend upgrades: {len(backend)}")
-
-    # Check 1: Curses in regular rolls
-    print(f"\n{YELLOW}1. Curse Handling:{NC}")
-    backend_curses = [u for u in backend.values() if u.get("curse")]
-    frontend_curse_files = [u for u in frontend.values() if u.get("_file") == "curses.json"]
-    print(f"   Curses in backend: {len(backend_curses)}")
-    print(f"   Curses in frontend (separate): {len(frontend_curse_files)}")
-    if backend_curses:
-        print(f"   ⚠️  Backend includes curses in UPGRADES dict (should be separate)")
-        issues.append("Curses mixed with regular upgrades in backend")
-
-    # Check 2: Missing upgrades
-    print(f"\n{YELLOW}2. Coverage Comparison:{NC}")
-    missing_in_backend = set(frontend.keys()) - set(backend.keys())
-    extra_in_backend = set(backend.keys()) - set(frontend.keys())
-
-    if missing_in_backend:
-        print(f"   ⚠️  Missing in backend ({len(missing_in_backend)}): {list(missing_in_backend)[:3]}...")
-        issues.append(f"Frontend upgrades not in backend: {missing_in_backend}")
-    else:
-        print(f"   ✓ All frontend upgrades in backend")
-
-    if extra_in_backend:
-        print(f"   ⚠️  Extra in backend ({len(extra_in_backend)}): {list(extra_in_backend)[:3]}...")
-        issues.append(f"Backend has upgrades not in frontend: {extra_in_backend}")
-    else:
-        print(f"   ✓ No extra upgrades in backend")
-
-    # Check 3: Stat coverage
-    print(f"\n{YELLOW}3. Backend Stat Coverage:{NC}")
-    print(f"   Backend knows about: {known_stats}")
-
-    used_stats = set()
-    for u in frontend.values():
-        if u.get("type") == "stat_modifier" and u.get("stat"):
-            used_stats.add(u["stat"])
-
-    unknown_stats = used_stats - set(known_stats)
-    if unknown_stats:
-        print(f"   ⚠️  Unknown stats in frontend: {unknown_stats}")
-        issues.append(f"Frontend uses stats backend doesn't handle: {unknown_stats}")
-    else:
-        print(f"   ✓ All frontend stats known to backend")
-
-    # Check 4: Upgrade types
-    print(f"\n{YELLOW}4. Upgrade Type Coverage:{NC}")
-    frontend_types = set(u.get("type") for u in frontend.values())
-    backend_handles = {"stat_modifier"}  # Only type backend validates
-
-    unhandled_types = frontend_types - backend_handles
-    print(f"   Frontend types: {frontend_types}")
-    print(f"   Backend validates: {backend_handles}")
-
-    if unhandled_types:
-        count = sum(1 for u in frontend.values() if u.get("type") in unhandled_types)
-        print(f"   ⚠️  Backend doesn't validate {len(unhandled_types)} upgrade types ({count} upgrades affected)")
-        print(f"      Types: {unhandled_types}")
-        issues.append(f"Backend doesn't validate upgrade types: {unhandled_types}")
-    else:
-        print(f"   ✓ Backend validates all upgrade types")
-
-    # Check 5: Target coverage (for stat modifiers)
-    print(f"\n{YELLOW}5. Upgrade Target Coverage:{NC}")
-    frontend_targets = set()
-    for u in frontend.values():
-        if u.get("type") == "stat_modifier":
-            target = u.get("target")
-            if target:
-                frontend_targets.add(target)
-
-    backend_handles_targets = {"player"}  # Only target backend validates
-    unhandled_targets = frontend_targets - backend_handles_targets
-
-    if unhandled_targets:
-        count = sum(1 for u in frontend.values()
-                   if u.get("type") == "stat_modifier" and u.get("target") in unhandled_targets)
-        print(f"   ⚠️  Backend only validates 'player' target, ignores: {unhandled_targets} ({count} upgrades)")
-        issues.append(f"Backend doesn't validate targets: {unhandled_targets}")
-    else:
-        print(f"   ✓ Backend validates all targets")
-
-    return issues
-
-# Run analysis
-issues = check_upgrade_coverage()
-
-if issues:
-    print(f"\n{RED}=== SYNC ISSUES FOUND ==={NC}")
-    for i, issue in enumerate(issues, 1):
+if class_issues:
+    print(f"\n{RED}=== MIGRATION ISSUES ==={NC}")
+    for i, issue in enumerate(class_issues, 1):
         print(f"{i}. {issue}")
-    print(f"\n{YELLOW}Recommendation: These need manual backend updates or refactoring.${NC}")
 else:
-    print(f"\n{GREEN}✓ All upgrade systems appear in sync!${NC}")
+    if len(find_class_based_upgrades()[0]) == 0:
+        print(f"\n{YELLOW}=== MIGRATION STATUS ===${NC}")
+        print(f"Phase 1 (Infrastructure): In progress")
+        print(f"Next: Implement Phase 2 (Stat Modifiers)")
 
 PYTHON_SCRIPT
 

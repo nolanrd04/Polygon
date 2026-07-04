@@ -1,406 +1,296 @@
 import { EventBus } from '../../core/EventBus'
+import { GameManager } from '../../core/GameManager'
 import { UpgradeEffectSystem } from './UpgradeEffectSystem'
 import { UpgradeModifierSystem } from './UpgradeModifierSystem'
+import { UpgradeTargetID, UpgradeTypeID } from '../../data/ID'
+import {
+  Upgrade,
+  type UpgradeDef,
+  type UpgradeContext,
+  type DamageRef,
+  type ExplosionSpec,
+} from '../../upgrades/Upgrade'
+import type { Projectile } from '../../entities/projectiles/Projectile'
+import type { Enemy } from '../../entities/enemies/Enemy'
+import type { Player } from '../../entities/Player'
 
-/**
- * Upgrade definition structure from JSON
- */
-export interface UpgradeDefinition {
-  id: string
-  name: string
-  description: string
-  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary'
-  type: 'stat_modifier' | 'variant' | 'effect' | 'visual_effect' | 'ability'
-
-  // For stat_modifier type
-  target?: string
-  stat?: string
-  value?: number
-  isMultiplier?: boolean // If true, value is a multiplier (e.g., 1.2 = +20%)
-
-  // For variant type
-  variantClass?: string
-  replaces?: string[] // Other variants this replaces
-
-  // For effect type
-  effect?: string
-  effectValue?: number
-
-  // Stacking
-  stackable: boolean
-  maxStacks?: number
-
-  // Upgrade tiers
-  tier?: number
-  upgradesTo?: string // ID of next tier upgrade
-
-  // Dependencies
-  dependentOn?: string[] // IDs of upgrades that must be owned
-  dependencyCount?: number // How many of the dependent upgrades must be owned (default: 1)
-  incompatibleWith?: string[] // IDs of upgrades that cannot be owned if this upgrade is active
-
-  // Cost
-  cost?: number
-
-  // Curse
-  curse?: boolean
+/** The def/ctor pair the registry stores for each upgrade id. */
+interface UpgradeEntry {
+  def: UpgradeDef
+  ctor: new (def: UpgradeDef) => Upgrade
 }
 
 /**
- * Central upgrade management system.
- * Handles applying, tracking, and querying all upgrades.
+ * Central upgrade engine.
+ *
+ * Owns the per-run ledger: one Upgrade instance per purchase, in acquisition
+ * order, kept aligned with GameManager's appliedUpgrades id array (the
+ * serialized form). Stack counts, dependency checks, and replay order are all
+ * derived from the ledger — there are no separate bookkeeping maps to drift.
+ *
+ * Also the hook dispatcher: entities call one generic dispatch* line per
+ * extension point, and the engine invokes overridden hooks on every owned
+ * instance in ledger order.
  */
 class UpgradeSystemClass {
-  private appliedUpgrades: Map<string, UpgradeDefinition> = new Map()
-  private stackCounts: Map<string, number> = new Map()
-  private activeVariants: Map<string, string> = new Map() // target -> variantClass
+  /** One instance per purchase, in acquisition order. */
+  private owned: Upgrade[] = []
+  private activeVariants: Map<UpgradeTargetID, string> = new Map() // targetClass -> variantClass
+  private ctx: UpgradeContext | null = null
+
+  /** Provide the engine surfaces hooks receive. Called once per scene. */
+  setContext(ctx: UpgradeContext): void {
+    this.ctx = ctx
+  }
+
+  private requireContext(): UpgradeContext {
+    if (!this.ctx) {
+      // Fall back to a bare context so headless callers (tests, early boot)
+      // still work; player-dependent hooks just no-op.
+      this.ctx = { gameManager: GameManager }
+    }
+    return this.ctx
+  }
 
   /**
-   * Apply an upgrade to the player.
-   * Returns false if the upgrade cannot be applied (stack limit reached, etc.)
+   * Purchase/apply an upgrade: constructs a fresh instance from the entry,
+   * appends it to the ledger, and runs its onApply. Returns false if the
+   * upgrade cannot be applied right now.
    */
-  applyUpgrade(upgrade: UpgradeDefinition): boolean {
-    // Check if we can apply this upgrade
-    if (!this.canApply(upgrade)) {
-      console.warn(`Cannot apply upgrade ${upgrade.id}`)
+  apply(entry: UpgradeEntry): boolean {
+    if (!this.canApply(entry.def)) {
+      console.warn(`Cannot apply upgrade ${entry.def.id}`)
       return false
     }
 
-    // Handle based on upgrade type and curse logic
-    switch (upgrade.type) {
-      case 'stat_modifier':
-        this.applyStatModifier(upgrade)
-        break
+    const ctx = this.requireContext()
+    const instance = new entry.ctor(entry.def)
 
-      case 'variant':
-        this.applyVariant(upgrade)
-        break
-
-      case 'effect':
-        this.applyEffect(upgrade)
-        break
-
-      case 'visual_effect':
-        this.applyVisualEffect(upgrade)
-        break
-
-      case 'ability':
-        this.applyAbility(upgrade)
-        break
-    }
-
-    // Track the upgrade
-    this.appliedUpgrades.set(upgrade.id, upgrade)
-
-    // Increment stack count
-    const currentStacks = this.stackCounts.get(upgrade.id) || 0
-    this.stackCounts.set(upgrade.id, currentStacks + 1)
-
-    // Emit event for UI updates
-    EventBus.emit('upgrade-applied', upgrade.id)
-
-    return true
-  }
-
-  /**
-   * Check if an upgrade can be applied.
-   */
-  canApply(upgrade: UpgradeDefinition): boolean {
-    // Check dependencies
-    if (!this.canMeetDependencies(upgrade)) {
-      return false
-    }
-
-    // Check incompatibilities
-    if (upgrade.incompatibleWith && upgrade.incompatibleWith.length > 0) {
-      for (const incompatibleId of upgrade.incompatibleWith) {
-        if (this.hasUpgrade(incompatibleId)) {
-          return false
-        }
+    // Variants evict whatever they replace from the ledger entirely
+    let pruned = false
+    if (entry.def.replaces) {
+      for (const replacedId of entry.def.replaces) {
+        pruned = this.pruneAll(replacedId) || pruned
       }
     }
 
-    // Check stack limit
-    if (upgrade.stackable && upgrade.maxStacks) {
-      const currentStacks = this.stackCounts.get(upgrade.id) || 0
-      if (currentStacks >= upgrade.maxStacks) {
-        return false
-      }
+    this.owned.push(instance)
+    if (entry.def.upgradeType === UpgradeTypeID.Variant && entry.def.targetClass && entry.def.variantClass) {
+      this.activeVariants.set(entry.def.targetClass, entry.def.variantClass)
     }
 
-    // Check if not stackable and already applied
-    if (!upgrade.stackable && this.appliedUpgrades.has(upgrade.id)) {
-      return false
-    }
-
-    return true
-  }
-
-  /**
-   * Check if an upgrade's dependencies are met.
-   */
-  private canMeetDependencies(upgrade: UpgradeDefinition): boolean {
-    if (!upgrade.dependentOn || upgrade.dependentOn.length === 0) {
-      return true
-    }
-
-    const required = upgrade.dependencyCount || 1
-    let dependencyCount = 0
-
-    for (const dependentId of upgrade.dependentOn) {
-      // Check if this upgrade has been obtained
-      if (this.hasUpgrade(dependentId)) {
-        const stacks = this.stackCounts.get(dependentId) || 0
-        dependencyCount += stacks > 0 ? 1 : 0 // Count as 1 even if multiple stacks
-      }
-    }
-
-    return dependencyCount >= required
-  }
-
-  /**
-   * Check if a specific upgrade has been obtained.
-   * For variants, checks if it's the currently active variant.
-   * For other upgrades, checks if it's in the applied list.
-   */
-  private hasUpgrade(upgradeId: string): boolean {
-    // First check appliedUpgrades
-    if (this.appliedUpgrades.has(upgradeId)) {
-      const upgrade = this.appliedUpgrades.get(upgradeId)!
-      // For variants, only count if it's still the active variant
-      if (upgrade.type === 'variant') {
-        return this.activeVariants.get(upgrade.target!) === upgrade.variantClass
-      }
-      // For other types, it's applied if it's in the map
-      return true
-    }
-    return false
-  }
-
-  /**
-   * Apply a stat modifier upgrade.
-   */
-  private applyStatModifier(upgrade: UpgradeDefinition): void {
-    if (!upgrade.target || !upgrade.stat || upgrade.value === undefined) {
-      console.error('Invalid stat_modifier upgrade:', upgrade)
-      return
-    }
-
-    // Convert multiplier format: 1.50 -> 0.50 (for additive stacking)
-    // Additive format: 5 stays as 5
-    let modifierValue = upgrade.value
-    if (upgrade.isMultiplier && modifierValue > 0) {
-      // Convert from "multiply by X" to "add X-1" for percentage-based modifiers
-      modifierValue = modifierValue
-    }
-
-    if (upgrade.curse)
-    {
-      console.log("Applying curse of value: " + modifierValue)
-    }
-    UpgradeModifierSystem.addModifier(
-      upgrade.target,
-      upgrade.stat,
-      modifierValue,
-      upgrade.isMultiplier || false,
-      upgrade.curse || false
-    )
-  }
-
-  /**
-   * Apply a variant upgrade (changes projectile class).
-   */
-  private applyVariant(upgrade: UpgradeDefinition): void {
-    if (!upgrade.target || !upgrade.variantClass) {
-      console.error('Invalid variant upgrade:', upgrade)
-      return
-    }
-
-    // Remove any conflicting variants
-    if (upgrade.replaces) {
-      for (const replacedId of upgrade.replaces) {
-        this.removeUpgrade(replacedId)
-      }
-    }
-
-    // Set the active variant for this target
-    this.activeVariants.set(upgrade.target, upgrade.variantClass)
-  }
-
-  /**
-   * Apply an effect upgrade (adds behavior).
-   */
-  private applyEffect(upgrade: UpgradeDefinition): void {
-    if (!upgrade.effect) {
-      console.error('Invalid effect upgrade:', upgrade)
-      return
-    }
-
-    const value = upgrade.effectValue || upgrade.value || 0
-    UpgradeEffectSystem.addEffect(upgrade.effect, value)
-  }
-
-  /**
-   * Apply a visual effect upgrade.
-   */
-  private applyVisualEffect(upgrade: UpgradeDefinition): void {
-    if (!upgrade.effect) {
-      console.error('Invalid visual_effect upgrade:', upgrade)
-      return
-    }
-
-    UpgradeEffectSystem.addVisualEffect(upgrade.effect, upgrade)
-  }
-
-  /**
-   * Apply an ability upgrade.
-   */
-  private applyAbility(upgrade: UpgradeDefinition): void {
-    if (!upgrade.effect) {
-      console.error('Invalid ability upgrade:', upgrade)
-      return
-    }
-
-    UpgradeEffectSystem.addAbility(upgrade.effect)
-  }
-
-  /**
-   * Remove an upgrade.
-   */
-  removeUpgrade(upgradeId: string): void {
-    const upgrade = this.appliedUpgrades.get(upgradeId)
-    if (!upgrade) return
-
-    // Remove from tracking
-    this.appliedUpgrades.delete(upgradeId)
-    this.stackCounts.delete(upgradeId)
-
-    // Remove from systems based on type
-    switch (upgrade.type) {
-      case 'stat_modifier':
-        if (upgrade.target && upgrade.stat) {
-          UpgradeModifierSystem.removeModifier(upgrade.target, upgrade.stat)
-        }
-        break
-
-      case 'variant':
-        if (upgrade.target) {
-          this.activeVariants.delete(upgrade.target)
-        }
-        break
-
-      case 'effect':
-        if (upgrade.effect) {
-          UpgradeEffectSystem.removeEffect(upgrade.effect)
-        }
-        break
-
-      case 'visual_effect':
-        if (upgrade.effect) {
-          UpgradeEffectSystem.removeVisualEffect(upgrade.effect)
-        }
-        break
-
-      case 'ability':
-        if (upgrade.effect) {
-          UpgradeEffectSystem.removeAbility(upgrade.effect)
-        }
-        break
-    }
-  }
-
-  /**
-   * Subtract/decrement an upgrade (for dev tools).
-   * For stackable upgrades, reduces stack by 1. For non-stackable, removes it.
-   */
-  decrementUpgrade(upgradeId: string): void {
-    const upgrade = this.appliedUpgrades.get(upgradeId)
-    if (!upgrade) return
-
-    const stackCount = this.stackCounts.get(upgradeId) || 0
-
-    if (upgrade.stackable && stackCount > 1) {
-      // Decrement stack count
-      this.stackCounts.set(upgradeId, stackCount - 1)
-
-      // Reduce the effect/modifier by one stack's worth
-      switch (upgrade.type) {
-        case 'stat_modifier':
-          if (upgrade.target && upgrade.stat && upgrade.value !== undefined) {
-            UpgradeModifierSystem.removeModifier(upgrade.target, upgrade.stat)
-            // Re-apply with reduced stacks
-            const newStacks = stackCount - 1
-            for (let i = 0; i < newStacks; i++) {
-              UpgradeModifierSystem.addModifier(upgrade.target, upgrade.stat, upgrade.value, upgrade.isMultiplier || false)
-            }
-          }
-          break
-
-        case 'effect':
-          if (upgrade.effect && upgrade.value !== undefined) {
-            UpgradeEffectSystem.addEffect(upgrade.effect, -upgrade.value)
-          }
-          break
-      }
+    if (pruned) {
+      // The evicted variant's contributions must be unwound — replay covers
+      // both that and the new instance's onApply.
+      this.replay()
     } else {
-      // Remove completely (either non-stackable or last stack)
-      this.removeUpgrade(upgradeId)
+      instance.onApply(ctx)
     }
+
+    EventBus.emit('upgrade-applied', entry.def.id)
+    return true
+  }
+
+  /**
+   * Check if an upgrade could be applied right now (stacking, dependencies,
+   * incompatibilities, attack-type match). Operates purely on defs.
+   */
+  canApply(def: UpgradeDef): boolean {
+    if (!this.canMeetDependencies(def)) return false
+
+    if (def.incompatibleWith) {
+      for (const incompatibleId of def.incompatibleWith) {
+        if (this.hasUpgrade(incompatibleId)) return false
+      }
+    }
+
+    const stacks = this.getStackCount(def.id)
+    if (def.stackable && def.maxStacks && stacks >= def.maxStacks) return false
+    if (!def.stackable && stacks > 0) return false
+
+    if (def.specificAttackType) {
+      const state = GameManager.getState()
+      const currentAttackType = state.playerStats.unlockedAttacks[0] || 'bullet'
+      if (def.specificAttackType !== currentAttackType) return false
+    }
+
+    return true
+  }
+
+  private canMeetDependencies(def: UpgradeDef): boolean {
+    if (!def.dependentOn || def.dependentOn.length === 0) return true
+
+    const required = def.dependencyCount || 1
+    let met = 0
+    for (const dependentId of def.dependentOn) {
+      if (this.hasUpgrade(dependentId)) met++
+    }
+    return met >= required
+  }
+
+  /**
+   * Remove the most recently purchased instance of an upgrade (dev tools),
+   * then replay the remaining ledger against base stats.
+   */
+  removeOne(upgradeId: string): void {
+    const ctx = this.requireContext()
+    for (let i = this.owned.length - 1; i >= 0; i--) {
+      if (this.owned[i].id === upgradeId) {
+        const [instance] = this.owned.splice(i, 1)
+        instance.onRemove(ctx)
+        ctx.gameManager.removeLastAppliedUpgrade(upgradeId)
+        this.replay()
+        return
+      }
+    }
+  }
+
+  /** Remove every instance of an id from the ledger (variant replacement).
+   *  Caller is responsible for replaying afterwards. */
+  private pruneAll(upgradeId: string): boolean {
+    const ctx = this.requireContext()
+    let removed = false
+    for (let i = this.owned.length - 1; i >= 0; i--) {
+      if (this.owned[i].id === upgradeId) {
+        const [instance] = this.owned.splice(i, 1)
+        instance.onRemove(ctx)
+        ctx.gameManager.removeLastAppliedUpgrade(upgradeId)
+        removed = true
+      }
+    }
+    return removed
+  }
+
+  /**
+   * Rebuild instances from a saved ledger (save load) and replay them.
+   * Same code path as removal — edit ledger, replay.
+   */
+  restore(entries: UpgradeEntry[]): void {
+    this.owned = entries.map(entry => new entry.ctor(entry.def))
+    this.replay()
+  }
+
+  /**
+   * Replay the ledger: reset every derived surface to its base state, then
+   * re-run onApply for each owned instance in acquisition order. Current
+   * health is preserved (clamped to the recomputed max) — hooks may heal
+   * during replay but the snapshot wins, so restoring a save never
+   * double-applies health and removing an upgrade never heals.
+   */
+  replay(): void {
+    const ctx = this.requireContext()
+    const healthBefore = ctx.gameManager.getPlayerStats().health
+
+    UpgradeModifierSystem.reset()
+    UpgradeEffectSystem.reset()
+    this.activeVariants.clear()
+    ctx.gameManager.resetStatsToBase()
+    ctx.player?.setMaxDashCharges(1)
+
+    for (const instance of this.owned) {
+      const def = instance.def
+      if (def.upgradeType === UpgradeTypeID.Variant && def.targetClass && def.variantClass) {
+        this.activeVariants.set(def.targetClass, def.variantClass)
+      }
+      instance.onApply(ctx)
+    }
+
+    const stats = ctx.gameManager.getPlayerStats()
+    ctx.gameManager.updatePlayerStats({ health: Math.min(healthBefore, stats.maxHealth) })
+    ctx.player?.updatePolygon()
+  }
+
+  /**
+   * Reset all upgrades (new game / dev tools). Clears the ledger and replays
+   * the empty ledger so every derived surface returns to base.
+   */
+  reset(): void {
+    this.owned = []
+    this.activeVariants.clear()
+    if (this.ctx) {
+      this.ctx.gameManager.setAppliedUpgrades([])
+      this.replay()
+    } else {
+      UpgradeModifierSystem.reset()
+      UpgradeEffectSystem.reset()
+    }
+  }
+
+  // ============================================================
+  // QUERIES — all derived from the ledger
+  // ============================================================
+
+  hasUpgrade(upgradeId: string): boolean {
+    return this.owned.some(instance => instance.id === upgradeId)
+  }
+
+  getStackCount(upgradeId: string): number {
+    return this.owned.reduce((count, instance) => count + (instance.id === upgradeId ? 1 : 0), 0)
+  }
+
+  /** All owned instances in acquisition order. */
+  getOwned(): readonly Upgrade[] {
+    return this.owned
   }
 
   /**
    * Get the active variant class for a target.
    * Returns null if no variant is active (use default class).
    */
-  getVariant(target: string): string | null {
+  getVariant(target: UpgradeTargetID): string | null {
     return this.activeVariants.get(target) || null
   }
 
-  /**
-   * Get all modifiers for a target.
-   */
-  getModifiers(target: string): Map<string, number> {
-    return UpgradeModifierSystem.getModifiers(target)
+  // ============================================================
+  // HOOK DISPATCH — called by the engine at fixed extension points.
+  // Iterates owned instances in ledger order, skipping instances that
+  // don't override the hook.
+  // ============================================================
+
+  dispatchModifyProjectileSpawn(projectile: Projectile): void {
+    for (const u of this.owned) {
+      if (u.modifyProjectileSpawn !== baseProto.modifyProjectileSpawn) u.modifyProjectileSpawn(projectile)
+    }
   }
 
-  /**
-   * Check if an effect is active.
-   */
-  hasEffect(effectId: string): boolean {
-    return UpgradeEffectSystem.hasEffect(effectId)
+  dispatchModifyHitEnemy(projectile: Projectile, enemy: Enemy, damage: DamageRef): void {
+    for (const u of this.owned) {
+      if (u.modifyHitEnemy !== baseProto.modifyHitEnemy) u.modifyHitEnemy(projectile, enemy, damage)
+    }
   }
 
-  /**
-   * Get the total value of an effect (sum of all stacks).
-   */
-  getEffectValue(effectId: string): number {
-    return UpgradeEffectSystem.getEffectValue(effectId)
+  dispatchOnHitEnemy(projectile: Projectile, enemy: Enemy, damageDealt: number): void {
+    for (const u of this.owned) {
+      if (u.onHitEnemy !== baseProto.onHitEnemy) u.onHitEnemy(projectile, enemy, damageDealt)
+    }
   }
 
-  /**
-   * Get all applied upgrades.
-   */
-  getAppliedUpgrades(): UpgradeDefinition[] {
-    return Array.from(this.appliedUpgrades.values())
+  dispatchModifyPlayerHurt(damage: DamageRef, source?: Enemy): void {
+    for (const u of this.owned) {
+      if (u.modifyPlayerHurt !== baseProto.modifyPlayerHurt) u.modifyPlayerHurt(damage, source)
+    }
   }
 
-  /**
-   * Get the stack count for an upgrade.
-   */
-  getStackCount(upgradeId: string): number {
-    return this.stackCounts.get(upgradeId) || 0
+  dispatchOnEnemyKilled(enemy: Enemy): void {
+    for (const u of this.owned) {
+      if (u.onEnemyKilled !== baseProto.onEnemyKilled) u.onEnemyKilled(enemy)
+    }
   }
 
-  /**
-   * Reset all upgrades (for new game).
-   */
-  reset(): void {
-    this.appliedUpgrades.clear()
-    this.stackCounts.clear()
-    this.activeVariants.clear()
-    UpgradeModifierSystem.reset()
-    UpgradeEffectSystem.reset()
+  dispatchUpdatePlayer(player: Player, delta: number): void {
+    for (const u of this.owned) {
+      if (u.updatePlayer !== baseProto.updatePlayer) u.updatePlayer(player, delta)
+    }
+  }
+
+  dispatchModifyExplosion(explosion: ExplosionSpec): void {
+    for (const u of this.owned) {
+      if (u.modifyExplosion !== baseProto.modifyExplosion) u.modifyExplosion(explosion)
+    }
   }
 }
+
+/** Base hook implementations — dispatch skips instances that don't override. */
+const baseProto = Upgrade.prototype
 
 export const UpgradeSystem = new UpgradeSystemClass()

@@ -34,14 +34,19 @@ Sync the backend whenever **any of these files change**:
 
 | File | Why Sync? | Frequency |
 |------|-----------|-----------|
-| `frontend/src/game/data/upgrades/*.json` | Upgrade values, rarities, new upgrades | ⚠️ Often (balancing) |
+| `frontend/src/game/upgrades/**/*.ts` | Upgrade logic, values, validation | ⚠️ Often (balancing, new mechanics) |
+| `backend/app/core/upgrades/**/*.py` | Backend upgrade implementations | ⚠️ Often (when syncing with frontend) |
 | `frontend/src/game/entities/enemies/*.ts` | Enemy health, damage, spawn rules | ⚠️ Often (balancing) |
 | `frontend/src/game/systems/difficulty/Normal.ts` | Wave scaling, rarity weights, spawn timing | ⚠️ Often (difficulty changes) |
 | `frontend/src/game/systems/MainScene.ts` | Curse roll probability, upgrade mechanics | ⚠️ Often (game loop changes) |
 | `frontend/src/game/data/attackTypes.ts` | Attack type definitions | ℹ️ Rarely (system change) |
-| `frontend/src/game/systems/upgrades/EffectHandlers.ts` | Effect ID changes, new effects | ⚠️ Occasionally (new mechanics) |
 
-**Pro tip:** Use `git log --oneline -- <file>` to see what changed since last sync.
+**Pro tip:** Use `sync-check.sh` to verify frontend and backend upgrades are in sync:
+```bash
+./sync-check.sh
+```
+
+The script checks that all 71 upgrades have matching `.ts` (frontend) and `.py` (backend) files.
 
 ---
 
@@ -49,26 +54,57 @@ Sync the backend whenever **any of these files change**:
 
 ### A. Upgrade System
 
-**Track:** ID, type, target, stat, value, rarity, stackability, dependencies, effects.
+**Track:** ID, type, name, description, rarity, cost, and implementation logic.
 
-```json
-// Example: If frontend upgrades a damage boost
-{
-  "id": "damage_2",
-  "value": 0.008,  // ← Changed from 0.005
-  "rarity": "uncommon"
+**Frontend:** `frontend/src/game/upgrades/<category>/<upgrade_id>.ts` — each file exports a
+JSON-serializable `UpgradeDef` (the sync-relevant half) plus a behavior class:
+```typescript
+export const Damage2Def: UpgradeDef = {
+  id: 'damage_2',
+  name: 'Devastation',
+  description: '+0.8% damage.',
+  rarity: RarityID.Uncommon,
+  upgradeType: UpgradeTypeID.StatModifier,
+  cost: 6,
+  targetClass: UpgradeTargetID.Attack,
+  fieldInTargetClass: UpgradeStatID.Damage,
+  value: 0.008,
+  isMultiplier: true,
+  stackable: true,
+  maxStacks: 99999,
 }
+
+export class Damage2 extends Upgrade {}
 ```
 
-**Backend file:** `backend/app/core/upgrade_data.py` → `UPGRADES` dictionary
+The def half maps 1:1 onto the live backend catalog entry in
+`backend/app/core/data/upgrades.json` — that JSON is what the backend actually
+serves and validates against today. (Long-term plan: code-generate that JSON
+from the frontend defs so the two can't drift.)
 
-**What to update:**
-- Numeric values (damage, health, speed, etc.)
-- Rarity (affects wave rolling)
-- `stackable` and `maxStacks`
-- Effect IDs (must match `EffectHandlers.ts`)
-- Dependencies and incompatibilities
+**Backend (live path):** `backend/app/core/upgrade_data.py` + `backend/app/core/data/upgrades.json`
+
+> ⚠️ The Python class registry under `backend/app/core/upgrades/` is **unwired
+> dead code** (stub appliers, always-true `can_apply`) — do not maintain it by
+> hand. It will be regenerated from the frontend defs during the backend port.
+
+**What to update when syncing:**
+- Numeric values (damage multiplier, healing percent, damage reduction, etc.)
+- Name, description (affects UI display)
+- Rarity (affects wave rolling probabilities)
+- Cost (point cost to purchase)
+- Type (stat_modifier, effect, ability, variant, visual_effect)
+- Stacking/dependency/incompatibility rules (`maxStacks`, `dependentOn`, `incompatibleWith`, `replaces`)
 - Add/remove entries when new upgrades ship or old ones are deleted
+
+**Sync checklist:**
+- ✅ Upgrade ID matches frontend def and backend `upgrades.json`
+- ✅ Name and description are identical
+- ✅ Rarity, type, and cost match
+- ✅ Stacking/dependency/incompatibility rules match (known divergence: frontend
+  declares `incompatibleWith` on the two bullet variants; backend JSON doesn't yet —
+  fix belongs to the backend port)
+- ✅ `sync-check.sh` passes with no mismatches
 
 ---
 
@@ -201,15 +237,17 @@ Ensure all backend changes match frontend definitions:
 - Types match (stat_modifier, effect, variant, ability, visual_effect)
 - Targets match (attack, bullet, player, laser, etc.)
 - Rarity values are valid (common, uncommon, rare, epic, legendary)
-- Effect IDs reference real effects (check `EffectHandlers.ts`)
+- Effect IDs reference effects the frontend actually implements (either an
+  upgrade-class hook or a polled `UpgradeEffectSystem` counter like `shield`)
 - Dependencies resolve to valid upgrade IDs
 
 **Script to help validate:**
 
 ```bash
-# Check that all effect IDs in backend have handlers in frontend
-grep -o '"effect": "[^"]*"' backend/app/core/upgrade_data.py | sort -u
-grep -o 'registerEffect(.*"' frontend/src/game/systems/upgrades/EffectHandlers.ts | sort -u
+# Effect IDs the backend catalog references
+grep -o '"effect": "[^"]*"' backend/app/core/data/upgrades.json | sort -u
+# Effect IDs the frontend defs declare
+grep -rho 'effect: "[^"]*"' frontend/src/game/upgrades | sort -u
 ```
 
 ### Step 5: Run Backend Tests (if available)
@@ -256,15 +294,9 @@ git push origin <branch>
 
 | Frontend File | Backend File | What to Sync |
 |---|---|---|
-| `frontend/src/game/data/upgrades/stat_upgrades.json` | `backend/app/core/upgrade_data.py` | All stat modifier definitions |
-| `frontend/src/game/data/upgrades/effect_upgrades.json` | `backend/app/core/upgrade_data.py` | All effect upgrade definitions |
-| `frontend/src/game/data/upgrades/ability_upgrades.json` | `backend/app/core/upgrade_data.py` | All ability definitions |
-| `frontend/src/game/data/upgrades/variant_upgrades.json` | `backend/app/core/upgrade_data.py` | All variant definitions |
-| `frontend/src/game/data/upgrades/visual_upgrades.json` | `backend/app/core/upgrade_data.py` | Visual effect definitions (for completeness) |
-| `frontend/src/game/data/upgrades/curses.json` | `backend/app/core/upgrade_data.py` | All curse definitions |
+| `frontend/src/game/upgrades/<category>/*.ts` (the `UpgradeDef` exports) | `backend/app/core/data/upgrades.json` | All upgrade/curse definitions |
 | `frontend/src/game/entities/enemies/*.ts` | `backend/app/core/enemy_data.py` | Health, damage, wave eligibility |
 | `frontend/src/game/systems/difficulty/Normal.ts` | `backend/app/core/upgrade_data.py` | Rarity weights, spawn rules |
-| `frontend/src/game/systems/upgrades/EffectHandlers.ts` | `backend/app/core/upgrade_data.py` | Effect ID validation |
 
 ---
 
@@ -277,7 +309,7 @@ Before deploying backend changes, use this checklist:
 - [ ] All upgrade IDs in `UPGRADES` are unique
 - [ ] All rarity values are one of: common, uncommon, rare, epic, legendary
 - [ ] All type values are one of: stat_modifier, effect, variant, ability, visual_effect
-- [ ] All effect IDs reference real effects in `EffectHandlers.ts` (frontend)
+- [ ] All effect IDs reference effects the frontend implements (upgrade-class hooks or polled counters)
 - [ ] All dependencies (`dependentOn`) reference valid upgrade IDs
 - [ ] All incompatibilities (`incompatibleWith`, `replaces`) reference valid upgrade IDs
 - [ ] No numeric values are null or missing (should be 0 or actual number)

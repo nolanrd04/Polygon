@@ -24,9 +24,15 @@ The attack type is selected on `AttackSelectPage` and stored in `sessionStorage`
 
 ---
 
-## Upgrade JSON Files
+## Upgrades
 
-All upgrade definitions live in `frontend/src/game/data/upgrades/`. They are imported directly by `MainScene`, `WaveValidation`, and the backend. The JSON files are not a complete registry to memorise — instead, understand what each file is responsible for:
+**Current System:** Class-based upgrades in `frontend/src/game/upgrades/` (TypeScript) with matching Python implementations in `backend/app/core/upgrades/`. See [UPGRADES.md](./UPGRADES.md) for full details.
+
+**Legacy System:** Original JSON upgrade definitions in `frontend/src/game/data/upgrades/` are kept for reference during migration but are **not actively used**. The active system uses 71 TypeScript class files organized by upgrade type.
+
+### Legacy Upgrade JSON Files (Reference Only)
+
+All legacy upgrade definitions live in `frontend/src/game/data/upgrades/`. They serve as documentation of the previous structure:
 
 ### `stat_upgrades.json` — Fixed stat modifiers
 

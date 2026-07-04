@@ -1,9 +1,7 @@
 import axios from '../../config/axios'
 import { GameManager } from '../core/GameManager'
-import statUpgrades from '../data/upgrades/stat_upgrades.json'
-import effectUpgrades from '../data/upgrades/effect_upgrades.json'
-import variantUpgrades from '../data/upgrades/variant_upgrades.json'
-import abilityUpgrades from '../data/upgrades/ability_upgrades.json'
+import { getAllUpgrades, getUpgrade } from '../upgrades'
+import { UpgradeSystem } from '../systems/upgrades'
 import { NormalDifficulty } from '../systems/difficulty/Normal'
 
 export interface FrameSample {
@@ -59,49 +57,10 @@ export class WaveValidationService {
 
       // Generate initial upgrades if we don't have any yet
       if (this.offeredUpgrades.length === 0) {
-        const allUpgrades = [
-          ...statUpgrades.upgrades,
-          ...effectUpgrades.upgrades,
-          ...variantUpgrades.upgrades,
-          ...abilityUpgrades.upgrades
-        ]
-
-        // Get current state for filtering
-        const currentUpgrades = GameManager.getState().appliedUpgrades
-        const currentAttackType = GameManager.getState().playerStats.unlockedAttacks[0] || 'bullet'
-
-        // Filter upgrades: exclude incompatible, dependent, and mismatched attack types
-        const validUpgrades = allUpgrades.filter((upgrade: any) => {
-          if (!upgrade.stackable && currentUpgrades.includes(upgrade.id)) {
-            return false
-          }
-          if (upgrade.stackable && upgrade.maxStacks) {
-            const currentStacks = currentUpgrades.filter((id: string) => id === upgrade.id).length
-            if (currentStacks >= upgrade.maxStacks) return false
-          }
-          if (upgrade.attackType && upgrade.attackType !== currentAttackType) {
-            return false
-          }
-          if (upgrade.dependentOn && upgrade.dependentOn.length > 0) {
-            const required = upgrade.dependencyCount || 1
-            const hasDeps = upgrade.dependentOn.filter((id: string) => currentUpgrades.includes(id)).length
-            if (hasDeps < required) {
-              return false
-            }
-          }
-          if (upgrade.replaces) {
-            const replaces = Array.isArray(upgrade.replaces) ? upgrade.replaces : [upgrade.replaces]
-            if (replaces.some((id: string) => currentUpgrades.includes(id))) {
-              return false
-            }
-          }
-          if (upgrade.incompatibleWith && upgrade.incompatibleWith.length > 0) {
-            if (upgrade.incompatibleWith.some((id: string) => currentUpgrades.includes(id))) {
-              return false
-            }
-          }
-          return true
-        })
+        // Filter upgrades: exclude curses and visual_effects (matching the old JSON-era
+        // offline roll, which never included visual_upgrades.json), plus incompatible,
+        // dependent, and mismatched attack types
+        const validUpgrades = getAllUpgrades().filter(u => !u.curse && u.upgradeType !== 'visual_effect' && UpgradeSystem.canApply(u))
 
         // Pick 3 random valid upgrades using per-wave rarity weights
         const rarityWeights = NormalDifficulty.getRarityWeights(waveNumber)
@@ -340,13 +299,7 @@ export class WaveValidationService {
       console.log('[WAVE VALIDATION] Player is dead or offline - applying upgrade locally (sandbox mode)')
 
       // Find the upgrade cost
-      const allUpgrades = [
-        ...statUpgrades.upgrades,
-        ...effectUpgrades.upgrades,
-        ...variantUpgrades.upgrades,
-        ...abilityUpgrades.upgrades
-      ]
-      const upgrade = allUpgrades.find((u: any) => u.id === upgradeId)
+      const upgrade = getUpgrade(upgradeId)
       const cost = upgrade?.cost || 0
 
       // Deduct points locally
@@ -415,60 +368,10 @@ export class WaveValidationService {
       }
       GameManager.updatePlayerStats({ points: newPoints })
 
-      // Generate random upgrades from full upgrade pool
-      const allUpgrades = [
-        ...statUpgrades.upgrades,
-        ...effectUpgrades.upgrades,
-        ...variantUpgrades.upgrades,
-        ...abilityUpgrades.upgrades
-      ]
-
-      // Get current state for filtering
-      const currentUpgrades = GameManager.getState().appliedUpgrades
-      const currentAttackType = GameManager.getState().playerStats.unlockedAttacks[0] || 'bullet'
-
-      // Filter upgrades: exclude incompatible, dependent, and mismatched attack types
-      const validUpgrades = allUpgrades.filter((upgrade: any) => {
-        // Check if already applied (non-stackable)
-        if (!upgrade.stackable && currentUpgrades.includes(upgrade.id)) {
-          return false
-        }
-        if (upgrade.stackable && upgrade.maxStacks) {
-          const currentStacks = currentUpgrades.filter((id: string) => id === upgrade.id).length
-          if (currentStacks >= upgrade.maxStacks) return false
-        }
-
-        // Check attack type - if upgrade has attackType, must match current
-        if (upgrade.attackType && upgrade.attackType !== currentAttackType) {
-          return false
-        }
-
-        // Check dependencies - must have required upgrades
-        if (upgrade.dependentOn && upgrade.dependentOn.length > 0) {
-          const required = upgrade.dependencyCount || 1
-          const hasDeps = upgrade.dependentOn.filter((id: string) => currentUpgrades.includes(id)).length
-          if (hasDeps < required) {
-            return false
-          }
-        }
-
-        // Check replaces - can't offer if conflicting variant exists
-        if (upgrade.replaces) {
-          const replaces = Array.isArray(upgrade.replaces) ? upgrade.replaces : [upgrade.replaces]
-          if (replaces.some((id: string) => currentUpgrades.includes(id))) {
-            return false
-          }
-        }
-
-        // Check incompatibilities
-        if (upgrade.incompatibleWith && upgrade.incompatibleWith.length > 0) {
-          if (upgrade.incompatibleWith.some((id: string) => currentUpgrades.includes(id))) {
-            return false
-          }
-        }
-
-        return true
-      })
+      // Filter upgrades: exclude curses and visual_effects (matching the old JSON-era
+      // offline roll, which never included visual_upgrades.json), plus incompatible,
+      // dependent, and mismatched attack types
+      const validUpgrades = getAllUpgrades().filter(u => !u.curse && u.upgradeType !== 'visual_effect' && UpgradeSystem.canApply(u))
 
       // Pick 3 random valid upgrades using per-wave rarity weights
       const rarityWeights = NormalDifficulty.getRarityWeights(wave)

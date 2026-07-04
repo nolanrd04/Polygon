@@ -1,0 +1,1 @@
+the json files are not longer used anywhere. If need be, simply move the files out from legacy/ into the parent directory

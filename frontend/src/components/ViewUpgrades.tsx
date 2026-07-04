@@ -1,25 +1,7 @@
 import { useMemo } from 'react'
-import statUpgrades from '../game/data/upgrades/stat_upgrades.json'
-import effectUpgrades from '../game/data/upgrades/effect_upgrades.json'
-import variantUpgrades from '../game/data/upgrades/variant_upgrades.json'
-import visualUpgrades from '../game/data/upgrades/visual_upgrades.json'
-import abilityUpgrades from '../game/data/upgrades/ability_upgrades.json'
+import { getAllUpgrades } from '../game/upgrades'
+import type { UpgradeDef } from '../game/upgrades/Upgrade'
 import { GameManager } from '../game/core/GameManager'
-
-interface UpgradeDef {
-  id: string
-  name: string
-  description: string
-  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary'
-  type?: string
-  target?: string
-  attackType?: string
-  stat?: string
-  effect?: string
-  value?: number
-  effectValue?: number
-  isMultiplier?: boolean
-}
 
 interface ViewUpgradesProps {
   onBack: () => void
@@ -57,13 +39,9 @@ const rarityText: Record<UpgradeDef['rarity'], string> = {
   legendary: 'text-yellow-400'
 }
 
-const ALL_UPGRADES: UpgradeDef[] = [
-  ...statUpgrades.upgrades,
-  ...effectUpgrades.upgrades,
-  ...variantUpgrades.upgrades,
-  ...visualUpgrades.upgrades,
-  ...abilityUpgrades.upgrades
-] as UpgradeDef[]
+// Curses excluded here, matching the JSON-era behavior (curses.json was never
+// imported into this summary screen).
+const ALL_UPGRADES: UpgradeDef[] = getAllUpgrades().filter(u => !u.curse)
 
 function formatValue(unit: string, total: number, isMultiplier: boolean): string {
   if (isMultiplier) {
@@ -99,13 +77,13 @@ function buildGroups(applied: string[]): UpgradeGroup[] {
     let totalLabel: string
     if (typeof numeric === 'number') {
       const unit =
-        def.attackType && def.stat ? `${def.attackType} ${def.stat}` :
-        def.stat ? def.stat :
+        def.specificAttackType && def.fieldInTargetClass ? `${def.specificAttackType} ${def.fieldInTargetClass}` :
+        def.fieldInTargetClass ? def.fieldInTargetClass :
         def.effect ? def.effect :
-        def.target ? def.target :
+        def.targetClass ? def.targetClass :
         'value'
       totalLabel = formatValue(unit, numeric * count, !!def.isMultiplier)
-    } else if (def.type === 'variant' || def.type === 'visual_effect' || def.type === 'ability') {
+    } else if (def.upgradeType === 'variant' || def.upgradeType === 'visual_effect' || def.upgradeType === 'ability') {
       totalLabel = 'Active'
     } else {
       totalLabel = '—'

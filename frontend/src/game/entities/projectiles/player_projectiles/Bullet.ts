@@ -1,6 +1,6 @@
 import { Projectile } from '../Projectile'
 import { COLORS } from '../../../core/GameConfig'
-import { UpgradeModifierSystem } from '../../../systems/upgrades'
+import { UpgradeSystem } from '../../../systems/upgrades'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
 import { getDefaultVolume } from '../../../core/AudioRegistry'
 
@@ -62,9 +62,10 @@ export class HomingBullet extends Projectile {
   private canHome: boolean = true
   private homeDelay: number = 125 // Delay before homing re-activates after hit (milliseconds)
   private directionIndicator?: Phaser.GameObjects.Sprite
-  private trackingDistance: number = 200
-  private maximumSpawnDamageMultiplier: number = 1
-  private minimumDamageMultiplier: number = 0.4
+  // Public so homing upgrades can adjust them in modifyProjectileSpawn
+  trackingDistance: number = 200
+  maximumSpawnDamageMultiplier: number = 1
+  minimumDamageMultiplier: number = 0.4
   private initialDamage: number = 0 // Will be set on first AI frame after upgrades applied
   private hasInitializedDamage: boolean = false
 
@@ -80,11 +81,6 @@ export class HomingBullet extends Projectile {
     this.timeLeft = 3000 // Despawn after 3 seconds
     this.knockback = 1 // Push enemies back on hit
     this.spawnSound = 'bullet_shot'
-    this.trackingDistance = UpgradeModifierSystem.applyModifiers('bullet', 'trackingDistance', this.trackingDistance)
-    this.maximumSpawnDamageMultiplier = UpgradeModifierSystem.applyModifiers('bullet', 'maximumSpawnDamageMultiplier', this.maximumSpawnDamageMultiplier)
-    this.minimumDamageMultiplier = UpgradeModifierSystem.applyModifiers('bullet', 'minimumDamageMultiplier', this.minimumDamageMultiplier)
-    console.log('Maximum spawn damage multiplier:', this.maximumSpawnDamageMultiplier)
-    console.log('Minimum damage multiplier:', this.minimumDamageMultiplier)
   }
 
   PreDraw(): boolean {
@@ -231,14 +227,28 @@ export class ExplosiveBullet extends Projectile {
 }
 
 /**
- * Stationary AOE explosion spawned by ExplosiveBullet on impact.
- * Hits all enemies within its radius once, then fades out.
+ * Stationary AOE explosion. Spawned by ExplosiveBullet on impact (default
+ * base spec) and by Chain Reaction on kill (custom base spec). Hits all
+ * enemies within its radius once, then fades out.
  */
 export class BulletExplosion extends Projectile {
+  private readonly baseDamage: number
+  private readonly baseRadius: number
+
+  constructor(base: { damage: number; radius: number } = { damage: 10, radius: 50 }) {
+    super()
+    this.baseDamage = base.damage
+    this.baseRadius = base.radius
+  }
+
   SetDefaults(): void {
-    this.damage = UpgradeModifierSystem.applyModifiers('bullet', 'explosionDamage', 10)
+    // Base values; owned upgrades adjust them through the modifyExplosion hook
+    const explosion = { damage: this.baseDamage, radius: this.baseRadius }
+    UpgradeSystem.dispatchModifyExplosion(explosion)
+
+    this.damage = explosion.damage
     this.speed = 0
-    this.size = UpgradeModifierSystem.applyModifiers('bullet', 'explosionRadius', 50)
+    this.size = explosion.radius
     this.pierce = 999999
     this.color = 0xff4400
     this.timeLeft = 200

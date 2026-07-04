@@ -1,12 +1,9 @@
 import { useState } from 'react'
-import { type UpgradeDefinition, UpgradeSystem } from '../game/systems/upgrades'
+import { UpgradeSystem } from '../game/systems/upgrades'
+import { getAllUpgrades } from '../game/upgrades'
+import type { UpgradeDef } from '../game/upgrades/Upgrade'
 import { EventBus } from '../game/core/EventBus'
 import { ATTACK_INFO, type AttackType } from '../game/data/attackTypes'
-import statUpgrades from '../game/data/upgrades/stat_upgrades.json'
-import effectUpgrades from '../game/data/upgrades/effect_upgrades.json'
-import variantUpgrades from '../game/data/upgrades/variant_upgrades.json'
-import visualUpgrades from '../game/data/upgrades/visual_upgrades.json'
-import abilityUpgrades from '../game/data/upgrades/ability_upgrades.json'
 
 interface DevToolsProps {
   onToggleCollisionBoxes: () => void
@@ -25,11 +22,11 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
   const [refreshKey, setRefreshKey] = useState(0)
 
   const allUpgrades = {
-    stat: statUpgrades.upgrades,
-    effect: effectUpgrades.upgrades,
-    variant: variantUpgrades.upgrades,
-    visual: visualUpgrades.upgrades,
-    ability: abilityUpgrades.upgrades
+    stat: getAllUpgrades().filter(u => u.upgradeType === 'stat_modifier' && !u.curse),
+    effect: getAllUpgrades().filter(u => u.upgradeType === 'effect' && !u.curse),
+    variant: getAllUpgrades().filter(u => u.upgradeType === 'variant' && !u.curse),
+    visual: getAllUpgrades().filter(u => u.upgradeType === 'visual_effect' && !u.curse),
+    ability: getAllUpgrades().filter(u => u.upgradeType === 'ability' && !u.curse)
   }
 
   const enemyTypes = [
@@ -45,7 +42,7 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
     { id: 'dodecahedron', name: 'Dodecahedron', description: 'Boss enemy with high health' }
   ]
 
-  const handleApplyUpgrade = (upgrade: UpgradeDefinition) => {
+  const handleApplyUpgrade = (upgrade: UpgradeDef) => {
     // Emit dev-only event that bypasses point cost
     EventBus.emit('dev-apply-upgrade', upgrade.id)
     console.log('✅ Applied (FREE):', upgrade.name)
@@ -54,7 +51,7 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
     setTimeout(() => setRefreshKey(prev => prev + 1), 100)
   }
 
-  const handleRemoveUpgrade = (upgrade: UpgradeDefinition, e: React.MouseEvent) => {
+  const handleRemoveUpgrade = (upgrade: UpgradeDef, e: React.MouseEvent) => {
     e.preventDefault() // Prevent context menu
     EventBus.emit('dev-remove-upgrade' as any, upgrade.id)
     console.log('❌ Removed:', upgrade.name)
@@ -207,20 +204,20 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
           allUpgrades[selectedCategory]
             .filter(upgrade => {
               // Filter by attack type
-              if ((upgrade as any).attackType && (upgrade as any).attackType !== selectedAttack) {
+              if (upgrade.specificAttackType && upgrade.specificAttackType !== selectedAttack) {
                 return false
               }
               return true
             })
             .map((upgrade) => {
-              const applied = UpgradeSystem.getAppliedUpgrades().some(u => u.id === upgrade.id)
               const stackCount = UpgradeSystem.getStackCount(upgrade.id)
+              const applied = stackCount > 0
 
               return (
                 <button
                   key={`${upgrade.id}-${refreshKey}`}
-                  onClick={() => handleApplyUpgrade(upgrade as UpgradeDefinition)}
-                  onContextMenu={(e) => handleRemoveUpgrade(upgrade as UpgradeDefinition, e)}
+                  onClick={() => handleApplyUpgrade(upgrade)}
+                  onContextMenu={(e) => handleRemoveUpgrade(upgrade, e)}
                   className={`w-full text-left p-2 rounded text-xs ${
                     applied
                       ? 'bg-green-900 border border-green-500'

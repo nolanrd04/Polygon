@@ -1,360 +1,130 @@
-# Upgrade System
+# Upgrade Engine
 
-A data-driven, modular upgrade system that supports stat modifiers, projectile variants, effects, visual effects, and abilities.
+The engine half of the upgrade architecture. Upgrades themselves live in
+`src/game/upgrades/` — one file per upgrade, exporting a declarative
+`UpgradeDef` (plain data) and an `Upgrade` subclass (behavior). This folder
+contains the systems that store, replay, and dispatch them.
 
-## Architecture
+The model is tModLoader's `ModBuff`: **the engine calls the upgrade, never the
+reverse.** Entities contain one generic dispatch line per extension point and
+know nothing about any specific upgrade.
 
-### Core Systems
-
-1. **UpgradeSystem** - Main manager that tracks and applies upgrades
-2. **UpgradeModifierSystem** - Handles stat modifications (additive & multiplicative)
-3. **UpgradeEffectSystem** - Manages gameplay effects (lifesteal, regen, etc.)
-4. **EffectHandlers** - Implementations of all effects
-
-### File Structure
+## Core Systems
 
 ```
 systems/upgrades/
-├── UpgradeSystem.ts          # Main upgrade manager
-├── UpgradeModifierSystem.ts  # Stat modifier manager
-├── UpgradeEffectSystem.ts    # Effect manager
-├── EffectHandlers.ts         # Effect implementations
+├── UpgradeSystem.ts          # Owned-instance ledger, replay, hook dispatch
+├── UpgradeModifierSystem.ts  # Shared stat channels (additive & multiplicative)
+├── UpgradeEffectSystem.ts    # Polled counters/flags (shield charges, ricochet, dash)
 ├── index.ts                  # Exports
 └── README.md                 # This file
-
-data/upgrades/
-├── stat_upgrades.json        # Stat modifiers (+damage, +speed, etc.)
-├── effect_upgrades.json      # Effects (lifesteal, regen, multishot, etc.)
-├── variant_upgrades.json     # Projectile variants (homing, explosive, etc.)
-├── visual_upgrades.json      # Visual effects (glow, trail, etc.)
-└── ability_upgrades.json     # Abilities (dash, shield, time slow, etc.)
 ```
 
-## Upgrade Types
+### UpgradeSystem — ledger, replay, dispatch
 
-### 1. Stat Modifiers
-Modify numeric stats on entities.
+The single source of truth for what the player owns is an **ordered ledger**:
+one `Upgrade` instance per purchase, in acquisition order, mirrored by
+`GameManager.getState().appliedUpgrades` (the serialized id list). Stack
+counts, dependency checks, and application order are all derived from it —
+there are no separate bookkeeping maps to drift.
 
-**Example:**
-```json
-{
-  "id": "bullet_damage_1",
-  "name": "Sharper Rounds",
-  "description": "+5 bullet damage",
-  "rarity": "common",
-  "type": "stat_modifier",
-  "target": "bullet",
-  "stat": "damage",
-  "value": 5,
-  "stackable": true,
-  "maxStacks": 99
-}
-```
+- **Purchase** (`apply(entry)`) — constructs a fresh instance from the
+  registry's `{ def, ctor }` pair, appends it, runs its `onApply`. Refuses
+  (returns `false`) if `canApply(def)` fails; refusal has no side effects.
+- **Removal** (`removeOne(id)`) / **restore from save** (`restore(entries)`)
+  / **reset** are all the same operation: edit the ledger, then `replay()`.
+- **`replay()`** resets every derived surface to base (modifier channels,
+  effect counters, variants, base player stats, dash charges), then re-runs
+  `onApply` for each owned instance in ledger order. Current health is
+  snapshotted and clamped to the recomputed max, so loading a save never
+  double-applies maxHealth and removing an upgrade never heals.
 
-**Targets:**
-- `bullet`, `laser`, `zapper`, `flamer`, `spinner` - Projectile types
-- `player` - Player stats
-- `triangle`, `square`, `pentagon`, etc. - Enemy types
-- `enemy` - All enemies
-- `wave` - Wave configuration
+Because upgrades are permanent within a run, effects **accumulate once** on
+apply rather than being recomputed per tick (deliberate deviation from
+Terraria's per-tick `ResetEffects`). Application order is acquisition order —
+mixed additive/multiplicative results are intentionally path-dependent.
 
-**Common Stats:**
-- `damage`, `speed`, `pierce`, `size` - Projectiles
-- `maxHealth`, `speed`, `polygonSides` - Player
-- `health`, `damage`, `speed` - Enemies
+### Hook dispatch points
 
-### 2. Variant Upgrades
-Replace a projectile class with a different variant.
+`UpgradeSystem.dispatch*` iterates owned instances in ledger order and invokes
+the hook on those that override it. Entity-side footprint is exactly one line
+per extension point:
 
-**Example:**
-```json
-{
-  "id": "homing_bullets",
-  "name": "Homing Bullets",
-  "description": "Bullets track nearest enemy",
-  "rarity": "epic",
-  "type": "variant",
-  "target": "bullet",
-  "variantClass": "HomingBullet",
-  "replaces": ["explosive_bullets", "heavy_bullets"],
-  "stackable": false
-}
-```
+| Hook | Dispatched from |
+|---|---|
+| `modifyProjectileSpawn` | `MainScene.spawnProjectile` (player-owned only) |
+| `modifyHitEnemy` / `onHitEnemy` | `CollisionManager.handleProjectileEnemyCollision` |
+| `modifyPlayerHurt` | `Player.takeDamage` (melee passes the source enemy) |
+| `onEnemyKilled` | `CollisionManager` kill resolution |
+| `updatePlayer` | `MainScene.update` |
+| `modifyExplosion` | `BulletExplosion.SetDefaults` and Chain Reaction's `onEnemyKilled` |
 
-**Available Variants:**
-- `HomingBullet` - Tracks enemies
-- `ExplosiveBullet` - Explodes on impact
-- `HeavyBullet` - Slower, more damage, more pierce
+### UpgradeModifierSystem — shared stat channels
 
-### 3. Effect Upgrades
-Add behaviors that trigger on events.
+Named per-target stat pools (`attack/damage`, `bullet/speed`, ...) that
+multiple upgrades contribute to via the default `StatModifier` `onApply`, and
+that entities read generically — the equivalent of Terraria's
+`player.statDefense`. Formula: `(base + additive) × (1 + multiplicative)`.
+Damage is applied exactly once, at collision time (`CollisionManager`), never
+at spawn.
 
-**Example:**
-```json
-{
-  "id": "vampirism_common",
-  "name": "Vampirism",
-  "description": "Heal for 2% of damage dealt",
-  "rarity": "rare",
-  "type": "effect",
-  "effect": "lifesteal",
-  "effectValue": 0.02,
-  "stackable": true,
-  "maxStacks": 5
-}
-```
+### UpgradeEffectSystem — polled counters and flags
 
-**Effect Events:**
-- `onHit` - When projectile hits enemy
-- `onKill` - When enemy is killed
-- `onUpdate` - Every frame
-- `onDamage` - When player takes damage
-- `onSpawn` - When entity spawns
+What survives of the old effect system: counters and flags other systems poll
+(`shield` charges consumed by `Player.activateShield`, `ricochet` checked by
+`CollisionManager`, `dash` ability, `multishot`, inert visual-effect flags).
+Event-driven behavior (lifesteal, regen, protection, thorns, explode-on-kill)
+now lives on the upgrade classes as hooks.
 
-**Built-in Effects:**
-- `lifesteal` - Heal on hit
-- `regen` - Heal over time
-- `armor` - Reduce incoming damage
-- `thorns` - Reflect damage
-- `explode_on_kill` - Enemies explode on death
-- `multishot` - Fire additional projectiles
+## The flag pattern (what other files may know)
 
-### 4. Visual Effects
-Add visual enhancements.
+Other files may branch on **whether** an upgrade or effect is active
+(`UpgradeSystem.hasUpgrade('homing_bullets')`,
+`UpgradeEffectSystem.hasAbility('dash')`) — but the **numbers and behavior
+belong to the upgrade class**. If you find yourself writing an upgrade's value
+into an entity file, it should be a hook override instead.
 
-**Example:**
-```json
-{
-  "id": "player_glow",
-  "name": "Radiant Core",
-  "description": "Player emits a glowing aura",
-  "rarity": "uncommon",
-  "type": "visual_effect",
-  "target": "player",
-  "effect": "glow",
-  "value": 0x00ffff,
-  "stackable": false
-}
-```
+## Writing a new upgrade
 
-### 5. Ability Upgrades
-Unlock new player abilities.
+One new file under `src/game/upgrades/<category>/`, exporting a def and a
+class — registration is automatic (the registry globs the category folders).
 
-**Example:**
-```json
-{
-  "id": "dash_ability",
-  "name": "Dash",
-  "description": "Press SPACE to dash",
-  "rarity": "epic",
-  "type": "ability",
-  "effect": "dash",
-  "stackable": false
-}
-```
+```ts
+import { Upgrade, type UpgradeDef, type DamageRef } from '../Upgrade'
+import { RarityID, UpgradeTypeID } from '../../data/ID'
 
-## Usage
-
-### Applying an Upgrade
-
-```typescript
-import { UpgradeSystem } from './systems/upgrades'
-
-// Load upgrade from JSON
-const upgrade = statUpgrades.upgrades.find(u => u.id === 'bullet_damage_1')
-
-// Apply it
-UpgradeSystem.applyUpgrade(upgrade)
-```
-
-### Checking Active Upgrades
-
-```typescript
-// Check if variant is active
-const variant = UpgradeSystem.getVariant('bullet') // 'HomingBullet' | null
-
-// Check if effect is active
-if (UpgradeSystem.hasEffect('lifesteal')) {
-  const percent = UpgradeSystem.getEffectValue('lifesteal') // 0.02
+export const IronSkinDef: UpgradeDef = {
+  id: 'iron_skin',
+  name: 'Iron Skin',
+  description: 'Reduce incoming damage by 4%',
+  rarity: RarityID.Rare,
+  upgradeType: UpgradeTypeID.Effect,
+  cost: 10,
+  effectValue: 0.04,
+  stackable: true,
+  maxStacks: 3,
 }
 
-// Get stat modifiers
-const modifiers = UpgradeSystem.getModifiers('bullet')
-const damageBonus = modifiers.get('damage') // +15 from upgrades
-```
+export class IronSkin extends Upgrade {
+  onApply(): void {} // behavior is the hook, skip the default counter
 
-### Creating Projectiles with Modifiers
-
-```typescript
-// In Player.ts
-const projectile = new Bullet()
-projectile.SetDefaults()
-
-// Apply modifiers
-const modifiers = UpgradeSystem.getModifiers('bullet')
-for (const [stat, value] of modifiers) {
-  if (stat in projectile) {
-    projectile[stat] += value
-  }
-}
-
-projectile._spawn(...)
-```
-
-### Triggering Effects
-
-```typescript
-// In CollisionManager.ts
-UpgradeEffectSystem.onProjectileHit(projectile, enemy)
-UpgradeEffectSystem.onEnemyKill(enemy)
-
-// In MainScene.ts update()
-UpgradeEffectSystem.onUpdate(delta)
-
-// In Player.ts takeDamage()
-const modifiedDamage = UpgradeEffectSystem.onPlayerDamage(amount)
-```
-
-## Adding New Upgrades
-
-### 1. Stat Modifier
-Just add to the appropriate JSON file:
-
-```json
-{
-  "id": "laser_damage_2",
-  "name": "Focused Beam II",
-  "description": "+30 laser damage",
-  "rarity": "rare",
-  "type": "stat_modifier",
-  "target": "laser",
-  "stat": "damage",
-  "value": 30,
-  "stackable": true,
-  "maxStacks": 10
-}
-```
-
-No code changes needed!
-
-### 2. New Effect
-1. Add to effect_upgrades.json
-2. Register handler in EffectHandlers.ts:
-
-```typescript
-UpgradeEffectSystem.registerEffect('poison', {
-  onHit: (projectile, enemy) => {
-    const dps = UpgradeEffectSystem.getEffectValue('poison')
-    enemy.applyPoison(dps, 3000) // 3 seconds
-  }
-})
-```
-
-### 3. New Variant
-1. Create projectile class:
-```typescript
-export class PiercingBullet extends Projectile {
-  SetDefaults() {
-    this.damage = 8
-    this.speed = 500
-    this.pierce = 999 // Infinite pierce
-    this.color = 0x00ff00
+  modifyPlayerHurt(damage: DamageRef): void {
+    damage.amount = Math.max(1, damage.amount * (1 - this.def.effectValue!))
   }
 }
 ```
 
-2. Add to variant_upgrades.json:
-```json
-{
-  "id": "piercing_bullets",
-  "name": "Piercing Bullets",
-  "variantClass": "PiercingBullet",
-  ...
-}
-```
+- Simple stat upgrades need **no class body at all** — the base `onApply`
+  applies the def generically (modifier channel, player base stat, effect
+  counter, or ability flag depending on `upgradeType`).
+- Stackables get one instance per purchase; write per-instance behavior and
+  stacking falls out naturally.
+- Per-run mutable state (shot counters, ...) is safe as instance fields —
+  instances are constructed fresh each purchase/restore and never outlive the
+  run.
+- `def` must stay JSON-serializable (no functions/class references): it is the
+  future source for code-generating the backend's `upgrades.json`.
 
-3. Add to Player.ts createBulletVariant():
-```typescript
-case 'PiercingBullet':
-  return new PiercingBullet()
-```
-
-## Upgrade Tiers
-
-Upgrades can have multiple tiers:
-
-```json
-{
-  "id": "vampirism_common",
-  "tier": 1,
-  "upgradesTo": "vampirism_epic",
-  ...
-},
-{
-  "id": "vampirism_epic",
-  "tier": 2,
-  "upgradesTo": "vampirism_legendary",
-  ...
-}
-```
-
-## Stack Limits
-
-Control how many times an upgrade can be applied:
-
-```json
-{
-  "stackable": true,
-  "maxStacks": 5  // Can get this upgrade 5 times max
-}
-```
-
-## Rarity System
-
-- `common` - Basic upgrades
-- `uncommon` - Moderate power
-- `rare` - Strong upgrades
-- `epic` - Very powerful
-- `legendary` - Game-changing
-
-## Future Extensions
-
-### Enemy Modifiers
-Apply upgrades to enemies:
-
-```json
-{
-  "id": "stronger_triangles",
-  "type": "stat_modifier",
-  "target": "triangle",
-  "stat": "health",
-  "value": 20
-}
-```
-
-### Wave Modifiers
-Change wave behavior:
-
-```json
-{
-  "id": "more_enemies",
-  "type": "stat_modifier",
-  "target": "wave",
-  "stat": "enemyCount",
-  "value": 1.5,
-  "isMultiplier": true
-}
-```
-
-### Boss Modifiers
-Future boss-specific upgrades:
-
-```json
-{
-  "id": "boss_damage",
-  "type": "stat_modifier",
-  "target": "boss",
-  "stat": "damage",
-  "value": 50
-}
-```
+The bar: an upgrade with multi-stat changes plus stateful custom on-hit
+behavior referencing enemy max health must be writable in that one file,
+touching nothing else.

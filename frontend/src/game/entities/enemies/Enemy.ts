@@ -79,6 +79,11 @@ export abstract class Enemy {
   protected scene!: Phaser.Scene
   protected container!: Phaser.GameObjects.Container
 
+  /** Scene access for upgrade hooks (e.g. spawning an explosion on kill). */
+  getScene(): Phaser.Scene {
+    return this.scene
+  }
+
   /**
    * Main sprite for rendering.
    * ALL enemies use sprites (no Graphics).

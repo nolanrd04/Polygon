@@ -9,23 +9,17 @@ import { GameManager } from '../core/GameManager'
 import { GAME_HEIGHT, WORLD_WIDTH, WORLD_HEIGHT } from '../core/GameConfig'
 import { AttackType } from '../data/attackTypes'
 import { Projectile } from '../entities/projectiles/Projectile'
-import { UpgradeSystem, UpgradeEffectSystem, registerEffectHandlers, type UpgradeDefinition } from '../systems/upgrades'
+import { UpgradeSystem, UpgradeEffectSystem } from '../systems/upgrades'
 import { TextureGenerator } from '../utils/TextureGenerator'
 import { waveValidation } from '../services/WaveValidation'
 import { SaveManager } from '../services/SaveManager'
 import { getDefaultVolume, pauseBackgroundMusic, resumeBackgroundMusic, preloadAllAudio } from '../core/AudioRegistry'
 import { TouchControlManager } from '../systems/TouchControlManager'
 import { DroppedUpgradeBundle } from '../entities/upgrades/DroppedUpgradeBundle'
-import type { Rarity, RarityWeights } from '../systems/difficulty/Difficulty'
+import type { RarityWeights } from '../systems/difficulty/Difficulty'
 import { NormalDifficulty } from '../systems/difficulty/Normal'
-
-// Import all upgrade JSONs
-import statUpgrades from '../data/upgrades/stat_upgrades.json'
-import effectUpgrades from '../data/upgrades/effect_upgrades.json'
-import variantUpgrades from '../data/upgrades/variant_upgrades.json'
-import visualUpgrades from '../data/upgrades/visual_upgrades.json'
-import abilityUpgrades from '../data/upgrades/ability_upgrades.json'
-import curses from '../data/upgrades/curses.json'
+import { getAllUpgrades, getUpgrade, getUpgradeEntry } from '../upgrades'
+import { RarityID } from '../data/ID'
 
 export class MainScene extends Phaser.Scene {
   player!: Player
@@ -51,9 +45,6 @@ export class MainScene extends Phaser.Scene {
   create(): void {
 
     // -------- INITIALIZATION -------- //
-    // Register effect handlers (once at game start)
-    registerEffectHandlers()
-
     // Load audio assets
     preloadAllAudio(this)
 
@@ -77,6 +68,9 @@ export class MainScene extends Phaser.Scene {
 
     // Initialize player at center with selected attack
     this.player = new Player(this, WORLD_WIDTH / 2, WORLD_HEIGHT / 2, selectedAttack)
+
+    // Engine surfaces handed to every upgrade hook (onApply, updatePlayer, ...)
+    UpgradeSystem.setContext({ gameManager: GameManager, player: this.player, scene: this })
 
     // Make camera follow player smoothly with pixel rounding to prevent jitter
     // roundPixels: true forces full pixel rounding to eliminate sub-pixel jitter
@@ -123,7 +117,7 @@ export class MainScene extends Phaser.Scene {
 
         // Build rarity weights capped at the bundle's tier and re-normalized.
         // e.g. a rare bundle on wave 25 strips epic+legendary then rescales common/uncommon/rare to sum to 1.
-        const rarityOrder: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary']
+        const rarityOrder: RarityID[] = [RarityID.Common, RarityID.Uncommon, RarityID.Rare, RarityID.Epic, RarityID.Legendary]
         const rawWeights = this.waveManager.getRarityWeights()
         let weightSum = 0
         for (let tier = 0; tier <= upgradeValue; tier++) weightSum += rawWeights[rarityOrder[tier]]
@@ -154,21 +148,12 @@ export class MainScene extends Phaser.Scene {
 
         if (pickedIds.length === 0) return
 
-        const allUpgradeDefs = [
-          ...statUpgrades.upgrades,
-          ...effectUpgrades.upgrades,
-          ...variantUpgrades.upgrades,
-          ...visualUpgrades.upgrades,
-          ...abilityUpgrades.upgrades,
-          ...curses.curses,
-        ] as UpgradeDefinition[]
-
         pickedIds.forEach((upgradeId, i) => {
           this.applyUpgrade(upgradeId, true)
 
-          const def = allUpgradeDefs.find(u => u.id === upgradeId)
+          const def = getUpgrade(upgradeId)
           if (def) {
-            const rarityIndex = rarityOrder.indexOf(def.rarity as Rarity)
+            const rarityIndex = rarityOrder.indexOf(def.rarity)
             this.showBundlePickupText(x, y, def.name, rarityIndex, def.curse, i * 220)
           }
         })
@@ -238,10 +223,10 @@ export class MainScene extends Phaser.Scene {
       this.applyUpgrade(upgradeId, true) // Skip cost check for dev tools
     })
     EventBus.on('dev-remove-upgrade' as any, (upgradeId: string) => {
-      UpgradeSystem.decrementUpgrade(upgradeId)
+      UpgradeSystem.removeOne(upgradeId)
     })
     EventBus.on('evolution-milestone', () => {
-      this.applyUpgrade('polygon_upgrade', true, false) // Apply Evolution upgrade for free
+      this.applyUpgrade('polygon_upgrade', true) // Apply Evolution upgrade for free
     })
     EventBus.on('toggle-collision-boxes' as any, (show: boolean) => {
       this.showCollisionBoxes = show
@@ -264,7 +249,9 @@ export class MainScene extends Phaser.Scene {
         onComplete: () => explosion.destroy()
       })
 
-      // Convert enemy-explode event to explosion-damage event so that blast radius and damage upgrades apply
+      // Only enemy self-detonations (ExplodeAbility) emit enemy-explode now —
+      // player-owned explosions (ExplosiveBullet, Chain Reaction) are real
+      // BulletExplosion projectiles that damage through CollisionManager.
       this.events.emit('explosion-damage', data)
     })
     EventBus.on('player-death', () => {
@@ -433,6 +420,10 @@ export class MainScene extends Phaser.Scene {
         // CRITICAL: Reset GameManager state for new game
         // This clears isDead flag, kills, points, etc. from previous sessions
         GameManager.reset()
+        // Clear the upgrade ledger too — the engine singletons outlive scene
+        // restarts, so a second run in the same browser session would
+        // otherwise inherit the previous run's upgrades
+        UpgradeSystem.reset()
         GameManager.addPoints(70)
       } else {
         console.log('Loaded game detected (points:', hasPoints, ', upgrades:', hasUpgrades, ', wave:', hasProgressedWaves, ') - keeping existing points:', currentState.playerStats.points)
@@ -448,14 +439,20 @@ export class MainScene extends Phaser.Scene {
         SaveManager.restoreFromLoad(upgradeHistory)
 
         // RE-APPLY SAVED UPGRADES
-        // This restores effect system state (like shield charges) from saved game
-        console.log('DEBUG: currentState.appliedUpgrades =', currentState.appliedUpgrades)
-        console.log('DEBUG: savedUpgrades array:', savedUpgrades, 'length:', savedUpgrades.length)
+        // Rebuild the owned-instance ledger from the saved id list and replay
+        // it against base stats — the same code path as removal and reset.
+        // Current health is preserved by the replay, so loading never
+        // double-applies maxHealth upgrades.
         if (savedUpgrades.length > 0) {
-          console.log(`Re-applying ${savedUpgrades.length} saved upgrades:`, savedUpgrades)
-          for (const upgradeId of savedUpgrades) {
-            this.applyUpgrade(upgradeId, true, true) // Skip cost, isRestore=true (don't add to array again)
-          }
+          console.log(`Restoring ${savedUpgrades.length} saved upgrades:`, savedUpgrades)
+          const entries = savedUpgrades
+            .map(upgradeId => {
+              const entry = getUpgradeEntry(upgradeId)
+              if (!entry) console.error(`Saved upgrade not found in registry: ${upgradeId}`)
+              return entry
+            })
+            .filter(entry => entry !== undefined)
+          UpgradeSystem.restore(entries)
         } else {
           console.warn('WARNING: No saved upgrades to re-apply! This will lose effect state like shield charges.')
         }
@@ -513,8 +510,8 @@ export class MainScene extends Phaser.Scene {
       )
     }
 
-    // Update effect system (for regeneration, etc.)
-    UpgradeEffectSystem.onUpdate(delta)
+    // Per-frame upgrade hooks (regeneration, etc.)
+    UpgradeSystem.dispatchUpdatePlayer(this.player, delta)
 
     // Handle movement input (skip if left joystick is active)
     if (!this.touchControls.isLeftJoystickActive()) {
@@ -602,6 +599,11 @@ export class MainScene extends Phaser.Scene {
 
     // Assign unique ID from GameManager
     projectile.id = GameManager.generateProjectileId()
+
+    // Let owned upgrades modify the projectile before it spawns
+    if (owner === 'player') {
+      UpgradeSystem.dispatchModifyProjectileSpawn(projectile)
+    }
 
     // Spawn the projectile
     const container = projectile._spawn(this, startX, startY, targetX, targetY)
@@ -721,7 +723,7 @@ export class MainScene extends Phaser.Scene {
 
   /** Weighted-random rarity roll. Returns upgradeValue 0–4.  FOR BUNDLES*/
   private rollBundleRarity(weights: RarityWeights): number {
-    const order: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary']
+    const order: RarityID[] = [RarityID.Common, RarityID.Uncommon, RarityID.Rare, RarityID.Epic, RarityID.Legendary]
     const total = order.reduce((sum, r) => sum + weights[r], 0)
     let roll = Math.random() * total
     for (let i = 0; i < order.length; i++) {
@@ -733,11 +735,11 @@ export class MainScene extends Phaser.Scene {
 
   /** Picks a random curse at or below maxRarity (0–4). Falls back to lower tiers. Skips IDs in exclude. */
   private pickCurse(maxRarity: number, exclude: string[] = []): string | null {
-    const rarityOrder: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary']
+    const rarityOrder: RarityID[] = [RarityID.Common, RarityID.Uncommon, RarityID.Rare, RarityID.Epic, RarityID.Legendary]
     for (let tier = maxRarity; tier >= 0; tier--) {
       const rarity = rarityOrder[tier]
-      const candidates = (curses.curses as UpgradeDefinition[]).filter(
-        u => u.rarity === rarity && !exclude.includes(u.id) && UpgradeSystem.canApply(u)
+      const candidates = getAllUpgrades().filter(
+        u => u.curse && u.rarity === rarity && !exclude.includes(u.id) && UpgradeSystem.canApply(u)
       )
       if (candidates.length > 0) {
         return candidates[Math.floor(Math.random() * candidates.length)].id
@@ -748,25 +750,18 @@ export class MainScene extends Phaser.Scene {
 
   /** Picks a random non-curse upgrade at or below maxRarity (0–4). Falls back to lower tiers. Skips IDs in exclude. */
   private pickRegularUpgrade(maxRarity: number, exclude: string[] = []): string | null {
-    const allRegular = [
-      ...statUpgrades.upgrades,
-      ...effectUpgrades.upgrades,
-      ...variantUpgrades.upgrades,
-      ...visualUpgrades.upgrades,
-      ...abilityUpgrades.upgrades,
-    ] as UpgradeDefinition[]
-
-    const rarityOrder: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary']
+    const rarityOrder: RarityID[] = [RarityID.Common, RarityID.Uncommon, RarityID.Rare, RarityID.Epic, RarityID.Legendary]
 
     for (let tier = maxRarity; tier >= 0; tier--) {
       const rarity = rarityOrder[tier]
-      const candidates = allRegular.filter(u => {
+      const candidates = getAllUpgrades().filter(u => {
+        if (u.curse) return false
         if (u.rarity !== rarity) return false
         if (exclude.includes(u.id)) return false
         if (!UpgradeSystem.canApply(u)) return false
         // Bundles must not silently replace an already-active variant.
-        if (u.type === 'variant' && u.target) {
-          const activeVariant = UpgradeSystem.getVariant(u.target)
+        if (u.upgradeType === 'variant' && u.targetClass) {
+          const activeVariant = UpgradeSystem.getVariant(u.targetClass)
           if (activeVariant !== null && activeVariant !== u.variantClass) return false
         }
         return true
@@ -778,117 +773,59 @@ export class MainScene extends Phaser.Scene {
     return null
   }
 
-  private async applyUpgrade(upgradeId: string, skipCost: boolean = false, isRestore: boolean = false): Promise<boolean> {
-    // Combine all upgrade sources
-    const allUpgrades = [
-      ...statUpgrades.upgrades,
-      ...effectUpgrades.upgrades,
-      ...variantUpgrades.upgrades,
-      ...visualUpgrades.upgrades,
-      ...abilityUpgrades.upgrades,
-      ...curses.curses
-    ] as UpgradeDefinition[]
+  private async applyUpgrade(upgradeId: string, skipCost: boolean = false): Promise<boolean> {
+    const entry = getUpgradeEntry(upgradeId)
 
-    // Find the upgrade
-    const upgrade = allUpgrades.find(u => u.id === upgradeId)
-
-    if (!upgrade) {
+    if (!entry) {
       console.error(`Upgrade not found: ${upgradeId}`)
       return false
     }
 
     // Check if player can afford it (skip for dev tools)
     const stats = GameManager.getPlayerStats()
-    const cost = upgrade.cost || 0
+    const cost = entry.def.cost || 0
 
     if (!skipCost && stats.points < cost) {
-      console.warn(`Not enough points for ${upgrade.name}. Need ${cost}, have ${stats.points}`)
+      console.warn(`Not enough points for ${entry.def.name}. Need ${cost}, have ${stats.points}`)
       return false
     }
 
-    // Apply the upgrade
-    const success = UpgradeSystem.applyUpgrade(upgrade)
-
-    if (success) {
-      console.log(`Applied upgrade: ${upgrade.name}${skipCost ? ' (DEV - FREE)' : ''}`)
-
-      // Play selection sound for live picks only — skip on save restore so loading doesn't replay it per upgrade
-      if (!isRestore) {
-        this.sound.play('select_upgrade', { volume: getDefaultVolume('select_upgrade') })
-      }
-
-      // Add to GameManager's appliedUpgrades array for save/load
-      // Only skip adding if we're restoring from a saved game (already in array)
-      // Always add for new purchases (even duplicates - upgrades can stack!)
-      const currentState = GameManager.getState()
-      if (!isRestore) {
-        currentState.appliedUpgrades.push(upgradeId)
-        console.log('Added to GameManager.appliedUpgrades:', upgradeId, '(total:', currentState.appliedUpgrades.length, ')')
-
-        // Record in SaveManager for ordered upgrade history
-        // This maintains the order of purchase for correct stat reconstruction on load
-        const currentWave = currentState.wave
-        SaveManager.recordUpgradePurchase(upgradeId, currentWave)
-      }
-
-      // VALIDATE WITH BACKEND and sync points (skip for dev tools and saved upgrades)
-      if (!skipCost) {
-        const currentWave = GameManager.getState().wave
-        const result = await waveValidation.selectUpgrade(upgradeId, currentWave)
-
-        if (!result.success) {
-          console.warn('Backend rejected upgrade selection - possible desync')
-          return false
-        }
-
-        // Sync points from backend (authoritative source)
-        if (result.newPoints !== undefined) {
-          console.log(`Syncing points from backend: ${stats.points} -> ${result.newPoints}`)
-          GameManager.updatePlayerStats({ points: result.newPoints })
-        }
-      }
-      // When skipCost = true (dev tools or re-applying saved upgrades), don't deduct points
-      // - Dev tools: free upgrades for testing
-      // - Saved upgrades: already paid for, don't charge again
-
-      // Apply player stat changes immediately
-      // Skip if restoring from save - saved stats already include these modifications
-      if (!isRestore && upgrade.type === 'stat_modifier' && upgrade.target === 'player') {
-        if (upgrade.stat === 'maxHealth' && upgrade.value) {
-          GameManager.updatePlayerStats({
-            maxHealth: stats.maxHealth + upgrade.value,
-            health: stats.health + upgrade.value // Also heal
-          })
-        } else if (upgrade.stat === 'speed' && upgrade.value) {
-          GameManager.updatePlayerStats({
-            speed: stats.speed + upgrade.value
-          })
-        } else if (upgrade.stat === 'polygonSides' && upgrade.value) {
-          GameManager.updatePlayerStats({
-            polygonSides: stats.polygonSides + upgrade.value
-          })
-          this.player.updatePolygon()
-        }
-      } else if (isRestore && upgrade.type === 'stat_modifier' && upgrade.target === 'player') {
-        // When restoring, if it's a polygon upgrade, update the visual without changing the stat
-        if (upgrade.stat === 'polygonSides') {
-          this.player.updatePolygon()
-        }
-      }
-      
-      // Apply dash charge upgrades
-      if (upgrade.type === 'ability') {
-        if (upgrade.id === 'double_dash') {
-          this.player.setMaxDashCharges(2)
-        } else if (upgrade.id === 'triple_dash') {
-          this.player.setMaxDashCharges(3)
-        }
-      }
-      
-      return true
-    } else {
-      console.warn(`Could not apply upgrade: ${upgrade.name}`)
+    // Constructs a fresh instance, appends it to the owned ledger, and runs
+    // its onApply hook. Refuses (stacking/dependency/incompatibility rules)
+    // without side effects.
+    if (!UpgradeSystem.apply(entry)) {
       return false
     }
+    console.log(`Applied upgrade: ${entry.def.name}${skipCost ? ' (DEV - FREE)' : ''}`)
+
+    this.sound.play('select_upgrade', { volume: getDefaultVolume('select_upgrade') })
+
+    // Record the purchase in GameManager's ledger (one entry per purchase,
+    // duplicates included — this is the serialized form of the owned list)
+    GameManager.addAppliedUpgrade(upgradeId)
+
+    // Record in SaveManager for ordered upgrade history
+    // This maintains the order of purchase for correct stat reconstruction on load
+    SaveManager.recordUpgradePurchase(upgradeId, GameManager.getState().wave)
+
+    // VALIDATE WITH BACKEND and sync points (skip for dev tools)
+    if (!skipCost) {
+      const currentWave = GameManager.getState().wave
+      const result = await waveValidation.selectUpgrade(upgradeId, currentWave)
+
+      if (!result.success) {
+        console.warn('Backend rejected upgrade selection - possible desync')
+        return false
+      }
+
+      // Sync points from backend (authoritative source)
+      if (result.newPoints !== undefined) {
+        console.log(`Syncing points from backend: ${stats.points} -> ${result.newPoints}`)
+        GameManager.updatePlayerStats({ points: result.newPoints })
+      }
+    }
+    // When skipCost = true (dev tools), don't deduct points
+
+    return true
   }
 }

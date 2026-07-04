@@ -1,495 +1,172 @@
 # Upgrades System
 
-Upgrades are positive modifications that enhance player capabilities during gameplay. They range from simple stat increases to complex interactive effects and variant weapon changes.
+Upgrades are modifications purchased during gameplay — simple stat increases, behavior-changing effects, weapon variants, abilities, and curses. The architecture is modeled on tModLoader's `ModBuff`: each upgrade is one self-contained file, and **the engine calls the upgrade's hooks — never the reverse**.
 
 ## Overview
 
-- **Data Location**: `frontend/src/game/data/upgrades/` (organized by type)
-- **Implementation**: `frontend/src/game/systems/upgrades/` (4-file system coordinated by `UpgradeSystem`)
-- **Application**: Applied through a centralized system that validates, tracks, and delegates by type
-- **Types**: Five distinct types — stat modifier, effect, ability, variant, visual effect
-- **Coordination**: `UpgradeSystem` routes each upgrade to the appropriate sub-system
+- **Upgrade files**: `frontend/src/game/upgrades/` — one file per upgrade (73), organized by type
+- **Registry**: `frontend/src/game/upgrades/index.ts` auto-registers every file in the category folders via `import.meta.glob` — `UPGRADE_REGISTRY` maps `id → { def, ctor }`
+- **Base class**: `Upgrade` (`frontend/src/game/upgrades/Upgrade.ts`) — declarative `UpgradeDef` + overridable engine hooks
+- **Engine**: `frontend/src/game/systems/upgrades/` — ledger, replay, hook dispatch, stat channels (see its README for engine internals)
 
-## Important Files
+## The Definition/Instance Split
 
-### Data Files (JSON)
+Every upgrade file exports **two halves**:
 
-| File | Purpose | Example Content |
-|------|---------|-----------------|
-| `stat_upgrades.json` | Flat numeric modifiers (damage, speed, health) | `+0.8% damage`, `-20 max health` |
-| `effect_upgrades.json` | Interactive effects (lifesteal, regen, thorns, explosions) | Heal on hit, damage reduction, reflect |
-| `ability_upgrades.json` | Player abilities (dash, shield, time slow) | Toggleable/triggered actions |
-| `variant_upgrades.json` | Weapon variant swaps (replaces one variant with another) | Homing bullets, explosive bullets |
-| `visual_upgrades.json` | Cosmetic visual effects (glows, trails, particles) | Radiant aura, projectile trails |
-| `curses.json` | Negative upgrades (debuffs) | See [CURSES.md](./CURSES.md) |
-
-### Implementation Files
-
-| File | Responsibility |
-|------|-----------------|
-| `UpgradeSystem.ts` | Central coordinator — validates, applies, tracks all upgrades by type |
-| `UpgradeModifierSystem.ts` | Numeric stat calculations (formula: `(base + additive) × (1 + multiplicative)`) |
-| `UpgradeEffectSystem.ts` | Non-numeric effects (lifesteal on hit, regen per frame, damage reduction, reflect) |
-| `EffectHandlers.ts` | Concrete behavior for each effect (registered once at game start in `MainScene.create()`) |
-
-## Upgrade Structure
-
-All upgrades follow this base structure:
-
-```json
-{
-  "id": "upgrade_identifier",
-  "name": "Display Name",
-  "description": "Brief description",
-  "rarity": "rare",
-  "type": "stat_modifier|effect|ability|variant|visual_effect",
-  "stackable": true,
-  "maxStacks": 5,
-  "cost": 10
+```ts
+// The catalog entry — plain JSON-serializable data. Browse/offer/UI code
+// only ever touches this.
+export const Damage1Def: UpgradeDef = {
+  id: 'damage_1',
+  name: 'Devastation',
+  description: '+0.2% damage.',
+  rarity: RarityID.Common,
+  upgradeType: UpgradeTypeID.StatModifier,
+  cost: 2,
+  targetClass: UpgradeTargetID.Attack,
+  fieldInTargetClass: UpgradeStatID.Damage,
+  value: 0.002,
+  isMultiplier: true,
+  stackable: true,
+  maxStacks: 99999,
 }
+
+// The behavior — instantiated fresh by the engine on every purchase.
+// Empty body = the def is applied generically by the base class.
+export class Damage1 extends Upgrade {}
 ```
 
-### Type-Specific Fields
+Think item template vs. item drop: the def describes the upgrade; the player owns instances. Because instances are constructed per purchase (and reconstructed on save load), per-run mutable state on an upgrade class — a shot counter, say — is safe by construction and can never bleed across runs.
 
-#### Stat Modifier
-Used for numeric stat changes (additive or multiplicative).
+## The Ledger
 
-```json
-{
-  "type": "stat_modifier",
-  "target": "attack",
-  "stat": "damage",
-  "value": 0.008,
-  "isMultiplier": true
-}
-```
+The single source of truth for owned upgrades is an **ordered ledger**: one `Upgrade` instance per purchase, in acquisition order, held by `UpgradeSystem` and mirrored as an id array in `GameManager.getState().appliedUpgrades` (the serialized form). Everything else is derived from it:
 
-- **target**: Entity type affected — `"attack"`, `"bullet"`, `"player"`, `"laser"`, `"spinner"`, etc.
-- **stat**: Specific stat to modify — `"damage"`, `"speed"`, `"maxHealth"`, `"fireRate"`, etc.
-- **value**: Numeric change (can be positive or negative)
-- **isMultiplier**: `true` = multiplicative (stacks additively as percentages), `false` = additive flat value
+- **Stack count** = number of instances with that id (no separate counters)
+- **Application order** = ledger order. Mixed additive/multiplicative stacking is deliberately path-dependent (+10 flat then +10% ≠ +10% then +10 flat)
+- **Removal, save-load restore, and dev reset are the same operation**: edit the ledger, then `UpgradeSystem.replay()` — reset all derived state to base and re-run every `onApply` in order. Current health is snapshotted across the replay, so loading never double-applies maxHealth upgrades and removing never heals
+- **Base/derived stat separation**: `GameManager` keeps per-run base stats (100 HP / 200 speed / 3 sides); current stats are always base + ledger replay
 
-#### Effect
-Triggers custom behavior on game events (hit, kill, damage taken, frame update).
+## Hooks
 
-```json
-{
-  "type": "effect",
-  "effect": "lifesteal",
-  "effectValue": 0.02,
-  "stackable": true,
-  "maxStacks": 3
-}
-```
+The base class declares the hook set; the engine (`UpgradeSystem.dispatch*`) invokes overridden hooks on every owned instance, in ledger order, from exactly one generic line per extension point:
 
-- **effect**: Registered effect ID from `EffectHandlers.ts`
-- **effectValue**: Numeric parameter (e.g., percentage, damage amount, healing rate)
-- If stackable, effect values accumulate
+| Hook | Fires | Dispatch point | Example |
+|---|---|---|---|
+| `onApply(ctx)` | On purchase, and per instance on replay | `UpgradeSystem.apply/replay` | double_dash sets dash charges |
+| `onRemove(ctx)` | When an instance leaves the ledger | `UpgradeSystem.removeOne` | (rarely needed — replay covers most undo) |
+| `modifyProjectileSpawn(p)` | Every player projectile before spawn | `MainScene.spawnProjectile` | homing_distance bumps `trackingDistance` |
+| `modifyHitEnemy(p, enemy, dmg)` | Before a hit's damage is applied | `CollisionManager` | (mutate `dmg.amount` in place) |
+| `onHitEnemy(p, enemy, dealt)` | After a hit landed | `CollisionManager` | vampirism heals % of damage dealt |
+| `modifyPlayerHurt(dmg, source?)` | Player takes damage (`source` = melee enemy) | `Player.takeDamage` | armor reduces, fragility amplifies, thorns reflects at `source` |
+| `onEnemyKilled(enemy)` | Player kills an enemy | `CollisionManager` | explosion_on_kill emits an explosion |
+| `updatePlayer(player, delta)` | Every frame | `MainScene.update` | regeneration heals per second |
+| `modifyExplosion(explosion)` | Any player explosion is parameterized | `BulletExplosion.SetDefaults`, Chain Reaction | explosion_damage/radius upgrades |
 
-**Available effects** (registered in `EffectHandlers.ts`):
-| Effect ID | Trigger | Behavior |
-|-----------|---------|----------|
-| `lifesteal` | `onHit` | Heal player for `projectile.damage × lifeStealPercent` |
-| `regen` | `onUpdate` | Heal player each frame based on HP/sec |
-| `protection` | `onDamage` | Reduce incoming damage by percentage |
-| `thorns` | `onDamage` | Reflect percentage of damage back to nearby enemies |
-| `explode_on_kill` | `onKill` | Emit explosion event at enemy death location |
-| `dash` | — | Tracked ability; behavior in `Player.ts` |
-| `shield` | — | Tracked as consumable shield charge |
+`Enemy` exposes `maxHealth`, `isBoss`, and `takeDamage()` — enough for hooks that scale off enemy stats.
 
-#### Ability
-Grants a player ability (dash, shield, time slow). Often has dependencies.
+### Default `onApply` (why simple upgrades stay empty)
 
-```json
-{
-  "type": "ability",
-  "effect": "dash",
-  "stackable": false,
-  "dependentOn": [],
-  "cost": 10
-}
-```
+The base `onApply` applies the def generically, keyed on `upgradeType`:
 
-- **effect**: Ability ID (linked to handlers or tracked via `hasAbility('id')`)
-- Typically `stackable: false` unless ability charges/stacks (e.g., shield charges)
+- `stat_modifier` targeting player maxHealth/speed/polygonSides → mutates `GameManager` stats directly
+- any other `stat_modifier` → `UpgradeModifierSystem.addModifier()` (shared stat channels; formula `(base + additive) × (1 + multiplicative)`, multiplicative bonuses sum)
+- `effect` → `UpgradeEffectSystem.addEffect()` counter (shield charges, ricochet flag, ...)
+- `ability` → `UpgradeEffectSystem.addAbility()` flag
+- `visual_effect` → inert flag
+- `variant` → nothing (the engine tracks the active variant itself)
 
-#### Variant
-Swaps one weapon variant for another. Mutually exclusive.
+Behavior-owning upgrades override hooks instead — and override `onApply(): void {}` when the def's stat fields are metadata-only (e.g. the explosion upgrades, whose numbers act through `modifyExplosion`, not the modifier channels).
 
-```json
-{
-  "type": "variant",
-  "target": "bullet",
-  "attackType": "bullet",
-  "variantClass": "HomingBullet",
-  "replaces": ["explosive_bullets"],
-  "stackable": false,
-  "cost": 20
-}
-```
+### The flag pattern (allowed coupling)
 
-- **target**: Entity type being replaced (e.g., `"bullet"`, `"laser"`)
-- **variantClass**: Class name of the new variant (must be implemented in codebase)
-- **replaces**: Array of variant IDs this replaces (mutual exclusivity)
-- **attackType**: *(Optional)* Restricts to specific attack type (e.g., `"bullet"` only)
-
-#### Visual Effect
-Cosmetic only — no gameplay impact.
-
-```json
-{
-  "type": "visual_effect",
-  "target": "player",
-  "effect": "glow",
-  "color": 65535,
-  "intensity": 0.5,
-  "stackable": false,
-  "cost": 0
-}
-```
-
-- **target**: Entity affected (e.g., `"player"`, `"bullet"`)
-- **effect**: Visual effect ID
-- Additional fields (color, intensity, etc.) depend on the effect handler
+Other files may branch on **whether** an upgrade is active — `Player.getBulletVariantClass()` reads `UpgradeSystem.getVariant()`, `CollisionManager` checks `hasEffect('ricochet')` — but the numbers and behavior belong to the upgrade class. Never write an upgrade's value into an entity file.
 
 ## Core Concepts
 
 ### Stacking
 
-Upgrades can be stackable or singleton.
+- **Stackable** (`stackable: true`, up to `maxStacks`): one ledger instance per purchase; each instance contributes independently, so stacking falls out of dispatch naturally
+- **Non-stackable**: refused by `canApply` once owned
+- Query with `UpgradeSystem.getStackCount(id)` / `hasUpgrade(id)`
 
-- **Stackable** (`"stackable": true`): Can be applied multiple times (up to `maxStacks`)
-  - Stat modifiers: Values accumulate
-  - Effects: Numeric values accumulate (e.g., 5% lifesteal + 5% lifesteal = 10% total)
-  - Tracked via `UpgradeSystem.getStackCount(upgradeId)`
+### Tiers, Dependencies, Incompatibilities
 
-- **Non-stackable** (`"stackable": false`): Can only be applied once
-  - Abilities, variants, tier upgrades, and most special effects
+All declared on the def and enforced by `UpgradeSystem.canApply(def)`:
 
-### Tiers and Upgrades
+- `tier` / `upgradesTo` — linear progression chains (vampirism 1→2→3)
+- `dependentOn` + `dependencyCount` — required prior upgrades (triple_dash needs double_dash)
+- `incompatibleWith` — mutual exclusion (homing vs. explosive bullets)
+- `specificAttackType` — offer only for the matching equipped attack
+- `replaces` (variants) — purchasing evicts the replaced variant's instances from the ledger, then replays
 
-Linear progression through tiers using `upgradesTo`:
+### Purchase Flow
 
-```json
-{
-  "id": "vampirism_1",
-  "tier": 1,
-  "upgradesTo": "vampirism_2",
-  ...
-},
-{
-  "id": "vampirism_2",
-  "tier": 2,
-  "upgradesTo": "vampirism_3",
-  ...
-},
-{
-  "id": "vampirism_3",
-  "tier": 3,
-  ...
-}
-```
-
-Each tier upgrade is mutually exclusive with its siblings — you can only have one tier active at a time.
-
-### Dependencies and Incompatibilities
-
-Control upgrade availability and interactions.
-
-**Dependencies** — upgrade requires other upgrades first:
-```json
-{
-  "id": "triple_dash",
-  "dependentOn": ["double_dash"],
-  "dependencyCount": 1
-}
-```
-
-- **dependentOn**: Array of upgrade IDs required
-- **dependencyCount**: How many of the `dependentOn` upgrades must be owned (default: 1)
-- Validation happens in `UpgradeSystem.canApply()`
-
-**Incompatibilities** — upgrades cannot coexist:
-```json
-{
-  "id": "homing_bullets",
-  "incompatibleWith": ["explosive_bullets"]
-}
-```
-
-- `UpgradeSystem` prevents applying an incompatible upgrade if any conflicting upgrade is active
-
-### How Upgrades Are Applied
-
-1. **Validation** (`UpgradeSystem.canApply()`)
-   - Check stack limits
-   - Check dependencies are met
-   - Check no incompatibilities exist
-
-2. **Delegation by type**
-   - `stat_modifier` → `UpgradeModifierSystem.addModifier()`
-   - `effect` → `UpgradeEffectSystem.addEffect()`
-   - `ability` → `UpgradeEffectSystem.addAbility()`
-   - `variant` → Update active variants, remove replaced ones
-   - `visual_effect` → `UpgradeEffectSystem.addVisualEffect()`
-
-3. **Tracking**
-   - Store in `appliedUpgrades` map
-   - Increment stack count
-   - Emit `upgrade-applied` event for UI updates
-
-### Modifier Formula
-
-Applied by `UpgradeModifierSystem.applyModifiers()`:
-
-```
-finalValue = (baseValue + additive) × (1 + multiplicative)
-```
-
-Multiple multiplicative upgrades **sum**, not multiply:
-- `5% + 5% + 5% = 15%` (not `15.76%`)
+1. UI/bundle/dev-tools code emits an id; `MainScene.applyUpgrade` looks up the registry entry and checks cost
+2. `UpgradeSystem.apply(entry)` checks `canApply(def)`, constructs `new entry.ctor(entry.def)`, appends it to the ledger, runs `onApply`. A refusal returns `false` with **no side effects** (nothing recorded, no sound)
+3. On success: purchase is recorded in `GameManager.addAppliedUpgrade()` + `SaveManager`, then validated with the backend (skipped for dev/free applies)
 
 ## Adding a New Upgrade
 
-### 1. Choose the Right File and Type
-
-- **Stat increase/decrease** → `stat_upgrades.json`, type `stat_modifier`
-- **Interactive behavior** → `effect_upgrades.json`, type `effect`
-- **Player ability** → `ability_upgrades.json`, type `ability`
-- **Weapon variant** → `variant_upgrades.json`, type `variant`
-- **Cosmetic effect** → `visual_upgrades.json`, type `visual_effect`
-- **Negative effect** → `curses.json`, type varies, add `"curse": true`
-
-### 2. Add the JSON Definition
-
-Example: New stackable stat upgrade
-
-```json
-{
-  "id": "critical_strike_1",
-  "name": "Critical Strike",
-  "description": "+1% critical hit chance",
-  "rarity": "uncommon",
-  "type": "stat_modifier",
-  "target": "bullet",
-  "stat": "critChance",
-  "value": 0.01,
-  "isMultiplier": false,
-  "stackable": true,
-  "maxStacks": 10,
-  "cost": 5
-}
-```
-
-Example: New effect upgrade with dependencies
-
-```json
-{
-  "id": "ricochet_enhanced",
-  "name": "Enhanced Ricochet",
-  "description": "Ricochet bounces increase damage by 5%",
-  "rarity": "rare",
-  "type": "effect",
-  "effect": "ricochet_boost",
-  "effectValue": 0.05,
-  "stackable": false,
-  "dependentOn": ["ricochet"],
-  "dependencyCount": 1,
-  "cost": 15
-}
-```
-
-### 3. If Adding a New Effect
-
-Register the effect in `EffectHandlers.ts`:
+1. Create one file in the right category folder (`stat_modifiers/`, `effects/`, `variants/`, `abilities/`, `visual_effects/`, `curses/`)
+2. Export a `<Name>Def: UpgradeDef` and a `class <Name> extends Upgrade`
+3. Simple stat change → leave the class body empty. Behavior → override hooks; read your numbers from `this.def`
+4. Done — registration is automatic (the registry globs the folder). No index edits, no entity edits, no engine edits.
 
 ```ts
-// In registerEffectHandlers()
-UpgradeEffectSystem.registerEffect('ricochet_boost', {
-  onProjectileCollision: (projectile: any) => {
-    // Custom behavior here
-    const boostValue = UpgradeEffectSystem.getEffectValue('ricochet_boost')
-    projectile.damage *= (1 + boostValue)
+// effects/frenzy.ts — a stateful example: every 3rd hit deals bonus damage
+import { Upgrade, type UpgradeDef, type DamageRef } from '../Upgrade'
+import type { Projectile } from '../../entities/projectiles/Projectile'
+import type { Enemy } from '../../entities/enemies/Enemy'
+import { RarityID, UpgradeTypeID } from '../../data/ID'
+
+export const FrenzyDef: UpgradeDef = {
+  id: 'frenzy',
+  name: 'Frenzy',
+  description: 'Every 3rd hit deals 5% of the enemy\'s max health as bonus damage',
+  rarity: RarityID.Legendary,
+  upgradeType: UpgradeTypeID.Effect,
+  cost: 40,
+  effectValue: 0.05,
+  stackable: false,
+}
+
+export class Frenzy extends Upgrade {
+  private hitCount = 0 // per-run state: safe, instances never outlive the run
+
+  onApply(): void {}
+
+  modifyHitEnemy(_p: Projectile, enemy: Enemy, damage: DamageRef): void {
+    this.hitCount++
+    if (this.hitCount % 3 === 0) {
+      damage.amount += enemy.maxHealth * this.def.effectValue!
+    }
   }
-})
-```
-
-Available event hooks:
-- `onHit(projectile, enemy)` — when projectile hits enemy
-- `onKill(enemy)` — when enemy dies
-- `onUpdate(deltaTime)` — every frame
-- `onDamage(amount)` — when player takes damage (can modify and return amount)
-- `onSpawn(entity)` — when entity spawns
-
-### 4. If Adding a New Variant
-
-1. Implement the variant class (e.g., `HomingBullet.ts`)
-2. Add to `variant_upgrades.json`:
-
-```json
-{
-  "id": "my_variant",
-  "type": "variant",
-  "target": "bullet",
-  "variantClass": "MyVariantClass",
-  "replaces": ["other_variant"],
-  "stackable": false
 }
 ```
 
-3. The system calls `UpgradeSystem.getVariant(target)` to get the active variant class name
+**Def checklist**: unique snake_case `id`; class name is the PascalCase of it; `rarity`/`upgradeType` from the `ID.ts` enums; keep the def JSON-serializable (it is the future source for generating the backend's `upgrades.json`).
 
-### 5. If Adding a New Stat Target
-
-Stat modifiers work on any `target` + `stat` combination. Ensure the code that uses the stat calls:
-
-```ts
-UpgradeModifierSystem.applyModifiers(target, stat, baseValue)
-```
-
-For example, if adding a new stat `"accuracy"` on `"bullet"` target, any code applying bullet stats would call:
-
-```ts
-const accuracy = UpgradeModifierSystem.applyModifiers('bullet', 'accuracy', baseAccuracy)
-```
-
-## Integration Points
-
-### In Player Code
-
-Query active effects and abilities:
-```ts
-UpgradeSystem.hasEffect('lifesteal')
-UpgradeSystem.getEffectValue('lifesteal')
-UpgradeSystem.hasAbility('dash')
-UpgradeSystem.getVariant('bullet')
-```
-
-### In Collision/Damage Code
-
-Apply modifiers before calculations:
-```ts
-const finalDamage = UpgradeModifierSystem.applyModifiers('bullet', 'damage', baseDamage)
-```
-
-Trigger effect events at appropriate moments:
-```ts
-UpgradeEffectSystem.onProjectileHit(projectile, enemy)
-UpgradeEffectSystem.onEnemyKill(enemy)
-UpgradeEffectSystem.onPlayerDamage(amount)
-```
-
-## Validation Rules
-
-- **id**: Must be unique, lowercase with underscores
-- **name**: Display name, can be shared across tiers
-- **rarity**: One of `common`, `uncommon`, `rare`, `epic`, `legendary`
-- **type**: Must match one of the five types
-- **stackable**: Must be boolean
-- For `stat_modifier`: Must have `target`, `stat`, `value`, `isMultiplier`
-- For `effect`: Must have `effect` ID that is registered in `EffectHandlers.ts`
-- For `variant`: Must have `target`, `variantClass`, and `replaces` array
-- Dependencies and incompatibilities must reference valid upgrade IDs
+**Backend note**: the live backend still reads `backend/app/core/data/upgrades.json`; keep it in step for online play (`sync-check.sh` checks filename parity). The Python classes under `backend/app/core/upgrades/` are unwired dead code — don't maintain them by hand; they'll be regenerated from frontend defs during the backend port.
 
 ## Bundle Pickup Flow
 
-When a player collects an upgrade bundle, the following sequence executes (see `MainScene.ts` lines 108–175):
+When a player collects an upgrade bundle (`MainScene` overlap handler):
 
-### 1. Bundle Overlap Detected
-**MainScene.ts:108** — Phaser overlap handler registered in `create()`
-
-### 2. Bundle Destroyed & Position Saved
-**MainScene.ts:117** — `bundle.destroy()` called immediately to prevent double-pickup
-- Saves bundle position for floating text display
-
-### 3. Roll Item Count
-**MainScene.ts:121** — `Math.floor(Math.random() * 4) + 1` yields 1–4 items per bundle
-
-### 4. Build Rarity Weights
-**MainScene.ts:123–136** — Rarity weights are capped and re-normalized to bundle tier
-- Example: A rare bundle on wave 25 strips epic + legendary from the weight table
-- Remaining rarities (common, uncommon, rare) are rescaled to sum to 1.0
-- Creates `rollItemRarity()` closure for consistent rolls within this bundle
-
-### 5. Pick Upgrades
-**MainScene.ts:138–152** — Slots filled sequentially:
-
-| Slot | Source | Logic |
-|------|--------|-------|
-| Slot 1 | `pickRegularUpgrade(upgradeValue)` | **Lines 749+** — Guaranteed matching-tier item; falls back to lower tiers only if pool exhausted |
-| Slots 2–N | 30% curse / 70% upgrade | **Lines 148–152** — Each roll: 30% `pickCurse()`, 70% `pickRegularUpgrade()` at rolled rarity |
-
-**Exclusion**: All picked IDs tracked in `pickedIds` array to prevent duplicates within bundle
-
-**Validation**: Each candidate passes `UpgradeSystem.canApply()` (dependency, incompatibility, stack limit checks)
-
-### 6. Apply & Display
-**MainScene.ts:165–173** — For each picked upgrade:
-- Call `applyUpgrade(upgradeId, true)`
-- Look up upgrade definition
-- Call `showBundlePickupText()` with 220ms stagger
-
-### Helper Functions
-
-**`pickCurse(maxRarity, exclude)` — Lines 734–746**
-```ts
-// Filters curses.curses by rarity tier (maxRarity down to 0)
-// Falls back to lower tiers if none available at requested tier
-// Skips IDs in exclude array
-// Validates with UpgradeSystem.canApply()
-```
-
-**`pickRegularUpgrade(maxRarity, exclude)` — Lines 749+**
-```ts
-// Filters all non-curse upgrades (stat, effect, ability, variant, visual)
-// Falls back to lower tiers
-// Validates with UpgradeSystem.canApply()
-// Special: Doesn't silently replace active variants
-```
-
-**`showBundlePickupText(x, y, upgradeName, rarityIndex, curse, delay)` — Lines 688–719**
-```ts
-// Creates floating text at bundle location
-// Colors:
-//   Rarity 0–4: gray, green, blue, purple, gold
-//   Curse: red
-// Tweens upward with alpha fade over 1800ms
-// Delayed by 220ms per item (staggered display)
-```
-
----
+1. Bundle destroyed immediately (prevents double-pickup), position saved for floating text
+2. Roll item count: 1–4
+3. Rarity weights capped at the bundle's tier and re-normalized (a rare bundle never yields epics)
+4. Slot 1 is always a regular upgrade at the bundle's tier (falls back down-tier only if the pool is exhausted); remaining slots roll 30% curse / 70% regular
+5. Candidates are filtered through `UpgradeSystem.canApply()` and de-duplicated within the bundle; bundles never silently replace an active variant
+6. Each pick goes through the normal `applyUpgrade` path (free) with staggered pickup text (rarity-colored; curses red)
 
 ## Debugging
 
-### Check Active Upgrades
-
 ```ts
-console.log(UpgradeSystem.getAppliedUpgrades())
+UpgradeSystem.getOwned()               // owned instances, acquisition order
+UpgradeSystem.getStackCount('damage_1')
+UpgradeModifierSystem.debug()          // dump stat channels
+UpgradeEffectSystem.getEffectValue('shield')
 ```
 
-### Check Stack Count
-
-```ts
-console.log(UpgradeSystem.getStackCount('damage_1'))
-```
-
-### Check Modifiers
-
-```ts
-UpgradeModifierSystem.debug()
-```
-
-### Check Effect Values
-
-```ts
-console.log(UpgradeSystem.getEffectValue('lifesteal'))
-```
-
-## Known Issues & Best Practices
-
-- **Stat modifier naming**: Use consistent naming across tiers (e.g., "Devastation" for all damage tiers)
-- **Effect IDs**: Must match exactly in both JSON and `EffectHandlers.ts`
-- **Variant replaces**: Array is symmetric — both directions must be listed
-- **Cursor filtering**: Attack-type-specific upgrades (with `attackType` field) are filtered by the backend; frontend validates to prevent invalid selections
-- **Bundle rarity normalization**: Weights are capped at bundle tier to ensure no epic/legendary items appear in common bundles
-- **Duplicate prevention**: The `pickedIds` array prevents the same upgrade from appearing twice in one bundle
+DevTools (bottom-right in dev): left-click applies free, right-click removes one stack (ledger removal + replay), Reset All clears the ledger.

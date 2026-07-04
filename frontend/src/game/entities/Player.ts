@@ -9,6 +9,8 @@ import { Flame } from './projectiles/player_projectiles/Flame'
 import { Spinner } from './projectiles/player_projectiles/Spinner'
 import { AttackType } from '../data/attackTypes'
 import { UpgradeSystem, UpgradeEffectSystem, UpgradeModifierSystem } from '../systems/upgrades'
+import { UpgradeTargetID, UpgradeStatID } from '../data/ID'
+import type { Enemy } from './enemies/Enemy'
 import { TextureGenerator } from '../utils/TextureGenerator'
 import { waveValidation } from '../services/WaveValidation'
 import { getDefaultVolume } from '../core/AudioRegistry'
@@ -427,7 +429,7 @@ export class Player extends Phaser.GameObjects.Container {
    * Get the appropriate bullet variant class based on active upgrades.
    */
   private getBulletVariantClass(): new () => Projectile {
-    const variant = UpgradeSystem.getVariant('bullet')
+    const variant = UpgradeSystem.getVariant(UpgradeTargetID.Bullet)
 
     switch (variant) {
       case 'HomingBullet':
@@ -445,27 +447,21 @@ export class Player extends Phaser.GameObjects.Container {
    * Apply all active upgrade modifiers to a projectile.
    */
   private applyUpgradeModifiers(projectile: Projectile): void {
-    const target = this.attackType // 'bullet', 'laser', etc.
+    // AttackType ('bullet' | 'laser' | 'zapper' | 'flamer' | 'spinner') is wider than
+    // UpgradeTargetID today (only 'bullet' has upgrades so far) — cast since this loop
+    // is generic over whatever attack type the player currently has equipped.
+    const target = this.attackType as unknown as UpgradeTargetID
 
-    // Apply modifiers to each numeric stat
-    const stats = ['damage', 'speed', 'size', 'pierce', 'timeLeft'] as const
+    // Damage is intentionally excluded here — CollisionManager applies it once per hit
+    // (attack-specific, then global "attack" modifiers), so it's applied exactly once
+    // regardless of whether a projectile was spawned via Player.shoot() or spawned
+    // internally (e.g. BulletExplosion).
+    const stats = [UpgradeStatID.Speed, UpgradeStatID.Size, UpgradeStatID.Pierce, UpgradeStatID.TimeLeft] as const
 
     for (const stat of stats) {
       if (stat in projectile && typeof (projectile as any)[stat] === 'number') {
         const baseValue = (projectile as any)[stat]
-        
-        // For damage, check both attack-specific and global "attack" modifiers
-        let modifiedValue: number
-        if (stat === 'damage') {
-          // Apply attack-specific damage modifiers first
-          modifiedValue = UpgradeModifierSystem.applyModifiers(target, stat, baseValue)
-          // Then apply global attack damage modifiers
-          modifiedValue = UpgradeModifierSystem.applyModifiers('attack', stat, modifiedValue)
-        } else {
-          // For other stats, just use attack-specific modifiers
-          modifiedValue = UpgradeModifierSystem.applyModifiers(target, stat, baseValue)
-        }
-        
+        const modifiedValue = UpgradeModifierSystem.applyModifiers(target, stat, baseValue)
         ;(projectile as any)[stat] = modifiedValue
       }
     }
@@ -479,15 +475,19 @@ export class Player extends Phaser.GameObjects.Container {
    * Deal damage to the player.
    * Triggers a visual flash and updates GameManager.
    * @param amount Amount of damage to deal
+   * @param source The enemy that dealt it (melee contact only) — handed to
+   *   upgrade hooks like Thorns; undefined for projectile hits
    */
-  takeDamage(amount: number): void {
+  takeDamage(amount: number, source?: Enemy): void {
     // Check if shielded
     if (this.shielded) {
       return // No damage when shielded
     }
 
-    // Apply damage reduction from effects (armor, etc.)
-    const modifiedAmount = UpgradeEffectSystem.onPlayerDamage(amount)
+    // Let owned upgrades mutate the incoming damage (armor, fragility, thorns)
+    const damage = { amount }
+    UpgradeSystem.dispatchModifyPlayerHurt(damage, source)
+    const modifiedAmount = damage.amount
 
     GameManager.takeDamage(modifiedAmount)
 
@@ -622,14 +622,14 @@ export class Player extends Phaser.GameObjects.Container {
    * Get the effective dash speed including upgrade modifiers.
    */
   private getModifiedDashSpeed(): number {
-    return UpgradeModifierSystem.applyModifiers('player', 'dashSpeed', this.dashSpeed)
+    return UpgradeModifierSystem.applyModifiers(UpgradeTargetID.Player, UpgradeStatID.DashSpeed, this.dashSpeed)
   }
 
   /**
    * Get the effective dash cooldown including upgrade modifiers.
    */
   private getModifiedDashCooldown(): number {
-    return UpgradeModifierSystem.applyModifiers('player', 'dashCooldown', this.dashCooldown)
+    return UpgradeModifierSystem.applyModifiers(UpgradeTargetID.Player, UpgradeStatID.DashCooldown, this.dashCooldown)
   }
 
   /**

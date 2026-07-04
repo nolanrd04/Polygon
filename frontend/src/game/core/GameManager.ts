@@ -39,6 +39,17 @@ export interface GameState {
  * Handles player stats, wave progression, damage/healing, and upgrade application.
  * Communicates state changes via the EventBus to keep UI and game systems in sync.
  */
+/**
+ * Per-run base stats. Current stats are always base + upgrade-ledger replay —
+ * upgrades accumulate on top of these, and UpgradeSystem.replay() resets back
+ * to them before re-applying the ledger.
+ */
+const BASE_PLAYER_STATS = {
+  maxHealth: 100,
+  speed: 200,
+  polygonSides: 3
+} as const
+
 class GameManagerClass {
   // Initialize with default starting state
   private state: GameState = {
@@ -47,12 +58,12 @@ class GameManagerClass {
     isWaveActive: false,
     seed: Date.now(),
     playerStats: {
-      health: 100,
-      maxHealth: 100,
-      speed: 200,
+      health: BASE_PLAYER_STATS.maxHealth,
+      maxHealth: BASE_PLAYER_STATS.maxHealth,
+      speed: BASE_PLAYER_STATS.speed,
       points: 0,
       kills: 0,
-      polygonSides: 3,
+      polygonSides: BASE_PLAYER_STATS.polygonSides,
       unlockedAttacks: ['bullet'],
       isDead: false
     },
@@ -197,6 +208,40 @@ class GameManagerClass {
   }
 
   /**
+   * Record a purchase in the upgrade ledger (one entry per purchase, in
+   * acquisition order — duplicates included for stackables)
+   */
+  addAppliedUpgrade(upgradeId: string): void {
+    this.state.appliedUpgrades.push(upgradeId)
+  }
+
+  /**
+   * Remove the most recent ledger entry for an upgrade (dev-remove,
+   * variant replacement)
+   */
+  removeLastAppliedUpgrade(upgradeId: string): void {
+    const index = this.state.appliedUpgrades.lastIndexOf(upgradeId)
+    if (index !== -1) {
+      this.state.appliedUpgrades.splice(index, 1)
+    }
+  }
+
+  /**
+   * Reset the upgrade-derived player stats back to their per-run base values.
+   * Called by UpgradeSystem.replay() before re-applying the ledger; health,
+   * points, kills, etc. are left untouched (replay clamps health itself).
+   */
+  resetStatsToBase(): void {
+    this.state.playerStats = {
+      ...this.state.playerStats,
+      maxHealth: BASE_PLAYER_STATS.maxHealth,
+      speed: BASE_PLAYER_STATS.speed,
+      polygonSides: BASE_PLAYER_STATS.polygonSides
+    }
+    EventBus.emit('player-stats-update', this.state.playerStats)
+  }
+
+  /**
    * Set the random seed (for save/load)
    */
   setSeed(seed: number): void {
@@ -307,12 +352,12 @@ class GameManagerClass {
       isWaveActive: false,
       seed: Date.now(),
       playerStats: {
-        health: 100,
-        maxHealth: 100,
-        speed: 200,
+        health: BASE_PLAYER_STATS.maxHealth,
+        maxHealth: BASE_PLAYER_STATS.maxHealth,
+        speed: BASE_PLAYER_STATS.speed,
         points: 0,
         kills: 0,
-        polygonSides: 3,
+        polygonSides: BASE_PLAYER_STATS.polygonSides,
         unlockedAttacks: ['bullet'],
         isDead: false
       },
