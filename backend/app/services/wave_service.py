@@ -176,8 +176,19 @@ class WaveService:
 
         # 1. Validate upgrades used
         upgrades_used = wave_data.get("upgrades_used", [])
-        # Valid upgrades = previously allowed + newly offered this wave
-        valid_upgrades = set(token.allowed_upgrades + token.offered_upgrades)
+        # Valid upgrades = the server's own record of what this user has
+        # legitimately purchased (app/api/waves.py:select_upgrade already
+        # validates every purchase against the offered set + can_apply_upgrade
+        # at buy time). token.allowed_upgrades/offered_upgrades are only a
+        # snapshot from /waves/start — stale the moment a player rerolls and
+        # buys from a later offer, which flagged perfectly legitimate
+        # purchases as "unauthorized". Fall back to the token snapshot only
+        # if no game save exists yet (e.g. the very first wave).
+        game_save = await self.game_save_repo.find_by_user_id(user_id)
+        if game_save:
+            valid_upgrades = set(game_save.current_upgrades)
+        else:
+            valid_upgrades = set(token.allowed_upgrades + token.offered_upgrades)
         print(f"Validating upgrades: {upgrades_used} vs valid: {valid_upgrades}")
         print(f"DEBUG - Token allowed_upgrades: {token.allowed_upgrades}")
         print(f"DEBUG - Token offered_upgrades: {token.offered_upgrades}")
@@ -310,9 +321,17 @@ class WaveService:
         count: int = 3
     ) -> List[Dict[str, Any]]:
         """Roll random upgrades based on per-wave rarity weights"""
+        # Curses and visual effects are never part of the wave-start offer:
+        # curses only surface through the client-side mid-wave bundle pickup,
+        # and the frontend's offer-screen lookup table excludes both (see
+        # UpgradeModal.loadBackendUpgrades / WaveValidation's offline roll) —
+        # rolling them here made the backend hand out ids the frontend
+        # couldn't resolve, silently shrinking the offer below `count`.
         available_upgrades = [
             upgrade for upgrade in UPGRADES.values()
-            if can_apply_upgrade(upgrade["id"], current_upgrades, attack_type)
+            if not upgrade.get("curse")
+            and upgrade.get("type") != "visual_effect"
+            and can_apply_upgrade(upgrade["id"], current_upgrades, attack_type)
         ]
 
         if not available_upgrades:

@@ -46,7 +46,7 @@ Sync the backend whenever **any of these files change**:
 ./sync-check.sh
 ```
 
-The script checks that all 71 upgrades have matching `.ts` (frontend) and `.py` (backend) files.
+The script does **value-parity**: it parses every frontend `UpgradeDef` and diffs it field-by-field against the live `backend/app/core/data/upgrades.json` (see `scripts/upgrade_defs_sync.py`) — not just filename presence.
 
 ---
 
@@ -79,14 +79,15 @@ export class Damage2 extends Upgrade {}
 
 The def half maps 1:1 onto the live backend catalog entry in
 `backend/app/core/data/upgrades.json` — that JSON is what the backend actually
-serves and validates against today. (Long-term plan: code-generate that JSON
-from the frontend defs so the two can't drift.)
+serves and validates against today, and it is **code-generated from these
+defs** (`python3 scripts/upgrade_defs_sync.py --write`). Never hand-edit it;
+edit the frontend def and regenerate.
 
 **Backend (live path):** `backend/app/core/upgrade_data.py` + `backend/app/core/data/upgrades.json`
 
-> ⚠️ The Python class registry under `backend/app/core/upgrades/` is **unwired
-> dead code** (stub appliers, always-true `can_apply`) — do not maintain it by
-> hand. It will be regenerated from the frontend defs during the backend port.
+The old Python class registry under `backend/app/core/upgrades/` (stub
+appliers, always-true `can_apply`) was unwired dead code and has been deleted
+as part of the backend port.
 
 **What to update when syncing:**
 - Numeric values (damage multiplier, healing percent, damage reduction, etc.)
@@ -101,9 +102,9 @@ from the frontend defs so the two can't drift.)
 - ✅ Upgrade ID matches frontend def and backend `upgrades.json`
 - ✅ Name and description are identical
 - ✅ Rarity, type, and cost match
-- ✅ Stacking/dependency/incompatibility rules match (known divergence: frontend
-  declares `incompatibleWith` on the two bullet variants; backend JSON doesn't yet —
-  fix belongs to the backend port)
+- ✅ Stacking/dependency/incompatibility rules match (`incompatibleWith` on the
+  two bullet variants was a known divergence — fixed by the backend port; both
+  now declare it)
 - ✅ `sync-check.sh` passes with no mismatches
 
 ---
@@ -176,10 +177,10 @@ RARITY_WEIGHTS_BY_WAVE = {
 
 ```bash
 # Find what changed since last sync
-git log --oneline -20 -- frontend/src/game/data/ frontend/src/game/entities/enemies/ frontend/src/game/systems/
+git log --oneline -20 -- frontend/src/game/upgrades/ frontend/src/game/entities/enemies/ frontend/src/game/systems/
 
 # Show diffs for specific files
-git diff <last-sync-commit> HEAD -- frontend/src/game/data/upgrades/stat_upgrades.json
+git diff <last-sync-commit> HEAD -- frontend/src/game/upgrades/stat_modifiers/dash_speed_1.ts
 git diff <last-sync-commit> HEAD -- frontend/src/game/entities/enemies/Octogon.ts
 git diff <last-sync-commit> HEAD -- frontend/src/game/systems/difficulty/Normal.ts
 ```
@@ -473,11 +474,11 @@ for wave, weights in RARITY_WEIGHTS_BY_WAVE.items():
 
 **Result:** Anti-cheat rejects valid waves with "unknown upgrade" error.
 
-**Prevention:** Always use `snake_case` for upgrade IDs. Use grep to verify:
+**Prevention:** Always use `snake_case` for upgrade IDs. `sync-check.sh` catches this (an id mismatch shows up as one def "missing in backend" and one "missing in frontend"), or check by hand:
 
 ```bash
-grep -o '"id": "[^"]*"' frontend/src/game/data/upgrades/*.json | sort -u
-grep -o '"[a-z_0-9]*":' backend/app/core/upgrade_data.py | sort -u
+grep -rho 'id: "[^"]*"' frontend/src/game/upgrades | sort -u
+grep -o '"id": "[^"]*"' backend/app/core/data/upgrades.json | sort -u
 ```
 
 ### 6. Missing Curse Flag
@@ -505,18 +506,17 @@ grep -o '"[a-z_0-9]*":' backend/app/core/upgrade_data.py | sort -u
 
 ### Minimal Sync (Single Upgrade Change)
 
-1. `git diff <last-commit> HEAD -- frontend/src/game/data/upgrades/stat_upgrades.json`
-2. Find the changed upgrade in `backend/app/core/upgrade_data.py`
-3. Update the value/rarity/description
-4. Verify: `python -c "from app.core.upgrade_data import UPGRADES; print(UPGRADES['changed_id'])"`
-5. Test: Start a game, select the upgrade, verify effect
+1. Edit the `UpgradeDef` under `frontend/src/game/upgrades/<category>/<id>.ts`
+2. Regenerate: `python3 scripts/upgrade_defs_sync.py --write`
+3. Verify: `python -c "from app.core.upgrade_data import UPGRADES; print(UPGRADES['changed_id'])"`
+4. Test: Start a game, select the upgrade, verify effect
 
 ### Full Sync (Multiple Changes)
 
-1. Identify all changed files: `git log --oneline -10 -- frontend/src/game/data/ frontend/src/game/entities/ frontend/src/game/systems/`
+1. Identify all changed files: `git log --oneline -10 -- frontend/src/game/upgrades/ frontend/src/game/entities/ frontend/src/game/systems/`
 2. For each file, run: `git diff <last-commit> HEAD -- <file>`
 3. Create `BACKEND_SYNC_WORK.md` with all changes listed
-4. Update `backend/app/core/upgrade_data.py` and `backend/app/core/enemy_data.py`
+4. Regenerate upgrades: `python3 scripts/upgrade_defs_sync.py --write`; hand-sync `backend/app/core/enemy_data.py` for enemy/difficulty changes
 5. Run validation: `python backend/tests/validate_upgrades.py` (if exists)
 6. Manual test: Play through waves 1, 5, 20
 7. Commit with message: `Sync backend with frontend (commit <hash>): <summary>`
@@ -534,9 +534,9 @@ The script and git hook are already in place. No setup needed! Just start using 
 ### Workflow
 
 #### 1. Make Frontend Changes
-Edit upgrade JSONs, enemy .ts files, or difficulty settings and commit:
+Edit/add an `UpgradeDef` under `frontend/src/game/upgrades/<category>/` and commit:
 ```bash
-git add frontend/src/game/data/upgrades/stat_upgrades.json
+git add frontend/src/game/upgrades/stat_modifiers/dash_speed_1.ts
 git commit -m "Nerf dash upgrades"
 ```
 
@@ -544,7 +544,7 @@ The **pre-commit hook** will remind you:
 ```
 ⚠️  Frontend data files detected in this commit:
 Upgrades:
-  • frontend/src/game/data/upgrades/stat_upgrades.json
+  • frontend/src/game/upgrades/stat_modifiers/dash_speed_1.ts
 
 Reminder: Don't forget to sync the backend!
 Run: ./sync-check.sh to see what needs updating
@@ -555,43 +555,39 @@ Run: ./sync-check.sh to see what needs updating
 ./sync-check.sh
 ```
 
-**Output:** Shows all changed files + generates `sync_reports/sync-report.json`
+**Output:** a value-parity diff against `backend/app/core/data/upgrades.json`:
 ```
-Changed Upgrade Files:
-  • frontend/src/game/data/upgrades/stat_upgrades.json
-
-Upgrade Changes Detected:
-  File: frontend/src/game/data/upgrades/stat_upgrades.json
-  - "value": 0.40,
-  + "value": 0.15,
-
-Summary: Changed: 1 upgrade file(s), 0 enemy file(s), 0 difficulty file(s)
+Found 1 mismatch(es) between frontend defs and backend upgrades.json:
+  - dash_speed_1.value: frontend=0.15 backend=0.4
 
 Next steps:
-  1. Review changes above and in sync-report.json
-  2. Update backend files accordingly
-  3. Run: ./sync-check.sh --mark to update sync marker
+  1. If the frontend defs are correct, regenerate the backend copy:
+       python3 scripts/upgrade_defs_sync.py --write
+  2. If a mismatch is unintentional, fix the source (usually the frontend def)
+     and re-run this script.
 ```
 
-#### 3. Review the Report
-- **Terminal output** shows the diff
-- **`sync-report.json`** has structured data for programmatic access
+#### 3. Regenerate the Backend Copy
+```bash
+python3 scripts/upgrade_defs_sync.py --write
+```
+Overwrites `backend/app/core/data/upgrades.json` from the frontend defs — no manual field-by-field editing for upgrade data. (Rarity weights, enemy stats, and wave scaling live in separate files and are still synced by hand — see the sections above.)
 
-#### 4. Manually Sync Backend
-Edit `backend/app/core/upgrade_data.py` or `backend/app/core/enemy_data.py` with the changes shown in the report.
-
-#### 5. Mark as Synced
+#### 4. Mark as Synced
 ```bash
 ./sync-check.sh --mark
 ```
 
-This updates the `.sync-marker` file to the current commit. Now the next `sync-check.sh` run will only show *new* changes since this sync.
+This updates the `.sync-marker` file to the current commit.
 
 ### Script Reference
 
 ```bash
-# Check what needs syncing (generates sync-report.json)
+# Value-parity check against backend/app/core/data/upgrades.json
 ./sync-check.sh
+
+# Regenerate backend/app/core/data/upgrades.json from the frontend defs
+python3 scripts/upgrade_defs_sync.py --write
 
 # Update marker after syncing backend
 ./sync-check.sh --mark
@@ -599,7 +595,6 @@ This updates the `.sync-marker` file to the current commit. Now the next `sync-c
 
 **Files created:**
 - `.sync-marker` — Tracks the commit hash of the last backend sync
-- `sync_reports/sync-report.json` — JSON report of what changed since last sync (auto-overwritten on each run)
 
 **Pre-commit hook:** `.git/hooks/pre-commit`
 - Runs before every commit
@@ -612,7 +607,7 @@ This updates the `.sync-marker` file to the current commit. Now the next `sync-c
 
 If data is out of sync, check:
 
-1. **Frontend:** `frontend/src/game/data/upgrades/*.json` and `frontend/src/game/entities/enemies/*.ts`
+1. **Frontend:** `frontend/src/game/upgrades/**/*.ts` (`UpgradeDef` exports) and `frontend/src/game/entities/enemies/*.ts`
 2. **Backend:** `backend/app/core/upgrade_data.py` and `backend/app/core/enemy_data.py`
 3. **Logs:** Check backend validation logs (`flagged_waves` collection) for hint about which field is mismatched
 4. **Git history:** `git log -- <file>` to find when it was last changed

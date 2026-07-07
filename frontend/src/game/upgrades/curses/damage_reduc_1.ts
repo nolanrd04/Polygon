@@ -3,7 +3,7 @@ import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID } from '../../d
 
 export const DamageReduc1Def: UpgradeDef = {
   id: "damage_reduc_1",
-  name: "Weaknes 1",
+  name: "Weakness 1",
   description: "-0.1% damage.",
   rarity: RarityID.Common,
   upgradeType: UpgradeTypeID.StatModifier,

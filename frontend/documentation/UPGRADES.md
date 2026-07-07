@@ -145,9 +145,9 @@ export class Frenzy extends Upgrade {
 }
 ```
 
-**Def checklist**: unique snake_case `id`; class name is the PascalCase of it; `rarity`/`upgradeType` from the `ID.ts` enums; keep the def JSON-serializable (it is the future source for generating the backend's `upgrades.json`).
+**Def checklist**: unique snake_case `id`; class name is the PascalCase of it; `rarity`/`upgradeType` from the `ID.ts` enums; keep the def JSON-serializable (it is code-generated into the backend's `upgrades.json`).
 
-**Backend note**: the live backend still reads `backend/app/core/data/upgrades.json`; keep it in step for online play (`sync-check.sh` checks filename parity). The Python classes under `backend/app/core/upgrades/` are unwired dead code — don't maintain them by hand; they'll be regenerated from frontend defs during the backend port.
+**Backend note**: the live backend reads `backend/app/core/data/upgrades.json`, which is **generated from these defs** — never hand-edit it. After adding/changing a def, run `python3 scripts/upgrade_defs_sync.py --write` to regenerate it, or `./sync-check.sh` to just check for drift (value-parity against every field, not just filenames).
 
 ## Bundle Pickup Flow
 
