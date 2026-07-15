@@ -16,8 +16,7 @@ export const HomingDistance1Def: UpgradeDef = {
   specificAttackType: "bullet",
   stackable: true,
   maxStacks: 6,
-  dependentOn: ["homing_bullets"],
-  dependencyCount: 1,
+  dependentOn: [{ ids: ["homing_bullets"] }],
 }
 
 export class HomingDistance1 extends Upgrade {

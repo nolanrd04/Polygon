@@ -120,12 +120,19 @@ class UpgradeSystemClass {
   private canMeetDependencies(def: UpgradeDef): boolean {
     if (!def.dependentOn || def.dependentOn.length === 0) return true
 
-    const required = def.dependencyCount || 1
-    let met = 0
-    for (const dependentId of def.dependentOn) {
-      if (this.hasUpgrade(dependentId)) met++
+    for (const group of def.dependentOn) {
+      const required = group.count || 1
+      let met = 0
+      for (const item of group.ids) {
+        if (typeof item === 'string') {
+          if (this.hasUpgrade(item)) met++
+        } else if (this.getStackCount(item.id) >= item.minStacks) {
+          met++
+        }
+      }
+      if (met < required) return false
     }
-    return met >= required
+    return true
   }
 
   /**

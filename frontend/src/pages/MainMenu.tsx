@@ -200,7 +200,7 @@ export default function MainMenu() {
       </div>
 
       <div className="absolute bottom-8 text-gray-600 text-sm">
-        v0.1.5 - Early Development
+        v0.1.6 - Early Development
       </div>
 
       {showLoadModal && (

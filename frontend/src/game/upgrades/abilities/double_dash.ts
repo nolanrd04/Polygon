@@ -10,8 +10,7 @@ export const DoubleDashDef: UpgradeDef = {
   cost: 20,
   effect: "double_dash",
   stackable: false,
-  dependentOn: ["dash_ability"],
-  dependencyCount: 1,
+  dependentOn: [{ ids: ["dash_ability"] }],
 }
 
 export class DoubleDash extends Upgrade {

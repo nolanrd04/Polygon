@@ -91,6 +91,11 @@ export abstract class Projectile {
    *  Default 500ms balances DPS while preventing instant re-hits. */
   hitEnemyCooldown: number = 500
 
+  /** Minimum time between shots, in milliseconds. Read by Player.shoot() to gate fire rate
+   *  for whichever class is currently equipped/selected as a variant. Irrelevant for
+   *  projectiles spawned outside that path (e.g. BulletExplosion). */
+  cooldown: number = 200
+
   /** Whether this projectile can cut through terrain/obstacles.
    *  When true, hitting terrain counts as a pierce hit but doesn't destroy the projectile.
    *  When false (default), the projectile ignores terrain collision. */
@@ -202,6 +207,23 @@ export abstract class Projectile {
    * ```
    */
   abstract SetDefaults(): void
+
+  /**
+   * Called once, right after the projectile has been spawned into the world
+   * (position, velocity, owner/ownerId, container/body all set up).
+   * Use this to spawn additional projectiles from this one (e.g. a buckshot
+   * "spawner" that fires several pellets), since owner/ownerId aren't
+   * available yet inside SetDefaults().
+   *
+   * Example:
+   * ```
+   * OnSpawn() {
+   *   const scene = this.scene as Phaser.Scene & { spawnProjectile: Function }
+   *   scene.spawnProjectile(new Pellet(), this.positionX, this.positionY, targetX, targetY, this.owner, this.ownerId)
+   * }
+   * ```
+   */
+  OnSpawn(): void {}
 
   /**
    * TMODLOADER-STYLE RENDERING HOOKS
@@ -383,6 +405,9 @@ export abstract class Projectile {
 
     this.body.setVelocity(this.velocityX, this.velocityY)
     this.container.rotation = angle
+
+    // Let the projectile react to being fully spawned (e.g. spawn child pellets)
+    this.OnSpawn()
 
     // Initial render
     this._renderFrame()

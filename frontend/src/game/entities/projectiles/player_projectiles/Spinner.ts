@@ -25,6 +25,7 @@ export class Spinner extends Projectile {
     this.pierce = 999 // Hits all enemies in radius
     this.color = COLORS.player
     this.timeLeft = this.spinDuration
+    this.cooldown = 1000
   }
 
   AI(): void {

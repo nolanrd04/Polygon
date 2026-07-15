@@ -14,8 +14,7 @@ export const DashSpeed2Def: UpgradeDef = {
   isMultiplier: true,
   stackable: true,
   maxStacks: 2,
-  dependentOn: ["dash_ability"],
-  dependencyCount: 1,
+  dependentOn: [{ ids: ["dash_ability"] }],
 }
 
 export class DashSpeed2 extends Upgrade {}

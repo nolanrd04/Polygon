@@ -20,6 +20,7 @@ export class Flame extends Projectile {
     this.pierce = 999 // Hits all enemies in cone
     this.color = COLORS.flamer
     this.timeLeft = 50 // Very short, refreshed each frame while firing
+    this.cooldown = 50 // Very fast for continuous effect
   }
 
 

@@ -10,6 +10,16 @@ interface UpdateNote {
 // Add new updates at the top of this array
 const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: 'v0.1.6',
+    date: '2026-07-15',
+    title: 'Added Buckshot Bullets upgrade',
+    changes: [
+      'Added a new bullet variant that acts like a shotgun.',
+      'Also added three new upgrades that modify how it performs.',
+      'Refactored how upgrade dependencies work to allow for more complex upgrade trees.'
+    ]
+  },
+  {
     version: 'v0.1.5',
     date: '2026-07-02',
     title: 'Enemy changes',

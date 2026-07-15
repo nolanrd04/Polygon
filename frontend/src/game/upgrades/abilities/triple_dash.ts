@@ -10,8 +10,7 @@ export const TripleDashDef: UpgradeDef = {
   cost: 40,
   effect: "triple_dash",
   stackable: false,
-  dependentOn: ["double_dash"],
-  dependencyCount: 1,
+  dependentOn: [{ ids: ["double_dash"] }],
 }
 
 export class TripleDash extends Upgrade {

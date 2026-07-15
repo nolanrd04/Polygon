@@ -15,8 +15,7 @@ export const ExplosionDamagePercent1Def: UpgradeDef = {
   specificAttackType: "bullet",
   stackable: true,
   maxStacks: 5,
-  dependentOn: ["explosive_bullets", "explosion_on_kill"],
-  dependencyCount: 1,
+  dependentOn: [{ ids: ["explosive_bullets", "explosion_on_kill"] }],
 }
 
 export class ExplosionDamagePercent1 extends Upgrade {

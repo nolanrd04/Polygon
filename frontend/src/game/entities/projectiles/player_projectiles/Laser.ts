@@ -20,6 +20,7 @@ export class Laser extends Projectile {
     this.pierce = 999 // Pierces everything
     this.color = COLORS.laser
     this.timeLeft = 100 // Visual duration only
+    this.cooldown = 300
   }
 
 

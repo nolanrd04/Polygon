@@ -7,7 +7,7 @@
 - [ ] Make upgrade rarity chances dynamic. For exampke it starts only being able to get common, uncommon, and rare, but the chances change depending on wave level.
 
 ## Enemies
-- [ ] Super pentagon — sprints toward player, explodes, leaves behind a fire pool
+- [ DONE ] Super pentagon — sprints toward player, explodes, leaves behind a fire pool
 - [ ] Super hexagon — still shielded, sprays magic in direction of player, explodes on death
 - [ ] Octogon - Stars 95% opac. Moves towards the player and through walls. Stays 95% opac until within a certain distance, then it will become less opac. Within 15 units it will be 0% opac.
 - [ ] Hexagon: add visual indication for shield health

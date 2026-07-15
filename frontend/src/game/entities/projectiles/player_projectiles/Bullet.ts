@@ -1,6 +1,7 @@
 import { Projectile } from '../Projectile'
 import { COLORS } from '../../../core/GameConfig'
-import { UpgradeSystem } from '../../../systems/upgrades'
+import { UpgradeSystem, UpgradeModifierSystem } from '../../../systems/upgrades'
+import { UpgradeTargetID, UpgradeStatID } from '../../../data/ID'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
 import { getDefaultVolume } from '../../../core/AudioRegistry'
 
@@ -19,6 +20,7 @@ export class Bullet extends Projectile {
     this.timeLeft = 3000 // milliseconds
     this.knockback = 7 // Push enemies back on hit
     this.spawnSound = 'bullet_shot'
+    this.cooldown = 300
   }
 
   OnObstacleCollide(_obstacle?: Phaser.GameObjects.GameObject): void 
@@ -48,6 +50,7 @@ export class HeavyBullet extends Projectile {
     this.pierce = 2
     this.color = 0xff6600
     this.spawnSound = 'bullet_shot'
+    this.cooldown = 300
   }
 
 }
@@ -81,6 +84,7 @@ export class HomingBullet extends Projectile {
     this.timeLeft = 3000 // Despawn after 3 seconds
     this.knockback = 1 // Push enemies back on hit
     this.spawnSound = 'bullet_shot'
+    this.cooldown = 300
   }
 
   PreDraw(): boolean {
@@ -197,6 +201,7 @@ export class ExplosiveBullet extends Projectile {
     this.knockback = 75
     this.spawnSound = 'bullet_shot'
     this.hitEnemyCooldown = 250
+    this.cooldown = 300
   }
 
   private spawnExplosion(): void {
@@ -268,5 +273,72 @@ export class BulletExplosion extends Projectile {
 
   OnHitNPC(_enemy: any): boolean {
     return true
+  }
+}
+
+export class BuckshotBullet extends Projectile 
+{
+  // acts as a spawn point for the other buckshot bullets, but doesn't hit enemies itself
+  minPellets = 3
+  maxPellets = 5
+  chokeAngle = 40
+  SetDefaults(): void {
+    this.damage = 3
+    this.speed = 0
+    this.size = 1
+    this.pierce = 1
+    this.color = COLORS.bullet
+    this.knockback = 0
+    this.spawnSound = 'bullet_shot'
+    this.timeLeft = 1
+    this.cooldown = 300
+
+    this._canHitEnemy = () => false // Prevents buckshot bullets from hitting enemies directly
+  }
+
+  OnSpawn(): void {
+    const scene = this.scene as Phaser.Scene & { spawnProjectile: Function }
+    const numPellets = Phaser.Math.Between(this.minPellets, this.maxPellets)
+
+    for (let i = 0; i < numPellets; i++) {
+      const angleOffset = Phaser.Math.Between(-this.chokeAngle / 2, this.chokeAngle / 2)
+      const radianOffset = this.rotation + Phaser.Math.DegToRad(angleOffset) // this.rotation = the direction this bullet was actually fired in
+      const targetX = this.positionX + Math.cos(radianOffset) * 1000 // Arbitrary long distance
+      const targetY = this.positionY + Math.sin(radianOffset) * 1000
+
+      const pellet = new BuckshotPellet()
+      pellet.SetDefaults()
+      pellet.damage = this.damage // Inherit damage from the main buckshot bullet
+
+      // Pellets are spawned directly here instead of through Player.NewProjectile(), so they
+      // never go through Player.applyUpgradeModifiers() — apply the same non-damage stats by hand
+      // (damage is intentionally excluded; CollisionManager applies it once per hit instead).
+      for (const stat of [UpgradeStatID.Speed, UpgradeStatID.Size, UpgradeStatID.Pierce, UpgradeStatID.TimeLeft] as const) {
+        (pellet as Projectile)[stat] = UpgradeModifierSystem.applyModifiers(UpgradeTargetID.Bullet, stat, (pellet as Projectile)[stat])
+      }
+
+      scene.spawnProjectile(pellet, this.positionX, this.positionY, targetX, targetY, 'player', this.ownerId)
+    }
+  }
+
+  draw(): void {
+    // No visual representation for the central buckshot bullet
+  }
+}
+
+export class BuckshotPellet extends Projectile
+{
+  SetDefaults(): void {
+    this.damage = 3
+    this.speed = 400
+    this.size = 3
+    this.pierce = 1
+    this.color = COLORS.bullet
+    this.knockback = 5
+    this.timeLeft = 2000
+  }
+
+  OnSpawn(): void {
+    this.timeLeft = Phaser.Math.Between(250, 1000)
   }
 }

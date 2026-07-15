@@ -2,7 +2,7 @@ import Phaser from 'phaser'
 import { GameManager } from '../core/GameManager'
 import { COLORS, WORLD_WIDTH, WORLD_HEIGHT } from '../core/GameConfig'
 import { Projectile } from './projectiles/Projectile'
-import { Bullet, HeavyBullet, HomingBullet, ExplosiveBullet } from './projectiles/player_projectiles/Bullet'
+import { Bullet, HeavyBullet, HomingBullet, ExplosiveBullet, BuckshotBullet } from './projectiles/player_projectiles/Bullet'
 import { Laser } from './projectiles/player_projectiles/Laser'
 import { Zapper } from './projectiles/player_projectiles/Zapper'
 import { Flame } from './projectiles/player_projectiles/Flame'
@@ -273,21 +273,6 @@ export class Player extends Phaser.GameObjects.Container {
   // ============================================================
 
   /**
-   * Get the cooldown time between shots for the current attack type.
-   * @returns Cooldown in milliseconds
-   */
-  private getCooldown(): number {
-    switch (this.attackType) {
-      case 'bullet': return 300
-      case 'laser': return 300
-      case 'zapper': return 400
-      case 'flamer': return 50 // Very fast for continuous effect
-      case 'spinner': return 1000
-      default: return 200
-    }
-  }
-
-  /**
    * Attempt to shoot a projectile towards a target.
    * Respects cooldown - won't fire if cooldown hasn't elapsed.
    * @param targetX X position to shoot towards
@@ -295,7 +280,13 @@ export class Player extends Phaser.GameObjects.Container {
    */
   shoot(_targetX: number, _targetY: number): void {
     const now = this.scene.time.now
-    if (now - this.lastFireTime < this.getCooldown()) return
+
+    // Cooldown lives on the projectile class itself (set in SetDefaults()), not on Player,
+    // so each variant (e.g. a bullet variant) can define its own fire rate.
+    const ProjectileClass = this.getActiveProjectileClass()
+    const cooldownProbe = new ProjectileClass()
+    cooldownProbe.SetDefaults()
+    if (now - this.lastFireTime < cooldownProbe.cooldown) return
 
     this.lastFireTime = now
     this.firedSoundThisShot = false
@@ -336,22 +327,7 @@ export class Player extends Phaser.GameObjects.Container {
    * Spawn a single projectile with upgrade modifiers applied.
    */
   private spawnProjectile(startX: number, startY: number, targetX: number, targetY: number): void {
-    // Determine projectile class based on attack type and active variant
-    let ProjectileClass: new () => Projectile
-
     switch (this.attackType) {
-      case 'bullet':
-        ProjectileClass = this.getBulletVariantClass()
-        break
-
-      case 'laser':
-        ProjectileClass = Laser
-        break
-
-      case 'zapper':
-        ProjectileClass = Zapper
-        break
-
       case 'flamer':
         // Flamer is continuous - reuse existing or create new
         if (this.activeFlame && !this.activeFlame.isDestroyed) {
@@ -359,9 +335,10 @@ export class Player extends Phaser.GameObjects.Container {
           this.activeFlame.getContainer().y = startY
           return
         }
-        ProjectileClass = Flame
-        const flameProjectile = this.NewProjectile(ProjectileClass, startX, startY, targetX, targetY)
-        this.activeFlame = flameProjectile as Flame
+        {
+          const flameProjectile = this.NewProjectile(Flame, startX, startY, targetX, targetY)
+          this.activeFlame = flameProjectile as Flame
+        }
         return
 
       case 'spinner':
@@ -369,17 +346,32 @@ export class Player extends Phaser.GameObjects.Container {
         if (this.activeSpinner && !this.activeSpinner.isDestroyed) {
           return
         }
-        ProjectileClass = Spinner
-        const spinnerProjectile = this.NewProjectile(ProjectileClass, startX, startY, targetX, targetY)
-        ;(spinnerProjectile as Spinner).pierce = this.sides
-        this.activeSpinner = spinnerProjectile as Spinner
+        {
+          const spinnerProjectile = this.NewProjectile(Spinner, startX, startY, targetX, targetY)
+          ;(spinnerProjectile as Spinner).pierce = this.sides
+          this.activeSpinner = spinnerProjectile as Spinner
+        }
         return
 
       default:
-        ProjectileClass = Bullet
+        this.NewProjectile(this.getActiveProjectileClass(), startX, startY, targetX, targetY)
     }
+  }
 
-    this.NewProjectile(ProjectileClass, startX, startY, targetX, targetY)
+  /**
+   * Resolve the projectile class for the player's current attack type (and active variant,
+   * for attack types like 'bullet' that support them). Used both to spawn projectiles and,
+   * in shoot(), to read the class's own fire-rate cooldown.
+   */
+  private getActiveProjectileClass(): new () => Projectile {
+    switch (this.attackType) {
+      case 'bullet': return this.getBulletVariantClass()
+      case 'laser': return Laser
+      case 'zapper': return Zapper
+      case 'flamer': return Flame
+      case 'spinner': return Spinner
+      default: return Bullet
+    }
   }
 
   /**
@@ -438,6 +430,8 @@ export class Player extends Phaser.GameObjects.Container {
         return ExplosiveBullet
       case 'HeavyBullet':
         return HeavyBullet
+      case 'BuckshotBullet':
+        return BuckshotBullet
       default:
         return Bullet
     }

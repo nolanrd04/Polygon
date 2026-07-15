@@ -15,6 +15,11 @@ import type { Player } from '../entities/Player'
  * Browse/offer/UI code consumes defs only. Behavior lives on the Upgrade
  * class (the other half), which the engine instantiates per purchase.
  */
+export interface DependencyGroup {
+  ids: (string | { id: string; minStacks: number })[]
+  count?: number // how many ids in this group must be satisfied (default: 1)
+}
+
 export interface UpgradeDef {
   id: string
   name: string
@@ -48,9 +53,10 @@ export interface UpgradeDef {
   tier?: number
   upgradesTo?: string // ID of next tier upgrade
 
-  // Dependencies
-  dependentOn?: string[] // IDs of upgrades that must be owned
-  dependencyCount?: number // How many of the dependent upgrades must be owned (default: 1)
+  // Dependencies — every group must be satisfied (AND across groups); within
+  // a group, `count` of `ids` must be owned (OR/threshold, default 1). An id
+  // may require a minimum stack count instead of plain ownership.
+  dependentOn?: DependencyGroup[]
   incompatibleWith?: string[] // IDs of upgrades that cannot be owned if this upgrade is active
 
   // Curse

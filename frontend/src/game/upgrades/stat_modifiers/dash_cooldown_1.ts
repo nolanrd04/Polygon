@@ -14,8 +14,7 @@ export const DashCooldown1Def: UpgradeDef = {
   isMultiplier: true,
   stackable: true,
   maxStacks: 5,
-  dependentOn: ["dash_ability"],
-  dependencyCount: 1,
+  dependentOn: [{ ids: ["dash_ability"] }],
 }
 
 export class DashCooldown1 extends Upgrade {}

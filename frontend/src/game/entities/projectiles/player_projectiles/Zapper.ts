@@ -26,6 +26,7 @@ export class Zapper extends Projectile {
     this.color = COLORS.zapper
     this.timeLeft = 200 // Visual duration
     this.usesCustomRendering = true // Enable Graphics API for chain lightning
+    this.cooldown = 400
   }
 
 

@@ -83,15 +83,22 @@ def can_apply_upgrade(
         if current_stacks >= upgrade["maxStacks"]:
             return False
 
-    # Check dependencies
+    # Check dependencies — every group must be satisfied (AND across groups);
+    # within a group, `count` of `ids` must be owned (OR/threshold, default 1).
+    # An id may be a {"id", "minStacks"} object requiring a stack count instead
+    # of plain ownership.
     if upgrade.get("dependentOn"):
-        required = upgrade.get("dependencyCount", 1)
-        dependency_count = sum(
-            1 for dep_id in upgrade["dependentOn"]
-            if dep_id in current_upgrades
-        )
-        if dependency_count < required:
-            return False
+        for group in upgrade["dependentOn"]:
+            required = group.get("count", 1)
+            met = 0
+            for item in group["ids"]:
+                if isinstance(item, dict):
+                    if current_upgrades.count(item["id"]) >= item["minStacks"]:
+                        met += 1
+                elif item in current_upgrades:
+                    met += 1
+            if met < required:
+                return False
 
     # Check for conflicts (replaces)
     if upgrade.get("replaces"):

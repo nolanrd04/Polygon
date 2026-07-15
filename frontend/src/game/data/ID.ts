@@ -52,6 +52,15 @@ export const enum UpgradeStatID {
   TrackingDistance             = 'trackingDistance',
   MinimumDamageMultiplier      = 'minimumDamageMultiplier',
   MaximumSpawnDamageMultiplier = 'maximumSpawnDamageMultiplier',
+  ChokeAngle                   = 'chokeAngle',
+  MinimumPellets               = 'minPellets',
+  MaximumPellets               = 'maxPellets',
+}
+
+export const enum UpgradeVariantID {
+  HomingBullets    = 'homing_bullets',
+  ExplosiveBullets = 'explosive_bullets',
+  BuckshotBullets  = 'buckshot_bullets',
 }
 
 export const enum AttackTypeID

@@ -16,8 +16,7 @@ export const MinimumHomingDamageMultiplier2Def: UpgradeDef = {
   specificAttackType: "bullet",
   stackable: true,
   maxStacks: 2,
-  dependentOn: ["homing_bullets"],
-  dependencyCount: 1,
+  dependentOn: [{ ids: ["homing_bullets"] }],
 }
 
 export class MinimumHomingDamageMultiplier2 extends Upgrade {
