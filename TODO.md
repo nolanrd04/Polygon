@@ -29,9 +29,8 @@
 - [ ] Similar to upgrades but give a negative effect
 
 ## Upgrades/Bundles
-- [ ] Make enemies drop upgrade bundles
-- [ ] Upgrade bundles give random upgrades of the rarity with a chance to give a curse
-- [ ] New upgrade to remove a curse
+- [x] Make enemies drop upgrade bundles
+- [x] Upgrade bundles give random upgrades of the rarity with a chance to give a curse
 
 ## Visuals
 - [ ] Implement 'dusts' (see terraria)
@@ -41,7 +40,7 @@
 ## Bullet upgrades (future)
 - [ ] Maybe make homing bullets do 50% less damage each time it pierces an enemy?
 - [ ] Napalm (exploding bullets)
-- [ ] Burst variant - bullets come out in a burst with a longer cooldown. upgrades to decrease the burst interval and decrease burst cooldown.
+- [x] Buckshot bullet variante.
 
 ## MOBILE
 - [ ] Remove Fullscreen button

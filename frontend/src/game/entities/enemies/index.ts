@@ -19,12 +19,13 @@ import { Hexagon } from './Hexagon'
 import { SuperTriangle } from './SuperTriangle'
 import { Octogon } from './Octogon'
 import { SuperSquare } from './SuperSquare'
+import { SuperPentagon } from './SuperPentagon'
+import { SuperHexagon } from './SuperHexegon'
 
 // bosses
 import { Dodecahedron } from './Dodecahedron'
 // import { Exploder } from './Exploder'
 import type { Enemy } from './Enemy'
-import { SuperPentagon } from './SuperPentagon'
 
 export type EnemyType = {
   id: string
@@ -47,6 +48,7 @@ export const ENEMY_TYPES: EnemyType[] = [
   { id: 'dodecahedron', class: Dodecahedron },
   { id: 'super_square', class: SuperSquare },
   { id: 'super_pentagon', class: SuperPentagon },
+  { id: 'super_hexagon', class: SuperHexagon },
   // { id: 'exploder', class: Exploder },
 ]
 

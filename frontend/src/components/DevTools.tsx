@@ -39,6 +39,7 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
     { id: 'super_triangle', name: 'Super Triangle', description: 'Ranged attacker' },
     { id: 'super_square', name: 'Super Square', description: 'Enhanced square that shoots an acid projectile' },
     { id: 'super_pentagon', name: 'Super Pentagon', description: 'Enemy that teleports and detonates on death' },
+    { id: 'super_hexagon', name: 'Super Hexagon', description: 'Enemy with shield that shoots acid projectiles' },
     { id: 'dodecahedron', name: 'Dodecahedron', description: 'Boss enemy with high health' }
   ]
 

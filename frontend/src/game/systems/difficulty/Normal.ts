@@ -7,7 +7,8 @@ const ENEMY_COUNTS: Record<number, number> = {
   1: 30, 2: 35, 3: 30, 4: 40, 5: 40,
   6: 60, 7: 45, 8: 50, 9: 60, 10: 60,
   11: 70, 12: 80, 13: 100, 14: 100, 15: 85,
-  16: 90, 17: 80, 18: 100, 19: 100,
+  16: 90, 17: 80, 18: 100, 19: 100, 20: 80,
+  21: 110, 22: 115, 23: 120,
 }
 
 /**
@@ -18,7 +19,7 @@ const SPAWN_WEIGHTS: Record<number, EnemySpawnWeight[]> = {
   1: [{ type: 'triangle', weight: 100 }],
   2: [{ type: 'triangle', weight: 100 }],
   3: [{ type: 'triangle', weight: 70 }, { type: 'square', weight: 30 }],
-  4: [{ type: 'triangle', weight: 70 }, { type: 'square', weight: 30 }],
+  4: [{ type: 'triangle', weight: 60 }, { type: 'square', weight: 40 }],
   5: [{ type: 'triangle', weight: 60 }, { type: 'square', weight: 30 }, { type: 'super_triangle', weight: 10 }],
   6: [{ type: 'triangle', weight: 60 }, { type: 'square', weight: 30 }, { type: 'super_triangle', weight: 10 }],
   7: [{ type: 'triangle', weight: 40 }, { type: 'square', weight: 25 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }],
@@ -37,20 +38,22 @@ const SPAWN_WEIGHTS: Record<number, EnemySpawnWeight[]> = {
   20: [{ type: 'square', weight: 20 }, { type: 'super_triangle', weight: 10 }, { type: 'pentagon', weight: 5 }, { type: 'diamond', weight: 15 }, { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 15 }, { type: 'super_square', weight: 25 }],
   21: [{ type: 'pentagon', weight: 10 }, { type: 'super_triangle', weight: 10 }, { type: 'diamond', weight: 25 }, { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 10 }, { type: 'super_square', weight: 10 }, { type: 'super_pentagon', weight: 25 }],
   22: [{ type: 'pentagon', weight: 5 }, { type: 'super_triangle', weight: 10 }, { type: 'diamond', weight: 35 }, { type: 'octogon', weight: 5 }, { type: 'super_square', weight: 10 }, { type: 'super_pentagon', weight: 35 }],
-
-
+  23: [{ type: 'pentagon', weight: 5 }, { type: 'super_triangle', weight: 10 }, { type: 'diamond', weight: 30 }, { type: 'octogon', weight: 10 }, { type: 'super_square', weight: 10 }, { type: 'super_pentagon', weight: 35 }],
+  24: [{ type: 'super_triangle', weight: 15 }, { type: 'diamond', weight: 20 }, { type: 'octogon', weight: 10 }, { type: 'super_square', weight: 15 }, { type: 'super_pentagon', weight: 25 }, { type: 'super_hexagon', weight: 15 }],
+  25: [{ type: 'super_triangle', weight: 10 }, { type: 'diamond', weight: 20 }, { type: 'octogon', weight: 15 }, { type: 'super_square', weight: 15 }, { type: 'super_pentagon', weight: 20 }, { type: 'super_hexagon', weight: 20 }],
+  26: [{ type: 'diamond', weight: 20 }, { type: 'octogon', weight: 20 }, { type: 'super_square', weight: 20 }, { type: 'super_pentagon', weight: 20 }, { type: 'super_hexagon', weight: 20 }],
 }
 
 const FALLBACK_WEIGHTS: EnemySpawnWeight[] = [
-  { type: 'triangle', weight: 5 },
   { type: 'square', weight: 5 },
-  { type: 'super_triangle', weight: 15 },
+  { type: 'super_triangle', weight: 10 },
   { type: 'pentagon', weight: 10 },
   { type: 'hexagon', weight: 10 },
   { type: 'diamond', weight: 20 },
   { type: 'octogon', weight: 15 },
   { type: 'super_square', weight: 10 },
   { type: 'super_pentagon', weight: 10 },
+  { type: 'super_hexagon', weight: 10 }
 ]
 
 /**
@@ -125,10 +128,20 @@ const BUNDLE_RARITY_WEIGHTS_BY_WAVE: Record<number, RarityWeights> = {
   18: { common: 0.37, uncommon: 0.36, rare: 0.19, epic: 0.06, legendary: 0.02 },
   19: { common: 0.36, uncommon: 0.36, rare: 0.19, epic: 0.07, legendary: 0.02 },
   20: { common: 0.35, uncommon: 0.36, rare: 0.20, epic: 0.07, legendary: 0.02 },
+  21: { common: 0.34, uncommon: 0.37, rare: 0.20, epic: 0.07, legendary: 0.02 },
+  22: { common: 0.33, uncommon: 0.37, rare: 0.21, epic: 0.07, legendary: 0.02 },
+  23: { common: 0.32, uncommon: 0.37, rare: 0.21, epic: 0.08, legendary: 0.02 },
+  24: { common: 0.31, uncommon: 0.37, rare: 0.22, epic: 0.08, legendary: 0.02 },
+  25: { common: 0.30, uncommon: 0.37, rare: 0.22, epic: 0.09, legendary: 0.02 },
+  26: { common: 0.29, uncommon: 0.37, rare: 0.22, epic: 0.09, legendary: 0.03 },
+  27: { common: 0.28, uncommon: 0.37, rare: 0.23, epic: 0.09, legendary: 0.03 },
+  28: { common: 0.27, uncommon: 0.37, rare: 0.23, epic: 0.10, legendary: 0.03 },
+  29: { common: 0.26, uncommon: 0.37, rare: 0.24, epic: 0.10, legendary: 0.03 },
+  30: { common: 0.25, uncommon: 0.37, rare: 0.24, epic: 0.11, legendary: 0.03 },
 }
 
 const FALLBACK_BUNDLE_RARITY_WEIGHTS: RarityWeights = {
-  common: 0.33, uncommon: 0.36, rare: 0.20, epic: 0.08, legendary: 0.03,
+  common: 0.25, uncommon: 0.37, rare: 0.24, epic: 0.11, legendary: 0.03,
 }
 
 /**
@@ -158,8 +171,18 @@ export const NormalDifficulty: Difficulty = {
 
   getSpawnDelay(wave: number): number {
     // Earlier waves use gentler scaling so the very first waves don't feel frantic.
-    if (wave < 3) return Math.max(50, 1000 - wave * 25)
-    if (wave < 5) return Math.max(50, 1000 - wave * 35)
+    if (wave < 30) 
+    {
+      return Math.max(50, 1000 - wave * 25)
+    }
+    else if (wave < 40)
+    {
+      return Math.max(50, 1000 - wave * 35)
+    }
+    else if (wave < 50)
+    {
+      return Math.max(50, 1000 - wave * 45)
+    }
     return Math.max(50, 1000 - wave * 50)
   },
 
@@ -172,11 +195,13 @@ export const NormalDifficulty: Difficulty = {
   },
 
   getBundleDropChance(wave: number): number {
-    if (wave <= 4)  return 0.5
-    if (wave <= 9)  return 0.07
-    if (wave <= 14) return 0.09
-    if (wave <= 19) return 0.10
-    return 0.12
+    if (wave <= 4)  return 0.12
+    if (wave <= 9)  return 0.1
+    if (wave <= 14) return 0.07
+    if (wave <= 19) return 0.05
+    if (wave <= 24) return 0.04
+    if (wave <= 29) return 0.03
+    return 0.03
   },
 
   getBundleRarityWeights(wave: number): RarityWeights {
