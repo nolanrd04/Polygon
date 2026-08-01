@@ -1,80 +1,56 @@
-# Curses System
+# Curses
 
-Curses are negative effects applied to the player that reduce character stats or capabilities. Unlike upgrades which improve the player, curses apply debuffs as penalties or rewards from certain game events (like boss drops or mid-wave loot bundles).
+Curses are debuffs the player can pick up mid-run — never bought, only rolled. They are not a separate system: a curse is an ordinary `Upgrade` (see [UPGRADES.md](./UPGRADES.md) for the full def/instance/hook architecture) whose def sets `curse: true`. Everything else — the ledger, `onApply`, hooks, stacking, replay — works identically to a regular upgrade.
 
-## Overview
+## Where they live
 
-- **Source**: Defined in `src/game/data/upgrades/curses.json`
-- **Implementation**: Curses are upgrades with `curse: true` property
-- **Application**: Applied through the same upgrade system as regular upgrades
-- **Effects**: Typically use negative stat modifiers (negative `value` with `isMultiplier: true`)
-- **Stackable**: Most curses can be stacked multiple times unless `stackable: false`
+- **Files**: `frontend/src/game/upgrades/curses/` — one file per curse, same registry auto-discovery as every other category
+- **Marker**: `UpgradeDef.curse?: boolean` (`frontend/src/game/upgrades/Upgrade.ts`) — the only thing that distinguishes a curse from a regular upgrade
+- **Legacy**: the old JSON-based curse system (`curses.json`, a `curse: true` property on a plain JSON row) is gone. What remains lives under `frontend/src/game/data/upgrades/legacy/curses.json` for historical reference only and is not read by any code path
 
-## Curse Structure
+## How the `curse` flag is used
 
-```json
-{
-  "id": "curse_identifier",
-  "name": "Curse Name",
-  "description": "Effect description",
-  "rarity": "common",
-  "attackType": "bullet",
-  "type": "stat_modifier",
-  "target": "attack",
-  "stat": "damage",
-  "value": -0.2,
-  "isMultiplier": true,
-  "stackable": true,
-  "curse": true
+- **Bundle rolls** (`MainScene.pickCurse`) — filters `getAllUpgrades()` down to `u.curse === true`, by rarity, then `UpgradeSystem.canApply(u)`. Regular-upgrade rolls (`pickRegularUpgrade`) explicitly exclude curses (`if (u.curse) return false`). See [UPGRADE_BUNDLE.md](./UPGRADE_BUNDLE.md) for the full pickup flow — curses only ever enter play through bundle pickups today (no post-wave curse offers).
+- **`UpgradeModifierSystem.addModifier(target, stat, value, isMultiplier, curse)`** — the `curse` flag is passed through so *additive* curse modifiers get clamped at 0 instead of driving a stat negative. Every current curse is multiplicative, so this guard has no live caller yet.
+- **Pickup text** — `MainScene.showBundlePickupText` renders curse names in red (`def.curse` truthy) instead of the rarity color.
+
+## Current curses (15)
+
+Two implementation shapes, same as any upgrade: plain `stat_modifier` defs (empty class body, applied generically) and `effect` defs that override `modifyPlayerHurt` for behavior a stat channel can't express.
+
+### Stat-modifier curses (empty class body)
+
+| ID | Name | Rarity | Target.Stat | Value | Notes |
+|---|---|---|---|---|---|
+| `damage_reduc_1..5` | Weakness 1–5 | common→legendary | `attack.damage` | ×(−0.1% … −3.75%) | multiplicative, stacks to 99999 |
+| `health_reduc_1..5` | Reduced Health 1–5 | common→legendary | `player.maxHealth` | −5 … −80 flat | additive, stacks to 99999 |
+| `shattered_bullet_1..3` | Shattered Bullet 1–3 | uncommon/rare/epic | `bullet.damage` | −1 / −3 / −5 flat | additive, stacks to 99999 |
+
+### Effect curses (hook override)
+
+| ID | Name | Rarity | Effect | maxStacks |
+|---|---|---|---|---|
+| `fragility_1` | Fragility 1 | rare | +1.25% damage taken | 3 |
+| `fragility_2` | Fragility 2 | epic | +3.5% damage taken | 1 |
+
+```ts
+// curses/fragility_1.ts
+export class Fragility1 extends Upgrade {
+  onApply(): void {} // stat fields are metadata only; behavior is the hook
+
+  modifyPlayerHurt(damage: DamageRef): void {
+    damage.amount *= 1 + this.def.value!
+  }
 }
 ```
 
-### Key Properties
+## Adding a new curse
 
-- **id**: Unique identifier for the curse
-- **curse**: Must be `true` to mark as a curse (filters from regular upgrade rolls)
-- **attackType**: *(Optional)* Restricts curse to specific attack types (e.g., `"bullet"`, `"laser"`)
-  - If omitted, curse can be applied to any attack type
-  - Filtering happens automatically in both backend and frontend
-- **stackable**: Whether curse can be applied multiple times (default: `true`)
-- **value**: Negative number for debuff effect
-  - When `isMultiplier: true`, values are percentages (e.g., `-0.2` = -20%)
-- **rarity**: Curse rarity level (`common`, `uncommon`, `rare`, `epic`, `legendary`)
+Same as [adding any upgrade](./UPGRADES.md#adding-a-new-upgrade), plus `curse: true` on the def:
 
-## Attack Type Restrictions
+1. New file in `frontend/src/game/upgrades/curses/`
+2. Export `<Name>Def: UpgradeDef` with `curse: true`, and `class <Name> extends Upgrade`
+3. Simple stat penalty → leave the class body empty (a negative `value` on a `stat_modifier` def is all that's needed). Behavior-driven curse → override a hook, same as a regular effect upgrade
+4. Regenerate the backend copy: `python3 scripts/upgrade_defs_sync.py --write` (or `./sync-check.sh` to check for drift first)
 
-To restrict a curse to a specific attack type, add the `attackType` field:
-
-```json
-{
-  "id": "bullet_shatter",
-  "name": "Bullet Shatter",
-  "description": "-20% bullet damage",
-  "attackType": "bullet",
-  "type": "stat_modifier",
-  "target": "attack",
-  "stat": "damage",
-  "value": -0.2,
-  "isMultiplier": true,
-  "curse": true
-}
-```
-
-The filtering system will automatically prevent this curse from appearing unless the player has selected the bullet attack type. This applies to all curse sources (bundle drops, future post-wave selections, etc.).
-
-## How Curses Are Applied
-
-1. Curses are picked from bundles or other random events
-2. The upgrade system validates that the curse applies to the current attack type
-3. If valid, the curse is added to `playerStats.upgrades`
-4. The stat modifier is calculated and applied to the player's attack stats
-5. Multiple stackable curses accumulate their effects
-
-## Adding a New Curse
-
-1. Add curse definition to `curses.json`
-2. Include all required properties (`id`, `name`, `description`, `type`, `stat`, `value`, `curse: true`)
-3. If curse should only apply to specific attack types, add `attackType` field
-4. Stats are automatically validated and applied through the existing upgrade system
-
-No code changes needed for basic curse additions—the system handles validation and application automatically.
+No separate curse pool, filter list, or registration step — the `curse: true` flag on the def is the entire mechanism.

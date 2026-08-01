@@ -33,7 +33,7 @@ export class EnemyManager {
   /**
    * Spawn an enemy by type ID.
    */
-  spawnEnemy(typeId: string, x?: number, y?: number): Enemy | null {
+  spawnEnemy(typeId: string, x?: number, y?: number, dropScore: boolean = true, dropBundle: boolean = true): Enemy | null {
     const EnemyClass = EnemyRegistry[typeId]
     if (!EnemyClass) {
       console.warn(`Unknown enemy type: ${typeId}`)
@@ -48,7 +48,20 @@ export class EnemyManager {
     }
 
     const enemy = new EnemyClass()
+    enemy.typeId = typeId
     enemy.SetDefaults()
+
+    if (!dropScore) {
+      enemy.scoreChance = 0
+    }
+
+    if (!dropScore && dropBundle) {
+      enemy.bundleDropChance = enemy.scoreChance
+    }
+
+    if (!dropBundle) {
+      enemy.bundleDropChance = 0
+    }
 
     // Apply wave scaling from difficulty
     enemy.health *= this.difficulty.getHealthMultiplier(this.currentWave)

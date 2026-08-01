@@ -111,13 +111,42 @@ export class MainScene extends Phaser.Scene {
         const upgradeValue = bundle.upgradeValue
         bundle.destroy()
 
+        this.sound.play('select_upgrade', { volume: getDefaultVolume('select_upgrade') })
+
+        const rarityOrder: RarityID[] = [RarityID.Common, RarityID.Uncommon, RarityID.Rare, RarityID.Epic, RarityID.Legendary]
+        const applyPickedUpgrades = (pickedIds: string[]) => {
+          pickedIds.forEach((upgradeId, i) => {
+            this.applyUpgrade(upgradeId, true, false)
+
+            const def = getUpgrade(upgradeId)
+            if (def) {
+              const rarityIndex = rarityOrder.indexOf(def.rarity)
+              this.showBundlePickupText(x, y, def.name, rarityIndex, def.curse, i * 220)
+            }
+          })
+        }
+
+        // Online: the backend rolls the bundle's tier and contents itself
+        // and grants them for free (see WaveValidation.collectBundle) - it
+        // can't trust a client-rolled result for what free upgrades to hand
+        // out. Offline/sandbox has no backend to roll against, so it keeps
+        // the old fully-local roll.
+        if (localStorage.getItem('token')) {
+          const currentWave = GameManager.getState().wave
+          waveValidation.collectBundle(currentWave, upgradeValue).then(result => {
+            if (result.success && result.upgradeIds) {
+              applyPickedUpgrades(result.upgradeIds)
+            }
+          })
+          return
+        }
+
         // Roll how many upgrades/curses this bundle contains (1–4).
         // All upgrades are picked now so canApply() reflects current state.
         const count = Math.floor(Math.random() * 4) + 1
 
         // Build rarity weights capped at the bundle's tier and re-normalized.
         // e.g. a rare bundle on wave 25 strips epic+legendary then rescales common/uncommon/rare to sum to 1.
-        const rarityOrder: RarityID[] = [RarityID.Common, RarityID.Uncommon, RarityID.Rare, RarityID.Epic, RarityID.Legendary]
         const rawWeights = this.waveManager.getRarityWeights()
         let weightSum = 0
         for (let tier = 0; tier <= upgradeValue; tier++) weightSum += rawWeights[rarityOrder[tier]]
@@ -148,15 +177,7 @@ export class MainScene extends Phaser.Scene {
 
         if (pickedIds.length === 0) return
 
-        pickedIds.forEach((upgradeId, i) => {
-          this.applyUpgrade(upgradeId, true)
-
-          const def = getUpgrade(upgradeId)
-          if (def) {
-            const rarityIndex = rarityOrder.indexOf(def.rarity)
-            this.showBundlePickupText(x, y, def.name, rarityIndex, def.curse, i * 220)
-          }
-        })
+        applyPickedUpgrades(pickedIds)
       }
     )
     // -------- -------- -------- //
@@ -359,8 +380,8 @@ export class MainScene extends Phaser.Scene {
     })
 
     // WAVE VALIDATION: Track damage dealt
-    EventBus.on('damage-dealt', (damage: number) => {
-      waveValidation.recordDamage(damage)
+    EventBus.on('damage-dealt', ({ amount, source }) => {
+      waveValidation.recordDamage(amount, source)
     })
 
     // -------- -------- -------- //
@@ -462,14 +483,10 @@ export class MainScene extends Phaser.Scene {
       const seed = currentState.seed || Math.floor(Math.random() * 1000000)
 
       console.log('Starting wave from MainScene:', waveNumber, 'with seed:', seed)
+      // For new games, wave_service.start_wave()'s wave-1 branch already
+      // creates the backend save with the 70pt starting bonus - no separate
+      // sync needed.
       await waveValidation.startWave(waveNumber, seed)
-
-      // For new games, save the starting points to backend after wave start creates the game save
-      if (!isLoadedGame) {
-        console.log('Saving starting points to backend...')
-        await SaveManager.saveOnWaveComplete()
-        console.log('Starting points synced to backend')
-      }
 
       // Play looping background music
       // Start with volume at 75%
@@ -773,7 +790,7 @@ export class MainScene extends Phaser.Scene {
     return null
   }
 
-  private async applyUpgrade(upgradeId: string, skipCost: boolean = false): Promise<boolean> {
+  private async applyUpgrade(upgradeId: string, skipCost: boolean = false, playSound: boolean = true): Promise<boolean> {
     const entry = getUpgradeEntry(upgradeId)
 
     if (!entry) {
@@ -798,7 +815,9 @@ export class MainScene extends Phaser.Scene {
     }
     console.log(`Applied upgrade: ${entry.def.name}${skipCost ? ' (DEV - FREE)' : ''}`)
 
-    this.sound.play('select_upgrade', { volume: getDefaultVolume('select_upgrade') })
+    if (playSound) {
+      this.sound.play('select_upgrade', { volume: getDefaultVolume('select_upgrade') })
+    }
 
     // Record the purchase in GameManager's ledger (one entry per purchase,
     // duplicates included — this is the serialized form of the owned list)

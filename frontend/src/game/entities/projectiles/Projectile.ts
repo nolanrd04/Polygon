@@ -62,6 +62,14 @@ export abstract class Projectile {
   /** Multiplier applied to damage at collision time (useful for variants that deal reduced damage) */
   damageMultiplier: number = 1
 
+  /**
+   * Tags which damage-dealing path this projectile represents, for wave
+   * validation (see WaveValidationService.recordDamage). Override to
+   * 'explosion' for AoE follow-up hits (e.g. BulletExplosion) so the backend
+   * can bound each hit type's damage independently instead of a single flat total.
+   */
+  damageSource: 'primary' | 'explosion' = 'primary'
+
   /** How fast the projectile travels (pixels per second) */
   speed: number = 400
 

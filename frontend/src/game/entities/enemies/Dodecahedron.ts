@@ -3,7 +3,8 @@ import { Enemy } from './Enemy'
 import { TrailRenderer } from '../../utils/TrailRenderer'
 // import { EnemyBullet } from '../projectiles/enemy_projectiles/EnemyBullet'
 import { DodecahedronBullet } from '../projectiles/enemy_projectiles/DodecahedronBullet'
-import { BundleRarity, DifficultyID } from '../../data/ID'
+import { BundleRarity, DifficultyID, SoundID } from '../../data/ID'
+import { getDefaultVolume } from '../../../game/core/AudioRegistry'
 
 export class Dodecahedron extends Enemy {
   private invincible: boolean = false
@@ -174,6 +175,14 @@ export class Dodecahedron extends Enemy {
         this.dashStartTime = now
         // Calculate dash direction ONCE when starting dash (fixed direction)
         this.dashDirection = Phaser.Math.Angle.Between(this.x, this.y, _playerX, _playerY)
+        // all sound calls should have this check to prevent "sound stacking"
+        //
+        if (this.scene.sound.isPlaying(SoundID.BossDash))
+        {
+          this.scene.sound.stopByKey(SoundID.BossDash)
+        }
+        this.scene.sound.play(SoundID.BossDash, { volume: getDefaultVolume(SoundID.BossDash) })
+        //
       }
       if (this.dashing && this.dashCount < 3) // DASH
       {
@@ -239,6 +248,14 @@ export class Dodecahedron extends Enemy {
         {
           // Shoot bullet towards player
           this.ShootProjectileAtPlayer(this.damage)
+          // all sound calls should have this check to prevent "sound stacking"
+          //
+          if (this.scene.sound.isPlaying(SoundID.BossShoot1))
+          {
+            this.scene.sound.stopByKey(SoundID.BossShoot1)
+          }
+          this.scene.sound.play(SoundID.BossShoot1, { volume: getDefaultVolume(SoundID.BossShoot1) })
+          //
           this.shotBulletCounter++
         }
       }

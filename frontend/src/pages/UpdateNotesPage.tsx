@@ -10,6 +10,24 @@ interface UpdateNote {
 // Add new updates at the top of this array
 const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: 'v0.1.8',
+    date: '2026-08-15',
+    title: 'Huge server refactor.',
+    changes: [
+      'Enemies spawned from a split (square from octogon) do not drop bundles or points.',
+      'Homing bullets refactor: Starts at base damage then decays over time. For each enemy hit, damage is dramatically deduced.',
+      'Added new upgrades for the homing bullets.',
+      'Reworked waves 21-26 which added wave 27.',
+      'Fixed authentication when connected to the server.',
+      'Greatly refactored and improved anti cheat to account for dashing, polygon, attack variant, and healing upgrades when connected to the server.',
+      'Upgrades obtained from upgrade bundles do not save when quitting mid run when connected to the server.',
+      'Improved syncing from the server and frontend with upgrade, enemy, projectile, and difficulty data.',
+      'Removed visual upgrades.',
+      'Added sound effects for buckshot bullets, player shield, and enemy attacks.',
+      'Updated documentation on frontend',
+    ]
+  },
+  {
     version: 'v0.1.7',
     date: '2026-07-28',
     title: 'Added Super Hexagon enemy',

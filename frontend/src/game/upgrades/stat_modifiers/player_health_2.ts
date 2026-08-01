@@ -12,7 +12,7 @@ export const PlayerHealth2Def: UpgradeDef = {
   fieldInTargetClass: UpgradeStatID.MaxHealth,
   value: 30,
   stackable: true,
-  maxStacks: 15,
+  maxStacks: 99999999,
 }
 
 export class PlayerHealth2 extends Upgrade {}

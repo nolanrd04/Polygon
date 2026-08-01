@@ -55,6 +55,7 @@ export const enum UpgradeStatID {
   ChokeAngle                   = 'chokeAngle',
   MinimumPellets               = 'minPellets',
   MaximumPellets               = 'maxPellets',
+  HitEnemyDamageReduction      = 'hitEnemyDamageReduction', 
 }
 
 export const enum UpgradeVariantID {
@@ -67,4 +68,30 @@ export const enum AttackTypeID
 {
   Bullet = 'bullet',
   Laser = 'laser'
+}
+
+export const enum SoundID
+{
+  BulletShot = 'bullet_shot',
+  Explosion = 'explosion',
+  SelectUpgrade = 'select_upgrade',
+  PlayerHurt = 'player_hurt',
+  EnemyHurt = 'enemy_hurt',
+  EnemyKilled = 'enemy_killed',
+  PlayerDash = 'player_dash',
+  UpgradeRoll = 'upgrade_roll',
+  BulletCollide = 'bullet_tileCollide',
+  Buckshot = 'buckshot',
+  BossDash = 'boss_dash',
+  BossShoot1 = 'boss_shoot_1',
+  EnemyShoot1 = 'enemy_shoot_1',
+  EnemyShoot2 = 'enemy_shoot_2',
+  AcidBulletExplosion = 'acid_bullet_explosion',
+  PlayerShieldUp = 'player_shield_up',
+  DetonationWarning = 'detonation_warning'
+}
+
+export const enum SoundtrackID
+{
+  BackgroundMusic = 'background_music'
 }

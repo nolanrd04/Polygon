@@ -27,7 +27,7 @@ export interface GameEvents {
   'dev-apply-upgrade': string  // Dev-only: apply upgrade without cost
   'evolution-milestone': number  // Emitted every 6 waves with the current wave number
   'enemy-killed': { type: string; x: number; y: number }  // Wave validation tracking
-  'damage-dealt': number  // Wave validation tracking
+  'damage-dealt': { amount: number; source: 'primary' | 'explosion' }  // Wave validation tracking
   'upgrade-bundle': { x: number; y: number; bundleDropChance: number; forcedRarity?: number }
 }
 

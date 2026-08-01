@@ -8,7 +8,7 @@ export const BulletDamage3Def: UpgradeDef = {
   rarity: RarityID.Rare,
   upgradeType: UpgradeTypeID.StatModifier,
   cost: 10,
-  targetClass: UpgradeTargetID.Attack,
+  targetClass: UpgradeTargetID.Bullet,
   fieldInTargetClass: UpgradeStatID.Damage,
   value: 8,
   isMultiplier: false,

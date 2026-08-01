@@ -1,9 +1,6 @@
 import axios from '../../config/axios'
 import { GameManager } from '../core/GameManager'
 import {
-  SaveCategory,
-  SaveResult,
-  SaveValidationError,
   UpgradeEntry,
   UpgradesSaveData,
   DeathFrozenState,
@@ -15,28 +12,22 @@ import {
 } from './SaveTypes'
 
 /**
- * SaveManager - Modular Save System
+ * SaveManager - local session state + full-game load
  *
- * Handles saving different categories of game data independently:
- * - GameStats: Wave, kills, seed (frozen on death)
- * - Points: Currency (persists after death)
- * - Upgrades: Ordered purchase history (persists after death)
- * - DeathState: Frozen state at death (immutable once set)
- * - PlayerState: Health, speed, etc. (bundled with game stats)
- *
- * Key behaviors:
- * - Death state can only be frozen once per session
- * - Game stats saves are blocked after death
- * - Points and upgrades can be saved anytime
+ * All persistence to the backend now happens server-side, synchronously with
+ * the action that earns it: wave-complete/death via wave_service.complete_wave
+ * (online only - see WaveValidation.ts), upgrade purchases via
+ * /api/waves/select-upgrade and /api/waves/reroll. This class now only:
+ * - Tracks local session state (upgrade history for offline/sandbox mode,
+ *   death-state snapshot for the death screen) used by LocalSaveManager for
+ *   offline saves and by the UI for immediate display.
+ * - Loads the full game save from the backend (`loadFullGame`) and applies it
+ *   to GameManager (`restoreGameState`).
  */
 class SaveManagerClass {
   // ========================================
   // STATE
   // ========================================
-
-  /** Whether SaveManager has been initialized for this session */
-  /** CRITICAL: Prevents saves with empty data before game is loaded */
-  private isInitialized: boolean = false
 
   /** Whether death state has been frozen this session */
   private deathStateFrozen: boolean = false
@@ -59,7 +50,6 @@ class SaveManagerClass {
    * Call this when starting a new game.
    */
   initialize(): void {
-    this.isInitialized = true
     this.deathStateFrozen = false
     this.deathState = null
     this.gameStartTime = Date.now()
@@ -72,7 +62,6 @@ class SaveManagerClass {
    * Call this when continuing a saved game.
    */
   restoreFromLoad(upgradeHistory: UpgradeEntry[]): void {
-    this.isInitialized = true
     this.deathStateFrozen = false
     this.deathState = null
     this.gameStartTime = Date.now()
@@ -202,356 +191,6 @@ class SaveManagerClass {
       currentSpeed: stats.speed,
       currentPolygonSides: stats.polygonSides,
       unlockedAttacks: stats.unlockedAttacks
-    }
-  }
-
-  // ========================================
-  // INDIVIDUAL SAVE METHODS
-  // ========================================
-
-  /**
-   * Save current points to backend.
-   * Only allowed after death or when wave is not active.
-   * BLOCKS mid-wave saves to prevent exploit of repeating waves for points.
-   */
-  async savePoints(): Promise<SaveResult> {
-    const timestamp = Date.now()
-
-    // GUARD: Block points save during active wave (prevents mid-wave point farming exploit)
-    // Exception: Allow saving after death so points can be spent on upgrades
-    const gameState = GameManager.getState()
-    if (gameState.isWaveActive) {
-      console.log('[SaveManager] Skipping points save - wave is active (prevents mid-wave exploit)')
-      return {
-        success: false,
-        category: SaveCategory.POINTS,
-        timestamp,
-        error: SaveValidationError.WAVE_ACTIVE
-      }
-    }
-
-    try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        return {
-          success: false,
-          category: SaveCategory.POINTS,
-          timestamp,
-          error: SaveValidationError.NO_AUTH
-        }
-      }
-
-      const points = this.getCurrentPoints()
-
-      await axios.post('/api/saves/points', {
-        current_points: points.currentPoints
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-
-      console.log('[SaveManager] Points saved:', points.currentPoints)
-      return { success: true, category: SaveCategory.POINTS, timestamp }
-    } catch (error: any) {
-      console.error('[SaveManager] Failed to save points:', error)
-      return {
-        success: false,
-        category: SaveCategory.POINTS,
-        timestamp,
-        error: error.message || SaveValidationError.BACKEND_ERROR
-      }
-    }
-  }
-
-  /**
-   * Save upgrade history to backend.
-   * Only allowed after death or when wave is not active.
-   * BLOCKS mid-wave saves to prevent exploit of repeating waves for upgrades.
-   */
-  async saveUpgrades(): Promise<SaveResult> {
-    const timestamp = Date.now()
-
-    // GUARD: Block upgrades save during active wave (prevents mid-wave exploit)
-    // Exception: Allow saving after death so purchased upgrades are preserved
-    const gameState = GameManager.getState()
-    if (gameState.isWaveActive && !this.deathStateFrozen) {
-      console.log('[SaveManager] Skipping upgrades save - wave is active (prevents mid-wave exploit)')
-      return {
-        success: false,
-        category: SaveCategory.UPGRADES,
-        timestamp,
-        error: SaveValidationError.WAVE_ACTIVE
-      }
-    }
-
-    try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        return {
-          success: false,
-          category: SaveCategory.UPGRADES,
-          timestamp,
-          error: SaveValidationError.NO_AUTH
-        }
-      }
-
-      const upgrades = this.getUpgradeHistory()
-
-      await axios.post('/api/saves/upgrades', {
-        purchase_history: upgrades.purchaseHistory.map(u => ({
-          upgrade_id: u.upgradeId,
-          purchased_at: u.purchasedAt,
-          wave_number: u.waveNumber
-        }))
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-
-      console.log('[SaveManager] Upgrades saved:', upgrades.purchaseHistory.length, 'items')
-      return { success: true, category: SaveCategory.UPGRADES, timestamp }
-    } catch (error: any) {
-      console.error('[SaveManager] Failed to save upgrades:', error)
-      return {
-        success: false,
-        category: SaveCategory.UPGRADES,
-        timestamp,
-        error: error.message || SaveValidationError.BACKEND_ERROR
-      }
-    }
-  }
-
-  /**
-   * Save game statistics to backend.
-   * BLOCKED if player is dead (use frozen death state instead).
-   */
-  async saveGameStats(): Promise<SaveResult> {
-    const timestamp = Date.now()
-
-    // Guard: Block game stats save after death
-    if (this.deathStateFrozen) {
-      console.log('[SaveManager] Skipping game stats save - death state frozen')
-      return {
-        success: false,
-        category: SaveCategory.GAME_STATS,
-        timestamp,
-        error: SaveValidationError.PLAYER_DEAD
-      }
-    }
-
-    // Guard: Block save during active wave
-    const gameState = GameManager.getState()
-    if (gameState.isWaveActive) {
-      console.log('[SaveManager] Skipping game stats save - wave is active')
-      return {
-        success: false,
-        category: SaveCategory.GAME_STATS,
-        timestamp,
-        error: SaveValidationError.WAVE_ACTIVE
-      }
-    }
-
-    try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        return {
-          success: false,
-          category: SaveCategory.GAME_STATS,
-          timestamp,
-          error: SaveValidationError.NO_AUTH
-        }
-      }
-
-      const gameStats = this.getCurrentGameStats()
-      const playerState = this.getCurrentPlayerState()
-
-      await axios.post('/api/saves/game-stats', {
-        current_wave: gameStats.currentWave,
-        current_kills: gameStats.currentKills,
-        seed: gameStats.seed,
-        time_survived: gameStats.timeSurvived,
-        // Include player state with game stats
-        current_health: playerState.currentHealth,
-        current_max_health: playerState.currentMaxHealth,
-        current_speed: playerState.currentSpeed,
-        current_polygon_sides: playerState.currentPolygonSides,
-        unlocked_attacks: playerState.unlockedAttacks
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-
-      console.log('[SaveManager] Game stats saved - Wave:', gameStats.currentWave, 'Kills:', gameStats.currentKills)
-      return { success: true, category: SaveCategory.GAME_STATS, timestamp }
-    } catch (error: any) {
-      console.error('[SaveManager] Failed to save game stats:', error)
-      return {
-        success: false,
-        category: SaveCategory.GAME_STATS,
-        timestamp,
-        error: error.message || SaveValidationError.BACKEND_ERROR
-      }
-    }
-  }
-
-  /**
-   * Save death state to backend.
-   * Can only be called once per game (rejected if death state already exists).
-   */
-  async saveDeathState(): Promise<SaveResult> {
-    const timestamp = Date.now()
-
-    if (!this.deathState) {
-      return {
-        success: false,
-        category: SaveCategory.DEATH_STATE,
-        timestamp,
-        error: 'No death state to save'
-      }
-    }
-
-    try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        return {
-          success: false,
-          category: SaveCategory.DEATH_STATE,
-          timestamp,
-          error: SaveValidationError.NO_AUTH
-        }
-      }
-
-      await axios.post('/api/saves/death-state', {
-        frozen_at: this.deathState.frozenAt,
-        waves_completed: this.deathState.wavesCompleted,
-        enemies_killed: this.deathState.enemiesKilled,
-        time_survived: this.deathState.timeSurvived,
-        points_at_death: this.deathState.pointsAtDeath
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-
-      console.log('[SaveManager] Death state saved:', this.deathState)
-      return { success: true, category: SaveCategory.DEATH_STATE, timestamp }
-    } catch (error: any) {
-      console.error('[SaveManager] Failed to save death state:', error)
-      return {
-        success: false,
-        category: SaveCategory.DEATH_STATE,
-        timestamp,
-        error: error.message || SaveValidationError.BACKEND_ERROR
-      }
-    }
-  }
-
-  // ========================================
-  // COMPOSITE SAVE OPERATIONS
-  // ========================================
-
-  /**
-   * Save on wave completion.
-   * Saves: GameStats + Points + Upgrades (if player is alive)
-   */
-  async saveOnWaveComplete(): Promise<SaveResult[]> {
-    // GUARD: Don't save if not initialized (prevents overwriting during load)
-    if (!this.isInitialized) {
-      console.log('[SaveManager] Skipping wave complete save - not initialized yet')
-      return []
-    }
-
-    if (this.deathStateFrozen) {
-      console.log('[SaveManager] Skipping wave complete save - player is dead')
-      return []
-    }
-
-    console.log('[SaveManager] Saving on wave complete...')
-    const results: SaveResult[] = []
-
-    // Save all categories in parallel
-    const [gameStatsResult, pointsResult, upgradesResult] = await Promise.all([
-      this.saveGameStats(),
-      this.savePoints(),
-      this.saveUpgrades()
-    ])
-
-    results.push(gameStatsResult, pointsResult, upgradesResult)
-    return results
-  }
-
-  /**
-   * Save on player death.
-   * Saves: DeathState + Points + Upgrades
-   */
-  async saveOnDeath(): Promise<SaveResult[]> {
-    // GUARD: Don't save if not initialized (prevents overwriting during load)
-    if (!this.isInitialized) {
-      console.log('[SaveManager] Skipping death save - not initialized yet')
-      return []
-    }
-
-    // Freeze the death state first
-    this.freezeDeathState()
-
-    console.log('[SaveManager] Saving on death...')
-    const results: SaveResult[] = []
-
-    // Save all categories in parallel
-    const [deathStateResult, pointsResult, upgradesResult] = await Promise.all([
-      this.saveDeathState(),
-      this.savePoints(),
-      this.saveUpgrades()
-    ])
-
-    results.push(deathStateResult, pointsResult, upgradesResult)
-    return results
-  }
-
-  /**
-   * Save on upgrade purchase.
-   * Saves: Points + Upgrades
-   */
-  async saveOnUpgradePurchase(): Promise<SaveResult[]> {
-    // GUARD: Don't save if not initialized (prevents overwriting during load)
-    if (!this.isInitialized) {
-      console.log('[SaveManager] Skipping upgrade purchase save - not initialized yet')
-      return []
-    }
-
-    console.log('[SaveManager] Saving on upgrade purchase...')
-    const results: SaveResult[] = []
-
-    // Save in parallel
-    const [pointsResult, upgradesResult] = await Promise.all([
-      this.savePoints(),
-      this.saveUpgrades()
-    ])
-
-    results.push(pointsResult, upgradesResult)
-    return results
-  }
-
-  /**
-   * Save on quit.
-   * Saves appropriate data based on death state:
-   * - If alive: GameStats + Points + Upgrades
-   * - If dead: Points + Upgrades only
-   */
-  async saveOnQuit(): Promise<SaveResult[]> {
-    // GUARD: Don't save if not initialized (prevents overwriting during load)
-    if (!this.isInitialized) {
-      console.log('[SaveManager] Skipping quit save - not initialized yet')
-      return []
-    }
-
-    console.log('[SaveManager] Saving on quit...')
-
-    if (this.deathStateFrozen) {
-      // Player is dead - only save points and upgrades
-      const [pointsResult, upgradesResult] = await Promise.all([
-        this.savePoints(),
-        this.saveUpgrades()
-      ])
-      return [pointsResult, upgradesResult]
-    } else {
-      // Player is alive - save everything
-      return this.saveOnWaveComplete()
     }
   }
 

@@ -15,12 +15,14 @@ Enemies drop collectible in-world upgrade bundles on death. The player walks ove
 | `src/game/systems/WaveManager.ts` | Exposes `getBundleDropChance()`, `getBundleRarityWeights()`, `getRarityWeights()` as passthroughs to the Difficulty. |
 | `src/game/systems/difficulty/Difficulty.ts` | Interface — declares `getBundleDropChance(wave)` and `getBundleRarityWeights(wave)`. |
 | `src/game/systems/difficulty/Normal.ts` | Implements both methods with per-wave tables (`BUNDLE_RARITY_WEIGHTS_BY_WAVE`, `getBundleDropChance`). |
-| `src/game/systems/upgrades/UpgradeSystem.ts` | `UpgradeDefinition` interface includes `curse?: boolean`. `canApply()` used by item pickers. |
+| `src/game/upgrades/index.ts` | `UPGRADE_REGISTRY` + `getAllUpgrades()` / `getUpgrade()` / `getUpgradeEntry()` — the single catalog `pickRegularUpgrade`/`pickCurse` filter over. |
+| `src/game/systems/upgrades/UpgradeSystem.ts` | `UpgradeDef.curse?: boolean` (see [UPGRADES.md](./UPGRADES.md)). `canApply()` used by item pickers. |
 | `src/game/systems/upgrades/UpgradeModifierSystem.ts` | `addModifier()` has a curse guard for additive modifiers to prevent going below 0. |
 | `src/game/core/EventBus.ts` | `'upgrade-bundle'` event type: `{ x, y, bundleDropChance, forcedRarity? }`. |
-| `src/game/scenes/MainScene.ts` | Bundle group, player-bundle overlap handler, item roll logic, pickup text, `_update()` tick. |
-| `src/game/data/ID.ts` | `const enum BundleRarity { Common=0, Uncommon=1, Rare=2, Epic=3, Legendary=4 }`. |
-| `src/game/data/upgrades/curses.json` | 5 Weakness curses (common → legendary). The only curse pool that exists right now. |
+| `src/game/scenes/MainScene.ts` | Bundle group, player-bundle overlap handler, item roll logic (offline), `collectBundle` call (online), pickup text, `_update()` tick. |
+| `src/game/services/WaveValidation.ts` | `collectBundle(waveNumber, bundleTier)` — online-mode pickup, posts to the backend instead of rolling locally. |
+| `src/game/data/ID.ts` | `const enum BundleRarity { Common=0, Uncommon=1, Rare=2, Epic=3, Legendary=4 }` — one of several enums in this file; see [UPGRADES.md](./UPGRADES.md) and its `ID.ts — Named Constants` section below for the rest. |
+| `src/game/upgrades/curses/` | 15 curse files (one per curse, `curse: true` on the def). See [CURSES.md](./CURSES.md). |
 
 ---
 
@@ -41,11 +43,20 @@ MainScene (registered once in create())
 
 Player overlaps bundle (Phaser overlap, registered in create())
   → bundle.destroy() called immediately to prevent double-pickup
-  → roll count (1–4 items)
-  → build capped + re-normalized rarity weights for this bundle's tier
-  → slot 1: pickRegularUpgrade(upgradeValue, exclude)        // guaranteed matching-tier item
-  → slots 2–N: 50/50 → pickCurse(rollItemRarity()) or pickRegularUpgrade(rollItemRarity())
-  → applyUpgrade(id, true) for each picked id
+
+  → ONLINE (localStorage has a token): waveValidation.collectBundle(wave, upgradeValue)
+      → POST /api/waves/bundle-pickup { wave, bundle_tier, token: waveToken }
+      → backend rolls the bundle's contents itself (WaveService.collect_upgrade_bundle) —
+        the client-rolled tier/contents can't be trusted for what free upgrades to grant
+      → response.upgrade_ids applied locally via applyUpgrade(id, true)
+
+  → OFFLINE/SANDBOX (no token, no backend to roll against): fully local roll
+      → roll count (1–4 items)
+      → build capped + re-normalized rarity weights for this bundle's tier
+      → slot 1: pickRegularUpgrade(upgradeValue, exclude)        // guaranteed matching-tier item
+      → slots 2–N: 30% curse / 70% regular → pickCurse(rollItemRarity()) or pickRegularUpgrade(rollItemRarity())
+      → applyUpgrade(id, true) for each picked id
+
   → showBundlePickupText() for each (staggered 220 ms apart)
 
 MainScene._update()
@@ -150,67 +161,59 @@ Rarity colors: `#aaaaaa / #44cc66 / #4488ff / #cc44ff / #ffaa00`
 
 ## Item Selection — What's In The Bundle
 
-Happens **at collection time**, not spawn time, so `canApply()` reflects live upgrade state.
+**This section describes the offline/sandbox roll only.** In online mode the backend rolls contents itself (`WaveService.collect_upgrade_bundle`, mirrored from the same logic) and hands back a list of upgrade ids — the client never runs `pickRegularUpgrade`/`pickCurse` in that path. Both paths select **at collection time**, not spawn time, so `canApply()` reflects live upgrade state.
 
-### Step-by-step
+### Step-by-step (offline/sandbox)
 
 1. **Roll count** — `Math.floor(Math.random() * 4) + 1` → 1, 2, 3, or 4 items.
 2. **Build capped rarity weights** — take the wave's `getRarityWeights()`, sum only the tiers ≤ `upgradeValue`, and use that sum as the random ceiling. This redistributes probability from higher tiers into the eligible range.
    - *Example:* rare bundle (tier 2) on wave 25 with weights `[0.22, 0.36, 0.30, 0.09, 0.03]`. Eligible sum = 0.88. Roll lands on common ~25%, uncommon ~41%, rare ~34%.
 3. **Slot 1 (`pickRegularUpgrade(upgradeValue, exclude)`)** — always a regular upgrade at the bundle's exact tier (with tier-by-tier fallback if the pool is exhausted). Guarantees every bundle has at least one non-curse item matching its tier.
-4. **Slots 2–N** — each independently 50/50: `pickCurse(rollItemRarity(), exclude)` or `pickRegularUpgrade(rollItemRarity(), exclude)`. The exclude list grows with each pick to prevent duplicates.
+4. **Slots 2–N** — each independently rolled 30% curse / 70% regular: `pickCurse(rollItemRarity(), exclude)` or `pickRegularUpgrade(rollItemRarity(), exclude)`. The exclude list grows with each pick to prevent duplicates.
 5. **Apply all** — `applyUpgrade(id, true)` for each picked id (`true` = skip cost, no `waveValidation.selectUpgrade()` call).
 6. **Show pickup text** — `showBundlePickupText()` called once per item, staggered 220 ms apart. Curses appear in red; regular items in their rarity color.
 
 ### pickRegularUpgrade()
 
-Looks across `statUpgrades`, `effectUpgrades`, `variantUpgrades`, `visualUpgrades`, `abilityUpgrades`. Filters by rarity, then checks `UpgradeSystem.canApply()`. Additionally blocks variant upgrades whose `variantClass` differs from the currently-active variant on the same `target` — bundles must not silently swap your bullet type.
+Filters `getAllUpgrades()` (the single upgrade registry — every category folder, `curse: true` items excluded) by rarity tier, walking tiers downward from `maxRarity` until a candidate pool is non-empty, then checks `UpgradeSystem.canApply()`. Additionally blocks variant upgrades whose `variantClass` differs from the currently-active variant on the same `targetClass` — bundles must not silently swap your bullet type.
 
 ### pickCurse()
 
-Looks in `curses.json` only. Filters by rarity, then checks `UpgradeSystem.canApply()`.
+Same walk over `getAllUpgrades()`, filtered to `u.curse === true` instead. See [CURSES.md](./CURSES.md) for the current curse list.
 
 ---
 
-## Curses (`curses.json`)
+## Curses
 
-Currently 5 Weakness curses — one per rarity tier. Each is a multiplicative damage reduction on the `attack` target.
-
-| ID | Name | Rarity | Value |
-|----|------|--------|-------|
-| `damage_reduc_1` | Weakness 1 | common | -0.1% damage |
-| `damage_reduc_2` | Weakness 2 | uncommon | -0.4% damage |
-| `damage_reduc_3` | Weakness 3 | rare | -0.8% damage |
-| `damage_reduc_4` | Weakness 4 | epic | -1.75% damage |
-| `damage_reduc_5` | Weakness 5 | legendary | -3.75% damage |
-
-All use `isMultiplier: true` and `stackable: true` with `maxStacks: 99999`. They accumulate in `UpgradeModifierSystem`'s `multiplicativeModifiers` map and reduce the final stat via `(base + additive) * (1 + multiplicative)`.
+15 curse files under `src/game/upgrades/curses/` — full list, values, and the def/hook split in [CURSES.md](./CURSES.md). Nothing bundle-specific about them beyond the `curse: true` flag `pickCurse()` filters on.
 
 ---
 
 ## Curse Flow — End to End
 
 ```
-curses.json
-  → imported in MainScene.ts alongside stat/effect/variant/visual/ability JSONs
-  → pickCurse() filters curses.curses[] by rarity + canApply()
+curses/*.ts (registered via UPGRADE_REGISTRY, same glob as every other upgrade category)
+  → pickCurse() filters getAllUpgrades() by curse === true, rarity, canApply()
   → applyUpgrade(id, true)
-      → MainScene calls UpgradeSystem.apply(def)
-          → applyStatModifier(def)
-              → UpgradeModifierSystem.addModifier(target, stat, value, isMultiplier=true, curse=true)
-                  → multiplicativeModifiers[target][stat] += value  (value is negative)
+      → UpgradeSystem.apply(entry)
+          → new entry.ctor(entry.def), append to ledger, run onApply(ctx)
+              → stat_modifier curse (e.g. damage_reduc_*): default onApply →
+                  UpgradeModifierSystem.addModifier(target, stat, value, isMultiplier, curse=true)
+                      → multiplicativeModifiers[target][stat] += value  (value is negative)
+              → effect curse (e.g. fragility_*): onApply() no-op, behavior lives in
+                  modifyPlayerHurt(damage) → damage.amount *= 1 + this.def.value!
   → Bullet/stat reads:
       UpgradeModifierSystem.getMultiplicativeModifier('attack', 'damage')
           → multiplied into final damage in the projectile or damage formula
 ```
 
-The `curse` flag in `addModifier` only guards additive modifiers (clamps at 0/1 to prevent negative base values). All current curses are multiplicative, so the guard is never exercised in practice.
+The `curse` flag in `addModifier` only guards additive modifiers (clamps at 0 to prevent negative base values). `health_reduc_*`/`shattered_bullet_*` are additive curses and do exercise this guard; `damage_reduc_*` is multiplicative and doesn't need it.
 
 ---
 
 ## `ID.ts` — Named Constants
 
-`src/game/data/ID.ts` is modeled after Terraria's `Terraria.ID` pattern. Currently holds only `BundleRarity`:
+`src/game/data/ID.ts` is modeled after Terraria's `Terraria.ID` pattern. `BundleRarity` (the bundle-visual tier) is one of several enums it now holds — `RarityID`, `UpgradeTypeID`, `UpgradeTargetID`, `UpgradeStatID`, `UpgradeVariantID`, `AttackTypeID`, `DifficultyID`, `SoundID`, `SoundtrackID` were added as the upgrade engine grew. See [UPGRADES.md](./UPGRADES.md) for how the upgrade-related ones are used; only `BundleRarity` is specific to this doc:
 
 ```typescript
 export const enum BundleRarity {
@@ -252,7 +255,7 @@ A forced rarity implies a guaranteed spawn. If you want a forced rarity that sti
 
 ## Known Issues / Follow-up Work
 
-- **Backend sync gap.** `applyUpgrade(id, true)` skips `waveValidation.selectUpgrade()`. Bundle-applied upgrades go into `GameManager.appliedUpgrades` locally but are not validated server-side. This could be a desync vector if backend validation is strict.
-- **`replaces` field type mismatch.** In `variant_upgrades.json`, `replaces` is typed as `string[]` in `UpgradeDefinition` but stored as a plain string in the JSON. `applyVariant()` does `for...of` on it, which iterates characters rather than IDs. The variant swap logic in the post-wave modal is effectively broken but unnoticed because both upgrades overwrite `activeVariants` by target anyway.
-- **Only one curse type exists.** `curses.json` has only Weakness (damage reduction). Future curses using additive values would exercise the `UpgradeModifierSystem.addModifier` curse guard that currently has no real callers.
+- **Backend sync gap — fixed for online mode.** Online play now routes through `waveValidation.collectBundle()`, which the backend validates and rolls itself (`WaveService.collect_upgrade_bundle`) instead of trusting a client roll. Offline/sandbox still applies locally with no server round-trip, which is fine — there's no backend to desync from in that mode.
+- **`replaces` field type mismatch — fixed.** `UpgradeDef.replaces` is `string[]` and is stored/iterated as an actual array of ids (`for (const replacedId of entry.def.replaces)` in `UpgradeSystem`); the old JSON-string bug doesn't apply to the current def-based system.
+- **Curse variety.** 15 curses now exist across three stat-modifier families (`damage_reduc`, `health_reduc`, `shattered_bullet`) plus two effect-hook curses (`fragility_1/2`) — see [CURSES.md](./CURSES.md). `fragility_*` are additive-via-multiply on damage taken, not stat-channel additive, so the `UpgradeModifierSystem.addModifier` curse guard is exercised by `health_reduc_*`/`shattered_bullet_*` (both additive) but not by `fragility_*` or `damage_reduc_*` (both multiplicative-only).
 - **"Show highest rarity" on bundle visual** — the bundle's visual rarity is set at spawn (before items are rolled). This is effectively correct since `upgradeValue` IS the cap for item rarity, but revisit if multi-rarity bundles with items above the visual tier are ever added.

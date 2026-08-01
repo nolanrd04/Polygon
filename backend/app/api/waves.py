@@ -1,4 +1,5 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pydantic import BaseModel, Field
@@ -36,22 +37,32 @@ class EnemyDeath(BaseModel):
     frame: int
 
 
+class HitCounts(BaseModel):
+    primary: int = Field(default=0, ge=0)
+    explosion: int = Field(default=0, ge=0)
+
+
 class WaveCompleteRequest(BaseModel):
     token: str
     wave: int
     kills: int
     total_damage: int
+    hits: HitCounts = Field(default_factory=HitCounts)
     current_health: float
     damage_taken: int = Field(default=0, ge=0)
     frame_samples: List[FrameSample]
     enemy_deaths: List[EnemyDeath]
     upgrades_used: List[str]
+    points_earned: int = Field(default=0, ge=0)
+    shots_fired: List[float] = Field(default_factory=list)
+    is_death: bool = Field(default=False)
 
 
 class WaveCompleteResponse(BaseModel):
     success: bool
     message: str
     errors: List[str] = Field(default_factory=list)
+    current_points: Optional[int] = None
 
 
 class UpgradeSelectRequest(BaseModel):
@@ -70,6 +81,32 @@ class RerollResponse(BaseModel):
     current_points: int
 
 
+class BundlePickupRequest(BaseModel):
+    wave: int = Field(..., ge=1)
+    # The bundle's displayed tier (0=common .. 4=legendary), rolled
+    # client-side at drop time so the pickup grants what the player actually
+    # saw - clamped server-side against this wave's own bundle rarity
+    # weights, so it can't be used to claim a rarity this wave can't
+    # legitimately drop (see WaveService.collect_upgrade_bundle).
+    bundle_tier: int = Field(..., ge=0, le=4)
+    # The client's own active wave-validation token (same one /waves/complete
+    # will eventually be called with). (user_id, wave) alone isn't unique
+    # enough to find "the" token - a mid-wave reload can leave a second,
+    # never-completed token for the same wave sitting unused (e.g. the
+    # pre-loaded next-wave token from the previous wave's completion, plus a
+    # fresh one from MainScene re-running startWave on reload). Matching the
+    # exact token string this pickup is happening against guarantees the
+    # grant lands on the token that will actually be submitted at
+    # wave-complete, instead of an indeterminate one of possibly several.
+    token: str = Field(...)
+
+
+class BundlePickupResponse(BaseModel):
+    success: bool
+    upgrade_ids: List[str] = Field(default_factory=list)
+    message: Optional[str] = None
+
+
 @router.post("/start", response_model=WaveStartResponse)
 async def start_wave(
     request: WaveStartRequest,
@@ -80,7 +117,8 @@ async def start_wave(
     Start a new wave - generates validation token and rolls upgrades.
 
     This endpoint:
-    - Creates a 30-second validation token
+    - Creates a long-lived validation token (matches the auth token's own
+      session length - see WaveService.WAVE_TOKEN_LIFETIME_SECONDS)
     - Rolls 3 random upgrades based on rarity weights
     - Returns token and offered upgrades to client
     """
@@ -94,9 +132,11 @@ async def start_wave(
             seed=request.seed
         )
 
+        expires_in = int((token.expires_at - datetime.utcnow()).total_seconds())
+
         return WaveStartResponse(
             token=token.token,
-            expires_in=30,
+            expires_in=expires_in,
             offered_upgrades=offered_upgrades
         )
     except ValueError as e:
@@ -131,30 +171,36 @@ async def complete_wave(
         "wave": request.wave,
         "kills": request.kills,
         "total_damage": request.total_damage,
+        "hits": request.hits.model_dump(),
         "current_health": request.current_health,
         "damage_taken": request.damage_taken,
         "frame_samples": [f.model_dump() for f in request.frame_samples],
         "enemy_deaths": [e.model_dump() for e in request.enemy_deaths],
-        "upgrades_used": request.upgrades_used
+        "upgrades_used": request.upgrades_used,
+        "points_earned": request.points_earned,
+        "shots_fired": request.shots_fired
     }
 
-    is_valid, errors = await wave_service.complete_wave(
+    is_valid, errors, current_points = await wave_service.complete_wave(
         user_id=current_user.id,
         username=current_user.username,
         token_string=request.token,
-        wave_data=wave_data
+        wave_data=wave_data,
+        is_death=request.is_death
     )
 
     if is_valid:
         return WaveCompleteResponse(
             success=True,
-            message="Wave completed successfully"
+            message="Wave completed successfully",
+            current_points=current_points
         )
     else:
         return WaveCompleteResponse(
             success=False,
             message="Wave validation failed",
-            errors=errors
+            errors=errors,
+            current_points=current_points
         )
 
 
@@ -232,12 +278,24 @@ async def select_upgrade(
     upgrade_cost = upgrade.get('cost', 0)
     updated_points = max(0, game_save.current_points - upgrade_cost)
 
+    # Server-timestamped append to the ordered purchase history, so it's
+    # authoritative (this is what /api/saves/full's load path reconstructs
+    # build state from) instead of trusting a client-submitted history.
+    from datetime import datetime
+    from app.models.game_save import UpgradeEntry
+    updated_history = game_save.upgrade_history + [UpgradeEntry(
+        upgrade_id=request.upgrade_id,
+        purchased_at=int(datetime.utcnow().timestamp() * 1000),
+        wave_number=request.wave
+    )]
+
     await game_save_repo.update_by_id(
         game_save.id,
         {
             "current_upgrades": updated_upgrades,
             "offered_upgrades": [u.model_dump() for u in updated_offered_upgrades],
-            "current_points": updated_points
+            "current_points": updated_points,
+            "upgrade_history": [e.model_dump() for e in updated_history]
         }
     )
 
@@ -247,6 +305,42 @@ async def select_upgrade(
         "current_upgrades": updated_upgrades,
         "current_points": updated_points
     }
+
+
+@router.post("/bundle-pickup", response_model=BundlePickupResponse)
+async def bundle_pickup(
+    request: BundlePickupRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """
+    Grant a mid-wave upgrade-bundle pickup.
+
+    Free (no cost, same as a dev-tool grant) - but rolled and recorded
+    server-side (see WaveService.collect_upgrade_bundle) instead of trusting
+    whatever upgrade ids the client claims it rolled, and capped per-wave so
+    the endpoint can't be farmed for unlimited free upgrades.
+
+    The grant applies for the rest of this run immediately, but is only
+    recorded against the current wave's validation token - it isn't written
+    to the permanent save until this wave is actually completed (win or
+    death) via /api/waves/complete. Quitting mid-wave without completing it
+    drops the grant, same as it drops in-progress kills/damage.
+    """
+    wave_service = WaveService(db)
+    success, upgrade_ids, error = await wave_service.collect_upgrade_bundle(
+        user_id=current_user.id,
+        wave_number=request.wave,
+        client_bundle_tier=request.bundle_tier,
+        token_string=request.token
+    )
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error or "Could not grant bundle"
+        )
+
+    return BundlePickupResponse(success=True, upgrade_ids=upgrade_ids)
 
 
 @router.post("/reroll", response_model=RerollResponse)
@@ -292,7 +386,8 @@ async def reroll_upgrades(
         user_id=current_user.id,
         current_upgrades=game_save.current_upgrades,
         attack_type=game_save.current_attack_type,
-        wave_number=game_save.current_wave
+        wave_number=game_save.current_wave,
+        difficulty_id=game_save.difficulty_id
     )
 
     # Update game save with new points and new offered upgrades

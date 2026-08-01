@@ -1,6 +1,8 @@
 import { Projectile } from '../Projectile'
 import { SuperPentagonExplosion } from './SuperPentagonExplosion'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
+import { SoundID } from '../../../../game/data/ID'
+import { getDefaultVolume } from '../../../../game/core/AudioRegistry'
 
 export class SuperPentagonExplosionDetonation extends Projectile {
   private baseColor = 0xf74f25
@@ -47,6 +49,10 @@ export class SuperPentagonExplosionDetonation extends Projectile {
         this.color = this.lerpColor(this.bleepColor, this.baseColor, (cycleTime - 250) / 250)
       } else {
         // Solid yellow with enhanced glow (500-1000ms)
+        if (cycleTime == 500)
+        {
+          this.scene.sound.play(SoundID.DetonationWarning, { volume: .9 })
+        }
         this.color = 0xffff00
         glowAlpha = 0.8
         glowRadius = this.size * 1.2
@@ -84,5 +90,13 @@ export class SuperPentagonExplosionDetonation extends Projectile {
 
     // Spawn at death location, doesn't travel anywhere
     scene.spawnProjectile(explosion, this.positionX, this.positionY, this.positionX, this.positionY, 'enemy', this.ownerId)
+
+
+    
+    // all sound calls should have this check to prevent "sound stacking"
+    //
+
+    this.scene.sound.play(SoundID.Explosion, { volume: 1.2 })
+    //
   }
 }

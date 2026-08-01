@@ -11,7 +11,7 @@ export const ArmorDef: UpgradeDef = {
   effect: "protection",
   effectValue: 0.025,
   stackable: true,
-  maxStacks: 5,
+  maxStacks: 7,
 }
 
 export class Armor extends Upgrade {

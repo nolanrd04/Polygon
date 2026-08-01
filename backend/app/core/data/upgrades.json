@@ -9,7 +9,7 @@
     "effect": "protection",
     "effectValue": 0.025,
     "stackable": true,
-    "maxStacks": 5
+    "maxStacks": 7
   },
   "armor_2": {
     "id": "armor_2",
@@ -21,7 +21,7 @@
     "effect": "protection",
     "effectValue": 0.06,
     "stackable": true,
-    "maxStacks": 3
+    "maxStacks": 4
   },
   "buckshot_bullets": {
     "id": "buckshot_bullets",
@@ -72,7 +72,7 @@
     "rarity": "common",
     "type": "stat_modifier",
     "cost": 2,
-    "target": "attack",
+    "target": "bullet",
     "stat": "damage",
     "value": 1,
     "isMultiplier": false,
@@ -87,7 +87,7 @@
     "rarity": "uncommon",
     "type": "stat_modifier",
     "cost": 6,
-    "target": "attack",
+    "target": "bullet",
     "stat": "damage",
     "value": 4,
     "isMultiplier": false,
@@ -102,7 +102,7 @@
     "rarity": "rare",
     "type": "stat_modifier",
     "cost": 10,
-    "target": "attack",
+    "target": "bullet",
     "stat": "damage",
     "value": 8,
     "isMultiplier": false,
@@ -117,7 +117,7 @@
     "rarity": "epic",
     "type": "stat_modifier",
     "cost": 20,
-    "target": "attack",
+    "target": "bullet",
     "stat": "damage",
     "value": 16,
     "isMultiplier": false,
@@ -132,7 +132,7 @@
     "rarity": "legendary",
     "type": "stat_modifier",
     "cost": 40,
-    "target": "attack",
+    "target": "bullet",
     "stat": "damage",
     "value": 35,
     "isMultiplier": false,
@@ -635,12 +635,14 @@
     "target": "bullet",
     "variantClass": "ExplosiveBullet",
     "replaces": [
-      "homing_bullets"
+      "homing_bullets",
+      "buckshot_bullets"
     ],
     "attackType": "bullet",
     "stackable": false,
     "incompatibleWith": [
-      "homing_bullets"
+      "homing_bullets",
+      "buckshot_bullets"
     ]
   },
   "fragility_1": {
@@ -749,19 +751,21 @@
   "homing_bullets": {
     "id": "homing_bullets",
     "name": "Homing Bullets",
-    "description": "Bullets track nearest enemy with 60% reduced damage.",
+    "description": "Bullets track nearest enemy and decay in damage over time. On colliding with an enemy, bullets reduce even further in damage.",
     "rarity": "epic",
     "type": "variant",
     "cost": 20,
     "target": "bullet",
     "variantClass": "HomingBullet",
     "replaces": [
-      "explosive_bullets"
+      "explosive_bullets",
+      "buckshot_bullets"
     ],
     "attackType": "bullet",
     "stackable": false,
     "incompatibleWith": [
-      "explosive_bullets"
+      "explosive_bullets",
+      "buckshot_bullets"
     ]
   },
   "homing_distance_1": {
@@ -873,13 +877,13 @@
   "minimum_homing_damage_multiplier_1": {
     "id": "minimum_homing_damage_multiplier_1",
     "name": "Kinetic Amplifier",
-    "description": "Increases the possible damage of homing bullets by 2%",
+    "description": "Increases the minimum possible damage of homing bullets by 1%",
     "rarity": "epic",
     "type": "stat_modifier",
     "cost": 20,
     "target": "bullet",
     "stat": "minimumDamageMultiplier",
-    "value": 0.02,
+    "value": 0.01,
     "attackType": "bullet",
     "stackable": true,
     "maxStacks": 5,
@@ -894,13 +898,13 @@
   "minimum_homing_damage_multiplier_2": {
     "id": "minimum_homing_damage_multiplier_2",
     "name": "Kinetic Amplifier",
-    "description": "Increases the possible damage of homing bullets by 5%",
+    "description": "Increases the minimum possible damage of homing bullets by 3%",
     "rarity": "legendary",
     "type": "stat_modifier",
     "cost": 40,
     "target": "bullet",
     "stat": "minimumDamageMultiplier",
-    "value": 0.05,
+    "value": 0.03,
     "attackType": "bullet",
     "stackable": true,
     "maxStacks": 2,
@@ -911,17 +915,6 @@
         ]
       }
     ]
-  },
-  "player_glow": {
-    "id": "player_glow",
-    "name": "Radiant Core",
-    "description": "Player emits a glowing aura",
-    "rarity": "uncommon",
-    "type": "visual_effect",
-    "cost": 0,
-    "target": "player",
-    "effect": "glow",
-    "stackable": false
   },
   "player_health_1": {
     "id": "player_health_1",
@@ -934,7 +927,7 @@
     "stat": "maxHealth",
     "value": 10,
     "stackable": true,
-    "maxStacks": 20
+    "maxStacks": 99999999
   },
   "player_health_2": {
     "id": "player_health_2",
@@ -947,7 +940,7 @@
     "stat": "maxHealth",
     "value": 30,
     "stackable": true,
-    "maxStacks": 15
+    "maxStacks": 99999999
   },
   "player_health_3": {
     "id": "player_health_3",
@@ -960,7 +953,7 @@
     "stat": "maxHealth",
     "value": 60,
     "stackable": true,
-    "maxStacks": 10
+    "maxStacks": 99999999
   },
   "player_health_4": {
     "id": "player_health_4",
@@ -973,7 +966,7 @@
     "stat": "maxHealth",
     "value": 130,
     "stackable": true,
-    "maxStacks": 8
+    "maxStacks": 99999999
   },
   "player_health_5": {
     "id": "player_health_5",
@@ -986,7 +979,7 @@
     "stat": "maxHealth",
     "value": 300,
     "stackable": true,
-    "maxStacks": 5
+    "maxStacks": 99999999
   },
   "player_speed_1": {
     "id": "player_speed_1",
@@ -1013,17 +1006,6 @@
     "value": 1,
     "stackable": true,
     "maxStacks": 9
-  },
-  "projectile_trail": {
-    "id": "projectile_trail",
-    "name": "Particle Trail",
-    "description": "Projectiles leave trails",
-    "rarity": "common",
-    "type": "visual_effect",
-    "cost": 0,
-    "target": "bullet",
-    "effect": "trail",
-    "stackable": false
   },
   "regeneration": {
     "id": "regeneration",
@@ -1115,6 +1097,48 @@
     "effect": "shield",
     "stackable": true,
     "maxStacks": 5
+  },
+  "stronger_pierce_1": {
+    "id": "stronger_pierce_1",
+    "name": "Stronger Pierce 1",
+    "description": "Decreases the damage reduction of homing bullets after hitting an enemy by 1%",
+    "rarity": "legendary",
+    "type": "stat_modifier",
+    "cost": 40,
+    "target": "bullet",
+    "stat": "hitEnemyDamageReduction",
+    "value": -0.01,
+    "attackType": "bullet",
+    "stackable": true,
+    "maxStacks": 5,
+    "dependentOn": [
+      {
+        "ids": [
+          "homing_bullets"
+        ]
+      }
+    ]
+  },
+  "stronger_pierce_2": {
+    "id": "stronger_pierce_2",
+    "name": "Stronger Pierce 2",
+    "description": "Decreases the damage reduction of homing bullets after hitting an enemy by 5%",
+    "rarity": "epic",
+    "type": "stat_modifier",
+    "cost": 20,
+    "target": "bullet",
+    "stat": "hitEnemyDamageReduction",
+    "value": -0.05,
+    "attackType": "bullet",
+    "stackable": true,
+    "maxStacks": 1,
+    "dependentOn": [
+      {
+        "ids": [
+          "homing_bullets"
+        ]
+      }
+    ]
   },
   "tenacity_1": {
     "id": "tenacity_1",

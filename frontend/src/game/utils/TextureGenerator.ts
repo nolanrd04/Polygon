@@ -43,11 +43,11 @@ export class TextureGenerator {
   /**
    * Get the scale factor to apply to sprites created from TextureGenerator.
    * This ensures sprites display at the correct size despite high-res textures.
-   *
+   * Should be 1/5 of TEXTURE_SCALE.
    * Usage: sprite.setScale(TextureGenerator.getDisplayScale())
    */
   static getDisplayScale(): number {
-    return 1 / this.TEXTURE_SCALE
+    return 1/this.TEXTURE_SCALE
   }
 
   /**

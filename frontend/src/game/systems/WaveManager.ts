@@ -126,14 +126,7 @@ export class WaveManager {
     console.log(`Wave incremented to ${this.currentWave} after completion`)
 
     EventBus.emit('wave-start', this.currentWave)
-
-    if (!GameManager.hasPlayerDiedThisSession()) {
-      const { SaveManager } = await import('../services/SaveManager')
-      await SaveManager.saveOnWaveComplete()
-      console.log(`Saved incremented wave ${this.currentWave} to backend`)
-    } else {
-      console.log(`Skipping wave completion save - player died this session. Death save already marked as game_over.`)
-    }
+    // Online persistence already happened above, inside waveValidation.completeWave().
   }
 
   getCurrentWave(): number {

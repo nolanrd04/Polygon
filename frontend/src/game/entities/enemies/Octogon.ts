@@ -20,8 +20,8 @@ SetDefaults(): void {
 
   OnDeath(): void {
     const scene = this.scene as any
-    scene.enemyManager.spawnEnemy('square', this.x, this.y)
-    scene.enemyManager.spawnEnemy('square', this.x, this.y)
+    scene.enemyManager.spawnEnemy('square', this.x, this.y, false, false)
+    scene.enemyManager.spawnEnemy('square', this.x, this.y, false, false)
   }
 
     

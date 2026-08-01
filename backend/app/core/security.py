@@ -1,3 +1,4 @@
+import secrets
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
@@ -27,9 +28,14 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "jti": secrets.token_hex(16)})
     encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
     return encoded_jwt
+
+
+def decode_token(token: str) -> dict:
+    """Raises JWTError on an invalid/expired/malformed token."""
+    return jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
 
 
 async def get_current_user(
@@ -42,11 +48,17 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        payload = decode_token(token)
         user_id: str = payload.get("sub")
-        if user_id is None:
+        jti: str = payload.get("jti")
+        if user_id is None or jti is None:
             raise credentials_exception
     except JWTError:
+        raise credentials_exception
+
+    from app.repositories.token_blacklist_repository import TokenBlacklistRepository
+    blacklist_repo = TokenBlacklistRepository(db)
+    if await blacklist_repo.is_revoked(jti):
         raise credentials_exception
 
     from app.repositories.user_repository import UserRepository

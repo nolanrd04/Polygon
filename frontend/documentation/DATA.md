@@ -26,56 +26,9 @@ The attack type is selected on `AttackSelectPage` and stored in `sessionStorage`
 
 ## Upgrades
 
-**Current System:** Class-based upgrades in `frontend/src/game/upgrades/` (TypeScript) with matching Python implementations in `backend/app/core/upgrades/`. See [UPGRADES.md](./UPGRADES.md) for full details.
+**Current System:** one file per upgrade (77) under `frontend/src/game/upgrades/`, organized into `stat_modifiers/`, `effects/`, `variants/`, `abilities/`, `visual_effects/`, `curses/`. Each exports a declarative `UpgradeDef` (browsed/offered by UI code) and an `Upgrade` subclass (behavior, dispatched by the engine — see [UPGRADE_MANAGER.md](./UPGRADE_MANAGER.md)). The backend mirror is code-generated data, not a parallel implementation: `backend/app/core/data/upgrades.json` is generated from these defs via `scripts/upgrade_defs_sync.py --write` and should never be hand-edited. See [UPGRADES.md](./UPGRADES.md) for the full architecture and [CURSES.md](./CURSES.md) / [UPGRADE_BUNDLE.md](./UPGRADE_BUNDLE.md) for curses and bundle pickups specifically.
 
-**Legacy System:** Original JSON upgrade definitions in `frontend/src/game/data/upgrades/` are kept for reference during migration but are **not actively used**. The active system uses 71 TypeScript class files organized by upgrade type.
-
-### Legacy Upgrade JSON Files (Reference Only)
-
-All legacy upgrade definitions live in `frontend/src/game/data/upgrades/`. They serve as documentation of the previous structure:
-
-### `stat_upgrades.json` — Fixed stat modifiers
-
-These upgrades directly change a numeric stat on a target. Every entry specifies a `target` (e.g. `"bullet"`, `"player"`), a `stat` (e.g. `"damage"`, `"speed"`, `"maxHealth"`), and a `value`. Additive upgrades stack linearly; multiplicative ones (marked `isMultiplier: true`) compound via the formula `(base + additive) × (1 + multiplicative)`.
-
-Examples: increased bullet damage, faster bullet speed, increased player max health, faster player movement, larger projectile size.
-
-### `effect_upgrades.json` — Gameplay behaviour effects
-
-These upgrades register a named effect in `UpgradeEffectSystem` that triggers on game events. Rather than changing a flat stat, they add behaviour.
-
-Examples:
-- **Lifesteal** – heals the player for a percentage of damage dealt on each hit.
-- **Regeneration** – heals the player over time each frame.
-- **Armor** – reduces all incoming damage by a percentage (minimum 1 damage).
-- **Thorns** – reflects a percentage of melee damage back to the attacker.
-- **Explode on kill** – creates an AOE explosion when an enemy dies.
-- **Multishot** – fires additional projectiles per shot.
-- **Ricochet** – projectiles bounce off obstacles instead of being destroyed.
-
-### `variant_upgrades.json` — Projectile class swaps
-
-These upgrades replace the projectile class for a given attack type rather than modifying its stats. Only one variant per attack type can be active at a time (mutually exclusive). Picking a new variant automatically removes the previous one.
-
-Bullet variants:
-- **Homing** (`HomingBullet`) – steers toward the nearest enemy.
-- **Explosive** (`ExplosiveBullet`) – detonates on impact, dealing AOE damage.
-- **Heavy** (`HeavyBullet`) – larger, slower bullet with bonus knockback.
-
-### `ability_upgrades.json` — Player abilities
-
-These upgrades grant entirely new capabilities to the player by registering a named ability in `UpgradeEffectSystem`. The ability must then be triggered by a key bind (dash = SPACE, shield = E).
-
-| Upgrade | Ability | What it does |
-|---------|---------|--------------|
-| Dash | `dash` | Instant movement burst in the direction of travel |
-| Double Dash | `dash` extension | Grants a second dash charge |
-| Triple Dash | `dash` extension | Grants a third dash charge |
-| Shield | `shield` | Activates a 3-second invulnerability bubble (consumable charges) |
-
-### `visual_upgrades.json` — Visual-only effects
-
-These upgrades add cosmetic effects tracked by `UpgradeEffectSystem` but do not change game-play stats. Examples include glow trails on projectiles and trail effects on the player.
+**Legacy System:** the original JSON upgrade definitions (`stat_upgrades.json`, `effect_upgrades.json`, `variant_upgrades.json`, `ability_upgrades.json`, `visual_upgrades.json`, `curses.json`) now live under `frontend/src/game/data/upgrades/legacy/` and are not read by any code path — kept for historical reference only. Their shape (`target`/`stat`/`type` string fields, a flat array per category) is superseded by the current `UpgradeDef` shape (`targetClass`/`fieldInTargetClass`/`upgradeType` enums, one TS class per upgrade). Don't use the legacy files as a reference for current behavior.
 
 ---
 

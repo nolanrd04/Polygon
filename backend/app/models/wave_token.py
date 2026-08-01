@@ -22,6 +22,21 @@ class WaveValidationToken(BaseMongoModel):
     used: bool = Field(default=False)
     used_at: datetime | None = Field(default=None)
 
+    # Mid-wave upgrade-bundle pickups granted against this wave (see
+    # WaveService.collect_upgrade_bundle) - capped independently of `used`
+    # since bundles are collected before the wave completes.
+    bundles_granted: int = Field(default=0)
+
+    # Upgrade ids granted via mid-wave bundle pickups on THIS wave's token.
+    # Deliberately NOT written to the game save at grant time - only
+    # authorized for this wave's own complete_wave() upgrade check (see
+    # valid_upgrades there). They only become permanent when complete_wave
+    # actually persists them via _save_game_state, exactly like every other
+    # upgrade source - so quitting mid-wave without completing it (or dying,
+    # which does complete it) drops them, the same as it drops in-progress
+    # kills/damage.
+    bundle_upgrades: List[str] = Field(default_factory=list)
+
     class Config(BaseMongoModel.Config):
         json_schema_extra = {
             "example": {
@@ -79,8 +94,8 @@ class WaveValidationToken(BaseMongoModel):
         )
 
     def is_valid(self) -> bool:
-        """Check if token is still valid (only checks if used, not expiry time)"""
-        return not self.used
+        """Check if token is still valid (not used, not expired)"""
+        return not self.used and datetime.utcnow() < self.expires_at
 
     def mark_used(self):
         """Mark token as used"""

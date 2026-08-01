@@ -1,6 +1,8 @@
 import { Enemy } from './Enemy'
 import { AcidBullet } from '../projectiles/enemy_projectiles/AcidBullet'
 import { TextureGenerator } from '../../utils/TextureGenerator'
+import { SoundID } from '../../../game/data/ID'
+import { getDefaultVolume } from '../../../game/core/AudioRegistry'
 
 /**
  * Square enemy - balanced stats.
@@ -62,6 +64,14 @@ export class SuperSquare extends Enemy {
         
         const scene = this.scene as Phaser.Scene & { spawnProjectile: Function }
         scene.spawnProjectile(projectile, this.x, this.y, _playerX, _playerY, 'enemy', this.id)
+        // all sound calls should have this check to prevent "sound stacking"
+        //
+        if (this.scene.sound.isPlaying(SoundID.EnemyShoot2))
+        {
+          this.scene.sound.stopByKey(SoundID.EnemyShoot2)
+        }
+        this.scene.sound.play(SoundID.EnemyShoot2, { volume: getDefaultVolume(SoundID.EnemyShoot2) })
+        //
     }
   }
 

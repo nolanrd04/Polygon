@@ -10,10 +10,10 @@ export const ExplosiveBulletsDef: UpgradeDef = {
   cost: 20,
   targetClass: UpgradeTargetID.Bullet,
   variantClass: "ExplosiveBullet",
-  replaces: ["homing_bullets"],
+  replaces: ["homing_bullets", "buckshot_bullets"],
   specificAttackType: "bullet",
   stackable: false,
-  incompatibleWith: ["homing_bullets"],
+  incompatibleWith: ["homing_bullets", "buckshot_bullets"],
 }
 
 export class ExplosiveBullets extends Upgrade {}

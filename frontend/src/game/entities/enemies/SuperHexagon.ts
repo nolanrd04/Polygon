@@ -1,6 +1,8 @@
 import { Enemy } from './Enemy'
 import { TextureGenerator } from '../../utils/TextureGenerator'
 import { SuperHexagonProj } from '../projectiles/enemy_projectiles/SuperHexagonProj.ts'
+import { SoundID } from '../../../game/data/ID.ts'
+import { getDefaultVolume } from '../../../game/core/AudioRegistry.ts'
 
 /**
  * Super Hexagon enemy - tanky enemy with shield ability. Shield breaks into close range projectiles when broken.
@@ -69,6 +71,15 @@ export class SuperHexagon extends Enemy {
             proj.damage = this.damage
 
             scene.spawnProjectile(proj, this.x, this.y, _playerX, _playerY, 'enemy', this.id)
+            // all sound calls should have this check to prevent "sound stacking"
+            //
+            if (this.scene.sound.isPlaying(SoundID.EnemyShoot1))
+            {
+              this.scene.sound.stopByKey(SoundID.EnemyShoot1)
+            }
+        
+            this.scene.sound.play(SoundID.EnemyShoot1, { volume:  getDefaultVolume(SoundID.EnemyShoot1) })
+            //
         }
     }
   }
@@ -99,7 +110,7 @@ export class SuperHexagon extends Enemy {
     // Create shield visual as sprite using cached texture
     if (!this.shieldSprite) {
       const shieldTextureKey = TextureGenerator.getOrCreateCircle(this.scene, {
-        radius: this.radius + 5,
+        radius: this.radius + 10,
         fillColor: 0x00ffff,
         fillAlpha: 0.2,
         strokeWidth: 3,

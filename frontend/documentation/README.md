@@ -28,13 +28,15 @@ Backend API  (see BACKEND_CONNECTION.md)
 | [PAGES.md](PAGES.md) | React page components and routing |
 | [COMPONENTS.md](COMPONENTS.md) | React overlay components (HUD, modals, menus) |
 | [CORE.md](CORE.md) | GameManager, EventBus, GameConfig, AudioRegistry |
-| [DATA.md](DATA.md) | Upgrade JSON definitions and attack types |
+| [DATA.md](DATA.md) | Attack types and legacy upgrade JSON reference (current upgrades are in UPGRADES.md) |
 | [ENTITIES.md](ENTITIES.md) | Overview of all in-game entities |
 | [PLAYER.md](PLAYER.md) | Player class – fields, methods, abilities |
 | [ENEMY.md](ENEMY.md) | Enemy base class and all enemy types |
 | [PROJECTILE.md](PROJECTILE.md) | Projectile base class and all projectile types |
 | [PARTICLE.md](PARTICLE.md) | Particle system (stub – not yet implemented) |
-| [UPGRADE_BUNDLE.md](UPGRADE_BUNDLE.md) | DroppedUpgradeBundle (stub – not yet implemented) |
+| [UPGRADES.md](UPGRADES.md) | The upgrade architecture — def/instance split, ledger, hooks, how to add one |
+| [CURSES.md](CURSES.md) | Curses (`curse: true` upgrades) and the current 15-curse list |
+| [UPGRADE_BUNDLE.md](UPGRADE_BUNDLE.md) | DroppedUpgradeBundle — mid-combat pickup, roll logic, online vs. offline |
 | [SCENES.md](SCENES.md) | BootScene and MainScene |
 | [SERVICES.md](SERVICES.md) | SaveManager, WaveValidation, LocalSaveManager, SaveTypes |
 | [SYSTEMS.md](SYSTEMS.md) | System overview and inter-system relationships |
@@ -45,7 +47,7 @@ Backend API  (see BACKEND_CONNECTION.md)
 | [TOUCH_CONTROL_MANAGER.md](TOUCH_CONTROL_MANAGER.md) | Mobile touch input |
 | [WAVE_MANAGER.md](WAVE_MANAGER.md) | WaveManager in detail |
 | [DIFFICULTY.md](DIFFICULTY.md) | Difficulty interface and Normal implementation |
-| [UPGRADE_MANAGER.md](UPGRADE_MANAGER.md) | UpgradeSystem, UpgradeEffectSystem, UpgradeModifierSystem, EffectHandlers |
+| [UPGRADE_MANAGER.md](UPGRADE_MANAGER.md) | UpgradeSystem, UpgradeModifierSystem, UpgradeEffectSystem — the ledger/replay/hook-dispatch engine |
 | [UTILS.md](UTILS.md) | TextureGenerator and TrailRenderer overview |
 | [TEXTURE_GENERATOR.md](TEXTURE_GENERATOR.md) | On-demand texture caching in detail |
 | [TRAIL_RENDERER.md](TRAIL_RENDERER.md) | Sprite-based trail rendering in detail |

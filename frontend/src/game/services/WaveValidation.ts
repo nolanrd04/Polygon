@@ -31,7 +31,11 @@ export class WaveValidationService {
   private enemyDeaths: EnemyDeath[] = []
   private totalKills: number = 0
   private totalDamage: number = 0
+  private primaryHits: number = 0
+  private explosionHits: number = 0
   private damageTaken: number = 0
+  private pointsEarnedThisWave: number = 0
+  private shotsFired: number[] = []  // ms since wave start, one per cooldown-gated Player.shoot() call
   private offeredUpgrades: any[] = []
 
   /**
@@ -53,7 +57,11 @@ export class WaveValidationService {
       this.enemyDeaths = []
       this.totalKills = 0
       this.totalDamage = 0
+      this.primaryHits = 0
+      this.explosionHits = 0
       this.damageTaken = 0
+      this.pointsEarnedThisWave = 0
+      this.shotsFired = []
 
       // Generate initial upgrades if we don't have any yet
       if (this.offeredUpgrades.length === 0) {
@@ -130,7 +138,11 @@ export class WaveValidationService {
       this.enemyDeaths = []
       this.totalKills = 0
       this.totalDamage = 0
+      this.primaryHits = 0
+      this.explosionHits = 0
       this.damageTaken = 0
+      this.pointsEarnedThisWave = 0
+      this.shotsFired = []
 
       console.log(`Wave ${waveNumber} started. Token expires in ${response.data.expires_in}s`)
       console.log('Stored offeredUpgrades:', this.offeredUpgrades)
@@ -189,10 +201,16 @@ export class WaveValidationService {
   /**
    * Record damage dealt
    */
-  recordDamage(damage: number) {
+  recordDamage(damage: number, source: 'primary' | 'explosion') {
     // GUARD: Don't track wave stats after death
     if (GameManager.getPlayerStats().isDead) {
       return
+    }
+
+    if (source === 'explosion') {
+      this.explosionHits++
+    } else {
+      this.primaryHits++
     }
 
     this.totalDamage += Math.round(damage)
@@ -211,6 +229,40 @@ export class WaveValidationService {
   }
 
   /**
+   * Record score earned from a kill (the per-kill scoreChance roll)
+   */
+  recordPointsEarned(amount: number) {
+    // GUARD: Don't track wave stats after death
+    if (GameManager.getPlayerStats().isDead) {
+      return
+    }
+
+    this.pointsEarnedThisWave += amount
+  }
+
+  /**
+   * Record a weapon discharge (one per cooldown-gated Player.shoot() call -
+   * NOT one per hit; a single discharge can produce many hits at once via
+   * polygon-vertex fanout, buckshot pellets, and pierce).
+   */
+  recordShotFired() {
+    // GUARD: Don't track wave stats after death
+    if (GameManager.getPlayerStats().isDead) {
+      return
+    }
+
+    this.shotsFired.push(Date.now() - this.waveStartTime)
+
+    // Bound payload size for very long waves. Thinning (rather than
+    // dropping the tail) only ever widens the gaps the backend sees between
+    // consecutive entries, which can only make the per-shot cooldown check
+    // MORE lenient, never flag a false positive.
+    if (this.shotsFired.length > 3000) {
+      this.shotsFired = this.shotsFired.filter((_, i) => i % 2 === 0)
+    }
+  }
+
+  /**
    * Increment frame counter
    */
   incrementFrame() {
@@ -218,16 +270,19 @@ export class WaveValidationService {
   }
 
   /**
-   * Complete wave and submit to backend for validation
+   * Complete wave (or submit the final partial wave on death) and submit to
+   * backend for validation.
    */
-  async completeWave(waveNumber: number): Promise<{ success: boolean; errors?: string[] }> {
+  async completeWave(waveNumber: number, isDeath: boolean = false): Promise<{ success: boolean; errors?: string[]; newPoints?: number }> {
     // Check for offline mode (no auth token)
     const token = localStorage.getItem('token')
     const isOfflineMode = !token
 
-    // GUARD: Don't submit wave completion to backend after death or in offline mode
-    // Player can keep playing for fun, but stats won't be saved
-    if (GameManager.getPlayerStats().isDead || isOfflineMode) {
+    // GUARD: Skip in offline/sandbox mode always. Skip on a stale/non-death
+    // "already dead" completion (shouldn't normally happen), but NOT when
+    // this call IS the death submission itself - isDeath=true is expected to
+    // fire exactly when the player is already dead.
+    if (isOfflineMode || (GameManager.getPlayerStats().isDead && !isDeath)) {
       console.log('[WAVE VALIDATION] Skipping wave completion - player is dead or offline (sandbox mode)')
       return { success: true } // Return success to not block game flow
     }
@@ -254,23 +309,34 @@ export class WaveValidationService {
         wave: waveNumber,
         kills: this.totalKills,
         total_damage: this.totalDamage,
+        hits: { primary: this.primaryHits, explosion: this.explosionHits },
         current_health: currentHealth,
         damage_taken: this.damageTaken,
         frame_samples: this.frameSamples,
         enemy_deaths: this.enemyDeaths,
-        upgrades_used: appliedUpgrades
+        upgrades_used: appliedUpgrades,
+        points_earned: this.pointsEarnedThisWave,
+        shots_fired: this.shotsFired,
+        is_death: isDeath
       }, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
 
+      // Sync the authoritative total (wave bonus + clamped per-kill credit)
+      // back to GameManager regardless of pass/fail - the server still
+      // credits points on non-critical validation failures.
+      if (response.data.current_points !== undefined && response.data.current_points !== null) {
+        GameManager.updatePlayerStats({ points: response.data.current_points })
+      }
+
       if (response.data.success) {
         console.log(`Wave ${waveNumber} completed and validated`)
-        return { success: true }
+        return { success: true, newPoints: response.data.current_points }
       } else {
         console.warn('Wave validation failed:', response.data.errors)
-        return { success: false, errors: response.data.errors }
+        return { success: false, errors: response.data.errors, newPoints: response.data.current_points }
       }
     } catch (error: any) {
       console.error('Failed to complete wave:', error)
@@ -281,6 +347,8 @@ export class WaveValidationService {
     } finally {
       // Reset for next wave
       this.waveToken = null
+      this.pointsEarnedThisWave = 0
+      this.shotsFired = []
     }
   }
 
@@ -338,6 +406,44 @@ export class WaveValidationService {
     } catch (error: any) {
       console.error('Failed to select upgrade:', error)
       return {success: false}
+    }
+  }
+
+  /**
+   * Collect a mid-wave upgrade bundle (online mode only - caller is
+   * responsible for the offline/sandbox fallback, since there's no backend
+   * to roll against). Backend rolls the bundle's tier and contents itself
+   * and grants them for free; returns the granted upgrade ids to apply
+   * locally.
+   */
+  async collectBundle(waveNumber: number, bundleTier: number): Promise<{ success: boolean; upgradeIds?: string[] }> {
+    const token = localStorage.getItem('token')
+    if (!token) return { success: false }
+
+    // Bundle pickups must be tied to the wave-validation token currently
+    // in play - (user, wave) alone isn't a unique enough key server-side
+    // (see collect_upgrade_bundle), and with no token there's nothing valid
+    // to grant against anyway.
+    if (!this.waveToken) {
+      console.error('Bundle pickup attempted with no active wave token')
+      return { success: false }
+    }
+
+    try {
+      const response = await axios.post('/api/waves/bundle-pickup', {
+        wave: waveNumber,
+        bundle_tier: bundleTier,
+        token: this.waveToken
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      return { success: !!response.data.success, upgradeIds: response.data.upgrade_ids }
+    } catch (error: any) {
+      console.error('Bundle pickup failed:', error)
+      return { success: false }
     }
   }
 
@@ -469,6 +575,8 @@ export class WaveValidationService {
       enemyDeaths: this.enemyDeaths.length,
       totalKills: this.totalKills,
       totalDamage: this.totalDamage,
+      primaryHits: this.primaryHits,
+      explosionHits: this.explosionHits,
       damageTaken: this.damageTaken,
       hasToken: !!this.waveToken
     }

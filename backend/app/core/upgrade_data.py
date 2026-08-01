@@ -3,7 +3,8 @@ Upgrade definitions for backend upgrade rolling and validation.
 This matches the frontend upgrade JSON files in
 frontend/src/game/data/upgrades/.
 
-Per-wave rarity weights mirror the frontend Difficulty implementation
+Per-wave rarity weights come from the active Difficulty (app.core.difficulty),
+which mirrors the frontend Difficulty implementation
 (frontend/src/game/systems/difficulty/Normal.ts — getRarityWeights).
 
 Game data is loaded from JSON files in app/core/data/ for better modularity.
@@ -14,21 +15,6 @@ from typing import Dict, List, Any
 import json
 from pathlib import Path
 
-# Load rarity weights from JSON
-def _load_rarity_weights() -> tuple[Dict[int, Dict[str, float]], Dict[str, float]]:
-    data_path = Path(__file__).parent / "data" / "rarity_weights.json"
-    with open(data_path) as f:
-        data = json.load(f)
-
-    by_wave = {int(k): v for k, v in data["by_wave"].items()}
-    fallback = data["fallback"]
-    return by_wave, fallback
-
-RARITY_WEIGHTS_BY_WAVE, FALLBACK_RARITY_WEIGHTS = _load_rarity_weights()
-
-
-def get_rarity_weights(wave: int) -> Dict[str, float]:
-    return RARITY_WEIGHTS_BY_WAVE.get(wave, FALLBACK_RARITY_WEIGHTS)
 
 def _load_upgrades() -> Dict[str, Dict[str, Any]]:
     data_path = Path(__file__).parent / "data" / "upgrades.json"

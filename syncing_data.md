@@ -7,7 +7,7 @@ The game has two modes:
 
 Because the backend has independent copies, **any time you change a gameplay value on the frontend, the matching backend constant must be updated as well.** If they drift, the backend will either reject legitimate plays (false-positive bans / "wave validation failed") or accept cheated values.
 
-There is intentionally no automatic sync script. Updates are done manually (or by asking an AI assistant to do the diff and propagate the changes).
+**Upgrades, projectiles, and enemy base stats are auto-synced** via `sync-check.sh`, which runs `scripts/upgrade_defs_sync.py`, `scripts/projectile_defs_sync.py`, and `scripts/enemy_defs_sync.py` - all three parse the frontend source directly and either value-parity-check or (`--write`) regenerate the matching backend JSON. Run `./sync-check.sh` any time you change an upgrade, a projectile's `SetDefaults()`, or an enemy's `SetDefaults()`. Everything else below (rarity weights, hexagon shield ratio, wave scaling, spawn rules) is still manual - updates are done by hand (or by asking an AI assistant to do the diff and propagate the changes).
 
 ---
 
@@ -36,7 +36,34 @@ Trigger an update when you:
 
 Every upgrade entry in the JSON should have a matching key in `UPGRADES` with the same fields. Convert JSON booleans (`true`/`false`) to Python (`True`/`False`).
 
-### 2. Rarity weights
+**Auto-synced** - run `./sync-check.sh` (or `python3 scripts/upgrade_defs_sync.py --write` to regenerate directly).
+
+### 2. Projectiles
+
+Per-projectile stats live on the frontend in each projectile class's `SetDefaults()` method:
+
+- `frontend/src/game/entities/projectiles/player_projectiles/Bullet.ts` (Bullet, HomingBullet, ExplosiveBullet, BulletExplosion, BuckshotBullet, BuckshotPellet - HeavyBullet is real but has no upgrade path that can select it, deliberately excluded)
+- `frontend/src/game/entities/projectiles/player_projectiles/Laser.ts`
+- `frontend/src/game/entities/projectiles/player_projectiles/Zapper.ts`
+- `frontend/src/game/entities/projectiles/player_projectiles/Flame.ts`
+- `frontend/src/game/entities/projectiles/player_projectiles/Spinner.ts`
+
+These map to `backend/app/core/data/projectiles.json`, read via `backend/app/core/projectile_data.py`:
+
+| Frontend (`SetDefaults()`) | Backend field |
+|---|---|
+| `this.damage` | `damage` |
+| `this.speed` | `speed` |
+| `this.pierce` | `pierce` |
+| `this.cooldown` | `cooldown_ms` |
+| `BuckshotBullet.minPellets` / `.maxPellets` (class fields, not in SetDefaults()) | `min_pellets` / `max_pellets` |
+| `BulletExplosion`'s constructor default `{ damage, radius }` | the `explosion` entry |
+
+Trigger an update when you change any of the above on an existing projectile, or add/remove a selectable variant (also update `BULLET_VARIANT_UPGRADES`/`CLASS_TO_KEY` in `projectile_defs_sync.py` and `resolve_active_projectile()` in `projectile_data.py` if it's a new bullet variant).
+
+**Auto-synced** - run `./sync-check.sh` (or `python3 scripts/projectile_defs_sync.py --write` to regenerate directly).
+
+### 3. Rarity weights
 
 Rarity weights are **per-wave**: each wave has its own distribution across the five rarities (common → legendary). A fallback distribution is used for waves not explicitly listed (typically late-game).
 
@@ -51,7 +78,7 @@ Trigger an update when you:
 
 Each wave's weights (and the fallback) must sum to 1.0. Both files have a comment pointing at the other — keep the tables row-for-row identical.
 
-### 3. Enemy base stats
+### 4. Enemy base stats
 
 Per-enemy stats live on the frontend in each enemy class's `SetDefaults()` method:
 
@@ -60,26 +87,32 @@ Per-enemy stats live on the frontend in each enemy class's `SetDefaults()` metho
 - `frontend/src/game/entities/enemies/SuperTriangle.ts`
 - `frontend/src/game/entities/enemies/SuperSquare.ts`
 - `frontend/src/game/entities/enemies/Pentagon.ts`
+- `frontend/src/game/entities/enemies/SuperPentagon.ts`
 - `frontend/src/game/entities/enemies/Hexagon.ts`
+- `frontend/src/game/entities/enemies/SuperHexagon.ts`
 - `frontend/src/game/entities/enemies/Diamond.ts`
 - `frontend/src/game/entities/enemies/Octogon.ts`
 - `frontend/src/game/entities/enemies/Dodecahedron.ts`
 
-These map to constants in `backend/app/core/enemy_data.py`:
+These map to `backend/app/core/data/enemies.json`, read via `backend/app/core/enemy_data.py`:
 
-| Frontend (`SetDefaults()`) | Backend |
+| Frontend (`SetDefaults()`) | Backend field |
 |---|---|
-| `this.health` | `ENEMY_BASE_HEALTH` |
-| `this.damage` | `ENEMY_BASE_DAMAGE` |
-| Hexagon's `this.maxShieldHealth = this.health * 0.65` | `HEXAGON_SHIELD_RATIO` |
+| `this.health` | `base_health` (`ENEMY_BASE_HEALTH`) |
+| `this.damage` | `base_damage` (`ENEMY_BASE_DAMAGE`) |
+| `this.scoreChance` | `score_chance` (`ENEMY_SCORE_CHANCE`) |
+| `this.bundleDropChance` | `bundle_drop_chance` (`ENEMY_BUNDLE_DROP_CHANCE`) |
+| Hexagon/SuperHexagon's `this.maxShieldHealth = this.health * 0.65` (inline, not a SetDefaults() field — still manual) | `hexagon_shield_ratio` (`HEXAGON_SHIELD_RATIO`) |
+
+**Auto-synced** (except the shield ratio, which is an inline expression, not a SetDefaults() literal) - run `./sync-check.sh` (or `python3 scripts/enemy_defs_sync.py --write` to regenerate directly). The class → enemy-id mapping is read from `frontend/src/game/entities/enemies/index.ts`'s `ENEMY_TYPES` registry, so a new enemy is picked up automatically once it's registered there.
 
 Trigger an update when you:
-- change any enemy's base `health` or `damage`
+- change any enemy's `health`, `damage`, `scoreChance`, or `bundleDropChance`
 - add a new enemy type (also add a min-wave entry — see #5)
 - remove an enemy type
-- change Hexagon's shield ratio
+- change Hexagon's/SuperHexagon's shield ratio (manual — not covered by the sync script)
 
-### 4. Wave scaling formula
+### 5. Wave scaling formula
 
 | Frontend | Backend |
 |---|---|
@@ -87,7 +120,7 @@ Trigger an update when you:
 
 Trigger an update when you change the divisor (or change to a different scaling formula). The backend formula must match exactly.
 
-### 5. Spawn rules (per-wave eligibility)
+### 6. Spawn rules (per-wave eligibility)
 
 | Frontend | Backend |
 |---|---|

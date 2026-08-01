@@ -261,19 +261,18 @@ class GameManagerClass {
     // const score = Math.floor(baseBonus * waveMultiplier)
     const score = Math.min(55, Math.floor(baseBonus + (this.state.wave) * 2))
 
-    this.addPoints(score)
-
-    // GUARD: Don't save wave completion if player is dead
-    // Player can keep playing for fun, but wave progress won't be saved
-    if (!this.state.playerStats.isDead) {
-      // Save the current wave completion to backend
-      // Wave will be incremented by WaveManager after this returns
-      const { SaveManager } = await import('../services/SaveManager')
-      await SaveManager.saveOnWaveComplete()
-      console.log(`Saved game state after wave ${this.state.wave} completion, current wave: ${this.state.wave}, points: ${this.state.playerStats.points}`)
-    } else {
-      console.log(`[DEATH MODE] Wave ${this.state.wave} completed but NOT saved (player is dead)`)
+    // Online: the backend computes and credits this same deterministic bonus
+    // server-side (see WaveValidation.completeWave's current_points sync),
+    // so adding it locally here too would double-count it. Offline/sandbox
+    // mode has no backend to sync from, so it must still be awarded locally.
+    const isOfflineMode = !localStorage.getItem('token')
+    if (isOfflineMode) {
+      this.addPoints(score)
     }
+
+    // Online wave-completion persistence already happened validated, inside
+    // WaveManager.completeWave()'s earlier waveValidation.completeWave() call
+    // - nothing left to save here.
 
     // Pre-load upgrades for NEXT wave (WaveManager will increment wave after this)
     // So we pre-load for current wave + 1

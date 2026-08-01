@@ -1,7 +1,7 @@
 import { Projectile } from '../Projectile'
 import { COLORS } from '../../../core/GameConfig'
 import { UpgradeSystem, UpgradeModifierSystem } from '../../../systems/upgrades'
-import { UpgradeTargetID, UpgradeStatID } from '../../../data/ID'
+import { UpgradeTargetID, UpgradeStatID, SoundID } from '../../../data/ID'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
 import { getDefaultVolume } from '../../../core/AudioRegistry'
 
@@ -27,30 +27,12 @@ export class Bullet extends Projectile {
   {
     // all sound calls should have this check to prevent "sound stacking"
     //
-    if (this.scene.sound.isPlaying('bullet_tileCollide'))
+    if (this.scene.sound.isPlaying(SoundID.BulletCollide))
     {
-      this.scene.sound.stopByKey('bullet_tileCollide')
+      this.scene.sound.stopByKey(SoundID.BulletCollide)
     }
-    this.scene.sound.play('bullet_tileCollide', { volume: getDefaultVolume('bullet_tileCollide') })
+    this.scene.sound.play(SoundID.BulletCollide, { volume: getDefaultVolume(SoundID.BulletCollide) })
     //
-  }
-
-}
-
-/**
- * EXAMPLE
- * Heavy bullet - slower but more damage and pierce.
- */
-export class HeavyBullet extends Projectile {
-
-  SetDefaults(): void {
-    this.damage = 25
-    this.speed = 300
-    this.size = 8
-    this.pierce = 2
-    this.color = 0xff6600
-    this.spawnSound = 'bullet_shot'
-    this.cooldown = 300
   }
 
 }
@@ -60,6 +42,12 @@ export class HeavyBullet extends Projectile {
  * Homing bullet - tracks nearest enemy.
  */
 export class HomingBullet extends Projectile {
+
+  /*
+  Spawns with 100% of its damage then decreased to 40% of its damage over half its life. After hitting its target, take a 20% (before upgrades) damage 
+  reduction to the original 100% base damage. Flow looks like this:
+  */
+
   private turnSpeed: number = 0.08 // Increased from 0.05 for better tracking
   // private _lastTargetId: number = -1
   private canHome: boolean = true
@@ -71,6 +59,11 @@ export class HomingBullet extends Projectile {
   minimumDamageMultiplier: number = 0.4
   private initialDamage: number = 0 // Will be set on first AI frame after upgrades applied
   private hasInitializedDamage: boolean = false
+
+  // value to determine the flat damage reduction AFTER hitting an enemy
+  private hitEnemyDamageReduction: number = 0.3
+  // Number of enemies already hit this bullet's lifetime (pierce). Reduction compounds per hit past the first.
+  private hitCount: number = 0
 
   // for ricochet detection
 
@@ -156,33 +149,45 @@ export class HomingBullet extends Projectile {
     }
   }
 
-  // private getDamageMultiplier(): number {
-  //   const elapsedTime = this.scene.time.now - this.spawnTime
-  //   const progress = Math.min(1, elapsedTime / this.timeLeft)
+  private getDamageMultiplier(): number {
+    const elapsedTime = this.scene.time.now - this.spawnTime
+    const progress = Math.min(1, elapsedTime / this.timeLeft)
 
-  //   // Only decay for first half of lifetime
-  //   if (progress > 0.25) {
-  //     return this.minimumDamageMultiplier
-  //   }
+    // Only decay for first half of lifetime
+    if (progress > 0.5) {
+      return this.minimumDamageMultiplier
+    }
 
-  //   // Interpolate from max to min over first half
-  //   const halfLifeProgress = progress / 0.25 // Convert to 0-1 range for first half
-  //   return this.maximumSpawnDamageMultiplier - (halfLifeProgress * (this.maximumSpawnDamageMultiplier - this.minimumDamageMultiplier))
-  // }
+    // Interpolate from max to min over first half
+    const halfLifeProgress = progress / 0.5 // Convert to 0-1 range for first half
+    return this.maximumSpawnDamageMultiplier - (halfLifeProgress * (this.maximumSpawnDamageMultiplier - this.minimumDamageMultiplier))
+  }
 
   OnHitNPC(_enemy: any): boolean {
+    console.log('Initial damage:', this.initialDamage, 'Current damage before hit:', this.damage, 'Damage multiplier:', this.getDamageMultiplier())
     // Disable homing temporarily after hitting to prevent sticking
     this.canHome = false
     this.homeDelay = this.scene.time.now + 500 // Re-enable homing after 500ms
-    
-    // Apply damage decay based on time alive
-    this.damage = this.initialDamage * this.minimumDamageMultiplier
-    // console.log('Collision damage (decayed):', this.damage)
+
+    // Per-hit reduction compounds off the original damage (not the decayed value), and
+    // only applies starting on the second hit (i.e. pierce past the first enemy).
+    const pierceReduction = Math.pow(1 - this.hitEnemyDamageReduction, this.hitCount)
+    this.damage = this.initialDamage * pierceReduction * this.getDamageMultiplier()
+    this.hitCount++
+    console.log('Damage after hit:', this.damage, 'Hit count:', this.hitCount, 'Pierce reduction factor:', pierceReduction)
     return true
   }
 
   OnObstacleCollide(_obstacle?: Phaser.GameObjects.GameObject): void {
-    this.scene.sound.play('bullet_tileCollide', { volume: getDefaultVolume('bullet_tileCollide') })
+    
+    // all sound calls should have this check to prevent "sound stacking"
+    //
+    if (this.scene.sound.isPlaying(SoundID.BulletCollide))
+    {
+      this.scene.sound.stopByKey(SoundID.BulletCollide)
+    }
+    this.scene.sound.play(SoundID.BulletCollide, { volume: getDefaultVolume(SoundID.BulletCollide) })
+    //
   }
 
 }
@@ -211,11 +216,11 @@ export class ExplosiveBullet extends Projectile {
 
     // all sound calls should have this check to prevent "sound stacking"
     //
-    if (this.scene.sound.isPlaying('explosion'))
+    if (this.scene.sound.isPlaying(SoundID.Explosion))
     {
-      this.scene.sound.stopByKey('explosion')
+      this.scene.sound.stopByKey(SoundID.Explosion)
     }
-    this.scene.sound.play('explosion', { volume: getDefaultVolume('explosion') })
+    this.scene.sound.play(SoundID.Explosion, { volume: getDefaultVolume(SoundID.Explosion) })
     //
 
     scene.spawnProjectile(explosion, this.positionX, this.positionY, this.positionX, this.positionY, 'player', this.ownerId)
@@ -251,7 +256,13 @@ export class BulletExplosion extends Projectile {
     const explosion = { damage: this.baseDamage, radius: this.baseRadius }
     UpgradeSystem.dispatchModifyExplosion(explosion)
 
-    this.damage = explosion.damage
+    // Explosion-specific scaling is fully resolved above; the only other
+    // thing that legitimately applies to it is the universal "attack" bonus
+    // (damage_*) — never the primary attack's own bullet_damage_* bonus,
+    // which belongs to the bullet's own hit, not its side effects. This
+    // mirrors Player.applyUpgradeModifiers so this.damage is final here too.
+    this.damage = UpgradeModifierSystem.applyModifiers(UpgradeTargetID.Attack, UpgradeStatID.Damage, explosion.damage)
+    this.damageSource = 'explosion'
     this.speed = 0
     this.size = explosion.radius
     this.pierce = 999999
@@ -289,7 +300,7 @@ export class BuckshotBullet extends Projectile
     this.pierce = 1
     this.color = COLORS.bullet
     this.knockback = 0
-    this.spawnSound = 'bullet_shot'
+    this.spawnSound = SoundID.Buckshot
     this.timeLeft = 1
     this.cooldown = 300
 
@@ -308,11 +319,14 @@ export class BuckshotBullet extends Projectile
 
       const pellet = new BuckshotPellet()
       pellet.SetDefaults()
-      pellet.damage = this.damage // Inherit damage from the main buckshot bullet
+      // Inherit the already-fully-resolved damage from the main buckshot
+      // bullet - Player.applyUpgradeModifiers() ran on `this` before
+      // OnSpawn() was called, so this.damage is final; no separate
+      // resolution needed here.
+      pellet.damage = this.damage
 
       // Pellets are spawned directly here instead of through Player.NewProjectile(), so they
-      // never go through Player.applyUpgradeModifiers() — apply the same non-damage stats by hand
-      // (damage is intentionally excluded; CollisionManager applies it once per hit instead).
+      // never go through Player.applyUpgradeModifiers() — apply the same non-damage stats by hand.
       for (const stat of [UpgradeStatID.Speed, UpgradeStatID.Size, UpgradeStatID.Pierce, UpgradeStatID.TimeLeft] as const) {
         (pellet as Projectile)[stat] = UpgradeModifierSystem.applyModifiers(UpgradeTargetID.Bullet, stat, (pellet as Projectile)[stat])
       }
@@ -321,8 +335,9 @@ export class BuckshotBullet extends Projectile
     }
   }
 
-  draw(): void {
-    // No visual representation for the central buckshot bullet
+  Draw(): void {
+    this.sprite.setAlpha(0) // Hide the main bullet sprite; only the pellets are visible
+    this.sprite.setVisible(false)
   }
 }
 
@@ -340,5 +355,16 @@ export class BuckshotPellet extends Projectile
 
   OnSpawn(): void {
     this.timeLeft = Phaser.Math.Between(250, 1000)
+  }
+
+  OnObstacleCollide(_obstacle?: Phaser.GameObjects.GameObject): void {
+    // all sound calls should have this check to prevent "sound stacking"
+    //
+    if (this.scene.sound.isPlaying(SoundID.BulletCollide))
+    {
+      this.scene.sound.stopByKey(SoundID.BulletCollide)
+    }
+    this.scene.sound.play(SoundID.BulletCollide, { volume: getDefaultVolume(SoundID.BulletCollide) })
+    //
   }
 }

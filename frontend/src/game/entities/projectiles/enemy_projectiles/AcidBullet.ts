@@ -2,6 +2,8 @@ import { Projectile } from '../Projectile'
 import { AcidExplosion } from './AcidExplosion'
 import { TrailRenderer } from '../../../utils/TrailRenderer'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
+import { SoundID } from '../../../../game/data/ID'
+import { getDefaultVolume } from '../../../../game/core/AudioRegistry'
 
 export class AcidBullet extends Projectile {
   SetDefaults(): void {
@@ -58,5 +60,13 @@ export class AcidBullet extends Projectile {
 
     // Spawn at death location, doesn't travel anywhere
     scene.spawnProjectile(explosion, this.positionX, this.positionY, this.positionX, this.positionY, 'enemy', this.ownerId)
+    // all sound calls should have this check to prevent "sound stacking"
+        //
+        if (this.scene.sound.isPlaying(SoundID.AcidBulletExplosion))
+        {
+          this.scene.sound.stopByKey(SoundID.AcidBulletExplosion)
+        }
+        this.scene.sound.play(SoundID.AcidBulletExplosion, { volume: getDefaultVolume(SoundID.AcidBulletExplosion) })
+        //
   }
 }

@@ -6,6 +6,7 @@ import { GameManager } from '../core/GameManager'
 import { UpgradeSystem, UpgradeEffectSystem, UpgradeModifierSystem } from './upgrades'
 import { EventBus } from '../core/EventBus'
 import { UpgradeTargetID, UpgradeStatID } from '../data/ID'
+import { waveValidation } from '../services/WaveValidation'
 
 export class CollisionManager {
   private scene: Phaser.Scene
@@ -109,22 +110,24 @@ export class CollisionManager {
     // Deal damage if projectile allows it
     let killed = false
     if (shouldApplyCollisionDamage) {
-      // Apply damage modifiers (attack-specific, then global "attack") and round up to
-      // nearest whole number. This is the single point where Damage upgrades are applied —
-      // see Player.applyUpgradeModifiers for why it's not also done at spawn time.
+      // projectile.damage is already final by the time it reaches here —
+      // every projectile resolves its own damage (equipped-attack-specific
+      // and/or universal "attack" bonuses) at spawn time, in its own
+      // SetDefaults/Player.applyUpgradeModifiers, regardless of how it was
+      // spawned. So every projectile is handled uniformly here; nothing in
+      // this collision handler needs to know what kind of projectile it is.
       const baseDamage = projectile.damage
-      let modifiedDamage = UpgradeModifierSystem.applyModifiers(UpgradeTargetID.Bullet, UpgradeStatID.Damage, baseDamage)
-      modifiedDamage = UpgradeModifierSystem.applyModifiers(UpgradeTargetID.Attack, UpgradeStatID.Damage, modifiedDamage)
 
       // Let owned upgrades mutate the hit before it lands
-      const damage = { amount: modifiedDamage * projectile.damageMultiplier }
+      const damage = { amount: baseDamage * projectile.damageMultiplier }
       UpgradeSystem.dispatchModifyHitEnemy(projectile, enemy, damage)
       const finalDamage = Math.ceil(damage.amount)
 
-      console.log(`Collision damage: base=${baseDamage}, modified=${modifiedDamage}, final=${finalDamage}`)
+      console.log(`Collision damage: base=${baseDamage}, final=${finalDamage}`)
       killed = enemy.takeDamage(finalDamage)
-      // Emit damage event for wave validation
-      EventBus.emit('damage-dealt', finalDamage)
+      // Emit damage event for wave validation, tagged with which hit produced
+      // it so the backend can bound primary and explosion damage separately.
+      EventBus.emit('damage-dealt', { amount: finalDamage, source: projectile.damageSource })
 
       // React to the landed hit (lifesteal, etc.)
       UpgradeSystem.dispatchOnHitEnemy(projectile, enemy, finalDamage)
@@ -140,6 +143,7 @@ export class CollisionManager {
       // NOTE: Points continue after death for testing/fun
       if (Math.random() < enemy.scoreChance) {
         GameManager.addPoints(1)
+        waveValidation.recordPointsEarned(1)
       }
 
       // On-kill upgrade hooks (explode on kill, etc.)

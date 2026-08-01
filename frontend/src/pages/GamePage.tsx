@@ -11,6 +11,7 @@ import AbilityDisplay from '../components/AbilityDisplay'
 import { EventBus } from '../game/core/EventBus'
 import { SaveManager } from '../game/services/SaveManager'
 import { GameManager } from '../game/core/GameManager'
+import { waveValidation } from '../game/services/WaveValidation'
 
 export default function GamePage() {
   const navigate = useNavigate()
@@ -162,28 +163,24 @@ export default function GamePage() {
     EventBus.on('game-pause', () => setIsPaused(true))
     EventBus.on('game-resume', () => setIsPaused(false))
 
-    // Save on player death using modular SaveManager
+    // On death, submit the final (partial) wave for validation - this is
+    // what actually credits its kills/points and freezes death_state
+    // server-side now (online only; offline/sandbox stays fully local via
+    // freezeDeathState below, already called synchronously from
+    // GameManager.takeDamage() at the exact moment of death).
     EventBus.on('player-death', () => {
-      // Only save once on death (event fires every frame while dead)
+      // Only submit once on death (event fires every frame while dead)
       if (deathSaveCompletedRef.current) {
         return
       }
+      deathSaveCompletedRef.current = true
 
-      console.log('[DEATH] Event triggered - Using SaveManager.saveOnDeath()')
       const state = GameManager.getState()
-      console.log('[DEATH] Current state:', { wave: state.wave, points: state.playerStats.points, kills: state.playerStats.kills })
+      console.log('[DEATH] Event triggered - submitting final wave for validation. State:', { wave: state.wave, points: state.playerStats.points, kills: state.playerStats.kills })
 
-      // Use modular SaveManager for death save
-      // This saves: DeathState (frozen) + Points (current) + Upgrades (ordered)
-      SaveManager.saveOnDeath().then(results => {
-        const allSuccessful = results.every(r => r.success)
-        console.log('[DEATH] SaveManager results:', results.map(r => `${r.category}:${r.success}`).join(', '))
-        if (allSuccessful || results.length > 0) {
-          deathSaveCompletedRef.current = true
-          console.log('[DEATH] Death save completed - game stats saves now blocked')
-        }
+      waveValidation.completeWave(state.wave, true).then(result => {
+        console.log('[DEATH] Wave-on-death submission result:', result)
       })
-
     })
 
     // Listen for ability state updates
@@ -211,20 +208,13 @@ export default function GamePage() {
     }
     window.addEventListener('keydown', handleKeyDown)
 
-    // Add beforeunload handler to save on tab close
-    const handleBeforeUnload = () => {
-      // Use SaveManager for quit save (handles death state internally)
-      // Note: This is fire-and-forget since we can't await in beforeunload
-      SaveManager.saveOnQuit()
-    }
-    window.addEventListener('beforeunload', handleBeforeUnload)
+    // Nothing to save on quit/tab-close: completed waves and deaths already
+    // persisted server-side at the moment they happened. Quitting mid-wave
+    // (alive) intentionally does not checkpoint in-progress kills/health -
+    // see the persistence-anti-cheat-redesign plan for why.
 
     return () => {
       clearInterval(abilityInterval)
-
-      // Use SaveManager for quit save (handles death state internally)
-      console.log('[UNMOUNT] Using SaveManager.saveOnQuit()')
-      SaveManager.saveOnQuit()
 
       if (gameRef.current) {
         gameRef.current.destroy(true)
@@ -232,7 +222,6 @@ export default function GamePage() {
       }
       EventBus.removeAllListeners()
       window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('beforeunload', handleBeforeUnload)
     }
   }, [])
 
@@ -283,10 +272,8 @@ export default function GamePage() {
       {isPaused && (
         <PauseMenu
           onResume={() => GameManager.resume()}
-          onQuit={async () => {
-            // Use SaveManager for quit save (handles death state internally)
-            console.log('[QUIT] Using SaveManager.saveOnQuit()')
-            await SaveManager.saveOnQuit()
+          onQuit={() => {
+            // Nothing to save here - see the beforeunload comment above.
             window.location.href = '/'
           }}
         />

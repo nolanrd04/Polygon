@@ -1,0 +1,56 @@
+{
+  "buckshot_bullets": {
+    "cooldown_ms": 300,
+    "min_pellets": 3,
+    "max_pellets": 5,
+    "damage": 3,
+    "speed": 400,
+    "pierce": 1
+  },
+  "bullet": {
+    "damage": 10,
+    "speed": 400,
+    "pierce": 1,
+    "cooldown_ms": 300
+  },
+  "explosion": {
+    "damage": 10,
+    "radius": 50
+  },
+  "explosive_bullets": {
+    "damage": 10,
+    "speed": 350,
+    "pierce": 1,
+    "cooldown_ms": 300
+  },
+  "flamer": {
+    "damage": 3,
+    "speed": 0,
+    "pierce": 999,
+    "cooldown_ms": 50
+  },
+  "homing_bullets": {
+    "damage": 10,
+    "speed": 300,
+    "pierce": 1,
+    "cooldown_ms": 300
+  },
+  "laser": {
+    "damage": 15,
+    "speed": 0,
+    "pierce": 999,
+    "cooldown_ms": 300
+  },
+  "spinner": {
+    "damage": 20,
+    "speed": 0,
+    "pierce": 999,
+    "cooldown_ms": 1000
+  },
+  "zapper": {
+    "damage": 12,
+    "speed": 0,
+    "pierce": 0,
+    "cooldown_ms": 400
+  }
+}

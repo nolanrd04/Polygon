@@ -1,9 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel, Field, field_validator
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.database import get_database
+from app.core.limiter import limiter
+from app.core.security import decode_token, oauth2_scheme, get_current_user
+from app.repositories.token_blacklist_repository import TokenBlacklistRepository
 from app.services.auth_service import AuthService
-from app.models.user import UserResponse
+from app.models.user import User, UserResponse
 
 router = APIRouter()
 
@@ -12,7 +16,16 @@ class UserRegisterRequest(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=8, max_length=128)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
+        if len(v.encode("utf-8")) > 72:
+            raise ValueError("Password must be at most 72 bytes long")
+        if not any(c.isalpha() for c in v) or not any(c.isdigit() for c in v):
+            raise ValueError("Password must contain at least one letter and one number")
+        return v
 
 
 class UserLoginRequest(BaseModel):
@@ -35,7 +48,9 @@ class UsernameCheckResponse(BaseModel):
 
 
 @router.post("/register", response_model=UserResponse, status_code=201)
+@limiter.limit("5/hour")
 async def register(
+    request: Request,
     user_data: UserRegisterRequest,
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
@@ -58,7 +73,9 @@ async def register(
 
 
 @router.post("/login", response_model=Token)
+@limiter.limit("10/minute")
 async def login(
+    request: Request,
     login_data: UserLoginRequest,
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
@@ -72,7 +89,9 @@ async def login(
 
 
 @router.get("/check-username/{username}", response_model=UsernameCheckResponse)
+@limiter.limit("20/minute")
 async def check_username_availability(
+    request: Request,
     username: str,
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
@@ -80,3 +99,18 @@ async def check_username_availability(
     auth_service = AuthService(db)
     available = await auth_service.check_username_availability(username)
     return {"available": available, "username": username}
+
+
+@router.post("/logout", status_code=204)
+async def logout(
+    current_user: User = Depends(get_current_user),
+    token: str = Depends(oauth2_scheme),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Revoke the current access token so it can't be reused before it naturally expires"""
+    payload = decode_token(token)
+    blacklist_repo = TokenBlacklistRepository(db)
+    await blacklist_repo.revoke(
+        jti=payload["jti"],
+        expires_at=datetime.utcfromtimestamp(payload["exp"])
+    )

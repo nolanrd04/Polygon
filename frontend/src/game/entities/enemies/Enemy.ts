@@ -123,6 +123,8 @@ export abstract class Enemy {
 
   private _isDestroyed: boolean = false
   private _id: number = 0
+  /** Registry id this enemy was spawned as (e.g. 'super_triangle') - set by EnemyManager.spawnEnemy, used for wave-validation death reporting. */
+  typeId: string = ''
   isBoss: boolean = false
   private knockbackEndTime: number = 0 // When knockback effect expires
   lastHitPlayerTime: number = 0 // When this enemy last hit the player (for per-enemy damage cooldown)
@@ -570,9 +572,13 @@ export abstract class Enemy {
     if (this._isDestroyed) return
     this._isDestroyed = true
 
-    // Emit event for wave validation tracking
+    // Emit event for wave validation tracking. Use the registry id
+    // (e.g. 'super_triangle'), not the class name - this.constructor.name
+    // ('SuperTriangle') loses the underscore once lowercased downstream in
+    // WaveValidation.recordEnemyDeath, silently failing spawn validation for
+    // every multi-word enemy type.
     EventBus.emit('enemy-killed', {
-      type: this.constructor.name,
+      type: this.typeId || this.constructor.name,
       x: this.x,
       y: this.y
     })

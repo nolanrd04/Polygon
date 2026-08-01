@@ -2,7 +2,7 @@ import Phaser from 'phaser'
 import { GameManager } from '../core/GameManager'
 import { COLORS, WORLD_WIDTH, WORLD_HEIGHT } from '../core/GameConfig'
 import { Projectile } from './projectiles/Projectile'
-import { Bullet, HeavyBullet, HomingBullet, ExplosiveBullet, BuckshotBullet } from './projectiles/player_projectiles/Bullet'
+import { Bullet, HomingBullet, ExplosiveBullet, BuckshotBullet } from './projectiles/player_projectiles/Bullet'
 import { Laser } from './projectiles/player_projectiles/Laser'
 import { Zapper } from './projectiles/player_projectiles/Zapper'
 import { Flame } from './projectiles/player_projectiles/Flame'
@@ -290,6 +290,10 @@ export class Player extends Phaser.GameObjects.Container {
 
     this.lastFireTime = now
     this.firedSoundThisShot = false
+    // WAVE VALIDATION: one event per cooldown-gated discharge, distinct from
+    // hits.primary (which counts enemies hit - up to sides*pellets*pierce per
+    // discharge, not 1:1 with shots fired).
+    waveValidation.recordShotFired()
 
     // Calculate all polygon vertices with their facing angles
     const vertices: { x: number; y: number; angle: number }[] = []
@@ -428,8 +432,6 @@ export class Player extends Phaser.GameObjects.Container {
         return HomingBullet
       case 'ExplosiveBullet':
         return ExplosiveBullet
-      case 'HeavyBullet':
-        return HeavyBullet
       case 'BuckshotBullet':
         return BuckshotBullet
       default:
@@ -446,10 +448,6 @@ export class Player extends Phaser.GameObjects.Container {
     // is generic over whatever attack type the player currently has equipped.
     const target = this.attackType as unknown as UpgradeTargetID
 
-    // Damage is intentionally excluded here — CollisionManager applies it once per hit
-    // (attack-specific, then global "attack" modifiers), so it's applied exactly once
-    // regardless of whether a projectile was spawned via Player.shoot() or spawned
-    // internally (e.g. BulletExplosion).
     const stats = [UpgradeStatID.Speed, UpgradeStatID.Size, UpgradeStatID.Pierce, UpgradeStatID.TimeLeft] as const
 
     for (const stat of stats) {
@@ -459,6 +457,17 @@ export class Player extends Phaser.GameObjects.Container {
         ;(projectile as any)[stat] = modifiedValue
       }
     }
+
+    // Damage resolves fully here too (equipped-attack-specific, e.g.
+    // bullet_damage_*, then the universal "attack" bonus, e.g. damage_*) —
+    // the projectile's own damage is final from this point on. Secondary
+    // projectiles a hit spawns (e.g. BulletExplosion) never go through this
+    // path and never read this value; they resolve their own damage
+    // entirely through their own upgrade hooks. This is what lets
+    // CollisionManager treat every projectile uniformly at hit time instead
+    // of needing to know which kind of projectile it's looking at.
+    projectile.damage = UpgradeModifierSystem.applyModifiers(target, UpgradeStatID.Damage, projectile.damage)
+    projectile.damage = UpgradeModifierSystem.applyModifiers(UpgradeTargetID.Attack, UpgradeStatID.Damage, projectile.damage)
   }
 
   // ============================================================
@@ -522,6 +531,8 @@ export class Player extends Phaser.GameObjects.Container {
     UpgradeEffectSystem.addEffect('shield', -1)
 
     this.shielded = true
+
+    this.scene.sound.play('player_shield_up', { volume: getDefaultVolume('player_shield_up') })
 
     // Create shield visual using sprite
     const shieldTexture = TextureGenerator.getOrCreateCircle(this.scene, {

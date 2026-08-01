@@ -15,10 +15,20 @@ export const AUDIO_REGISTRY: AudioDefinition[] = [
   { key: 'player_hurt', path: 'assets/sounds/player_hurt.mp3', defaultVolume: 1 },
   { key: 'enemy_hurt', path: 'assets/sounds/enemy_hurt.mp3', defaultVolume: 1 },
   { key: 'enemy_killed', path: 'assets/sounds/enemy_killed.mp3', defaultVolume: 1 },
-  { key: 'player_dash', path: 'assets/sounds/player_dash.mp3', defaultVolume: 1 },
+  { key: 'player_dash', path: 'assets/sounds/player_dash.mp3', defaultVolume: 1.2 },
   { key: 'upgrade_reroll', path: 'assets/sounds/upgrade_reroll.mp3', defaultVolume: 1 },
+  { key: 'buckshot', path: 'assets/sounds/buckshot.mp3', defaultVolume: .7 },
+  { key: 'boss_dash', path: 'assets/sounds/boss_dash.mp3', defaultVolume: 1 },
+  { key: 'boss_shoot_1', path: 'assets/sounds/boss_shoot_1.mp3', defaultVolume: 1 },
+  { key: 'enemy_shoot_1', path: 'assets/sounds/enemy_shoot_1.mp3', defaultVolume: 1 },
+  { key: 'enemy_shoot_2', path: 'assets/sounds/enemy_shoot_2.mp3', defaultVolume: 1 },
+  { key: 'acid_bullet_explosion', path: 'assets/sounds/acid_bullet_explosion.mp3', defaultVolume: 1 },
+  { key: 'player_shield_up', path: 'assets/sounds/player_shield_up.mp3', defaultVolume: 1 },
+  { key: 'detonation_warning', path: 'assets/sounds/detonation_warning.mp3', defaultVolume: 1 },
+
   // Soundtrack (add your music file here)
   { key: 'background_music', path: 'assets/sounds/background_music.mp3', defaultVolume: 0.75, loop: true }
+
 ]
 
 const defaultVolumeByKey: Map<string, number> = new Map(

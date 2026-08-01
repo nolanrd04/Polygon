@@ -54,6 +54,7 @@ class GameSave(BaseMongoModel):
     current_kills: int = Field(default=0, ge=0)
     seed: int = Field(...)
     time_survived: int = Field(default=0, ge=0, description="Seconds since game start")
+    difficulty_id: str = Field(default="normal", description="Active difficulty (see app.core.difficulty)")
 
     # ==========================================
     # POINTS (persists after death)

@@ -20,7 +20,7 @@ import { SuperTriangle } from './SuperTriangle'
 import { Octogon } from './Octogon'
 import { SuperSquare } from './SuperSquare'
 import { SuperPentagon } from './SuperPentagon'
-import { SuperHexagon } from './SuperHexegon'
+import { SuperHexagon } from './SuperHexagon'
 
 // bosses
 import { Dodecahedron } from './Dodecahedron'

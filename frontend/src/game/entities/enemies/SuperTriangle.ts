@@ -2,6 +2,8 @@ import Phaser from 'phaser'
 import { Enemy } from './Enemy'
 import { EnemyBullet } from '../projectiles/enemy_projectiles/EnemyBullet'
 import { TextureGenerator } from '../../utils/TextureGenerator'
+import { SoundID } from '../../../game/data/ID'
+import { getDefaultVolume } from '../../../game/core/AudioRegistry'
 
 export class SuperTriangle extends Enemy {
   private lastFireTime: number = 0
@@ -71,6 +73,16 @@ export class SuperTriangle extends Enemy {
 
         const scene = this.scene as any
         scene.spawnProjectile(projectile, this.x, this.y, _playerX, _playerY, 'enemy', this.id)
+
+        
+        // all sound calls should have this check to prevent "sound stacking"
+        //
+        if (this.scene.sound.isPlaying(SoundID.EnemyShoot1))
+        {
+          this.scene.sound.stopByKey(SoundID.EnemyShoot1)
+        }
+        this.scene.sound.play(SoundID.EnemyShoot1, { volume: getDefaultVolume(SoundID.EnemyShoot1) })
+        //
       }
     }
   }

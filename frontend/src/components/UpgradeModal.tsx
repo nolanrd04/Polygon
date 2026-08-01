@@ -5,7 +5,6 @@ import { RarityID } from '../game/data/ID'
 import { GameManager } from '../game/core/GameManager'
 import { EventBus } from '../game/core/EventBus'
 import { waveValidation } from '../game/services/WaveValidation'
-import { SaveManager } from '../game/services/SaveManager'
 
 /**
  * UPGRADE ARCHITECTURE:
@@ -109,10 +108,9 @@ export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModal
 
   const handleReroll = async () => {
     if (playerPoints >= rerollCost) {
-      // Save current points to backend before reroll
-      console.log('Saving points before reroll...')
-      await SaveManager.savePoints()
-
+      // Reroll deducts server-side directly from the DB's current_points,
+      // which is already accurate (points are credited at wave-complete/
+      // death now) - no separate pre-reroll sync needed.
       const currentWave = GameManager.getState().wave
 
       // Call backend to reroll upgrades

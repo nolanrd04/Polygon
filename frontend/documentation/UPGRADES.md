@@ -4,7 +4,7 @@ Upgrades are modifications purchased during gameplay — simple stat increases, 
 
 ## Overview
 
-- **Upgrade files**: `frontend/src/game/upgrades/` — one file per upgrade (73), organized by type
+- **Upgrade files**: `frontend/src/game/upgrades/` — one file per upgrade (77), organized by type
 - **Registry**: `frontend/src/game/upgrades/index.ts` auto-registers every file in the category folders via `import.meta.glob` — `UPGRADE_REGISTRY` maps `id → { def, ctor }`
 - **Base class**: `Upgrade` (`frontend/src/game/upgrades/Upgrade.ts`) — declarative `UpgradeDef` + overridable engine hooks
 - **Engine**: `frontend/src/game/systems/upgrades/` — ledger, replay, hook dispatch, stat channels (see its README for engine internals)
@@ -95,10 +95,47 @@ Other files may branch on **whether** an upgrade is active — `Player.getBullet
 All declared on the def and enforced by `UpgradeSystem.canApply(def)`:
 
 - `tier` / `upgradesTo` — linear progression chains (vampirism 1→2→3)
-- `dependentOn` + `dependencyCount` — required prior upgrades (triple_dash needs double_dash)
+- `dependentOn: DependencyGroup[]` — every group must be satisfied (AND across groups); within a group, `count` of `ids` must be owned (OR/threshold, default 1). An id can require a minimum stack count instead of plain ownership: `{ id: 'damage_1', minStacks: 3 }`. Example: triple_dash needs `[{ ids: ['double_dash'] }]`
 - `incompatibleWith` — mutual exclusion (homing vs. explosive bullets)
 - `specificAttackType` — offer only for the matching equipped attack
 - `replaces` (variants) — purchasing evicts the replaced variant's instances from the ledger, then replays
+
+### Dependency Examples
+
+All four patterns below reduce to the same `dependentOn: DependencyGroup[]` shape — an array of groups ANDed together, each group internally an OR/threshold over `count`. 1 and 3 are live in the codebase today; 2 and 4 are supported but not yet used by any shipped upgrade.
+
+1. **Depends on one upgrade** — a single group, one id, default `count: 1`.
+   ```ts
+   // abilities/double_dash.ts
+   dependentOn: [{ ids: ["dash_ability"] }],
+   ```
+   Refused by `canApply` until `dash_ability` is owned.
+
+2. **Depends on upgrade A *and* upgrade B** — two separate groups; every group must be satisfied.
+   ```ts
+   // illustrative — no shipped upgrade needs this yet
+   dependentOn: [
+     { ids: ["dash_ability"] },
+     { ids: ["explosive_bullets"] },
+   ],
+   ```
+   Both must be owned — owning only `dash_ability` still leaves the second group `[{ ids: ["explosive_bullets"] }]` unmet.
+
+3. **Depends on upgrade A *or* upgrade B** — one group, multiple ids, default `count: 1` (any single id in the list satisfies it).
+   ```ts
+   // stat_modifiers/explosion_damage_1.ts
+   dependentOn: [{ ids: ["explosive_bullets", "explosion_on_kill"] }],
+   ```
+   Owning either `explosive_bullets` (the variant) or `explosion_on_kill` (the effect) is enough — either explosion source unlocks the follow-up damage upgrade.
+
+4. **Depends on N stacks of an upgrade** — an id can be `{ id, minStacks }` instead of a bare string.
+   ```ts
+   // illustrative — no shipped upgrade needs this yet
+   dependentOn: [{ ids: [{ id: "damage_1", minStacks: 3 }] }],
+   ```
+   `canMeetDependencies` checks `getStackCount('damage_1') >= 3` rather than plain ownership.
+
+These compose: a group's `count` generalizes case 3 to "K of N" (not just "any one"), and groups AND together, so `[{ ids: ["a", "b", "c"], count: 2 }, { ids: [{ id: "d", minStacks: 5 }] }]` reads as "(2 of a/b/c) AND (5+ stacks of d)".
 
 ### Purchase Flow
 

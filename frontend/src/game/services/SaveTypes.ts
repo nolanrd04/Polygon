@@ -13,9 +13,9 @@
 // ============================================================================
 // CATEGORY 1: GAME STATISTICS (Current Run)
 // ============================================================================
-// - Saved: On wave completion (NOT mid-wave)
+// - Written server-side by wave_service.complete_wave() on validated wave
+//   completion or death (see backend/app/services/wave_service.py)
 // - Updated after death: NO (frozen at death moment)
-// - Backend endpoint: POST /api/saves/game-stats
 // ============================================================================
 
 export interface GameStatsData {
@@ -35,9 +35,10 @@ export interface GameStatsDataBackend {
 // ============================================================================
 // CATEGORY 2: POINTS (Persistent Currency)
 // ============================================================================
-// - Saved: On wave completion, upgrade purchase, death
-// - Updated after death: YES (can still earn/spend after death)
-// - Backend endpoint: POST /api/saves/points
+// - Credited server-side: wave-completion bonus + clamped per-kill score, via
+//   wave_service.complete_wave() (normal completion and death)
+// - Debited server-side: /api/waves/select-upgrade, /api/waves/reroll
+// - Updated after death: YES (that final wave's score is still credited)
 // ============================================================================
 
 export interface PointsData {
@@ -51,9 +52,9 @@ export interface PointsDataBackend {
 // ============================================================================
 // CATEGORY 3: UPGRADES (Ordered Purchase History)
 // ============================================================================
-// - Saved: On upgrade purchase
+// - Server-appended on every validated purchase, by
+//   /api/waves/select-upgrade (see backend/app/api/waves.py)
 // - Updated after death: YES (can buy upgrades after death)
-// - Backend endpoint: POST /api/saves/upgrades
 // - CRITICAL: Order must be preserved for correct stat reconstruction
 // ============================================================================
 
@@ -80,8 +81,8 @@ export interface UpgradesSaveDataBackend {
 // ============================================================================
 // CATEGORY 4: DEATH FROZEN STATE (Immutable on Death)
 // ============================================================================
-// - Saved: Once on player death (never updated after)
-// - Backend endpoint: POST /api/saves/death-state
+// - Set once server-side, from wave_service.complete_wave(is_death=True)'s
+//   own computed totals (not trusted from the client)
 // - Purpose: Prevent exploit of quitting after death to preserve progress
 // ============================================================================
 
@@ -104,9 +105,10 @@ export interface DeathFrozenStateBackend {
 // ============================================================================
 // CATEGORY 5: PLAYER STATE (Computed Stats)
 // ============================================================================
-// - Derived from base stats + applied upgrades
-// - Saved: On wave completion (for quick restore)
-// - Not a separate endpoint - bundled with game-stats
+// - speed/maxHealth/polygonSides/unlockedAttacks are derived server-side from
+//   current_upgrades (wave_service._calculate_player_stats_from_upgrades),
+//   never trusted from the client. health is the one dynamic field, reported
+//   by the client and saved as-is by wave_service.
 // ============================================================================
 
 export interface PlayerStateData {
@@ -162,37 +164,6 @@ export interface FullGameSaveBackend {
   death_state: DeathFrozenStateBackend | null
   can_continue: boolean
   last_saved_at: number
-}
-
-// ============================================================================
-// SAVE OPERATION TYPES
-// ============================================================================
-
-export enum SaveCategory {
-  GAME_STATS = 'game-stats',
-  POINTS = 'points',
-  UPGRADES = 'upgrades',
-  DEATH_STATE = 'death-state',
-  PLAYER_STATE = 'player-state'
-}
-
-export interface SaveResult {
-  success: boolean
-  category: SaveCategory
-  timestamp: number
-  error?: string
-}
-
-// ============================================================================
-// SAVE VALIDATION ERRORS
-// ============================================================================
-
-export enum SaveValidationError {
-  PLAYER_DEAD = 'Cannot update game stats after death',
-  WAVE_ACTIVE = 'Cannot save mid-wave',
-  DEATH_STATE_EXISTS = 'Death state already frozen',
-  NO_AUTH = 'No authentication token',
-  BACKEND_ERROR = 'Backend validation failed'
 }
 
 // ============================================================================

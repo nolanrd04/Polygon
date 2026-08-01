@@ -64,7 +64,12 @@ export default function MainMenu() {
     }
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await axios.post('/api/auth/logout')
+    } catch (error) {
+      console.error('Failed to revoke token on logout:', error)
+    }
     localStorage.removeItem('token')
     setIsLoggedIn(false)
     setHasSavedGame(false)
@@ -200,7 +205,7 @@ export default function MainMenu() {
       </div>
 
       <div className="absolute bottom-8 text-gray-600 text-sm">
-        v0.1.7 - Early Development
+        v0.1.8 - Early Development
       </div>
 
       {showLoadModal && (
