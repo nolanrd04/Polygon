@@ -4,20 +4,19 @@
 - [~] Fixed progression for first 30 waves — Normal.ts hardcodes 1-19; extend through 30
 - [ ] Add difficulties beyond Normal (Difficulty interface is in place in systems/difficulty/)
 - [ ] After wave 30 is complete, start adding bosses to the regular enemy pool
-- [ ] Make upgrade rarity chances dynamic. For exampke it starts only being able to get common, uncommon, and rare, but the chances change depending on wave level.
 
 ## Enemies
 - [ DONE ] Super pentagon — sprints toward player, explodes, leaves behind a fire pool
-- [ ] Super hexagon — still shielded, sprays magic in direction of player, explodes on death
-- [ ] Octogon - Stars 95% opac. Moves towards the player and through walls. Stays 95% opac until within a certain distance, then it will become less opac. Within 15 units it will be 0% opac.
+- [ DONE ] Super hexagon
+- [ ] Super Octogon
 - [ ] Hexagon: add visual indication for shield health
 
 ## Bosses
-- [x] First boss phase 1
-- [ ] First boss phase 2: dashes → idle → fixed-direction rapid-fire bullet storm → dashes → random teleport → death laser → idle
+- [ DONE ] First boss phase 1
+- [ DONE ] First boss phase 2: dashes → idle → fixed-direction rapid-fire bullet storm → dashes → random teleport 
 
 ## Attacks
-- [x] Flame / laser / spinner / zapper implementations
+- [ ] Flame / laser / spinner / zapper implementations
 
 ## Sounds
 - [~] Ability sound effects (dash, shield, etc)
@@ -26,21 +25,29 @@
 - [ ] Boss sound effects
 
 ## Curses
-- [ ] Similar to upgrades but give a negative effect
+- [ BASE CLASS IMPLEMENTED] Similar to upgrades but give a negative effect
+- [ ] Poison: temporarily slows the player and deals damage per second over time. Time and damage dependent on rarity.
+- [ ] Frozen: Disables all movement and attacking for 3 seconds. Damage taken reduced by 99%.
+- [ ] Coldness: temporarily slows the player over time. Slowness amount and time dependent on rarity.
+- [ ] Burning: does damage over time. Damage and time dependent on rarity.
+- [ ] Bleeding: prevent healing for a time. Time dependent on rarity.
 
 ## Upgrades/Bundles
-- [x] Make enemies drop upgrade bundles
-- [x] Upgrade bundles give random upgrades of the rarity with a chance to give a curse
+- [ DONE ] Make enemies drop upgrade bundles
+- [ DONE ] Upgrade bundles give random upgrades of the rarity with a chance to give a curse
+- [ ] New "buffs" which are temporary upgrades to the player
+- [ ] "Largenes": reduces damage taken but reduced movement speed and increases size. All values dependent on rarity. Cannot roll from bundles.
+- [ ] "Lightweight: reduced size and increases speed but increases the damage taken. All values dependent on rarity. Cannot roll from bundles.
 
 ## Visuals
 - [ ] Implement 'dusts' (see terraria)
 - [ ] Ensure settings actually work
 - [ ] Add color customization
+- [ ] Lighting
 
 ## Bullet upgrades (future)
-- [ ] Maybe make homing bullets do 50% less damage each time it pierces an enemy?
 - [ ] Napalm (exploding bullets)
-- [x] Buckshot bullet variante.
+- [ DONE ] Buckshot bullet variante.
 
 ## MOBILE
 - [ ] Remove Fullscreen button
@@ -53,8 +60,8 @@
 - [~] Backend `PlayerStatsRepository.get_leaderboard` exists; frontend UI not built
 
 ## Per-game database tracking
-- [~] PlayerStats + GameSave + ordered upgrade_history are live
-- [ ] Still missing per-game record: game id, full upgrade order for that run, waves survived, enemies killed, points earned, total time spent
+- [~] PlayerStats (lifetime totals) + GameSave (current run: wave, kills, points, time_survived, ordered upgrade_history, death_state) are live
+- [ ] GameSave is one-per-user and gets deleted on new game start — still no persistent per-game history collection (game id, full upgrade order, waves survived, enemies killed, points earned, total time spent, per completed run). Data GameSave already tracks would just need archiving into a new collection on death instead of being overwritten.
 
 # Anti-cheat
 - Damage validation (`_validate_damage` in wave_service.py) currently assumes bullet attack type only. When flame/laser/spinner/zapper are implemented, each will need its own damage profile accounted for in `calculate_minimum_damage_required`.
@@ -62,53 +69,15 @@
 # Security
 
 ## Critical
-1. Hardcoded JWT Secret Key (backend/app/core/config.py:11)
-
-   secret_key: str = "your-secret-key-change-in-production"
-   Impact: Anyone can forge JWT tokens and impersonate users
-   Fix:
-   # In .env file:
-   JWT_SECRET_KEY=<generate-with: openssl rand -hex 32>
-
-   # In config.py:
-   secret_key: str = Field(..., env="JWT_SECRET_KEY")
-
-2. No MongoDB Authentication (backend/.env:1)
-
-   MONGODB_URL=mongodb://localhost:27017
-   Impact: Database accessible without credentials
-   Fix: Enable MongoDB auth in docker-compose.yml and use authenticated connection string
-
-3. Debug Mode Enabled (backend/app/core/config.py:16)
-
-   debug: bool = True
-   Impact: Verbose error messages leak system information
-   Fix: Set debug: bool = False in production
-
-4. No Rate Limiting
-
-   Impact: Vulnerable to brute-force login attacks
-   Fix: Add slowapi or similar rate limiting middleware
+1. [ DONE ] Hardcoded JWT Secret Key — `config.py` now requires `SECRET_KEY` from env, validates it's ≥32 chars, no insecure default. `.env` has a real generated secret.
+2. [ ] No MongoDB Authentication (backend/docker-compose.yml, backend/.env) — still `mongodb://localhost:27017` with no credentials
+3. [ DONE ] Debug Mode — `debug` flag in config.py is dead code (nothing reads `settings.debug`), and `FastAPI()` in main.py is never constructed with `debug=True`, so the verbose-error risk never applied. Flag can be deleted as cleanup.
+4. [ DONE ] No Rate Limiting — slowapi wired up (`app/core/limiter.py` + `main.py`): login 10/min, register 5/hour, check-username 20/min, all per-IP
 
 ## High priority
-5. 24-hour JWT expiry (config.py:13) — too long, use 1-2 hours + refresh tokens
-6. CORS wildcards (main.py:19-20) — restrict methods and headers in production
-7. Weak password policy — only 6 characters minimum, no complexity requirements
-8. No HTTPS enforcement — should redirect HTTP to HTTPS in production
-9. Missing security headers — no CSP, HSTS, X-Frame-Options, etc.
-10. No account lockout — unlimited login attempts possible
-
-## Security score summary
-
-| Category             | Score | Notes                                           |
-|----------------------|-------|-------------------------------------------------|
-| SQL/NoSQL Injection  | 9/10  | Excellent - parameterized queries throughout    |
-| XSS Protection       | 8/10  | Good - React auto-escaping, no unsafe patterns  |
-| Authentication       | 3/10  | CRITICAL - Hardcoded secret, weak policy        |
-| Anti-Cheat           | 10/10 | Outstanding - multi-layered validation          |
-| Input Validation     | 9/10  | Excellent - Pydantic models with validators     |
-| Session Management   | 5/10  | Works but lacks refresh tokens, too long expiry |
-| Database Security    | 4/10  | CRITICAL - No authentication enabled            |
-| Production Hardening | 2/10  | CRITICAL - Debug mode, missing headers          |
-
-Overall Score: 6.25/10
+5. [ INTENDED FOR NOW ] 24-hour JWT expiry (config.py:14) — still 1440 min, no refresh-token flow. Partial mitigation: logout now revokes tokens via `TokenBlacklistRepository`.
+6. [~] CORS — origins now restricted via `CORS_ORIGINS` env var (main.py:38, defaults to localhost:3000 only), no longer `*`. `allow_methods`/`allow_headers` are still `["*"]`.
+7. [ DONE ] Weak password policy — register now requires min 8 chars + at least one letter and one digit (`auth.py` `UserRegisterRequest.validate_password_strength`)
+8. [ ] No HTTPS enforcement — should redirect HTTP to HTTPS in production
+9. [ ] Missing security headers — no CSP, HSTS, X-Frame-Options, etc.
+10. [~] No true account lockout, but login is now rate-limited to 10/min per IP (slowapi) as partial brute-force mitigation

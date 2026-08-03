@@ -49,13 +49,12 @@ const SPAWN_WEIGHTS: Record<number, EnemySpawnWeight[]> = {
 }
 
 const FALLBACK_WEIGHTS: EnemySpawnWeight[] = [
-  { type: 'square', weight: 5 },
   { type: 'super_triangle', weight: 10 },
   { type: 'pentagon', weight: 10 },
   { type: 'hexagon', weight: 10 },
   { type: 'diamond', weight: 20 },
   { type: 'octogon', weight: 15 },
-  { type: 'super_square', weight: 10 },
+  { type: 'super_square', weight: 15 },
   { type: 'super_pentagon', weight: 10 },
   { type: 'super_hexagon', weight: 10 }
 ]
