@@ -229,6 +229,135 @@ export class TextureGenerator {
 
   /**
    * ========================================================================
+   * IRREGULAR POLYGON TEXTURE GENERATION
+   * ========================================================================
+   *
+   * Generates a polygon whose vertices are placed on a "fan" around the
+   * center: `angles[i]` is the central angle (in degrees) swept between
+   * vertex i and vertex i+1, and `vertexRadii[i]` is vertex i's distance from
+   * the center as a multiple of `radius`.
+   *
+   * WHY THIS PARAMETERISATION IS ALWAYS VALID:
+   * The central angles of the fan triangles must sum to 360°, so the supplied
+   * `angles` array is normalised to that total (any proportional set of
+   * numbers works — [1, 1, 2] is the same shape as [90, 90, 180]). Because
+   * every vertex is anchored to the center, the outline always closes, no
+   * matter what radii are used. Side lengths then follow from the law of
+   * cosines and never need to be specified directly:
+   *
+   *   L_i = sqrt(r_i² + r_i+1² - 2·r_i·r_i+1·cos(θ_i))
+   *
+   * CACHING NOTE: the cache key contains the full angle/radius arrays, so
+   * randomising these per-instance defeats the cache. Pick a handful of fixed
+   * shapes and vary tint/scale/rotation instead.
+   *
+   * @returns Texture key for use with scene.add.sprite()
+   */
+  static getOrCreateIrregularPolygon(
+    scene: Phaser.Scene,
+    options: {
+      angles: number[]          // Central angle per side in degrees (normalized to sum to 360)
+      radius: number            // Base radius; multiplied by each entry of vertexRadii
+      vertexRadii?: number[]    // Per-vertex radius multipliers (default: all 1 = regular)
+      fillColor?: number        // Fill color (default: 0xffffff white)
+      fillAlpha?: number        // Fill opacity 0-1 (default: 1.0)
+      strokeWidth?: number      // Stroke width in pixels (default: 0, no stroke)
+      strokeColor?: number      // Stroke color (default: 0xffffff white)
+      strokeAlpha?: number      // Stroke opacity 0-1 (default: 1.0)
+      rotation?: number         // Initial rotation offset in radians (default: -Math.PI/2, pointing up)
+    }
+  ): string {
+    const {
+      angles,
+      radius,
+      fillColor = 0xffffff,
+      fillAlpha = 1.0,
+      strokeWidth = 0,
+      strokeColor = 0xffffff,
+      strokeAlpha = 1.0,
+      rotation = -Math.PI / 2
+    } = options
+
+    const sides = angles.length
+
+    // Fewer than 3 vertices can't form a polygon - fall back to a circle
+    if (sides < 3) {
+      return this.getOrCreateCircle(scene, { radius, fillColor, fillAlpha, strokeWidth, strokeColor, strokeAlpha })
+    }
+
+    // Normalize the central angles so they sum to exactly 360 degrees
+    const angleTotal = angles.reduce((sum, a) => sum + Math.max(0, a), 0)
+    const normalized = angleTotal > 0
+      ? angles.map(a => (Math.max(0, a) / angleTotal) * 360)
+      : Array(sides).fill(360 / sides)
+
+    // Per-vertex radius multipliers, padded/truncated to match the vertex count
+    const radii = Array.from({ length: sides }, (_, i) => options.vertexRadii?.[i] ?? 1)
+
+    const angleKey = normalized.map(a => a.toFixed(1)).join('-')
+    const radiusKey = radii.map(r => r.toFixed(2)).join('-')
+    const key = `ipoly_${radius}_a${angleKey}_v${radiusKey}_f${fillColor.toString(16)}_${fillAlpha}_s${strokeWidth}_${strokeColor.toString(16)}_${strokeAlpha}_r${rotation.toFixed(2)}`
+
+    // Return if already exists
+    if (scene.textures.exists(key)) return key
+
+    // Scale all dimensions for high-resolution texture
+    const scaledRadius = radius * this.TEXTURE_SCALE
+    const scaledStrokeWidth = strokeWidth * this.TEXTURE_SCALE
+
+    // Canvas must fit the furthest vertex, not just the base radius
+    const maxRadiusMultiplier = Math.max(...radii, 0.0001)
+    const padding = scaledStrokeWidth + 10 * this.TEXTURE_SCALE
+    const size = Math.ceil(scaledRadius * maxRadiusMultiplier * 2 + padding * 2)
+    const centerX = size / 2
+    const centerY = size / 2
+
+    // Walk the fan: each vertex sits at the running sum of the preceding angles
+    const vertices: Phaser.Math.Vector2[] = []
+    let angle = rotation
+    for (let i = 0; i < sides; i++) {
+      const vertexRadius = scaledRadius * radii[i]
+      vertices.push(
+        new Phaser.Math.Vector2(
+          centerX + Math.cos(angle) * vertexRadius,
+          centerY + Math.sin(angle) * vertexRadius
+        )
+      )
+      angle += Phaser.Math.DegToRad(normalized[i])
+    }
+
+    const graphics = scene.add.graphics()
+
+    graphics.fillStyle(fillColor, fillAlpha)
+    if (strokeWidth > 0) {
+      graphics.lineStyle(scaledStrokeWidth, strokeColor, strokeAlpha)
+    }
+
+    graphics.beginPath()
+    graphics.moveTo(vertices[0].x, vertices[0].y)
+    for (let i = 1; i < vertices.length; i++) {
+      graphics.lineTo(vertices[i].x, vertices[i].y)
+    }
+    graphics.closePath()
+    graphics.fillPath()
+    if (strokeWidth > 0) {
+      graphics.strokePath()
+    }
+
+    // Render to texture
+    const renderTexture = scene.add.renderTexture(0, 0, size, size)
+    renderTexture.draw(graphics, 0, 0)
+    renderTexture.saveTexture(key)
+
+    // Clean up
+    renderTexture.destroy()
+    graphics.destroy()
+
+    return key
+  }
+
+  /**
+   * ========================================================================
    * DIAMOND (RHOMBUS) TEXTURE GENERATION
    * ========================================================================
    */

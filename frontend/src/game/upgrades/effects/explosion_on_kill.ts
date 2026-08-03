@@ -12,7 +12,7 @@ export const ExplosionOnKillDef: UpgradeDef = {
   upgradeType: UpgradeTypeID.Effect,
   cost: 20,
   effect: "explode_on_kill",
-  effectValue: 20,
+  effectValue: 10,
   stackable: false,
 }
 

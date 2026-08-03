@@ -10,8 +10,20 @@ interface UpdateNote {
 // Add new updates at the top of this array
 const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: 'v0.1.9',
+    date: '2026-08-03',
+    title: 'Added new Particle System for visual effects.',
+    changes: [
+      'Added new particle system for visual effects.',
+      'Added four examples in the base class.',
+      'Added new particle effects for bullets and explosions.',
+      'Added particles for enemy deaths.',
+      'Changes explosion on kill base damage from 20 to 10.',
+    ]
+  },
+  {
     version: 'v0.1.8',
-    date: '2026-08-15',
+    date: '2026-07-15',
     title: 'Huge server refactor.',
     changes: [
       'Enemies spawned from a split (square from octogon) do not drop bundles or points.',
@@ -29,7 +41,7 @@ const UPDATE_NOTES: UpdateNote[] = [
   },
   {
     version: 'v0.1.7',
-    date: '2026-07-28',
+    date: '2026-06-28',
     title: 'Added Super Hexagon enemy',
     changes: [
       'Added a new enemy that has a shield and shoots projectiles.',
@@ -38,7 +50,7 @@ const UPDATE_NOTES: UpdateNote[] = [
   },
   {
     version: 'v0.1.6',
-    date: '2026-07-15',
+    date: '2026-06-15',
     title: 'Added Buckshot Bullets upgrade',
     changes: [
       'Added a new bullet variant that acts like a shotgun.',
@@ -48,7 +60,7 @@ const UPDATE_NOTES: UpdateNote[] = [
   },
   {
     version: 'v0.1.5',
-    date: '2026-07-02',
+    date: '2026-06-02',
     title: 'Enemy changes',
     changes: [
       'Changed how enemies scale throughout waves.',
@@ -57,7 +69,7 @@ const UPDATE_NOTES: UpdateNote[] = [
   },
   {
     version: 'v0.1.4',
-    date: '2026-07-01',
+    date: '2026-06-01',
     title: 'minor enemy and upgrade changes',
     changes: [
       'Added more curses.',
@@ -69,7 +81,7 @@ const UPDATE_NOTES: UpdateNote[] = [
   },
   {
     version: 'v0.1.3',
-    date: '2026-07-01',
+    date: '2026-06-01',
     title: 'More Boss Drops',
     changes: [
       'Boss drops multuple bundles on death',
@@ -78,7 +90,7 @@ const UPDATE_NOTES: UpdateNote[] = [
   },
   {
     version: 'v0.1.2',
-    date: '2026-06-29',
+    date: '2026-05-29',
     title: 'Added Update Notes Page',
     changes: [
       'Added a new page to view update notes and changelog',
@@ -87,7 +99,7 @@ const UPDATE_NOTES: UpdateNote[] = [
   },
   {
     version: 'v0.1.1',
-    date: '2026-06-29',
+    date: '2026-05-29',
     title: 'Drop Bundles & Audio Polish',
     changes: [
       'Enemies now drop upgrade bundles on death',
@@ -98,7 +110,7 @@ const UPDATE_NOTES: UpdateNote[] = [
   },
   {
     version: 'v0.1.0',
-    date: '2026-06-01',
+    date: '2026-05-01',
     title: 'Initial Release',
     changes: [
       'Core gameplay loop: survive waves of polygon enemies',

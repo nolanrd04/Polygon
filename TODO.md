@@ -16,7 +16,12 @@
 - [ DONE ] First boss phase 2: dashes → idle → fixed-direction rapid-fire bullet storm → dashes → random teleport 
 
 ## Attacks
-- [ ] Flame / laser / spinner / zapper implementations
+- [ ] Laser
+- [ ] FLamer
+- [ ] Zapper
+- [ ] Spinner
+- [ ] Healer
+- [ ] Controller
 
 ## Sounds
 - [ DONE ] Ability sound effects (dash, shield, etc)
@@ -25,7 +30,7 @@
 - [ DONE ] Boss sound effects
 
 ## Curses
-- [ BASE CLASS IMPLEMENTED] Similar to upgrades but give a negative effect
+- [ BASE CLASS IMPLEMENTED ] Similar to upgrades but give a negative effect
 - [ ] Poison: temporarily slows the player and deals damage per second over time. Time and damage dependent on rarity.
 - [ ] Frozen: Disables all movement and attacking for 3 seconds. Damage taken reduced by 99%.
 - [ ] Coldness: temporarily slows the player over time. Slowness amount and time dependent on rarity.
@@ -42,7 +47,7 @@
 ## Visuals
 - [ ] Implement 'dusts' (see terraria)
 - [ ] Ensure settings actually work
-- [ ] Add color customization
+- [ ] Add color customization for the player
 - [ ] Lighting
 
 ## Bullet upgrades (future)

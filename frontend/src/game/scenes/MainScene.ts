@@ -9,6 +9,7 @@ import { GameManager } from '../core/GameManager'
 import { GAME_HEIGHT, WORLD_WIDTH, WORLD_HEIGHT } from '../core/GameConfig'
 import { AttackType } from '../data/attackTypes'
 import { Projectile } from '../entities/projectiles/Projectile'
+import { Particle } from '../entities/particles/Particle'
 import { UpgradeSystem, UpgradeEffectSystem } from '../systems/upgrades'
 import { TextureGenerator } from '../utils/TextureGenerator'
 import { waveValidation } from '../services/WaveValidation'
@@ -50,6 +51,9 @@ export class MainScene extends Phaser.Scene {
 
     // Generate common sprite textures (MUST be done before creating entities)
     TextureGenerator.generateCommonTextures(this)
+
+    // Bind the particle pool to this scene (MUST be after texture generation)
+    Particle.Initialize(this)
 
     // Initialize debug graphics (such as hitbox visuals)
     this.debugGraphics = this.add.graphics()
@@ -296,6 +300,7 @@ export class MainScene extends Phaser.Scene {
     // Clear projectiles at end of wave
     this.events.on('clear-projectiles', () => {
       this.player.clearProjectiles()
+      Particle.Clear()
     })
 
     // Handle explosion damage
@@ -580,6 +585,9 @@ export class MainScene extends Phaser.Scene {
         bundle._update()
       }
     }
+
+    // Advance visual particles (pooled; no physics or collision)
+    Particle.UpdateAll(delta)
 
     // Update managers
     this.enemyManager.update(this.player.x, this.player.y)

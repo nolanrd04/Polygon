@@ -33,7 +33,7 @@ Backend API  (see BACKEND_CONNECTION.md)
 | [PLAYER.md](PLAYER.md) | Player class – fields, methods, abilities |
 | [ENEMY.md](ENEMY.md) | Enemy base class and all enemy types |
 | [PROJECTILE.md](PROJECTILE.md) | Projectile base class and all projectile types |
-| [PARTICLE.md](PARTICLE.md) | Particle system (stub – not yet implemented) |
+| [PARTICLE.md](PARTICLE.md) | Particle system — pooled Terraria-style "dusts", shapes, spawn API |
 | [UPGRADES.md](UPGRADES.md) | The upgrade architecture — def/instance split, ledger, hooks, how to add one |
 | [CURSES.md](CURSES.md) | Curses (`curse: true` upgrades) and the current 15-curse list |
 | [UPGRADE_BUNDLE.md](UPGRADE_BUNDLE.md) | DroppedUpgradeBundle — mid-combat pickup, roll logic, online vs. offline |

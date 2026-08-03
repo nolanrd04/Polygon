@@ -66,6 +66,30 @@ Vertices are calculated from `angleStep × i + rotation`, then drawn as a filled
 
 ---
 
+### `getOrCreateIrregularPolygon(scene, options)`
+
+Generates a polygon with per-vertex angles and distances. Used by `Particle` for custom shapes (see [PARTICLE.md](PARTICLE.md)).
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `angles` | required | Central angle per side, in degrees. Normalized to sum to 360 |
+| `radius` | required | Base circumradius in pixels; multiplied by each `vertexRadii` entry |
+| `vertexRadii` | all `1` | Per-vertex radius multipliers |
+| `fillColor` | `0xffffff` | Fill color |
+| `fillAlpha` | `1.0` | Fill opacity |
+| `strokeWidth` | `0` | Stroke width |
+| `strokeColor` | `0xffffff` | Stroke color |
+| `strokeAlpha` | `1.0` | Stroke opacity |
+| `rotation` | `-Math.PI/2` | Initial vertex rotation offset (default points upward) |
+
+Vertices are placed on a fan around the center: vertex *i* sits at the running sum of the preceding angles, at distance `radius × vertexRadii[i]`. Because the angles are normalized to 360° and every vertex is anchored to the center, the outline always closes — any combination of angles and radii produces a valid shape. Side lengths follow from the law of cosines rather than being specified directly.
+
+Falls back to `getOrCreateCircle` when fewer than 3 angles are supplied. Canvas size accounts for the largest `vertexRadii` entry, so radii above 1 are not clipped.
+
+**Caching:** the key contains the full normalized angle and radius arrays, so randomizing them per call defeats the cache. Use a few fixed shapes and vary tint/scale/rotation instead.
+
+---
+
 ### `getOrCreateDiamond(scene, options)`
 
 Generates a rhombus (diamond) texture. Uses four hardcoded vertices: top, right, bottom, left. Width is controlled by `horizontalScale` (default `0.6`), making it taller than wide.
@@ -109,6 +133,11 @@ circle_{radius}_f{fillColorHex}_{fillAlpha}_s{strokeWidth}_{strokeColorHex}_{str
 ### Polygon
 ```
 poly_{sides}_{radius}_f{fillColorHex}_{fillAlpha}_s{strokeWidth}_{strokeColorHex}_{strokeAlpha}_r{rotation}
+```
+
+### Irregular polygon
+```
+ipoly_{radius}_a{angle-angle-...}_v{radius-radius-...}_f{fillColorHex}_{fillAlpha}_s{strokeWidth}_{strokeColorHex}_{strokeAlpha}_r{rotation}
 ```
 
 ### Diamond

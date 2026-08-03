@@ -3,6 +3,8 @@ import { DEV_SETTINGS } from '../../core/GameConfig'
 import { TextureGenerator } from '../../utils/TextureGenerator'
 import { EventBus } from '../../core/EventBus'
 import { getDefaultVolume } from '../../core/AudioRegistry'
+import { Particle } from '../particles/Particle'
+import { PolygonParticle } from '../particles/PolygonParticle'
 
 /**
  * Base class for all enemies.
@@ -314,6 +316,18 @@ export abstract class Enemy {
     }
     this.scene.sound.play(this.deathSound, { volume: getDefaultVolume(this.deathSound) })
     //
+
+    for (let i = 0; i < Phaser.Math.Between(this.sides, this.sides + 2); i++) {
+      let speed = new Phaser.Math.Vector2(Phaser.Math.Between(150, 250), 0)
+      speed.rotate(Phaser.Math.FloatBetween(0, Math.PI * 2))
+
+      Particle.NewParticle(PolygonParticle, this.x, this.y, speed.x, speed.y, {
+        color: this.color,
+        sides: Phaser.Math.Between(3, this.sides),
+        scale: (this.radius / 20) * Phaser.Math.FloatBetween(0.4, 0.6),
+      })
+    }
+
   }
 
   /**

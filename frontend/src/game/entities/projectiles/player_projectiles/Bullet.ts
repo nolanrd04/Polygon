@@ -4,6 +4,8 @@ import { UpgradeSystem, UpgradeModifierSystem } from '../../../systems/upgrades'
 import { UpgradeTargetID, UpgradeStatID, SoundID } from '../../../data/ID'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
 import { getDefaultVolume } from '../../../core/AudioRegistry'
+import { Particle } from '../../particles/Particle'
+import { SparkParticle, StreakParticle, SmokeParticle } from '../../particles/BasicParticles'
 
 /**
  * Standard bullet projectile.
@@ -11,6 +13,7 @@ import { getDefaultVolume } from '../../../core/AudioRegistry'
  */
 export class Bullet extends Projectile {
 
+    private particleTimer: number = 0
   SetDefaults(): void {
     this.damage = 10
     this.speed = 400
@@ -19,10 +22,26 @@ export class Bullet extends Projectile {
     this.color = COLORS.bullet
     this.timeLeft = 3000 // milliseconds
     this.knockback = 7 // Push enemies back on hit
-    this.spawnSound = 'bullet_shot'
+    this.spawnSound = SoundID.BulletShot
     this.cooldown = 300
   }
 
+  OnHitNPC(_enemy: any): boolean {
+
+    for (let i = 0; i < 3; i++) {
+
+      Particle.NewParticle(SparkParticle, this.positionX, this.positionY, 
+        this.velocityX * Phaser.Math.Between(0.1, 0.2), 
+        this.velocityY * Phaser.Math.Between(0.1, 0.2), 
+      {
+        color: this.color,
+        timeLeft: 300,
+        scale: 0.75,
+        radius: 1.5
+      })
+    }
+    return true
+  }
   OnObstacleCollide(_obstacle?: Phaser.GameObjects.GameObject): void 
   {
     // all sound calls should have this check to prevent "sound stacking"
@@ -33,6 +52,60 @@ export class Bullet extends Projectile {
     }
     this.scene.sound.play(SoundID.BulletCollide, { volume: getDefaultVolume(SoundID.BulletCollide) })
     //
+
+    // Impact scatter. randomAngle draws each angle independently instead of
+    // giving every spark an evenly-spaced slot, so the spray clumps unevenly
+    // like a real ricochet rather than reading as a radial starburst.
+    Particle.Burst(SparkParticle, this.positionX, this.positionY, Phaser.Math.Between(3, 5), {
+      randomAngle: true,
+      speed: 120,
+      speedVariance: 0.2,
+      color: this.color,
+      timeLeft: 300,
+      scale: 1,
+      radius: 1.5
+    })
+  }
+
+  AI(): void {
+    
+    // Simple sparkle:
+    if (this.particleTimer % 10 === 0) {
+      Particle.NewParticle(SparkParticle, this.positionX, this.positionY, 
+        this.velocityX * Phaser.Math.Between(0.1, 0.2), 
+        this.velocityY * Phaser.Math.Between(0.1, 0.2), 
+      {
+        color: this.color,
+        timeLeft: 300,
+        scale: 0.5,
+        radius: 1.5
+      })
+    }
+
+    // Streak trail: one every 4th frame, aimed along the bullet's heading
+    /*
+    if (this.particleTimer % 4 === 0) {
+      const streak = Particle.NewParticlePerfect(StreakParticle, this.positionX, this.positionY, 0, 0, {
+        timeLeft: 300,
+        color: this.color,
+        rotation: this.rotation
+      })
+      // 12px long, 3px thick. Pool returns null when full, so null-check.
+      if (streak) streak.SetStreak(12, 2)
+    }
+    */
+
+      // Shard trail: one every 15th frame, random rotation
+      /*
+    if (this.particleTimer % 15 === 0) {
+      Particle.NewParticlePerfect(ShardParticle, this.positionX, this.positionY, 0, 0, {
+        timeLeft: 300,
+        color: this.color,
+        rotation: this.rotation
+      })
+    }
+      */
+    this.particleTimer++
   }
 
 }
@@ -65,6 +138,8 @@ export class HomingBullet extends Projectile {
   // Number of enemies already hit this bullet's lifetime (pierce). Reduction compounds per hit past the first.
   private hitCount: number = 0
 
+  private particleTimer: number = 0
+
   // for ricochet detection
 
   SetDefaults(): void {
@@ -76,7 +151,7 @@ export class HomingBullet extends Projectile {
     this.color = 0x00ff00
     this.timeLeft = 3000 // Despawn after 3 seconds
     this.knockback = 1 // Push enemies back on hit
-    this.spawnSound = 'bullet_shot'
+    this.spawnSound = SoundID.BulletShot
     this.cooldown = 300
   }
 
@@ -145,8 +220,24 @@ export class HomingBullet extends Projectile {
         this.velocityX = Math.cos(newAngle) * this.speed
         this.velocityY = Math.sin(newAngle) * this.speed
         this.container.rotation = newAngle
+        this.rotation = newAngle
       }
     }
+
+    if (this.particleTimer % 16 === 0) {
+      const streak = Particle.NewParticlePerfect(StreakParticle, this.positionX, this.positionY, 0, 0, {
+        timeLeft: 300,
+        color: this.color,
+        rotation: this.rotation
+      })
+      // 12px long, 3px thick. Pool returns null when full, so null-check.
+      if (streak) 
+      {
+        streak.SetStreak(12, 1)
+      }
+    }
+
+    this.particleTimer++
   }
 
   private getDamageMultiplier(): number {
@@ -175,6 +266,17 @@ export class HomingBullet extends Projectile {
     this.damage = this.initialDamage * pierceReduction * this.getDamageMultiplier()
     this.hitCount++
     console.log('Damage after hit:', this.damage, 'Hit count:', this.hitCount, 'Pierce reduction factor:', pierceReduction)
+
+
+    Particle.Burst(SparkParticle, this.positionX, this.positionY, Phaser.Math.Between(3, 5), {
+      randomAngle: true,
+      speed: 120,
+      speedVariance: 0.2,
+      color: this.color,
+      timeLeft: 300,
+      scale: 0.75,
+      radius: 1.5
+    })
     return true
   }
 
@@ -188,6 +290,16 @@ export class HomingBullet extends Projectile {
     }
     this.scene.sound.play(SoundID.BulletCollide, { volume: getDefaultVolume(SoundID.BulletCollide) })
     //
+
+    Particle.Burst(SparkParticle, this.positionX, this.positionY, Phaser.Math.Between(3, 5), {
+      randomAngle: true,
+      speed: 120,
+      speedVariance: 0.2,
+      color: this.color,
+      timeLeft: 300,
+      scale: 1,
+      radius: 1.5
+    })
   }
 
 }
@@ -197,6 +309,7 @@ export class HomingBullet extends Projectile {
  * BulletExplosion at the impact point for AOE damage.
  */
 export class ExplosiveBullet extends Projectile {
+  private particleTimer: number = 0
   SetDefaults(): void {
     this.damage = 10
     this.speed = 350
@@ -207,6 +320,34 @@ export class ExplosiveBullet extends Projectile {
     this.spawnSound = 'bullet_shot'
     this.hitEnemyCooldown = 250
     this.cooldown = 300
+  }
+
+  AI(): void {
+    if (this.particleTimer % 8 === 0) {
+      let color: number = this.color
+      let colorNum = Phaser.Math.Between(0, 2)
+      if (colorNum === 0)
+      {
+        color = 0xffff00
+      }
+
+      Particle.NewParticle(SparkParticle, this.positionX + Phaser.Math.Between(-5, 5), this.positionY + Phaser.Math.Between(-5, 5), 0, 0, {
+        timeLeft: 300,
+        color: color,
+        rotation: this.rotation,
+        radius: 1.5,
+      })
+    }
+    if (this.particleTimer % 16 === 0) {
+      Particle.NewParticle(SmokeParticle, this.positionX, this.positionY, this.velocityX * 0.5, this.velocityY * 0.5, {
+        timeLeft: 400,
+        color: 0x555555,
+        rotation: this.rotation,
+        radius: 5.5,
+      })
+    }
+
+    this.particleTimer++
   }
 
   private spawnExplosion(): void {
@@ -249,6 +390,18 @@ export class BulletExplosion extends Projectile {
     super()
     this.baseDamage = base.damage
     this.baseRadius = base.radius
+  }
+
+  OnSpawn(): void {
+    Particle.Burst(SparkParticle, this.positionX, this.positionY, Phaser.Math.Between(10, 15), {
+      randomAngle: true,
+      speed: 240,
+      speedVariance: 0.2,
+      color: this.color,
+      timeLeft: 300,
+      scale: 0.75,
+      radius: Phaser.Math.Between(1.5, 3)
+    })
   }
 
   SetDefaults(): void {
