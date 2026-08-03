@@ -19,10 +19,10 @@
 - [ ] Flame / laser / spinner / zapper implementations
 
 ## Sounds
-- [~] Ability sound effects (dash, shield, etc)
-- [ ] Special attack sound effects
-- [ ] Enemy attack sound effects
-- [ ] Boss sound effects
+- [ DONE ] Ability sound effects (dash, shield, etc)
+- [ DONE ] Special attack sound effects
+- [ DONE ] Enemy attack sound effects
+- [ DONE ] Boss sound effects
 
 ## Curses
 - [ BASE CLASS IMPLEMENTED] Similar to upgrades but give a negative effect
