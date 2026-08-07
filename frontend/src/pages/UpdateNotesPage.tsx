@@ -10,6 +10,15 @@ interface UpdateNote {
 // Add new updates at the top of this array
 const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: 'v0.2.0',
+    date: '2026-08-04',
+    title: 'More visual effects and balancing.',
+    changes: [
+      'Added new particle effects for upgrade bundles, player attacks, and enemies.',
+      'Nerfed buckshot bullets (now functioning as intended where each pellet does 30% damage).'
+    ]
+  },
+  {
     version: 'v0.1.9',
     date: '2026-08-03',
     title: 'Added new Particle System for visual effects.',

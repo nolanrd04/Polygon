@@ -5,6 +5,8 @@ import { TrailRenderer } from '../../utils/TrailRenderer'
 import { DodecahedronBullet } from '../projectiles/enemy_projectiles/DodecahedronBullet'
 import { BundleRarity, DifficultyID, SoundID } from '../../data/ID'
 import { getDefaultVolume } from '../../../game/core/AudioRegistry'
+import { Particle, SmokeParticle, PolygonParticle } from '../particles'
+
 
 export class Dodecahedron extends Enemy {
   private invincible: boolean = false
@@ -30,6 +32,8 @@ export class Dodecahedron extends Enemy {
   private phaseStyleDuration: number = 6000 // 6 seconds in milliseconds
 
   // phase one variables
+
+  // dash attack
   private dashing: boolean = false
   private dashDuration: number = 800
   private dashCooldownDuration: number = 350
@@ -40,14 +44,18 @@ export class Dodecahedron extends Enemy {
   private dashCooldownStartTime: number = 0
   private showTrail: boolean = false
 
+  // projectile attack
   private shotBulletCounter: number = 0
   private shotBulletInterval: number = 750 // milliseconds between shots in bullet storm
 
+  // teleport
   private maxTeleportDistance: number = 400
   private minTeleportDistance: number = 200
   private teleportWindUpDuration: number = 500 // milliseconds
   private teleportWindDownDuration: number = 500 // milliseconds
 
+  // visuals
+  private particleTimer: number = 0
 
   SetDefaults(): void {
     this.health = 8000
@@ -101,7 +109,48 @@ export class Dodecahedron extends Enemy {
     }
   }
 
-  AI(_playerX: number, _playerY: number): void {
+  AI(_playerX: number, _playerY: number): void 
+  {
+    // general visuals
+    if (this.particleTimer % 15 == 0)
+    {
+      for(let i = 0; i < Phaser.Math.Between(4, 8); i++)
+      {
+        let type = PolygonParticle
+        if (Phaser.Math.Between(0,1) === 0)
+        {
+          type = SmokeParticle
+        }
+
+        const angle = Phaser.Math.FloatBetween(0, Math.PI * 2)
+        const dist = this.radius * Math.sqrt(Phaser.Math.FloatBetween(0, 1)) * 0.8
+        const offsetX = Math.cos(angle) * dist
+        const offsetY = Math.sin(angle) * dist
+
+        let velX = this.velocityX
+        let velY = this.velocityY
+
+        if (this.dashing)
+        {
+          velX = 0
+          velY = 0
+        }
+
+        Particle.NewParticle(type, 
+          this.x + offsetX, 
+          this.y + offsetY, 
+          velX, 
+          velY,
+          {
+            sides: Phaser.Math.Between(3, 8),
+            radius: Phaser.Math.Between(2.5, 8.5),
+            color: this.color,
+            additive: true
+          }
+        )
+      }
+    }
+
     const now = this.scene.time.now
 
     // spawn animation
@@ -127,6 +176,8 @@ export class Dodecahedron extends Enemy {
     {
 
     }
+
+    this.particleTimer++;
   }
 
   // ************ Phase Methods ************ //

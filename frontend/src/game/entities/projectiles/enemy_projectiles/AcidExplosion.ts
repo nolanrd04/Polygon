@@ -1,11 +1,13 @@
 import { Projectile } from '../Projectile'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
+import { Particle, SmokeParticle, SparkParticle } from '../../particles'
 
 export class AcidExplosion extends Projectile {
   private expansionTime: number = 0
   private maxExpansionTime: number = 200 // milliseconds
   private currentRadius: number = 0
   private maxRadius: number = 40
+  private particleTimer: number = 0
 
   SetDefaults(): void {
     this.damage = 12
@@ -17,6 +19,20 @@ export class AcidExplosion extends Projectile {
     this.hitEnemyCooldown = 100 // Can hit player again after 100ms
     this.canCutTiles = true
   }
+
+  OnSpawn(): void {
+
+        Particle.Burst(SparkParticle, this.positionX, this.positionY, Phaser.Math.Between(8, 12), {
+          randomAngle: true,
+          speed: 200,
+          speedVariance: 0.2,
+          color: this.color,
+          timeLeft: 300,
+          scale: 0.75,
+          radius: Phaser.Math.Between(2.5, 3.5),
+          additive: true,
+        })
+      }
 
   /**
    * Override PreDraw to replace sprite with semi-transparent explosion texture
@@ -65,6 +81,33 @@ export class AcidExplosion extends Projectile {
       this.body.setOffset(-this.currentRadius, -this.currentRadius)
     } else {
       this.currentRadius = this.maxRadius
+    }
+    // incremented before spawning dust because the projectile grows in size first
+    this.particleTimer++
+    let color = this.color
+    if (Phaser.Math.Between(0, 1) === 0) {
+      color = 0xFFFFFF
+    }
+    if (this.particleTimer % 10 === 0) {
+
+      for (let i = 0; i < Phaser.Math.Between(1, 3); i++) {
+
+      const angle = Phaser.Math.FloatBetween(0, Math.PI * 2)
+      const dist = this.size * Math.sqrt(Phaser.Math.FloatBetween(0, 1))
+      const offsetX = Math.cos(angle) * dist
+      const offsetY = Math.sin(angle) * dist
+
+      Particle.NewParticle(SmokeParticle, this.positionX + offsetX, this.positionY + offsetY,
+        0,
+        0,
+        {
+          color: color,
+          timeLeft: 300,
+          scale: 1,
+          radius: Phaser.Math.Between(2.5, 7),
+          additive: true,
+        })
+      }
     }
   }
 

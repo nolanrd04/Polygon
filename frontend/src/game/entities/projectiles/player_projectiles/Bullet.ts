@@ -5,7 +5,7 @@ import { UpgradeTargetID, UpgradeStatID, SoundID } from '../../../data/ID'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
 import { getDefaultVolume } from '../../../core/AudioRegistry'
 import { Particle } from '../../particles/Particle'
-import { SparkParticle, StreakParticle, SmokeParticle } from '../../particles/BasicParticles'
+import { SparkParticle, StreakParticle, SmokeParticle, ShardParticle } from '../../particles/BasicParticles'
 
 /**
  * Standard bullet projectile.
@@ -393,9 +393,9 @@ export class BulletExplosion extends Projectile {
   }
 
   OnSpawn(): void {
-    Particle.Burst(SparkParticle, this.positionX, this.positionY, Phaser.Math.Between(10, 15), {
+    Particle.Burst(SparkParticle, this.positionX, this.positionY, Phaser.Math.Between(8, 12), {
       randomAngle: true,
-      speed: 240,
+      speed: 200,
       speedVariance: 0.2,
       color: this.color,
       timeLeft: 300,
@@ -447,7 +447,7 @@ export class BuckshotBullet extends Projectile
   maxPellets = 5
   chokeAngle = 40
   SetDefaults(): void {
-    this.damage = 3
+    this.damage = 10
     this.speed = 0
     this.size = 1
     this.pierce = 1
@@ -476,15 +476,40 @@ export class BuckshotBullet extends Projectile
       // bullet - Player.applyUpgradeModifiers() ran on `this` before
       // OnSpawn() was called, so this.damage is final; no separate
       // resolution needed here.
-      pellet.damage = this.damage
-
       // Pellets are spawned directly here instead of through Player.NewProjectile(), so they
       // never go through Player.applyUpgradeModifiers() — apply the same non-damage stats by hand.
       for (const stat of [UpgradeStatID.Speed, UpgradeStatID.Size, UpgradeStatID.Pierce, UpgradeStatID.TimeLeft] as const) {
         (pellet as Projectile)[stat] = UpgradeModifierSystem.applyModifiers(UpgradeTargetID.Bullet, stat, (pellet as Projectile)[stat])
       }
 
+      pellet.damage = this.damage * 0.3 // Each pellet does 30% of the main bullet's damage. Sounds low but see damage_report.py for min/max possible values and it makes more sense.
+
       scene.spawnProjectile(pellet, this.positionX, this.positionY, targetX, targetY, 'player', this.ownerId)
+    }
+
+    for (let i = 0; i < Phaser.Math.Between(5, 8); i++) {
+      const direction = new Phaser.Math.Vector2(200, 0)
+      direction.rotate(this.rotation + Phaser.Math.FloatBetween(-Math.PI / 8, Math.PI / 8))
+
+      if (Phaser.Math.Between(0, 1) === 0) {
+        Particle.NewParticle(SparkParticle, this.positionX, this.positionY,
+          direction.x, direction.y, {
+          color: this.color,
+          timeLeft: 300,
+          scale: 1.5,
+          radius: 1.5
+        })
+      }
+      else
+      {
+        Particle.NewParticle(ShardParticle, this.positionX, this.positionY,
+          direction.x, direction.y, {
+          color: this.color,
+          timeLeft: 300,
+          scale: 1.5,
+          radius: 1.5
+        })
+      }
     }
   }
 
@@ -496,6 +521,7 @@ export class BuckshotBullet extends Projectile
 
 export class BuckshotPellet extends Projectile
 {
+  // private particleTimer: number = 0
   SetDefaults(): void {
     this.damage = 3
     this.speed = 400
@@ -510,6 +536,38 @@ export class BuckshotPellet extends Projectile
     this.timeLeft = Phaser.Math.Between(250, 1000)
   }
 
+  AI(): void {
+
+    // if (this.particleTimer % 10 === 0) {
+    //   Particle.NewParticle(SparkParticle, this.positionX, this.positionY, 
+    //     this.velocityX * Phaser.Math.Between(0.1, 0.2), 
+    //     this.velocityY * Phaser.Math.Between(0.1, 0.2), 
+    //   {
+    //     color: this.color,
+    //     timeLeft: 300,
+    //     scale: 0.5,
+    //     radius: 2
+    //   })
+    // }
+  }
+
+  OnHitNPC(_enemy: any): boolean {
+
+    for (let i = 0; i < 3; i++) {
+
+      Particle.NewParticle(SparkParticle, this.positionX, this.positionY, 
+        this.velocityX * Phaser.Math.Between(0.1, 0.2), 
+        this.velocityY * Phaser.Math.Between(0.1, 0.2), 
+      {
+        color: this.color,
+        timeLeft: 300,
+        scale: 0.75,
+        radius: 1.5
+      })
+    }
+    return true
+  }
+
   OnObstacleCollide(_obstacle?: Phaser.GameObjects.GameObject): void {
     // all sound calls should have this check to prevent "sound stacking"
     //
@@ -519,5 +577,15 @@ export class BuckshotPellet extends Projectile
     }
     this.scene.sound.play(SoundID.BulletCollide, { volume: getDefaultVolume(SoundID.BulletCollide) })
     //
+
+    Particle.Burst(SparkParticle, this.positionX, this.positionY, Phaser.Math.Between(3, 5), {
+      randomAngle: true,
+      speed: 120,
+      speedVariance: 0.2,
+      color: this.color,
+      timeLeft: 300,
+      scale: 1,
+      radius: 1.5
+    })
   }
 }

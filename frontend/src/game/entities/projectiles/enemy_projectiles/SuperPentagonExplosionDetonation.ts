@@ -2,7 +2,7 @@ import { Projectile } from '../Projectile'
 import { SuperPentagonExplosion } from './SuperPentagonExplosion'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
 import { SoundID } from '../../../../game/data/ID'
-import { getDefaultVolume } from '../../../../game/core/AudioRegistry'
+import { Particle, SparkParticle } from '../../particles'
 
 export class SuperPentagonExplosionDetonation extends Projectile {
   private baseColor = 0xf74f25
@@ -91,7 +91,15 @@ export class SuperPentagonExplosionDetonation extends Projectile {
     // Spawn at death location, doesn't travel anywhere
     scene.spawnProjectile(explosion, this.positionX, this.positionY, this.positionX, this.positionY, 'enemy', this.ownerId)
 
-
+    Particle.Burst(SparkParticle, this.positionX, this.positionY, Phaser.Math.Between(8, 12), {
+          randomAngle: true,
+          speed: 200,
+          speedVariance: 0.2,
+          color: this.color,
+          timeLeft: 300,
+          scale: 0.75,
+          radius: Phaser.Math.Between(1.5, 3)
+        })
     
     // all sound calls should have this check to prevent "sound stacking"
     //

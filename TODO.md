@@ -1,7 +1,7 @@
 # Gameplay
 
 ## Waves & progression
-- [~] Fixed progression for first 30 waves — Normal.ts hardcodes 1-19; extend through 30
+- [~] Fixed progression for first 30 waves — Normal.ts hardcodes 1-27; extend through 30
 - [ ] Add difficulties beyond Normal (Difficulty interface is in place in systems/difficulty/)
 - [ ] After wave 30 is complete, start adding bosses to the regular enemy pool
 
@@ -45,14 +45,14 @@
 - [ ] "Lightweight: reduced size and increases speed but increases the damage taken. All values dependent on rarity. Cannot roll from bundles.
 
 ## Visuals
-- [ ] Implement 'dusts' (see terraria)
+- [ DONE ] Implement 'dusts' (see terraria)
 - [ ] Ensure settings actually work
 - [ ] Add color customization for the player
 - [ ] Lighting
 
 ## Bullet upgrades (future)
 - [ ] Napalm (exploding bullets)
-- [ DONE ] Buckshot bullet variante.
+- [ DONE ] Buckshot bullet variant.
 
 ## MOBILE
 - [ ] Remove Fullscreen button

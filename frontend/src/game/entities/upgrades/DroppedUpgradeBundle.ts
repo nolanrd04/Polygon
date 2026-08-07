@@ -1,6 +1,9 @@
 import Phaser from 'phaser'
 import { TextureGenerator } from '../../utils/TextureGenerator'
 import { BundleRarity } from '../../data/ID'
+import { Particle } from '../particles/Particle'
+import { PolygonParticle } from '../particles/PolygonParticle'
+import { SparkParticle } from '../particles/BasicParticles'
 
 const RARITY_COLORS: number[] = [
   0xaaaaaa, // 0 common
@@ -146,6 +149,49 @@ export class DroppedUpgradeBundle {
     for (const layer of this.layers) {
       layer.rotation += layer.rotationSpeed
       layer.sprite.setRotation(layer.rotation)
+    }
+
+    // common: 45, uncommon: 30, rare: 20, epic: 15, legendary: 10
+    let speed = 45
+    switch (this.upgradeValue) {
+      case BundleRarity.Uncommon:
+        speed = 30
+        break
+      case BundleRarity.Rare:
+        speed = 20
+        break
+      case BundleRarity.Epic:
+        speed = 15
+        break
+      case BundleRarity.Legendary:
+        speed = 10
+        break
+      default:
+        speed = 45
+        break
+    }
+
+    if (this.timeLeft % speed === 0) {
+      for (let i = 0; i < Phaser.Math.Between(1, this.upgradeValue + 3); i++) {
+      Particle.NewParticle(SparkParticle, this.container.x + Phaser.Math.FloatBetween(-this.size, this.size), this.container.y + Phaser.Math.FloatBetween(-this.size, this.size), 0, 0, {
+        color: this.color,
+        radius: 2,
+        scale: 1.0,
+        timeLeft: 400,
+        additive: true,
+      })
+      }
+
+      for (let i = 0; i < Phaser.Math.Between(1, this.upgradeValue + 3); i++) {
+      Particle.NewParticle(PolygonParticle, this.container.x + Phaser.Math.FloatBetween(-this.size, this.size), this.container.y + Phaser.Math.FloatBetween(-this.size, this.size), 0, 0, {
+        color: this.color,
+        sides: this.upgradeValue + 3,
+        radius: 6,
+        scale: 1.0,
+        timeLeft: 400,
+        additive: true,
+      })
+      }
     }
   }
 

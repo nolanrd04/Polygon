@@ -1,6 +1,7 @@
 import { Projectile } from '../Projectile'
 import { TrailRenderer } from '../../../utils/TrailRenderer'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
+import { Particle, SparkParticle } from '../../particles'
 
 export class EnemyBullet extends Projectile {
 
@@ -47,4 +48,17 @@ export class EnemyBullet extends Projectile {
     }
   }
 
+  onHit(): void {
+    Particle.Burst(SparkParticle, this.positionX, this.positionY, Phaser.Math.Between(3, 5), {
+          randomAngle: true,
+          speed: 120,
+          speedVariance: 0.2,
+          color: this.color,
+          timeLeft: 300,
+          scale: 1,
+          radius: 1.5
+        })
+    // Enemy bullets do not pierce, so destroy on hit
+    this._destroy()
+  }
 }

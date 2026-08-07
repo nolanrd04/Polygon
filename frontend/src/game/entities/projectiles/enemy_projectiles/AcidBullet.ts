@@ -4,8 +4,10 @@ import { TrailRenderer } from '../../../utils/TrailRenderer'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
 import { SoundID } from '../../../../game/data/ID'
 import { getDefaultVolume } from '../../../../game/core/AudioRegistry'
+import { Particle, SparkParticle } from '../../particles'
 
 export class AcidBullet extends Projectile {
+  private particleTimer: number = 0
   SetDefaults(): void {
     this.damage = 8
     this.speed = 200
@@ -16,6 +18,26 @@ export class AcidBullet extends Projectile {
     this.doOldPositionTracking = true
     this.oldTrackingCounter = 6
     this.oldTrackingInterval = 45
+  }
+
+  AI(): void {
+    let color = this.color
+    if (Phaser.Math.Between(0, 1) === 0) {
+      color = 0xFFFFFF
+    }
+    if (this.particleTimer % 10 === 0) {
+      Particle.NewParticle(SparkParticle, this.positionX + Phaser.Math.Between(-this.size, this.size), this.positionY + Phaser.Math.Between(-this.size, this.size),
+        0, 
+        0, 
+        {
+          color: color,
+          timeLeft: 300,
+          scale: 1,
+          radius: Phaser.Math.Between(2.5, 3.5),
+          additive: true,
+        })
+    }
+    this.particleTimer++
   }
 
   /**
