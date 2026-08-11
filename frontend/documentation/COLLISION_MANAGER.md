@@ -67,10 +67,9 @@ Immediately calls `setupCollisions()` which registers six physics relationships:
 
 Returns `false` (don't block) in all cases — actual destruction happens inside this function:
 
-1. Calls `projectile.OnObstacleCollide(obstacle)`.
-2. If `canCutTiles`: increments pierce count; destroys if exhausted. Returns `false`.
-3. If ricochet effect is active and owner is `'player'`: calls `projectile.ricochet(obstacle)`. Returns `false`.
-4. Otherwise: calls `projectile._destroy()`. Returns `false`.
+1. Calls `projectile.OnObstacleCollide(obstacle)`. If it returns `false`, the projectile already handled the collision itself (e.g. ricocheted) — stop here, return `false`. `CollisionManager` never checks upgrade state itself; that's between the projectile class and whatever effect it opts into (see `UPGRADES.md` § Effect upgrades that need per-class behavior).
+2. Otherwise (hook returned `true`, the default): if `canCutTiles`, increments pierce count and destroys if exhausted. Returns `false`.
+3. Otherwise: calls `projectile._destroy()`. Returns `false`.
 
 ### Enemy ↔ Obstacle (processCallback)
 

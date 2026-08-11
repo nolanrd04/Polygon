@@ -82,6 +82,16 @@ def get_pellet_range(projectile: str) -> Tuple[int, int]:
     return data.get("min_pellets", 1), data.get("max_pellets", 1)
 
 
+def get_pellet_damage_fraction(projectile: str) -> float:
+    """
+    Fraction of the resolved bullet damage each pellet actually deals
+    (BuckshotBullet.OnSpawn(): `pellet.damage = this.damage * <fraction>`,
+    applied AFTER upgrade modifiers, not before). 1.0 for non-buckshot
+    projectiles, where a single hit deals the full resolved damage.
+    """
+    return _get(projectile).get("pellet_damage_fraction", 1.0)
+
+
 def get_explosion_defaults() -> Dict[str, Any]:
     """Base damage/radius for BulletExplosion (explosive_bullets impact)."""
     return PROJECTILES["explosion"]

@@ -80,7 +80,18 @@ Behavior-owning upgrades override hooks instead — and override `onApply(): voi
 
 ### The flag pattern (allowed coupling)
 
-Other files may branch on **whether** an upgrade is active — `Player.getBulletVariantClass()` reads `UpgradeSystem.getVariant()`, `CollisionManager` checks `hasEffect('ricochet')` — but the numbers and behavior belong to the upgrade class. Never write an upgrade's value into an entity file.
+Other files may branch on **whether** an upgrade is active — `Player.getBulletVariantClass()` reads `UpgradeSystem.getVariant()` — but the numbers and behavior belong to the upgrade class. Never write an upgrade's value into an entity file.
+
+### Effect upgrades that need per-class behavior
+
+Most `effect` upgrades are fully generic: the default `onApply` drops a counter into `UpgradeEffectSystem`, and one piece of engine code checks `hasEffect(id)` in exactly one place because the reaction is the same everywhere (shield absorbs a hit the same way regardless of what hit the player).
+
+Some effects can't work that way because the *reaction* genuinely differs per entity class — ricochet is the example: a `Bullet` bounces off a wall, a homing bullet just isn't allowed to ricochet at all, and a boss's arrow bounces unconditionally with no upgrade involved. There's no single correct "ricochet" behavior to hardcode centrally. For these:
+
+- Give the *related* base class a hook that returns control back to the caller (`Projectile.OnObstacleCollide(): boolean` — `true` = run default handling, `false` = "I already handled this myself"), and a small reusable physics/logic helper if the reaction shares math across classes (`Projectile.ricochet(obstacle)` — pure reflection, knows nothing about upgrades).
+- Each concrete class that the upgrade actually affects checks `UpgradeEffectSystem.hasEffect(id)` **in its own override** and reacts however makes sense for that class. See `Bullet`, `ExplosiveBullet`, `BuckshotPellet` in `player_projectiles/Bullet.ts` — each checks `hasEffect(UpgradeEffectID.Ricochet)` in its own `OnObstacleCollide()` and calls `this.ricochet(obstacle)`.
+- The check-and-react code must live in the entity classes the effect is actually about (here: `Projectile` subclasses) — never hardcoded into unrelated generic infrastructure like `CollisionManager`. Generic infrastructure should stay ignorant of specific upgrade ids; it just calls the hook and respects what it returns.
+- Not every effect upgrade needs this — reach for it only when a single centralized check can't express the behavior. Most effects should still stay centralized (simpler, one place to read).
 
 ## Core Concepts
 

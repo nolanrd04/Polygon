@@ -3,7 +3,7 @@ import { Player } from '../entities/Player'
 import { Enemy } from '../entities/enemies/Enemy'
 import { EnemyManager } from './EnemyManager'
 import { GameManager } from '../core/GameManager'
-import { UpgradeSystem, UpgradeEffectSystem, UpgradeModifierSystem } from './upgrades'
+import { UpgradeSystem, UpgradeModifierSystem } from './upgrades'
 import { EventBus } from '../core/EventBus'
 import { UpgradeTargetID, UpgradeStatID } from '../data/ID'
 import { waveValidation } from '../services/WaveValidation'
@@ -261,7 +261,13 @@ export class CollisionManager {
     if (!projectile || projectile.isDestroyed) return false
 
     const obstacleGO = obstacle as Phaser.GameObjects.GameObject
-    projectile.OnObstacleCollide(obstacleGO)
+
+    // Let the projectile react/opt out first - e.g. to ricochet instead of
+    // being destroyed. Returning false means it already handled the
+    // collision itself, so skip the default pierce/destroy handling below.
+    if (!projectile.OnObstacleCollide(obstacleGO)) {
+      return false
+    }
 
     // If projectile can cut tiles, let it pass through but count pierce
     if (projectile.canCutTiles) {
@@ -269,12 +275,6 @@ export class CollisionManager {
       if (projectile.currentPierceCount >= projectile.pierce) {
         projectile._destroy()
       }
-      return false
-    }
-
-    // Ricochet: reflect off the obstacle surface normal instead of destroying (player projectiles only)
-    if (projectile.owner === 'player' && UpgradeEffectSystem.hasEffect('ricochet')) {
-      projectile.ricochet(obstacleGO)
       return false
     }
 

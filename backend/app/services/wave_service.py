@@ -22,6 +22,7 @@ from app.core.projectile_data import (
     resolve_active_projectile,
     get_fire_cooldown_ms,
     get_base_damage,
+    get_pellet_damage_fraction,
     get_base_pierce,
     get_pellet_range,
     get_explosion_defaults,
@@ -811,6 +812,15 @@ class WaveService:
         1.10x. The ceiling-maximizing order (given any purchase-order
         interleaving) is flats-first-then-percents, since adding before
         multiplying never decreases the result for positive values.
+
+        Buckshot is a special case within the primary pool: each pellet only
+        deals a fraction of the resolved buckshot_bullets damage
+        (BuckshotBullet.OnSpawn(): `pellet.damage = this.damage * fraction`,
+        applied AFTER both modifier pools above, not before - see
+        get_pellet_damage_fraction). Every pellet-enemy collision reports as
+        its own 'primary' hit (BuckshotPellet never overrides
+        Projectile.damageSource), so the per-hit ceiling must reflect the
+        per-pellet damage, not the pre-split buckshot_bullets base.
         NOTE: Currently assumes bullet attack type, like _validate_damage.
         """
         active_projectile = resolve_active_projectile("bullet", current_upgrades)
@@ -837,6 +847,7 @@ class WaveService:
 
         max_primary = (primary_base + flat_bullet) * (1 + percent_bullet)
         max_primary = (max_primary + flat_attack) * (1 + percent_attack)
+        max_primary *= get_pellet_damage_fraction(active_projectile)
 
         max_explosion = (get_explosion_defaults()["damage"] + flat_explosion) * explosion_multiplier
         max_explosion = (max_explosion + flat_attack) * (1 + percent_attack)

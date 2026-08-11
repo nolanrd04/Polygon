@@ -2,6 +2,7 @@
 
 ## Waves & progression
 - [~] Fixed progression for first 30 waves — Normal.ts hardcodes 1-27; extend through 30
+- [ ] Improve waves 11+ on scaling. Right now its slow pacing, we gotta make it faster.
 - [ ] Add difficulties beyond Normal (Difficulty interface is in place in systems/difficulty/)
 - [ ] After wave 30 is complete, start adding bosses to the regular enemy pool
 

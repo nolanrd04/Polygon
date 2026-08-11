@@ -1,4139 +1,4722 @@
 {
   "gameStats": {
-    "currentWave": 27,
+    "currentWave": 29,
     "currentKills": 2247,
     "seed": 1785799877210,
-    "timeSurvived": 158
+    "timeSurvived": 370
   },
   "points": {
-    "currentPoints": 117
+    "currentPoints": 160
   },
   "upgrades": {
     "purchaseHistory": [
       {
         "upgradeId": "player_speed_1",
-        "purchasedAt": 1785885943145,
+        "purchasedAt": 1786394402525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785885944145,
+        "purchasedAt": 1786394403525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785885945145,
+        "purchasedAt": 1786394404525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785885946145,
+        "purchasedAt": 1786394405525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785885947145,
+        "purchasedAt": 1786394406525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785885948145,
+        "purchasedAt": 1786394407525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785885949145,
+        "purchasedAt": 1786394408525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785885950145,
+        "purchasedAt": 1786394409525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785885951145,
+        "purchasedAt": 1786394410525,
         "waveNumber": 1
       },
       {
         "upgradeId": "knockback_1",
-        "purchasedAt": 1785885952145,
+        "purchasedAt": 1786394411525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785885953145,
+        "purchasedAt": 1786394412525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_size_1",
-        "purchasedAt": 1785885954146,
+        "purchasedAt": 1786394413525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785885955146,
+        "purchasedAt": 1786394414525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785885956146,
+        "purchasedAt": 1786394415525,
         "waveNumber": 1
       },
       {
         "upgradeId": "knockback_1",
-        "purchasedAt": 1785885957146,
+        "purchasedAt": 1786394416525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785885958146,
+        "purchasedAt": 1786394417525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785885959146,
+        "purchasedAt": 1786394418525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785885960146,
+        "purchasedAt": 1786394419525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_speed_1",
-        "purchasedAt": 1785885961146,
+        "purchasedAt": 1786394420525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_speed_1",
-        "purchasedAt": 1785885962146,
+        "purchasedAt": 1786394421525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785885963146,
+        "purchasedAt": 1786394422525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785885964146,
+        "purchasedAt": 1786394423525,
         "waveNumber": 1
       },
       {
         "upgradeId": "dash_ability",
-        "purchasedAt": 1785885965146,
+        "purchasedAt": 1786394424525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785885966146,
+        "purchasedAt": 1786394425525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_speed_1",
-        "purchasedAt": 1785885967146,
+        "purchasedAt": 1786394426525,
         "waveNumber": 1
       },
       {
         "upgradeId": "vampirism_1",
-        "purchasedAt": 1785885968146,
+        "purchasedAt": 1786394427525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785885969146,
+        "purchasedAt": 1786394428525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785885970146,
+        "purchasedAt": 1786394429525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_speed_1",
-        "purchasedAt": 1785885971146,
+        "purchasedAt": 1786394430525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_size_1",
-        "purchasedAt": 1785885972146,
+        "purchasedAt": 1786394431525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785885973146,
+        "purchasedAt": 1786394432525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785885974146,
+        "purchasedAt": 1786394433525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_size_1",
-        "purchasedAt": 1785885975146,
+        "purchasedAt": 1786394434525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785885976146,
+        "purchasedAt": 1786394435525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_speed_1",
-        "purchasedAt": 1785885977146,
+        "purchasedAt": 1786394436525,
         "waveNumber": 1
       },
       {
         "upgradeId": "knockback_1",
-        "purchasedAt": 1785885978146,
+        "purchasedAt": 1786394437525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785885979146,
+        "purchasedAt": 1786394438525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_speed_1",
-        "purchasedAt": 1785885980146,
+        "purchasedAt": 1786394439525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_speed_1",
-        "purchasedAt": 1785885981146,
+        "purchasedAt": 1786394440525,
         "waveNumber": 1
       },
       {
         "upgradeId": "knockback_1",
-        "purchasedAt": 1785885982146,
+        "purchasedAt": 1786394441525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785885983146,
+        "purchasedAt": 1786394442525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785885984146,
+        "purchasedAt": 1786394443525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785885985146,
+        "purchasedAt": 1786394444525,
         "waveNumber": 1
       },
       {
         "upgradeId": "knockback_1",
-        "purchasedAt": 1785885986146,
+        "purchasedAt": 1786394445525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_speed_1",
-        "purchasedAt": 1785885987146,
+        "purchasedAt": 1786394446525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785885988146,
+        "purchasedAt": 1786394447525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785885989146,
+        "purchasedAt": 1786394448525,
         "waveNumber": 1
       },
       {
         "upgradeId": "buckshot_bullets",
-        "purchasedAt": 1785885990146,
+        "purchasedAt": 1786394449525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785885991146,
+        "purchasedAt": 1786394450525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785885992146,
+        "purchasedAt": 1786394451525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785885993146,
+        "purchasedAt": 1786394452525,
         "waveNumber": 1
       },
       {
         "upgradeId": "dash_cooldown_1",
-        "purchasedAt": 1785885994146,
+        "purchasedAt": 1786394453525,
         "waveNumber": 1
       },
       {
         "upgradeId": "armor",
-        "purchasedAt": 1785885995146,
+        "purchasedAt": 1786394454525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785885996146,
+        "purchasedAt": 1786394455525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785885997146,
+        "purchasedAt": 1786394456525,
         "waveNumber": 1
       },
       {
         "upgradeId": "knockback_2",
-        "purchasedAt": 1785885998146,
+        "purchasedAt": 1786394457525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_2",
-        "purchasedAt": 1785885999146,
+        "purchasedAt": 1786394458525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886000146,
+        "purchasedAt": 1786394459525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886001146,
+        "purchasedAt": 1786394460525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886002146,
+        "purchasedAt": 1786394461525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_speed_1",
-        "purchasedAt": 1785886003146,
+        "purchasedAt": 1786394462525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_pierce_1",
-        "purchasedAt": 1785886004146,
+        "purchasedAt": 1786394463525,
         "waveNumber": 1
       },
       {
         "upgradeId": "polygon_upgrade",
-        "purchasedAt": 1785886005146,
+        "purchasedAt": 1786394464525,
         "waveNumber": 1
       },
       {
         "upgradeId": "dash_speed_1",
-        "purchasedAt": 1785886006146,
+        "purchasedAt": 1786394465525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886007146,
+        "purchasedAt": 1786394466525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886008146,
+        "purchasedAt": 1786394467525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886009146,
+        "purchasedAt": 1786394468525,
         "waveNumber": 1
       },
       {
         "upgradeId": "tenacity_2",
-        "purchasedAt": 1785886010146,
+        "purchasedAt": 1786394469525,
         "waveNumber": 1
       },
       {
         "upgradeId": "armor",
-        "purchasedAt": 1785886011146,
+        "purchasedAt": 1786394470525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_speed_1",
-        "purchasedAt": 1785886012146,
+        "purchasedAt": 1786394471525,
         "waveNumber": 1
       },
       {
         "upgradeId": "regeneration",
-        "purchasedAt": 1785886013146,
+        "purchasedAt": 1786394472525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_pierce_1",
-        "purchasedAt": 1785886014146,
+        "purchasedAt": 1786394473525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886015146,
+        "purchasedAt": 1786394474525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886016146,
+        "purchasedAt": 1786394475525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_speed_1",
-        "purchasedAt": 1785886017146,
+        "purchasedAt": 1786394476525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shield_ability",
-        "purchasedAt": 1785886018146,
+        "purchasedAt": 1786394477525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_speed_1",
-        "purchasedAt": 1785886019146,
+        "purchasedAt": 1786394478525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886020146,
+        "purchasedAt": 1786394479525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886021146,
+        "purchasedAt": 1786394480525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_3",
-        "purchasedAt": 1785886022146,
+        "purchasedAt": 1786394481525,
         "waveNumber": 1
       },
       {
         "upgradeId": "knockback_2",
-        "purchasedAt": 1785886023146,
+        "purchasedAt": 1786394482525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886024146,
+        "purchasedAt": 1786394483525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886025146,
+        "purchasedAt": 1786394484525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886026146,
+        "purchasedAt": 1786394485525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886027146,
+        "purchasedAt": 1786394486525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886028146,
+        "purchasedAt": 1786394487525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886029146,
+        "purchasedAt": 1786394488525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_size_2",
-        "purchasedAt": 1785886030146,
+        "purchasedAt": 1786394489525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_speed_1",
-        "purchasedAt": 1785886031146,
+        "purchasedAt": 1786394490525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_speed_1",
-        "purchasedAt": 1785886032146,
+        "purchasedAt": 1786394491525,
         "waveNumber": 1
       },
       {
         "upgradeId": "dash_speed_1",
-        "purchasedAt": 1785886033146,
+        "purchasedAt": 1786394492525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886034146,
+        "purchasedAt": 1786394493525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886035146,
+        "purchasedAt": 1786394494525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886036146,
+        "purchasedAt": 1786394495525,
         "waveNumber": 1
       },
       {
         "upgradeId": "knockback_2",
-        "purchasedAt": 1785886037146,
+        "purchasedAt": 1786394496525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_2",
-        "purchasedAt": 1785886038146,
+        "purchasedAt": 1786394497525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886039146,
+        "purchasedAt": 1786394498525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886040146,
+        "purchasedAt": 1786394499525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886041146,
+        "purchasedAt": 1786394500525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886042146,
+        "purchasedAt": 1786394501525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886043146,
+        "purchasedAt": 1786394502525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886044146,
+        "purchasedAt": 1786394503525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886045146,
+        "purchasedAt": 1786394504525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886046146,
+        "purchasedAt": 1786394505525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886047146,
+        "purchasedAt": 1786394506525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886048146,
+        "purchasedAt": 1786394507525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886049146,
+        "purchasedAt": 1786394508525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886050146,
+        "purchasedAt": 1786394509525,
         "waveNumber": 1
       },
       {
         "upgradeId": "dash_cooldown_1",
-        "purchasedAt": 1785886051146,
+        "purchasedAt": 1786394510525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886052146,
+        "purchasedAt": 1786394511525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886053146,
+        "purchasedAt": 1786394512525,
         "waveNumber": 1
       },
       {
         "upgradeId": "dash_speed_2",
-        "purchasedAt": 1785886054146,
+        "purchasedAt": 1786394513525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886055146,
+        "purchasedAt": 1786394514525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886056146,
+        "purchasedAt": 1786394515525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886057146,
+        "purchasedAt": 1786394516525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886058146,
+        "purchasedAt": 1786394517525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886059146,
+        "purchasedAt": 1786394518525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886060146,
+        "purchasedAt": 1786394519525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886061146,
+        "purchasedAt": 1786394520525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_2",
-        "purchasedAt": 1785886062146,
+        "purchasedAt": 1786394521525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886063146,
+        "purchasedAt": 1786394522525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886064146,
+        "purchasedAt": 1786394523525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886065146,
+        "purchasedAt": 1786394524525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886066146,
+        "purchasedAt": 1786394525525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886067146,
+        "purchasedAt": 1786394526525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886068146,
+        "purchasedAt": 1786394527525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886069146,
+        "purchasedAt": 1786394528525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886070146,
+        "purchasedAt": 1786394529525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886071146,
+        "purchasedAt": 1786394530525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886072146,
+        "purchasedAt": 1786394531525,
         "waveNumber": 1
       },
       {
         "upgradeId": "knockback_3",
-        "purchasedAt": 1785886073146,
+        "purchasedAt": 1786394532525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shield_ability",
-        "purchasedAt": 1785886074146,
+        "purchasedAt": 1786394533525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886075146,
+        "purchasedAt": 1786394534525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886076146,
+        "purchasedAt": 1786394535525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886077146,
+        "purchasedAt": 1786394536525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886078146,
+        "purchasedAt": 1786394537525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886079146,
+        "purchasedAt": 1786394538525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886080146,
+        "purchasedAt": 1786394539525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886081146,
+        "purchasedAt": 1786394540525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886082146,
+        "purchasedAt": 1786394541525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886083146,
+        "purchasedAt": 1786394542525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886084146,
+        "purchasedAt": 1786394543525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886085146,
+        "purchasedAt": 1786394544525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886086146,
+        "purchasedAt": 1786394545525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886087146,
+        "purchasedAt": 1786394546525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886088146,
+        "purchasedAt": 1786394547525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886089146,
+        "purchasedAt": 1786394548525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886090146,
+        "purchasedAt": 1786394549525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886091146,
+        "purchasedAt": 1786394550525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886092146,
+        "purchasedAt": 1786394551525,
         "waveNumber": 1
       },
       {
         "upgradeId": "thorns",
-        "purchasedAt": 1785886093146,
+        "purchasedAt": 1786394552525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_size_2",
-        "purchasedAt": 1785886094146,
+        "purchasedAt": 1786394553525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886095146,
+        "purchasedAt": 1786394554525,
         "waveNumber": 1
       },
       {
         "upgradeId": "dash_speed_1",
-        "purchasedAt": 1785886096146,
+        "purchasedAt": 1786394555525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886097146,
+        "purchasedAt": 1786394556525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886098146,
+        "purchasedAt": 1786394557525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886099146,
+        "purchasedAt": 1786394558525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_2",
-        "purchasedAt": 1785886100146,
+        "purchasedAt": 1786394559525,
         "waveNumber": 1
       },
       {
         "upgradeId": "ricochet",
-        "purchasedAt": 1785886101146,
+        "purchasedAt": 1786394560525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886102146,
+        "purchasedAt": 1786394561525,
         "waveNumber": 1
       },
       {
         "upgradeId": "dash_cooldown_1",
-        "purchasedAt": 1785886103146,
+        "purchasedAt": 1786394562525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886104146,
+        "purchasedAt": 1786394563525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886105146,
+        "purchasedAt": 1786394564525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886106146,
+        "purchasedAt": 1786394565525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886107146,
+        "purchasedAt": 1786394566525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886108146,
+        "purchasedAt": 1786394567525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886109146,
+        "purchasedAt": 1786394568525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_1",
-        "purchasedAt": 1785886110146,
+        "purchasedAt": 1786394569525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886111146,
+        "purchasedAt": 1786394570525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886112146,
+        "purchasedAt": 1786394571525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886113146,
+        "purchasedAt": 1786394572525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886114146,
+        "purchasedAt": 1786394573525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886115146,
+        "purchasedAt": 1786394574525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886116146,
+        "purchasedAt": 1786394575525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_3",
-        "purchasedAt": 1785886117146,
+        "purchasedAt": 1786394576525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886118146,
+        "purchasedAt": 1786394577525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886119146,
+        "purchasedAt": 1786394578525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886120146,
+        "purchasedAt": 1786394579525,
         "waveNumber": 1
       },
       {
         "upgradeId": "tenacity_3",
-        "purchasedAt": 1785886121146,
+        "purchasedAt": 1786394580525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886122146,
+        "purchasedAt": 1786394581525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886123146,
+        "purchasedAt": 1786394582525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_2",
-        "purchasedAt": 1785886124146,
+        "purchasedAt": 1786394583525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_5",
-        "purchasedAt": 1785886125146,
+        "purchasedAt": 1786394584525,
         "waveNumber": 1
       },
       {
         "upgradeId": "dash_cooldown_1",
-        "purchasedAt": 1785886126146,
+        "purchasedAt": 1786394585525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_2",
-        "purchasedAt": 1785886127146,
+        "purchasedAt": 1786394586525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886128146,
+        "purchasedAt": 1786394587525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886129146,
+        "purchasedAt": 1786394588525,
         "waveNumber": 1
       },
       {
         "upgradeId": "vampirism_2",
-        "purchasedAt": 1785886130146,
+        "purchasedAt": 1786394589525,
         "waveNumber": 1
       },
       {
         "upgradeId": "double_dash",
-        "purchasedAt": 1785886131146,
+        "purchasedAt": 1786394590525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_2",
-        "purchasedAt": 1785886132146,
+        "purchasedAt": 1786394591525,
         "waveNumber": 1
       },
       {
         "upgradeId": "dash_speed_2",
-        "purchasedAt": 1785886133146,
+        "purchasedAt": 1786394592525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886134146,
+        "purchasedAt": 1786394593525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_2",
-        "purchasedAt": 1785886135146,
+        "purchasedAt": 1786394594525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_2",
-        "purchasedAt": 1785886136146,
+        "purchasedAt": 1786394595525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886137146,
+        "purchasedAt": 1786394596525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886138146,
+        "purchasedAt": 1786394597525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886139146,
+        "purchasedAt": 1786394598525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886140146,
+        "purchasedAt": 1786394599525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886141146,
+        "purchasedAt": 1786394600525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886142146,
+        "purchasedAt": 1786394601525,
         "waveNumber": 1
       },
       {
         "upgradeId": "knockback_3",
-        "purchasedAt": 1785886143146,
+        "purchasedAt": 1786394602525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886144146,
+        "purchasedAt": 1786394603525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_1",
-        "purchasedAt": 1785886145146,
+        "purchasedAt": 1786394604525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886146146,
+        "purchasedAt": 1786394605525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886147146,
+        "purchasedAt": 1786394606525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886148146,
+        "purchasedAt": 1786394607525,
         "waveNumber": 1
       },
       {
         "upgradeId": "tenacity_1",
-        "purchasedAt": 1785886149146,
+        "purchasedAt": 1786394608525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_2",
-        "purchasedAt": 1785886150146,
+        "purchasedAt": 1786394609525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shield_ability",
-        "purchasedAt": 1785886151146,
+        "purchasedAt": 1786394610525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886152146,
+        "purchasedAt": 1786394611525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886153146,
+        "purchasedAt": 1786394612525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886154146,
+        "purchasedAt": 1786394613525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886155146,
+        "purchasedAt": 1786394614525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886156146,
+        "purchasedAt": 1786394615525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886157146,
+        "purchasedAt": 1786394616525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886158146,
+        "purchasedAt": 1786394617525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886159146,
+        "purchasedAt": 1786394618525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886160146,
+        "purchasedAt": 1786394619525,
         "waveNumber": 1
       },
       {
         "upgradeId": "armor",
-        "purchasedAt": 1785886161146,
+        "purchasedAt": 1786394620525,
         "waveNumber": 1
       },
       {
         "upgradeId": "armor_2",
-        "purchasedAt": 1785886162146,
+        "purchasedAt": 1786394621525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886163146,
+        "purchasedAt": 1786394622525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886164146,
+        "purchasedAt": 1786394623525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886165146,
+        "purchasedAt": 1786394624525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886166146,
+        "purchasedAt": 1786394625525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886167146,
+        "purchasedAt": 1786394626525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_1",
-        "purchasedAt": 1785886168146,
+        "purchasedAt": 1786394627525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886169146,
+        "purchasedAt": 1786394628525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886170146,
+        "purchasedAt": 1786394629525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886171146,
+        "purchasedAt": 1786394630525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_1",
-        "purchasedAt": 1785886172146,
+        "purchasedAt": 1786394631525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_2",
-        "purchasedAt": 1785886173146,
+        "purchasedAt": 1786394632525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886174146,
+        "purchasedAt": 1786394633525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886175146,
+        "purchasedAt": 1786394634525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886176146,
+        "purchasedAt": 1786394635525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886177146,
+        "purchasedAt": 1786394636525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886178146,
+        "purchasedAt": 1786394637525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886179146,
+        "purchasedAt": 1786394638525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886180146,
+        "purchasedAt": 1786394639525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886181146,
+        "purchasedAt": 1786394640525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886182146,
+        "purchasedAt": 1786394641525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886183146,
+        "purchasedAt": 1786394642525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886184146,
+        "purchasedAt": 1786394643525,
         "waveNumber": 1
       },
       {
         "upgradeId": "tenacity_1",
-        "purchasedAt": 1785886185146,
+        "purchasedAt": 1786394644525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886186146,
+        "purchasedAt": 1786394645525,
         "waveNumber": 1
       },
       {
         "upgradeId": "armor",
-        "purchasedAt": 1785886187146,
+        "purchasedAt": 1786394646525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886188146,
+        "purchasedAt": 1786394647525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886189146,
+        "purchasedAt": 1786394648525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886190146,
+        "purchasedAt": 1786394649525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886191146,
+        "purchasedAt": 1786394650525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886192146,
+        "purchasedAt": 1786394651525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886193146,
+        "purchasedAt": 1786394652525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886194146,
+        "purchasedAt": 1786394653525,
         "waveNumber": 1
       },
       {
         "upgradeId": "polygon_upgrade",
-        "purchasedAt": 1785886195146,
+        "purchasedAt": 1786394654525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886196146,
+        "purchasedAt": 1786394655525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886197146,
+        "purchasedAt": 1786394656525,
         "waveNumber": 1
       },
       {
         "upgradeId": "dash_cooldown_1",
-        "purchasedAt": 1785886198146,
+        "purchasedAt": 1786394657525,
         "waveNumber": 1
       },
       {
         "upgradeId": "armor",
-        "purchasedAt": 1785886199146,
+        "purchasedAt": 1786394658525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886200146,
+        "purchasedAt": 1786394659525,
         "waveNumber": 1
       },
       {
         "upgradeId": "tenacity_1",
-        "purchasedAt": 1785886201146,
+        "purchasedAt": 1786394660525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886202146,
+        "purchasedAt": 1786394661525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886203146,
+        "purchasedAt": 1786394662525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886204146,
+        "purchasedAt": 1786394663525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886205146,
+        "purchasedAt": 1786394664525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886206146,
+        "purchasedAt": 1786394665525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886207146,
+        "purchasedAt": 1786394666525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886208146,
+        "purchasedAt": 1786394667525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886209146,
+        "purchasedAt": 1786394668525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886210146,
+        "purchasedAt": 1786394669525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886211146,
+        "purchasedAt": 1786394670525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886212146,
+        "purchasedAt": 1786394671525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886213146,
+        "purchasedAt": 1786394672525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886214146,
+        "purchasedAt": 1786394673525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886215146,
+        "purchasedAt": 1786394674525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886216146,
+        "purchasedAt": 1786394675525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886217146,
+        "purchasedAt": 1786394676525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886218146,
+        "purchasedAt": 1786394677525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886219146,
+        "purchasedAt": 1786394678525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886220146,
+        "purchasedAt": 1786394679525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886221146,
+        "purchasedAt": 1786394680525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886222146,
+        "purchasedAt": 1786394681525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886223146,
+        "purchasedAt": 1786394682525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886224146,
+        "purchasedAt": 1786394683525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886225146,
+        "purchasedAt": 1786394684525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_1",
-        "purchasedAt": 1785886226146,
+        "purchasedAt": 1786394685525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_2",
-        "purchasedAt": 1785886227146,
+        "purchasedAt": 1786394686525,
         "waveNumber": 1
       },
       {
         "upgradeId": "armor",
-        "purchasedAt": 1785886228146,
+        "purchasedAt": 1786394687525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886229146,
+        "purchasedAt": 1786394688525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886230146,
+        "purchasedAt": 1786394689525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886231146,
+        "purchasedAt": 1786394690525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886232146,
+        "purchasedAt": 1786394691525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886233146,
+        "purchasedAt": 1786394692525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886234146,
+        "purchasedAt": 1786394693525,
         "waveNumber": 1
       },
       {
         "upgradeId": "tenacity_1",
-        "purchasedAt": 1785886235146,
+        "purchasedAt": 1786394694525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_4",
-        "purchasedAt": 1785886236146,
+        "purchasedAt": 1786394695525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886237146,
+        "purchasedAt": 1786394696525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_3",
-        "purchasedAt": 1785886238146,
+        "purchasedAt": 1786394697525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886239146,
+        "purchasedAt": 1786394698525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886240146,
+        "purchasedAt": 1786394699525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886241146,
+        "purchasedAt": 1786394700525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886242146,
+        "purchasedAt": 1786394701525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886243146,
+        "purchasedAt": 1786394702525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886244146,
+        "purchasedAt": 1786394703525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886245146,
+        "purchasedAt": 1786394704525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886246146,
+        "purchasedAt": 1786394705525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886247146,
+        "purchasedAt": 1786394706525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886248146,
+        "purchasedAt": 1786394707525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886249146,
+        "purchasedAt": 1786394708525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886250146,
+        "purchasedAt": 1786394709525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886251146,
+        "purchasedAt": 1786394710525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886252146,
+        "purchasedAt": 1786394711525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886253146,
+        "purchasedAt": 1786394712525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886254146,
+        "purchasedAt": 1786394713525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886255146,
+        "purchasedAt": 1786394714525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886256146,
+        "purchasedAt": 1786394715525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886257146,
+        "purchasedAt": 1786394716525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886258146,
+        "purchasedAt": 1786394717525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886259146,
+        "purchasedAt": 1786394718525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_on_kill",
-        "purchasedAt": 1785886260146,
+        "purchasedAt": 1786394719525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886261146,
+        "purchasedAt": 1786394720525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_2",
-        "purchasedAt": 1785886262146,
+        "purchasedAt": 1786394721525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886263146,
+        "purchasedAt": 1786394722525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886264146,
+        "purchasedAt": 1786394723525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886265146,
+        "purchasedAt": 1786394724525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886266146,
+        "purchasedAt": 1786394725525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886267146,
+        "purchasedAt": 1786394726525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886268146,
+        "purchasedAt": 1786394727525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886269146,
+        "purchasedAt": 1786394728525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886270146,
+        "purchasedAt": 1786394729525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886271146,
+        "purchasedAt": 1786394730525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886272146,
+        "purchasedAt": 1786394731525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886273146,
+        "purchasedAt": 1786394732525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886274146,
+        "purchasedAt": 1786394733525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886275146,
+        "purchasedAt": 1786394734525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886276146,
+        "purchasedAt": 1786394735525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_radius",
-        "purchasedAt": 1785886277146,
+        "purchasedAt": 1786394736525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886278146,
+        "purchasedAt": 1786394737525,
         "waveNumber": 1
       },
       {
         "upgradeId": "tenacity_1",
-        "purchasedAt": 1785886279146,
+        "purchasedAt": 1786394738525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_radius",
-        "purchasedAt": 1785886280146,
+        "purchasedAt": 1786394739525,
         "waveNumber": 1
       },
       {
         "upgradeId": "armor_2",
-        "purchasedAt": 1785886281146,
+        "purchasedAt": 1786394740525,
         "waveNumber": 1
       },
       {
         "upgradeId": "armor_2",
-        "purchasedAt": 1785886282146,
+        "purchasedAt": 1786394741525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886283146,
+        "purchasedAt": 1786394742525,
         "waveNumber": 1
       },
       {
         "upgradeId": "armor",
-        "purchasedAt": 1785886284146,
+        "purchasedAt": 1786394743525,
         "waveNumber": 1
       },
       {
         "upgradeId": "thorns",
-        "purchasedAt": 1785886285146,
+        "purchasedAt": 1786394744525,
         "waveNumber": 1
       },
       {
         "upgradeId": "ricochet",
-        "purchasedAt": 1785886286146,
+        "purchasedAt": 1786394745525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886287146,
+        "purchasedAt": 1786394746525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886288146,
+        "purchasedAt": 1786394747525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886289146,
+        "purchasedAt": 1786394748525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886290146,
+        "purchasedAt": 1786394749525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886291146,
+        "purchasedAt": 1786394750525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886292146,
+        "purchasedAt": 1786394751525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886293146,
+        "purchasedAt": 1786394752525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_2",
-        "purchasedAt": 1785886294146,
+        "purchasedAt": 1786394753525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886295146,
+        "purchasedAt": 1786394754525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886296146,
+        "purchasedAt": 1786394755525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_radius",
-        "purchasedAt": 1785886297146,
+        "purchasedAt": 1786394756525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886298146,
+        "purchasedAt": 1786394757525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886299146,
+        "purchasedAt": 1786394758525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886300146,
+        "purchasedAt": 1786394759525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886301146,
+        "purchasedAt": 1786394760525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886302146,
+        "purchasedAt": 1786394761525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886303146,
+        "purchasedAt": 1786394762525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_2",
-        "purchasedAt": 1785886304146,
+        "purchasedAt": 1786394763525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886305146,
+        "purchasedAt": 1786394764525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886306146,
+        "purchasedAt": 1786394765525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886307146,
+        "purchasedAt": 1786394766525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886308146,
+        "purchasedAt": 1786394767525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886309146,
+        "purchasedAt": 1786394768525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886310146,
+        "purchasedAt": 1786394769525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886311146,
+        "purchasedAt": 1786394770525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886312146,
+        "purchasedAt": 1786394771525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886313146,
+        "purchasedAt": 1786394772525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886314146,
+        "purchasedAt": 1786394773525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_radius",
-        "purchasedAt": 1785886315146,
+        "purchasedAt": 1786394774525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886316146,
+        "purchasedAt": 1786394775525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_3",
-        "purchasedAt": 1785886317146,
+        "purchasedAt": 1786394776525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886318146,
+        "purchasedAt": 1786394777525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886319146,
+        "purchasedAt": 1786394778525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886320146,
+        "purchasedAt": 1786394779525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886321146,
+        "purchasedAt": 1786394780525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886322146,
+        "purchasedAt": 1786394781525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886323146,
+        "purchasedAt": 1786394782525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886324146,
+        "purchasedAt": 1786394783525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886325146,
+        "purchasedAt": 1786394784525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886326146,
+        "purchasedAt": 1786394785525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_radius",
-        "purchasedAt": 1785886327146,
+        "purchasedAt": 1786394786525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886328146,
+        "purchasedAt": 1786394787525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886329146,
+        "purchasedAt": 1786394788525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886330146,
+        "purchasedAt": 1786394789525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886331146,
+        "purchasedAt": 1786394790525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886332146,
+        "purchasedAt": 1786394791525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886333146,
+        "purchasedAt": 1786394792525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886334146,
+        "purchasedAt": 1786394793525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886335146,
+        "purchasedAt": 1786394794525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886336146,
+        "purchasedAt": 1786394795525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_3",
-        "purchasedAt": 1785886337146,
+        "purchasedAt": 1786394796525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_4",
-        "purchasedAt": 1785886338146,
+        "purchasedAt": 1786394797525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_1",
-        "purchasedAt": 1785886339146,
+        "purchasedAt": 1786394798525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886340146,
+        "purchasedAt": 1786394799525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_2",
-        "purchasedAt": 1785886341146,
+        "purchasedAt": 1786394800525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886342146,
+        "purchasedAt": 1786394801525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886343146,
+        "purchasedAt": 1786394802525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886344146,
+        "purchasedAt": 1786394803525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886345146,
+        "purchasedAt": 1786394804525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886346146,
+        "purchasedAt": 1786394805525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886347146,
+        "purchasedAt": 1786394806525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886348146,
+        "purchasedAt": 1786394807525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_1",
-        "purchasedAt": 1785886349146,
+        "purchasedAt": 1786394808525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886350146,
+        "purchasedAt": 1786394809525,
         "waveNumber": 1
       },
       {
         "upgradeId": "denser_shells",
-        "purchasedAt": 1785886351146,
+        "purchasedAt": 1786394810525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_2",
-        "purchasedAt": 1785886352146,
+        "purchasedAt": 1786394811525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886353146,
+        "purchasedAt": 1786394812525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886354146,
+        "purchasedAt": 1786394813525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886355146,
+        "purchasedAt": 1786394814525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shield_ability",
-        "purchasedAt": 1785886356146,
+        "purchasedAt": 1786394815525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886357146,
+        "purchasedAt": 1786394816525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886358146,
+        "purchasedAt": 1786394817525,
         "waveNumber": 1
       },
       {
         "upgradeId": "tenacity_1",
-        "purchasedAt": 1785886359146,
+        "purchasedAt": 1786394818525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886360146,
+        "purchasedAt": 1786394819525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886361146,
+        "purchasedAt": 1786394820525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886362146,
+        "purchasedAt": 1786394821525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886363146,
+        "purchasedAt": 1786394822525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886364146,
+        "purchasedAt": 1786394823525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886365146,
+        "purchasedAt": 1786394824525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886366146,
+        "purchasedAt": 1786394825525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886367146,
+        "purchasedAt": 1786394826525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886368146,
+        "purchasedAt": 1786394827525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886369146,
+        "purchasedAt": 1786394828525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886370146,
+        "purchasedAt": 1786394829525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_2",
-        "purchasedAt": 1785886371146,
+        "purchasedAt": 1786394830525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886372146,
+        "purchasedAt": 1786394831525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886373146,
+        "purchasedAt": 1786394832525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886374146,
+        "purchasedAt": 1786394833525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886375146,
+        "purchasedAt": 1786394834525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_3",
-        "purchasedAt": 1785886376146,
+        "purchasedAt": 1786394835525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_2",
-        "purchasedAt": 1785886377146,
+        "purchasedAt": 1786394836525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886378146,
+        "purchasedAt": 1786394837525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886379146,
+        "purchasedAt": 1786394838525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_1",
-        "purchasedAt": 1785886380146,
+        "purchasedAt": 1786394839525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886381146,
+        "purchasedAt": 1786394840525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886382146,
+        "purchasedAt": 1786394841525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886383146,
+        "purchasedAt": 1786394842525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886384146,
+        "purchasedAt": 1786394843525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886385146,
+        "purchasedAt": 1786394844525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886386146,
+        "purchasedAt": 1786394845525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886387146,
+        "purchasedAt": 1786394846525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886388146,
+        "purchasedAt": 1786394847525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886389146,
+        "purchasedAt": 1786394848525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886390146,
+        "purchasedAt": 1786394849525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886391146,
+        "purchasedAt": 1786394850525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886392146,
+        "purchasedAt": 1786394851525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_4",
-        "purchasedAt": 1785886393146,
+        "purchasedAt": 1786394852525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886394146,
+        "purchasedAt": 1786394853525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886395146,
+        "purchasedAt": 1786394854525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886396146,
+        "purchasedAt": 1786394855525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886397146,
+        "purchasedAt": 1786394856525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886398146,
+        "purchasedAt": 1786394857525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886399146,
+        "purchasedAt": 1786394858525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_2",
-        "purchasedAt": 1785886400146,
+        "purchasedAt": 1786394859525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886401146,
+        "purchasedAt": 1786394860525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886402146,
+        "purchasedAt": 1786394861525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886403146,
+        "purchasedAt": 1786394862525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886404146,
+        "purchasedAt": 1786394863525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886405146,
+        "purchasedAt": 1786394864525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886406146,
+        "purchasedAt": 1786394865525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886407146,
+        "purchasedAt": 1786394866525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_choke",
-        "purchasedAt": 1785886408146,
+        "purchasedAt": 1786394867525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886409146,
+        "purchasedAt": 1786394868525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886410146,
+        "purchasedAt": 1786394869525,
         "waveNumber": 1
       },
       {
         "upgradeId": "polygon_upgrade",
-        "purchasedAt": 1785886411146,
+        "purchasedAt": 1786394870525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886412146,
+        "purchasedAt": 1786394871525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886413146,
+        "purchasedAt": 1786394872525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_4",
-        "purchasedAt": 1785886414146,
+        "purchasedAt": 1786394873525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886415146,
+        "purchasedAt": 1786394874525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_percent_1",
-        "purchasedAt": 1785886416146,
+        "purchasedAt": 1786394875525,
         "waveNumber": 1
       },
       {
         "upgradeId": "regeneration",
-        "purchasedAt": 1785886417146,
+        "purchasedAt": 1786394876525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886418146,
+        "purchasedAt": 1786394877525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886419146,
+        "purchasedAt": 1786394878525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886420146,
+        "purchasedAt": 1786394879525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886421146,
+        "purchasedAt": 1786394880525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886422146,
+        "purchasedAt": 1786394881525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886423146,
+        "purchasedAt": 1786394882525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886424146,
+        "purchasedAt": 1786394883525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886425146,
+        "purchasedAt": 1786394884525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886426146,
+        "purchasedAt": 1786394885525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886427146,
+        "purchasedAt": 1786394886525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886428146,
+        "purchasedAt": 1786394887525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886429146,
+        "purchasedAt": 1786394888525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886430146,
+        "purchasedAt": 1786394889525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886431146,
+        "purchasedAt": 1786394890525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_3",
-        "purchasedAt": 1785886432146,
+        "purchasedAt": 1786394891525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886433146,
+        "purchasedAt": 1786394892525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886434146,
+        "purchasedAt": 1786394893525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_choke",
-        "purchasedAt": 1785886435146,
+        "purchasedAt": 1786394894525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_4",
-        "purchasedAt": 1785886436146,
+        "purchasedAt": 1786394895525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886437146,
+        "purchasedAt": 1786394896525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shield_ability",
-        "purchasedAt": 1785886438146,
+        "purchasedAt": 1786394897525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886439146,
+        "purchasedAt": 1786394898525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886440146,
+        "purchasedAt": 1786394899525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886441146,
+        "purchasedAt": 1786394900525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886442146,
+        "purchasedAt": 1786394901525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886443146,
+        "purchasedAt": 1786394902525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886444146,
+        "purchasedAt": 1786394903525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886445146,
+        "purchasedAt": 1786394904525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886446146,
+        "purchasedAt": 1786394905525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886447146,
+        "purchasedAt": 1786394906525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886448146,
+        "purchasedAt": 1786394907525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886449146,
+        "purchasedAt": 1786394908525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886450146,
+        "purchasedAt": 1786394909525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886451146,
+        "purchasedAt": 1786394910525,
         "waveNumber": 1
       },
       {
         "upgradeId": "regeneration",
-        "purchasedAt": 1785886452146,
+        "purchasedAt": 1786394911525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886453146,
+        "purchasedAt": 1786394912525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886454146,
+        "purchasedAt": 1786394913525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886455146,
+        "purchasedAt": 1786394914525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886456146,
+        "purchasedAt": 1786394915525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886457146,
+        "purchasedAt": 1786394916525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886458146,
+        "purchasedAt": 1786394917525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886459146,
+        "purchasedAt": 1786394918525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886460146,
+        "purchasedAt": 1786394919525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886461146,
+        "purchasedAt": 1786394920525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886462146,
+        "purchasedAt": 1786394921525,
         "waveNumber": 1
       },
       {
         "upgradeId": "tenacity_2",
-        "purchasedAt": 1785886463146,
+        "purchasedAt": 1786394922525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886464146,
+        "purchasedAt": 1786394923525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886465146,
+        "purchasedAt": 1786394924525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886466146,
+        "purchasedAt": 1786394925525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886467146,
+        "purchasedAt": 1786394926525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886468146,
+        "purchasedAt": 1786394927525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886469146,
+        "purchasedAt": 1786394928525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886470146,
+        "purchasedAt": 1786394929525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886471146,
+        "purchasedAt": 1786394930525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886472146,
+        "purchasedAt": 1786394931525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886473146,
+        "purchasedAt": 1786394932525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886474146,
+        "purchasedAt": 1786394933525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886475146,
+        "purchasedAt": 1786394934525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886476146,
+        "purchasedAt": 1786394935525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886477146,
+        "purchasedAt": 1786394936525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886478146,
+        "purchasedAt": 1786394937525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886479146,
+        "purchasedAt": 1786394938525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886480146,
+        "purchasedAt": 1786394939525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_1",
-        "purchasedAt": 1785886481146,
+        "purchasedAt": 1786394940525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886482146,
+        "purchasedAt": 1786394941525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886483146,
+        "purchasedAt": 1786394942525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886484146,
+        "purchasedAt": 1786394943525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886485146,
+        "purchasedAt": 1786394944525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886486146,
+        "purchasedAt": 1786394945525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886487146,
+        "purchasedAt": 1786394946525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886488146,
+        "purchasedAt": 1786394947525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886489146,
+        "purchasedAt": 1786394948525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_2",
-        "purchasedAt": 1785886490146,
+        "purchasedAt": 1786394949525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886491146,
+        "purchasedAt": 1786394950525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886492146,
+        "purchasedAt": 1786394951525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886493146,
+        "purchasedAt": 1786394952525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886494146,
+        "purchasedAt": 1786394953525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886495146,
+        "purchasedAt": 1786394954525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886496146,
+        "purchasedAt": 1786394955525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886497146,
+        "purchasedAt": 1786394956525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886498146,
+        "purchasedAt": 1786394957525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886499146,
+        "purchasedAt": 1786394958525,
         "waveNumber": 1
       },
       {
         "upgradeId": "tenacity_2",
-        "purchasedAt": 1785886500146,
+        "purchasedAt": 1786394959525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_5",
-        "purchasedAt": 1785886501146,
+        "purchasedAt": 1786394960525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886502146,
+        "purchasedAt": 1786394961525,
         "waveNumber": 1
       },
       {
         "upgradeId": "armor_2",
-        "purchasedAt": 1785886503146,
+        "purchasedAt": 1786394962525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886504146,
+        "purchasedAt": 1786394963525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886505146,
+        "purchasedAt": 1786394964525,
         "waveNumber": 1
       },
       {
         "upgradeId": "thorns",
-        "purchasedAt": 1785886506146,
+        "purchasedAt": 1786394965525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_4",
-        "purchasedAt": 1785886507146,
+        "purchasedAt": 1786394966525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886508146,
+        "purchasedAt": 1786394967525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_1",
-        "purchasedAt": 1785886509146,
+        "purchasedAt": 1786394968525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_2",
-        "purchasedAt": 1785886510146,
+        "purchasedAt": 1786394969525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_2",
-        "purchasedAt": 1785886511146,
+        "purchasedAt": 1786394970525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886512146,
+        "purchasedAt": 1786394971525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_1",
-        "purchasedAt": 1785886513146,
+        "purchasedAt": 1786394972525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886514146,
+        "purchasedAt": 1786394973525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886515146,
+        "purchasedAt": 1786394974525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886516146,
+        "purchasedAt": 1786394975525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886517146,
+        "purchasedAt": 1786394976525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886518146,
+        "purchasedAt": 1786394977525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886519146,
+        "purchasedAt": 1786394978525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886520146,
+        "purchasedAt": 1786394979525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886521146,
+        "purchasedAt": 1786394980525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886522146,
+        "purchasedAt": 1786394981525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886523146,
+        "purchasedAt": 1786394982525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886524146,
+        "purchasedAt": 1786394983525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886525146,
+        "purchasedAt": 1786394984525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_2",
-        "purchasedAt": 1785886526146,
+        "purchasedAt": 1786394985525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886527146,
+        "purchasedAt": 1786394986525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886528146,
+        "purchasedAt": 1786394987525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886529146,
+        "purchasedAt": 1786394988525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886530146,
+        "purchasedAt": 1786394989525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_1",
-        "purchasedAt": 1785886531146,
+        "purchasedAt": 1786394990525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886532146,
+        "purchasedAt": 1786394991525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886533146,
+        "purchasedAt": 1786394992525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886534146,
+        "purchasedAt": 1786394993525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886535146,
+        "purchasedAt": 1786394994525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886536146,
+        "purchasedAt": 1786394995525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886537146,
+        "purchasedAt": 1786394996525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886538146,
+        "purchasedAt": 1786394997525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886539146,
+        "purchasedAt": 1786394998525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886540146,
+        "purchasedAt": 1786394999525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886541146,
+        "purchasedAt": 1786395000525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886542146,
+        "purchasedAt": 1786395001525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886543146,
+        "purchasedAt": 1786395002525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886544146,
+        "purchasedAt": 1786395003525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886545146,
+        "purchasedAt": 1786395004525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886546146,
+        "purchasedAt": 1786395005525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886547146,
+        "purchasedAt": 1786395006525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886548146,
+        "purchasedAt": 1786395007525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886549146,
+        "purchasedAt": 1786395008525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886550146,
+        "purchasedAt": 1786395009525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886551146,
+        "purchasedAt": 1786395010525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886552146,
+        "purchasedAt": 1786395011525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886553146,
+        "purchasedAt": 1786395012525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_3",
-        "purchasedAt": 1785886554146,
+        "purchasedAt": 1786395013525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886555146,
+        "purchasedAt": 1786395014525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886556146,
+        "purchasedAt": 1786395015525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886557146,
+        "purchasedAt": 1786395016525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886558146,
+        "purchasedAt": 1786395017525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886559146,
+        "purchasedAt": 1786395018525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886560146,
+        "purchasedAt": 1786395019525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_1",
-        "purchasedAt": 1785886561146,
+        "purchasedAt": 1786395020525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_2",
-        "purchasedAt": 1785886562146,
+        "purchasedAt": 1786395021525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_3",
-        "purchasedAt": 1785886563146,
+        "purchasedAt": 1786395022525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886564146,
+        "purchasedAt": 1786395023525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_2",
-        "purchasedAt": 1785886565146,
+        "purchasedAt": 1786395024525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886566146,
+        "purchasedAt": 1786395025525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886567146,
+        "purchasedAt": 1786395026525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886568146,
+        "purchasedAt": 1786395027525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_3",
-        "purchasedAt": 1785886569146,
+        "purchasedAt": 1786395028525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886570146,
+        "purchasedAt": 1786395029525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886571146,
+        "purchasedAt": 1786395030525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886572146,
+        "purchasedAt": 1786395031525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886573146,
+        "purchasedAt": 1786395032525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886574146,
+        "purchasedAt": 1786395033525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886575146,
+        "purchasedAt": 1786395034525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886576146,
+        "purchasedAt": 1786395035525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886577146,
+        "purchasedAt": 1786395036525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886578146,
+        "purchasedAt": 1786395037525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886579146,
+        "purchasedAt": 1786395038525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886580146,
+        "purchasedAt": 1786395039525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886581146,
+        "purchasedAt": 1786395040525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_2",
-        "purchasedAt": 1785886582146,
+        "purchasedAt": 1786395041525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886583146,
+        "purchasedAt": 1786395042525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886584146,
+        "purchasedAt": 1786395043525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886585146,
+        "purchasedAt": 1786395044525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886586146,
+        "purchasedAt": 1786395045525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886587146,
+        "purchasedAt": 1786395046525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886588146,
+        "purchasedAt": 1786395047525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_3",
-        "purchasedAt": 1785886589146,
+        "purchasedAt": 1786395048525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_2",
-        "purchasedAt": 1785886590146,
+        "purchasedAt": 1786395049525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886591146,
+        "purchasedAt": 1786395050525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886592146,
+        "purchasedAt": 1786395051525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_4",
-        "purchasedAt": 1785886593146,
+        "purchasedAt": 1786395052525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_3",
-        "purchasedAt": 1785886594146,
+        "purchasedAt": 1786395053525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886595146,
+        "purchasedAt": 1786395054525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_2",
-        "purchasedAt": 1785886596146,
+        "purchasedAt": 1786395055525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886597146,
+        "purchasedAt": 1786395056525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886598146,
+        "purchasedAt": 1786395057525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_4",
-        "purchasedAt": 1785886599146,
+        "purchasedAt": 1786395058525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886600146,
+        "purchasedAt": 1786395059525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886601146,
+        "purchasedAt": 1786395060525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_5",
-        "purchasedAt": 1785886602146,
+        "purchasedAt": 1786395061525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886603146,
+        "purchasedAt": 1786395062525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886604146,
+        "purchasedAt": 1786395063525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886605146,
+        "purchasedAt": 1786395064525,
         "waveNumber": 1
       },
       {
         "upgradeId": "dash_cooldown_2",
-        "purchasedAt": 1785886606146,
+        "purchasedAt": 1786395065525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886607146,
+        "purchasedAt": 1786395066525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886608146,
+        "purchasedAt": 1786395067525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886609146,
+        "purchasedAt": 1786395068525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886610146,
+        "purchasedAt": 1786395069525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886611146,
+        "purchasedAt": 1786395070525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886612146,
+        "purchasedAt": 1786395071525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_4",
-        "purchasedAt": 1785886613146,
+        "purchasedAt": 1786395072525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_percent_1",
-        "purchasedAt": 1785886614146,
+        "purchasedAt": 1786395073525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886615146,
+        "purchasedAt": 1786395074525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886616146,
+        "purchasedAt": 1786395075525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886617146,
+        "purchasedAt": 1786395076525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886618146,
+        "purchasedAt": 1786395077525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886619146,
+        "purchasedAt": 1786395078525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886620146,
+        "purchasedAt": 1786395079525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_2",
-        "purchasedAt": 1785886621146,
+        "purchasedAt": 1786395080525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886622146,
+        "purchasedAt": 1786395081525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886623146,
+        "purchasedAt": 1786395082525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886624146,
+        "purchasedAt": 1786395083525,
         "waveNumber": 1
       },
       {
         "upgradeId": "dash_cooldown_2",
-        "purchasedAt": 1785886625146,
+        "purchasedAt": 1786395084525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886626146,
+        "purchasedAt": 1786395085525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886627146,
+        "purchasedAt": 1786395086525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886628146,
+        "purchasedAt": 1786395087525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886629146,
+        "purchasedAt": 1786395088525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886630146,
+        "purchasedAt": 1786395089525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886631146,
+        "purchasedAt": 1786395090525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886632146,
+        "purchasedAt": 1786395091525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886633146,
+        "purchasedAt": 1786395092525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886634146,
+        "purchasedAt": 1786395093525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886635146,
+        "purchasedAt": 1786395094525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886636146,
+        "purchasedAt": 1786395095525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886637146,
+        "purchasedAt": 1786395096525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886638146,
+        "purchasedAt": 1786395097525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886639146,
+        "purchasedAt": 1786395098525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886640146,
+        "purchasedAt": 1786395099525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886641146,
+        "purchasedAt": 1786395100525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886642146,
+        "purchasedAt": 1786395101525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886643146,
+        "purchasedAt": 1786395102525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886644146,
+        "purchasedAt": 1786395103525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886645146,
+        "purchasedAt": 1786395104525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886646146,
+        "purchasedAt": 1786395105525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886647146,
+        "purchasedAt": 1786395106525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886648146,
+        "purchasedAt": 1786395107525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886649146,
+        "purchasedAt": 1786395108525,
         "waveNumber": 1
       },
       {
         "upgradeId": "dash_cooldown_2",
-        "purchasedAt": 1785886650146,
+        "purchasedAt": 1786395109525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886651146,
+        "purchasedAt": 1786395110525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886652146,
+        "purchasedAt": 1786395111525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886653146,
+        "purchasedAt": 1786395112525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886654146,
+        "purchasedAt": 1786395113525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_2",
-        "purchasedAt": 1785886655146,
+        "purchasedAt": 1786395114525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886656146,
+        "purchasedAt": 1786395115525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886657146,
+        "purchasedAt": 1786395116525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_1",
-        "purchasedAt": 1785886658146,
+        "purchasedAt": 1786395117525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886659146,
+        "purchasedAt": 1786395118525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886660146,
+        "purchasedAt": 1786395119525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886661146,
+        "purchasedAt": 1786395120525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_percent_1",
-        "purchasedAt": 1785886662146,
+        "purchasedAt": 1786395121525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886663146,
+        "purchasedAt": 1786395122525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_5",
-        "purchasedAt": 1785886664146,
+        "purchasedAt": 1786395123525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_3",
-        "purchasedAt": 1785886665146,
+        "purchasedAt": 1786395124525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886666146,
+        "purchasedAt": 1786395125525,
         "waveNumber": 1
       },
       {
         "upgradeId": "fragility_1",
-        "purchasedAt": 1785886667146,
+        "purchasedAt": 1786395126525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886668146,
+        "purchasedAt": 1786395127525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886669146,
+        "purchasedAt": 1786395128525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886670146,
+        "purchasedAt": 1786395129525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886671146,
+        "purchasedAt": 1786395130525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886672146,
+        "purchasedAt": 1786395131525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886673146,
+        "purchasedAt": 1786395132525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886674146,
+        "purchasedAt": 1786395133525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886675146,
+        "purchasedAt": 1786395134525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886676146,
+        "purchasedAt": 1786395135525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_3",
-        "purchasedAt": 1785886677146,
+        "purchasedAt": 1786395136525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_1",
-        "purchasedAt": 1785886678146,
+        "purchasedAt": 1786395137525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_3",
-        "purchasedAt": 1785886679146,
+        "purchasedAt": 1786395138525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886680146,
+        "purchasedAt": 1786395139525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886681146,
+        "purchasedAt": 1786395140525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886682146,
+        "purchasedAt": 1786395141525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886683146,
+        "purchasedAt": 1786395142525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886684146,
+        "purchasedAt": 1786395143525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886685146,
+        "purchasedAt": 1786395144525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886686146,
+        "purchasedAt": 1786395145525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886687146,
+        "purchasedAt": 1786395146525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886688146,
+        "purchasedAt": 1786395147525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886689146,
+        "purchasedAt": 1786395148525,
         "waveNumber": 1
       },
       {
         "upgradeId": "polygon_upgrade",
-        "purchasedAt": 1785886690146,
+        "purchasedAt": 1786395149525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886691146,
+        "purchasedAt": 1786395150525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_3",
-        "purchasedAt": 1785886692146,
+        "purchasedAt": 1786395151525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_3",
-        "purchasedAt": 1785886693146,
+        "purchasedAt": 1786395152525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886694146,
+        "purchasedAt": 1786395153525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886695146,
+        "purchasedAt": 1786395154525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_percent_1",
-        "purchasedAt": 1785886696146,
+        "purchasedAt": 1786395155525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886697146,
+        "purchasedAt": 1786395156525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886698146,
+        "purchasedAt": 1786395157525,
         "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886699146,
+        "purchasedAt": 1786395158525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886700146,
+        "purchasedAt": 1786395159525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886701146,
+        "purchasedAt": 1786395160525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886702146,
+        "purchasedAt": 1786395161525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886703146,
+        "purchasedAt": 1786395162525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_3",
-        "purchasedAt": 1785886704146,
+        "purchasedAt": 1786395163525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_2",
-        "purchasedAt": 1785886705146,
+        "purchasedAt": 1786395164525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886706146,
+        "purchasedAt": 1786395165525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_2",
-        "purchasedAt": 1785886707146,
+        "purchasedAt": 1786395166525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886708146,
+        "purchasedAt": 1786395167525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886709146,
+        "purchasedAt": 1786395168525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886710146,
+        "purchasedAt": 1786395169525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886711146,
+        "purchasedAt": 1786395170525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886712146,
+        "purchasedAt": 1786395171525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886713146,
+        "purchasedAt": 1786395172525,
         "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886714146,
+        "purchasedAt": 1786395173525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886715146,
+        "purchasedAt": 1786395174525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886716146,
+        "purchasedAt": 1786395175525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886717146,
+        "purchasedAt": 1786395176525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886718146,
+        "purchasedAt": 1786395177525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886719146,
+        "purchasedAt": 1786395178525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886720146,
+        "purchasedAt": 1786395179525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886721146,
+        "purchasedAt": 1786395180525,
         "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_1",
-        "purchasedAt": 1785886722146,
+        "purchasedAt": 1786395181525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886723146,
+        "purchasedAt": 1786395182525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_2",
-        "purchasedAt": 1785886724146,
+        "purchasedAt": 1786395183525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886725146,
+        "purchasedAt": 1786395184525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886726146,
+        "purchasedAt": 1786395185525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886727146,
+        "purchasedAt": 1786395186525,
         "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886728146,
+        "purchasedAt": 1786395187525,
         "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886729146,
+        "purchasedAt": 1786395188525,
         "waveNumber": 1
       },
       {
         "upgradeId": "player_health_4",
-        "purchasedAt": 1785886732500,
-        "waveNumber": 26
+        "purchasedAt": 1786395189525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886732999,
-        "waveNumber": 26
+        "purchasedAt": 1786395190525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886734150,
-        "waveNumber": 26
+        "purchasedAt": 1786395191525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886735782,
-        "waveNumber": 26
+        "purchasedAt": 1786395192525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_3",
-        "purchasedAt": 1785886737050,
-        "waveNumber": 26
+        "purchasedAt": 1786395193525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886738000,
-        "waveNumber": 26
+        "purchasedAt": 1786395194525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "vampirism_3",
-        "purchasedAt": 1785886739567,
-        "waveNumber": 26
+        "purchasedAt": 1786395195525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_4",
-        "purchasedAt": 1785886740565,
-        "waveNumber": 26
+        "purchasedAt": 1786395196525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886764580,
-        "waveNumber": 26
+        "purchasedAt": 1786395197525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886819248,
-        "waveNumber": 26
+        "purchasedAt": 1786395198525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886819250,
-        "waveNumber": 26
+        "purchasedAt": 1786395199525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "damage_4",
-        "purchasedAt": 1785886820782,
-        "waveNumber": 26
+        "purchasedAt": 1786395200525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "player_health_3",
-        "purchasedAt": 1785886820783,
-        "waveNumber": 26
+        "purchasedAt": 1786395201525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886829698,
-        "waveNumber": 26
+        "purchasedAt": 1786395202525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886830698,
-        "waveNumber": 26
+        "purchasedAt": 1786395203525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886837397,
-        "waveNumber": 26
+        "purchasedAt": 1786395204525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_2",
-        "purchasedAt": 1785886837399,
-        "waveNumber": 26
+        "purchasedAt": 1786395205525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_1",
-        "purchasedAt": 1785886837399,
-        "waveNumber": 26
+        "purchasedAt": 1786395206525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886845797,
-        "waveNumber": 26
+        "purchasedAt": 1786395207525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "shattered_bullet_1",
-        "purchasedAt": 1785886845798,
-        "waveNumber": 26
+        "purchasedAt": 1786395208525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886848382,
-        "waveNumber": 26
+        "purchasedAt": 1786395209525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "damage_2",
-        "purchasedAt": 1785886853331,
-        "waveNumber": 26
+        "purchasedAt": 1786395210525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886853332,
-        "waveNumber": 26
+        "purchasedAt": 1786395211525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886853332,
-        "waveNumber": 26
+        "purchasedAt": 1786395212525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "damage_3",
-        "purchasedAt": 1785886861447,
-        "waveNumber": 26
+        "purchasedAt": 1786395213525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "damage_3",
-        "purchasedAt": 1785886872598,
-        "waveNumber": 26
+        "purchasedAt": 1786395214525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "explosion_damage_1",
-        "purchasedAt": 1785886872599,
-        "waveNumber": 26
+        "purchasedAt": 1786395215525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886872599,
-        "waveNumber": 26
+        "purchasedAt": 1786395216525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_1",
-        "purchasedAt": 1785886880614,
-        "waveNumber": 26
+        "purchasedAt": 1786395217525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886880614,
-        "waveNumber": 26
+        "purchasedAt": 1786395218525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "damage_1",
-        "purchasedAt": 1785886881130,
-        "waveNumber": 26
+        "purchasedAt": 1786395219525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "player_health_1",
-        "purchasedAt": 1785886881131,
-        "waveNumber": 26
+        "purchasedAt": 1786395220525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "damage_reduc_1",
-        "purchasedAt": 1785886881131,
-        "waveNumber": 26
+        "purchasedAt": 1786395221525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "player_health_2",
-        "purchasedAt": 1785886881297,
-        "waveNumber": 26
+        "purchasedAt": 1786395222525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "bullet_damage_2",
-        "purchasedAt": 1785886881297,
-        "waveNumber": 26
+        "purchasedAt": 1786395223525,
+        "waveNumber": 1
       },
       {
         "upgradeId": "health_reduc_2",
-        "purchasedAt": 1785886881297,
-        "waveNumber": 26
+        "purchasedAt": 1786395224525,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "bullet_damage_3",
+        "purchasedAt": 1786395226894,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "explosion_damage_1",
+        "purchasedAt": 1786395228464,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "player_health_3",
+        "purchasedAt": 1786395228946,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "player_health_2",
+        "purchasedAt": 1786395229344,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "explosion_damage_1",
+        "purchasedAt": 1786395230946,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "player_health_3",
+        "purchasedAt": 1786395231262,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "bullet_choke",
+        "purchasedAt": 1786395233680,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "bullet_damage_2",
+        "purchasedAt": 1786395234379,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "explosion_damage_1",
+        "purchasedAt": 1786395235846,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "player_health_2",
+        "purchasedAt": 1786395236479,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "player_health_2",
+        "purchasedAt": 1786395270777,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "damage_3",
+        "purchasedAt": 1786395294111,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "explosion_damage_1",
+        "purchasedAt": 1786395294112,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "bullet_damage_1",
+        "purchasedAt": 1786395294112,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "player_health_2",
+        "purchasedAt": 1786395294112,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "player_health_3",
+        "purchasedAt": 1786395316977,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "explosion_damage_1",
+        "purchasedAt": 1786395316978,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "damage_reduc_3",
+        "purchasedAt": 1786395316978,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "bullet_damage_3",
+        "purchasedAt": 1786395316978,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "player_health_2",
+        "purchasedAt": 1786395327677,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "damage_reduc_1",
+        "purchasedAt": 1786395327678,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "damage_2",
+        "purchasedAt": 1786395327678,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "player_health_1",
+        "purchasedAt": 1786395327678,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "bullet_damage_1",
+        "purchasedAt": 1786395328609,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "health_reduc_1",
+        "purchasedAt": 1786395328610,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "damage_1",
+        "purchasedAt": 1786395328610,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "damage_1",
+        "purchasedAt": 1786395330959,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "player_health_1",
+        "purchasedAt": 1786395330961,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "bullet_damage_1",
+        "purchasedAt": 1786395330961,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "player_health_1",
+        "purchasedAt": 1786395339827,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "explosion_damage_1",
+        "purchasedAt": 1786395341877,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "damage_1",
+        "purchasedAt": 1786395349576,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "bullet_damage_1",
+        "purchasedAt": 1786395349576,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "damage_2",
+        "purchasedAt": 1786395349609,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "damage_reduc_2",
+        "purchasedAt": 1786395349609,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "bullet_damage_2",
+        "purchasedAt": 1786395349609,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "player_health_2",
+        "purchasedAt": 1786395349609,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "damage_2",
+        "purchasedAt": 1786395349809,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "bullet_damage_1",
+        "purchasedAt": 1786395349809,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "player_health_3",
+        "purchasedAt": 1786395381510,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "bullet_damage_3",
+        "purchasedAt": 1786395381510,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "damage_2",
+        "purchasedAt": 1786395381510,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "player_health_1",
+        "purchasedAt": 1786395391609,
+        "waveNumber": 27
+      },
+      {
+        "upgradeId": "bullet_damage_3",
+        "purchasedAt": 1786395400774,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_1",
+        "purchasedAt": 1786395400776,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "explosion_damage_1",
+        "purchasedAt": 1786395400776,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "bullet_damage_1",
+        "purchasedAt": 1786395401974,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_1",
+        "purchasedAt": 1786395401975,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "bullet_damage_1",
+        "purchasedAt": 1786395403491,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_2",
+        "purchasedAt": 1786395404759,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_2",
+        "purchasedAt": 1786395404760,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "bullet_damage_2",
+        "purchasedAt": 1786395404760,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_1",
+        "purchasedAt": 1786395405874,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "bullet_damage_1",
+        "purchasedAt": 1786395405875,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "explosion_damage_1",
+        "purchasedAt": 1786395409375,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_4",
+        "purchasedAt": 1786395411308,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_3",
+        "purchasedAt": 1786395413192,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "explosion_damage_1",
+        "purchasedAt": 1786395414974,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_3",
+        "purchasedAt": 1786395415474,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_3",
+        "purchasedAt": 1786395417841,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "bullet_damage_3",
+        "purchasedAt": 1786395418208,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "longer_shells",
+        "purchasedAt": 1786395426308,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_1",
+        "purchasedAt": 1786395458058,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_1",
+        "purchasedAt": 1786395458059,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_1",
+        "purchasedAt": 1786395494508,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_1",
+        "purchasedAt": 1786395495291,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_reduc_1",
+        "purchasedAt": 1786395495291,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "health_reduc_1",
+        "purchasedAt": 1786395495292,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "bullet_damage_2",
+        "purchasedAt": 1786395496242,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_1",
+        "purchasedAt": 1786395509357,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_1",
+        "purchasedAt": 1786395527742,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_1",
+        "purchasedAt": 1786395527743,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "bullet_damage_5",
+        "purchasedAt": 1786395529691,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "explosion_damage_2",
+        "purchasedAt": 1786395529692,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_reduc_2",
+        "purchasedAt": 1786395529692,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_2",
+        "purchasedAt": 1786395529692,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_3",
+        "purchasedAt": 1786395539940,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_1",
+        "purchasedAt": 1786395539940,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_3",
+        "purchasedAt": 1786395542157,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_3",
+        "purchasedAt": 1786395543041,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "health_reduc_2",
+        "purchasedAt": 1786395543042,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "shattered_bullet_2",
+        "purchasedAt": 1786395543042,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "explosion_damage_1",
+        "purchasedAt": 1786395543474,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_2",
+        "purchasedAt": 1786395543474,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_2",
+        "purchasedAt": 1786395543474,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "explosion_damage_1",
+        "purchasedAt": 1786395543724,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_1",
+        "purchasedAt": 1786395543791,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_reduc_1",
+        "purchasedAt": 1786395543791,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_1",
+        "purchasedAt": 1786395543791,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "bullet_damage_1",
+        "purchasedAt": 1786395560089,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_1",
+        "purchasedAt": 1786395560090,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_1",
+        "purchasedAt": 1786395560090,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_1",
+        "purchasedAt": 1786395561339,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_2",
+        "purchasedAt": 1786395562606,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "health_reduc_1",
+        "purchasedAt": 1786395562606,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_1",
+        "purchasedAt": 1786395562606,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "bullet_damage_3",
+        "purchasedAt": 1786395565039,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_reduc_2",
+        "purchasedAt": 1786395565040,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_3",
+        "purchasedAt": 1786395565040,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "explosion_damage_1",
+        "purchasedAt": 1786395565040,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "bullet_damage_2",
+        "purchasedAt": 1786395565456,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_2",
+        "purchasedAt": 1786395565456,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "shattered_bullet_1",
+        "purchasedAt": 1786395565456,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "bullet_damage_2",
+        "purchasedAt": 1786395575558,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_2",
+        "purchasedAt": 1786395575559,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_1",
+        "purchasedAt": 1786395579957,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_1",
+        "purchasedAt": 1786395583421,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "bullet_damage_1",
+        "purchasedAt": 1786395583422,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_2",
+        "purchasedAt": 1786395583855,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "bullet_damage_2",
+        "purchasedAt": 1786395583855,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "player_health_2",
+        "purchasedAt": 1786395585588,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_2",
+        "purchasedAt": 1786395585589,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "health_reduc_1",
+        "purchasedAt": 1786395585589,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_1",
+        "purchasedAt": 1786395585589,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "damage_3",
+        "purchasedAt": 1786395586622,
+        "waveNumber": 28
+      },
+      {
+        "upgradeId": "health_reduc_1",
+        "purchasedAt": 1786395586622,
+        "waveNumber": 28
       }
     ]
   },
   "playerState": {
-    "currentHealth": 2501.4029618254917,
-    "currentMaxHealth": 5590,
+    "currentHealth": 3765.1782186724904,
+    "currentMaxHealth": 6755,
     "currentSpeed": 300,
     "currentPolygonSides": 7,
     "unlockedAttacks": [
       "bullet"
     ]
-  }
+  },
+  "deathState": null,
+  "canContinue": true,
+  "lastSavedAt": 1786395595656
 }

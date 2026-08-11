@@ -17,7 +17,10 @@ Special cases (can't be derived generically, so they're explicit below):
   - buckshot_bullets: cooldown_ms + min/max pellets come from BuckshotBullet;
     damage/speed/pierce come from BuckshotPellet (the thing that actually
     deals damage - see the "Inherit damage from the main buckshot bullet"
-    comment in BuckshotBullet.OnSpawn()).
+    comment in BuckshotBullet.OnSpawn()); pellet_damage_fraction is the
+    `pellet.damage = this.damage * <fraction>` multiplier applied in that
+    same OnSpawn() - it's a runtime multiplication, not a SetDefaults()
+    literal, so it needs its own extractor rather than _literal_fields().
   - explosion: BulletExplosion's damage/radius are its constructor's default
     parameter, not a SetDefaults() literal (SetDefaults() computes them
     dynamically via the upgrade-modifier hook).
@@ -110,6 +113,19 @@ def _set_defaults_body(class_body: str) -> str | None:
     return _extract_balanced(class_body, m.end() - 1)
 
 
+def _on_spawn_body(class_body: str) -> str | None:
+    m = re.search(r"OnSpawn\(\)\s*:\s*void\s*\{", class_body)
+    if not m:
+        return None
+    return _extract_balanced(class_body, m.end() - 1)
+
+
+def _pellet_damage_fraction(on_spawn_body: str) -> float | None:
+    """`pellet.damage = this.damage * <fraction>` inside BuckshotBullet.OnSpawn()."""
+    m = re.search(r"pellet\.damage\s*=\s*this\.damage\s*\*\s*(-?\d+(?:\.\d+)?)\b", on_spawn_body)
+    return float(m.group(1)) if m else None
+
+
 def _literal_fields(body: str) -> dict[str, float]:
     """this.<field> = <numeric literal>, for fields in FIELDS (trailing
     `// comment`s, semicolons, etc. are irrelevant - just need the number).
@@ -157,6 +173,11 @@ def parse_frontend_projectiles() -> dict[str, dict]:
                     entry["min_pellets"] = min_pellets
                 if max_pellets is not None:
                     entry["max_pellets"] = max_pellets
+
+                on_spawn = _on_spawn_body(class_body)
+                fraction = _pellet_damage_fraction(on_spawn) if on_spawn else None
+                if fraction is not None:
+                    entry["pellet_damage_fraction"] = fraction
                 continue
 
             if class_name == "BuckshotPellet":

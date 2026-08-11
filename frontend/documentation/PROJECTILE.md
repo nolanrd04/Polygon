@@ -56,7 +56,7 @@ An abstract base class for all projectiles. Handles spawning, physics movement, 
 |------|-------------|
 | `AI()` | Called every frame. Override to change velocity for homing or curved behavior. Default: no-op (straight line). |
 | `OnHitNPC(enemy)` | Called when hitting an enemy. Return `false` to suppress default collision damage (e.g. `ExplosiveBullet` handles its own AOE). |
-| `OnObstacleCollide(obstacle?)` | Called when hitting a map obstacle. |
+| `OnObstacleCollide(obstacle?)` | `(): boolean`, default `true`. Called when hitting a map obstacle, before `CollisionManager` decides what happens next. Return `true` to let the default pierce/destroy handling run afterward; return `false` to take full ownership of the collision (e.g. ricochet — see below). |
 | `OnKill()` | Called when the projectile is destroyed for any reason. Override for death effects (explosions, particles). |
 
 ### Helper methods (usable in `AI()` or hooks)
@@ -66,7 +66,7 @@ An abstract base class for all projectiles. Handles spawning, physics movement, 
 | `distanceTo(x, y)` | Euclidean distance to a point |
 | `angleTo(x, y)` | Angle in radians toward a point |
 | `moveTowards(x, y)` | Sets velocity and rotation to move toward a point at current `speed` |
-| `ricochet(obstacle)` | Reflects velocity off an obstacle using the surface normal. Increments pierce count; destroys if exhausted. |
+| `ricochet(obstacle)` | Reflects velocity off an obstacle using the surface normal. Increments pierce count; destroys if exhausted. Pure physics — knows nothing about upgrades; call it from `OnObstacleCollide()` (returning `false`) when a class should bounce. |
 | `swapToCustomCircle(options)` | Replaces the default sprite with a custom-colored translucent circle texture. |
 
 ### Internal methods (prefixed `_`)
@@ -98,6 +98,8 @@ The default projectile. Small, fast, green-tinted circles. Multishot and pierce 
 | `HeavyBullet` | Larger, slower, higher damage, more knockback |
 | `HomingBullet` | In `AI()`, steers toward the nearest enemy using a lerp on velocity |
 | `ExplosiveBullet` | `OnHitNPC` returns `false`; instead emits `enemy-explode` for AOE damage handled by `MainScene` |
+
+`Bullet`, `ExplosiveBullet`, and `BuckshotPellet` each override `OnObstacleCollide()` to check `UpgradeEffectSystem.hasEffect(UpgradeEffectID.Ricochet)` and call `this.ricochet(obstacle)` when owned — see [UPGRADES.md § Effect upgrades that need per-class behavior](UPGRADES.md#effect-upgrades-that-need-per-class-behavior) for why this check lives here instead of in `CollisionManager`. `HomingBullet` is incompatible with the upgrade and never checks it.
 
 ### Laser
 
@@ -135,3 +137,4 @@ Located in `frontend/src/game/entities/projectiles/enemy_projectiles/`.
 | `AcidBullet` | Slow-moving projectile fired by the Dodecahedron boss. |
 | `AcidExplosion` | AOE hazard created when an AcidBullet lands. |
 | `DodecahedronBullet` | Boss-specific projectile with custom stats and visual. |
+| `ArrowHeadBodyProj` | Fired by the Arrow Head boss. Overrides `OnObstacleCollide()` to always call `this.ricochet(obstacle)` and return `false` — bounces off walls unconditionally, no upgrade involved. |

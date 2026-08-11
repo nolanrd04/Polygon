@@ -1,4 +1,5 @@
 import type { Difficulty, EnemySpawnWeight, RarityWeights } from './Difficulty'
+import { ARROW_HEAD_IDS } from '../../entities/enemies/ArrowHead/ArrowHeadConfig'
 
 /**
  * Per-wave enemy counts. Fallback formula applies for waves not listed.
@@ -154,8 +155,8 @@ const FALLBACK_BUNDLE_RARITY_WEIGHTS: RarityWeights = {
  */
 const SCHEDULED_BOSS_SPAWNS: Record<number, string[]> = {
   10: ['hexagon', 'hexagon', 'hexagon', 'dodecahedron'],
-  20: ['hexagon', 'hexagon', 'hexagon', 'dodecahedron'],
-  30: ['hexagon', 'hexagon', 'hexagon', 'dodecahedron'],
+  20: ['hexagon', 'hexagon', 'hexagon', ARROW_HEAD_IDS.head],
+  30: ['hexagon', 'hexagon', 'hexagon', 'dodecahedron', ARROW_HEAD_IDS.head],
 }
 
 export const NormalDifficulty: Difficulty = {

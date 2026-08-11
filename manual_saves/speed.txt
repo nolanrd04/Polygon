@@ -1,0 +1,147 @@
+{
+  "gameStats": {
+    "currentWave": 1,
+    "currentKills": 0,
+    "seed": 1786393489426,
+    "timeSurvived": 22
+  },
+  "points": {
+    "currentPoints": 64
+  },
+  "upgrades": {
+    "purchaseHistory": [
+      {
+        "upgradeId": "player_speed_1",
+        "purchasedAt": 1786393491479,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "dash_ability",
+        "purchasedAt": 1786393493729,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "dash_speed_1",
+        "purchasedAt": 1786393498280,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "dash_speed_1",
+        "purchasedAt": 1786393498562,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "dash_speed_1",
+        "purchasedAt": 1786393498828,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "dash_cooldown_2",
+        "purchasedAt": 1786393500646,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "dash_cooldown_2",
+        "purchasedAt": 1786393501229,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "dash_cooldown_2",
+        "purchasedAt": 1786393501496,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "dash_cooldown_1",
+        "purchasedAt": 1786393503011,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "dash_cooldown_1",
+        "purchasedAt": 1786393503278,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "dash_cooldown_1",
+        "purchasedAt": 1786393503562,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "dash_cooldown_1",
+        "purchasedAt": 1786393503812,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "dash_cooldown_1",
+        "purchasedAt": 1786393504046,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "dash_speed_2",
+        "purchasedAt": 1786393505195,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "dash_speed_2",
+        "purchasedAt": 1786393505479,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "player_speed_1",
+        "purchasedAt": 1786393507512,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "player_speed_1",
+        "purchasedAt": 1786393507779,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "player_speed_1",
+        "purchasedAt": 1786393508028,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "player_speed_1",
+        "purchasedAt": 1786393508278,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "player_speed_1",
+        "purchasedAt": 1786393508528,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "player_speed_1",
+        "purchasedAt": 1786393508761,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "player_speed_1",
+        "purchasedAt": 1786393509011,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "player_speed_1",
+        "purchasedAt": 1786393509245,
+        "waveNumber": 1
+      },
+      {
+        "upgradeId": "player_speed_1",
+        "purchasedAt": 1786393509494,
+        "waveNumber": 1
+      }
+    ]
+  },
+  "playerState": {
+    "currentHealth": 100,
+    "currentMaxHealth": 100,
+    "currentSpeed": 300,
+    "currentPolygonSides": 3,
+    "unlockedAttacks": [
+      "bullet"
+    ]
+  },
+  "deathState": null,
+  "canContinue": true,
+  "lastSavedAt": 1786393512381
+}

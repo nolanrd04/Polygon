@@ -27,13 +27,68 @@ export class EnemyManager {
     this.enemyProjectileGroup = scene.add.group()
 
     // Enable enemy-to-enemy collision (prevents overlapping)
-    this.scene.physics.add.collider(this.enemyGroup, this.enemyGroup)
+    this.scene.physics.add.collider(
+      this.enemyGroup,
+      this.enemyGroup,
+      this.handleEnemyEnemyCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback
+    )
+  }
+
+  /**
+   * Enemy-vs-enemy contact.
+   *
+   * Separation is left to Arcade as before; this only adds the optional shove
+   * for enemies that opted into `knockbackEnemies` (a boss ploughing through
+   * the crowd rather than politely displacing it). Checked in both directions,
+   * since either or both bodies may be a barger.
+   */
+  private handleEnemyEnemyCollision(
+    containerA: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    containerB: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody
+  ): void {
+    const enemyA = (containerA as Phaser.GameObjects.Container).getData('enemyInstance') as Enemy | undefined
+    const enemyB = (containerB as Phaser.GameObjects.Container).getData('enemyInstance') as Enemy | undefined
+
+    if (!enemyA || !enemyB) return
+
+    this.barge(enemyA, enemyB)
+    this.barge(enemyB, enemyA)
+  }
+
+  /**
+   * Knock `target` away along `knocker`'s current velocity.
+   *
+   * No-ops when the knocker isn't a barger, and `applyKnockback` itself
+   * no-ops when the target is knockback-immune - which is how the parts of a
+   * multi-part boss avoid shoving each other while overlapping.
+   */
+  private barge(knocker: Enemy, target: Enemy): void {
+    if (!knocker.knockbackEnemies) return
+    if (knocker.isDestroyed || target.isDestroyed) return
+
+    const strength = knocker.knockbackEnemiesStrength
+    target.applyKnockback(knocker.velocityX * strength, knocker.velocityY * strength)
   }
 
   /**
    * Spawn an enemy by type ID.
+   *
+   * @param configure  Optional hook run after SetDefaults() and wave scaling
+   *                   but before the enemy is built. Use it when one enemy
+   *                   derives another's stats from its own already-scaled
+   *                   values (the Arrow Head boss configuring its segments):
+   *                   scaling has already happened, so derived stats are never
+   *                   scaled twice, and nothing has been created yet, so
+   *                   radius/scale/hitbox changes still take effect normally.
    */
-  spawnEnemy(typeId: string, x?: number, y?: number, dropScore: boolean = true, dropBundle: boolean = true): Enemy | null {
+  spawnEnemy(
+    typeId: string,
+    x?: number,
+    y?: number,
+    dropScore: boolean = true,
+    dropBundle: boolean = true,
+    configure?: (enemy: Enemy) => void
+  ): Enemy | null {
     const EnemyClass = EnemyRegistry[typeId]
     if (!EnemyClass) {
       console.warn(`Unknown enemy type: ${typeId}`)
@@ -88,6 +143,10 @@ export class EnemyManager {
         (enemy as any).waitFrames = 120
       }
     }
+
+    // Runs last, so a spawner can override anything - including values the
+    // wave scaling above just wrote.
+    configure?.(enemy)
 
     enemy._spawn(this.scene, x, y, this.nextId++)
 

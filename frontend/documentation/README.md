@@ -32,6 +32,7 @@ Backend API  (see BACKEND_CONNECTION.md)
 | [ENTITIES.md](ENTITIES.md) | Overview of all in-game entities |
 | [PLAYER.md](PLAYER.md) | Player class – fields, methods, abilities |
 | [ENEMY.md](ENEMY.md) | Enemy base class and all enemy types |
+| [ARROW_HEAD.md](ARROW_HEAD.md) | Arrow Head boss — multi-part worm, chain math, shared health pool |
 | [PROJECTILE.md](PROJECTILE.md) | Projectile base class and all projectile types |
 | [PARTICLE.md](PARTICLE.md) | Particle system — pooled Terraria-style "dusts", shapes, spawn API |
 | [UPGRADES.md](UPGRADES.md) | The upgrade architecture — def/instance split, ledger, hooks, how to add one |

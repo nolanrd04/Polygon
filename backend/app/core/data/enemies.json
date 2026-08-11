@@ -1,5 +1,8 @@
 {
   "base_health": {
+    "arrow_head": 20000,
+    "arrow_head_body": 2800,
+    "arrow_head_tail": 2800,
     "diamond": 250,
     "dodecahedron": 8000,
     "hexagon": 800,
@@ -13,6 +16,9 @@
     "triangle": 70
   },
   "base_damage": {
+    "arrow_head": 120,
+    "arrow_head_body": 86,
+    "arrow_head_tail": 54,
     "diamond": 65,
     "dodecahedron": 130,
     "hexagon": 100,
@@ -36,9 +42,15 @@
     "super_square": 17,
     "dodecahedron": 10,
     "super_pentagon": 21,
-    "super_hexagon": 24
+    "super_hexagon": 24,
+    "arrow_head": 20,
+    "arrow_head_body": 20,
+    "arrow_head_tail": 20
   },
   "score_chance": {
+    "arrow_head": 1,
+    "arrow_head_body": 0,
+    "arrow_head_tail": 0,
     "diamond": 0.45,
     "dodecahedron": 1,
     "hexagon": 0.65,
@@ -52,6 +64,9 @@
     "triangle": 0.3
   },
   "bundle_drop_chance": {
+    "arrow_head": 1,
+    "arrow_head_body": 0,
+    "arrow_head_tail": 0,
     "diamond": 0.1,
     "dodecahedron": 1,
     "hexagon": 0.16,
@@ -71,7 +86,10 @@
     30
   ],
   "boss_only_enemies": [
-    "dodecahedron"
+    "dodecahedron",
+    "arrow_head",
+    "arrow_head_body",
+    "arrow_head_tail"
   ],
   "splits_into": {
     "octogon": [

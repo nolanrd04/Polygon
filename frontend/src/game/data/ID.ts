@@ -64,6 +64,10 @@ export const enum UpgradeVariantID {
   BuckshotBullets  = 'buckshot_bullets',
 }
 
+export const enum UpgradeEffectID {
+  Ricochet = 'ricochet',
+}
+
 export const enum AttackTypeID
 {
   Bullet = 'bullet',

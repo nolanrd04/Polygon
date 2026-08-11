@@ -10,6 +10,15 @@ interface UpdateNote {
 // Add new updates at the top of this array
 const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: 'v0.2.1',
+    date: '2026-08-11',
+    title: 'Added new boss: Arrow Head',
+    changes: [
+      'Added a new boss enemy with unique worm-like behavior and attacks.',
+      'Changed how ricochete logic was programmed.'
+    ]
+  },
+  {
     version: 'v0.2.0',
     date: '2026-08-04',
     title: 'More visual effects and balancing.',

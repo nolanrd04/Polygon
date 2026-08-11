@@ -74,6 +74,19 @@ export abstract class Enemy {
   scale: number = 1.0  // Visual scale multiplier (0.8 = 80%, 1.0 = 100%, 1.2 = 120%)
   hitboxSize: number = 1.0  // Collision radius multiplier relative to visual radius (0.8 = 80%, 1.0 = 100%)
   knockbackResistance: number = 0  // Knockback resistance (0 = none, 1 = immune)
+  /**
+   * When true, this enemy shoves OTHER ENEMIES aside on contact, knocking them
+   * away along its own velocity, instead of just separating from them.
+   *
+   * Opt-in, so normal enemies keep bumping and separating as before. The
+   * target's own `knockbackResistance` still applies, so a fully resistant
+   * enemy (resistance 1) is immune to being barged.
+   *
+   * Enemy-vs-enemy only - this does nothing to the player.
+   */
+  knockbackEnemies: boolean = false
+  /** Multiplier on the shove velocity when `knockbackEnemies` is true. 1 = shove at exactly this enemy's own speed. */
+  knockbackEnemiesStrength: number = 1
   barWidth: number = 20  // Health bar width
   barHeight: number = 4  // Health bar height
 

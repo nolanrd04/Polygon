@@ -3,6 +3,7 @@
     "cooldown_ms": 300,
     "min_pellets": 3,
     "max_pellets": 5,
+    "pellet_damage_fraction": 0.3,
     "damage": 10,
     "speed": 400,
     "pierce": 1

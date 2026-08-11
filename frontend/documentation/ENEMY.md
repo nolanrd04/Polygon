@@ -95,6 +95,9 @@ All enemies are registered in `frontend/src/game/entities/enemies/index.ts` as a
 | `octogon` | `Octogon` | 8 | High health, introduced mid-game |
 | `super_square` | `SuperSquare` | 4 | Enhanced square with outline sprite |
 | `dodecahedron` | `Dodecahedron` | 12 | Boss. High health, large size, fires acid projectiles. `isBoss = true` (passes through obstacles) |
+| `arrow_head` | `ArrowHeadHead` | custom kite | Boss. Head of a multi-part worm — spawns and drives its own body/tail chain, owns every segment's stats and the shared health pool. See [ARROW_HEAD.md](ARROW_HEAD.md) |
+| `arrow_head_body` | `ArrowHeadBody` | custom concave arrow | Body segment of `arrow_head`. No AI — positioned by the head each frame. Never spawned directly by a wave |
+| `arrow_head_tail` | `ArrowHeadTail` | custom kite | Tail segment of `arrow_head`. Same behaviour as the body, far end of every stat curve |
 
 ### Enemy abilities
 

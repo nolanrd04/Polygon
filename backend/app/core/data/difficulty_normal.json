@@ -47,8 +47,8 @@
   ],
   "scheduled_boss_spawns": {
     "10": ["hexagon", "hexagon", "hexagon", "dodecahedron"],
-    "20": ["hexagon", "hexagon", "hexagon", "dodecahedron"],
-    "30": ["hexagon", "hexagon", "hexagon", "dodecahedron"]
+    "20": ["hexagon", "hexagon", "hexagon", "arrow_head"],
+    "30": ["hexagon", "hexagon", "hexagon", "dodecahedron", "arrow_head"]
   },
   "bundle_rarity_weights": {
     "1": {"common": 0.65, "uncommon": 0.25, "rare": 0.09, "epic": 0.01, "legendary": 0.0},

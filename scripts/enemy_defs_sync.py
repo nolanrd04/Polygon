@@ -22,6 +22,22 @@ they stay hand-maintained in enemies.json:
     per-enemy data.
   - splits_into: behavioral (Octogon.OnDeath() spawning children), not a
     literal value.
+  - arrow_head / arrow_head_body / arrow_head_tail (base_health, base_damage,
+    score_chance, bundle_drop_chance): these three don't extend Enemy
+    directly (ArrowHeadHead/Body/Tail extend ArrowHeadPart), and their
+    SetDefaults() pulls stats from ArrowHeadConfig.ts rather than assigning
+    numeric literals - e.g. `this.health = cfg.head.health` and
+    `this.damage = cfg.head.damage * cfg.segment.damageRatio(t)`. Neither
+    the class-body extractor nor the literal-number parser can see through
+    that, so these three ids are hand-maintained. To recompute them after
+    tuning ArrowHeadConfig.ts's `head` block:
+      base_health.arrow_head       = head.health
+      base_health.arrow_head_body  = head.health * chain.soloHealthRatio
+      base_health.arrow_head_tail  = head.health * chain.soloHealthRatio
+      base_damage.arrow_head       = head.damage
+      base_damage.arrow_head_body  = head.damage * segment.damageRatio(0)  # body's fallbackT
+      base_damage.arrow_head_tail  = head.damage * segment.damageRatio(1)  # tail's fallbackT
+      score_chance / bundle_drop_chance: head mirrors cfg.head.*, body/tail are always 0
 
 Used by:
   - `python3 scripts/enemy_defs_sync.py --write`   regenerate the 4 covered keys
@@ -48,6 +64,12 @@ FIELDS = {
     "scoreChance": "score_chance",
     "bundleDropChance": "bundle_drop_chance",
 }
+
+# Enemy ids whose stats aren't literal SetDefaults() assignments (see the
+# module docstring) - excluded from the diff/write below so the script
+# doesn't flag them as drift or, on --write, wipe them out for having no
+# parsed frontend value.
+HAND_MAINTAINED_ENEMY_IDS = {"arrow_head", "arrow_head_body", "arrow_head_tail"}
 
 # Numeric literal, including leading-dot decimals (e.g. `.65`, not just `0.65`).
 NUMBER = r"-?(?:\d+\.\d+|\.\d+|\d+)"
@@ -159,7 +181,8 @@ def diff_enemies(frontend: dict[str, dict], backend: dict) -> list[str]:
     issues = []
     for key, fmap in frontend.items():
         bmap = backend.get(key, {})
-        frontend_ids, backend_ids = set(fmap), set(bmap)
+        frontend_ids = set(fmap)
+        backend_ids = set(bmap) - HAND_MAINTAINED_ENEMY_IDS
 
         for missing in sorted(frontend_ids - backend_ids):
             issues.append(f"{key}: missing in backend: {missing}")
@@ -179,7 +202,13 @@ def main() -> int:
     if "--write" in sys.argv:
         backend = load_backend_enemies()
         for key, fmap in frontend.items():
-            backend[key] = {enemy_id: fmap[enemy_id] for enemy_id in sorted(fmap)}
+            preserved = {
+                enemy_id: value
+                for enemy_id, value in backend.get(key, {}).items()
+                if enemy_id in HAND_MAINTAINED_ENEMY_IDS
+            }
+            merged = {**preserved, **fmap}
+            backend[key] = {enemy_id: merged[enemy_id] for enemy_id in sorted(merged)}
         BACKEND_JSON.write_text(json.dumps(backend, indent=2) + "\n")
         total = sum(len(fmap) for fmap in frontend.values())
         print(f"Wrote {total} field values across {len(frontend)} keys to {BACKEND_JSON.relative_to(REPO_ROOT)}")

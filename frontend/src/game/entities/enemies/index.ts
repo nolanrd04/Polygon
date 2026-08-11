@@ -25,6 +25,7 @@ import { SuperHexagon } from './SuperHexagon'
 // bosses
 import { Dodecahedron } from './Dodecahedron'
 // import { Exploder } from './Exploder'
+import { ArrowHeadHead, ArrowHeadBody, ArrowHeadTail, ARROW_HEAD_IDS } from './ArrowHead'
 import type { Enemy } from './Enemy'
 
 export type EnemyType = {
@@ -50,6 +51,14 @@ export const ENEMY_TYPES: EnemyType[] = [
   { id: 'super_pentagon', class: SuperPentagon },
   { id: 'super_hexagon', class: SuperHexagon },
   // { id: 'exploder', class: Exploder },
+
+  // Arrow Head boss. The head is the only one a wave ever spawns directly -
+  // it spawns its own body/tail segments, which is why all three need to be
+  // registered here. Ids come from the boss's own config so there is exactly
+  // one place they are spelled out.
+  { id: ARROW_HEAD_IDS.head, class: ArrowHeadHead },
+  { id: ARROW_HEAD_IDS.body, class: ArrowHeadBody },
+  { id: ARROW_HEAD_IDS.tail, class: ArrowHeadTail },
 ]
 
 /**

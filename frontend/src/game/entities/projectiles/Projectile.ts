@@ -313,17 +313,38 @@ export abstract class Projectile {
 
   /**
    * Called when this projectile collides with an obstacle.
-   * Use for special obstacle interaction effects.
+   * Use for special obstacle interaction effects, or to override what happens
+   * next by returning false.
+   *
+   * Return true (the default) to let CollisionManager run its default
+   * handling afterwards (pierce through if canCutTiles, otherwise destroy).
+   * Return false to take full ownership of the collision instead - e.g. to
+   * ricochet off the obstacle (see `ricochet()` below) or curve away from it.
+   * Whichever projectile classes a "bounce on hit" upgrade applies to are
+   * responsible for checking that upgrade and reacting here themselves; there
+   * is no generic "ricochet" flag, since different projectiles may want to
+   * bounce differently (see Bullet.ts for a worked example).
    *
    * Example (ice projectile that freezes terrain):
    * ```
    * OnObstacleCollide() {
    *   // Create ice effect at collision point
    *   this.scene.events.emit('freeze-terrain', this.positionX, this.positionY)
+   *   return true
+   * }
+   * ```
+   *
+   * Example (always ricochets):
+   * ```
+   * OnObstacleCollide(obstacle) {
+   *   this.ricochet(obstacle)
+   *   return false
    * }
    * ```
    */
-  OnObstacleCollide(_obstacle?: Phaser.GameObjects.GameObject): void {}
+  OnObstacleCollide(_obstacle?: Phaser.GameObjects.GameObject): boolean {
+    return true
+  }
 
   /**
    * Called when projectile is destroyed (hit something, timed out, or left screen).

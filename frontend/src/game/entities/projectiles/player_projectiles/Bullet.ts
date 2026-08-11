@@ -1,7 +1,7 @@
 import { Projectile } from '../Projectile'
 import { COLORS } from '../../../core/GameConfig'
-import { UpgradeSystem, UpgradeModifierSystem } from '../../../systems/upgrades'
-import { UpgradeTargetID, UpgradeStatID, SoundID } from '../../../data/ID'
+import { UpgradeSystem, UpgradeModifierSystem, UpgradeEffectSystem } from '../../../systems/upgrades'
+import { UpgradeTargetID, UpgradeStatID, SoundID, UpgradeEffectID } from '../../../data/ID'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
 import { getDefaultVolume } from '../../../core/AudioRegistry'
 import { Particle } from '../../particles/Particle'
@@ -42,7 +42,7 @@ export class Bullet extends Projectile {
     }
     return true
   }
-  OnObstacleCollide(_obstacle?: Phaser.GameObjects.GameObject): void 
+  OnObstacleCollide(obstacle?: Phaser.GameObjects.GameObject): boolean
   {
     // all sound calls should have this check to prevent "sound stacking"
     //
@@ -65,10 +65,17 @@ export class Bullet extends Projectile {
       scale: 1,
       radius: 1.5
     })
+
+    // We handle the ricochet upgrade here: bounce instead of dying if owned.
+    if (obstacle && UpgradeEffectSystem.hasEffect(UpgradeEffectID.Ricochet)) {
+      this.ricochet(obstacle)
+      return false
+    }
+    return true
   }
 
   AI(): void {
-    
+
     // Simple sparkle:
     if (this.particleTimer % 10 === 0) {
       Particle.NewParticle(SparkParticle, this.positionX, this.positionY, 
@@ -280,8 +287,8 @@ export class HomingBullet extends Projectile {
     return true
   }
 
-  OnObstacleCollide(_obstacle?: Phaser.GameObjects.GameObject): void {
-    
+  OnObstacleCollide(_obstacle?: Phaser.GameObjects.GameObject): boolean {
+
     // all sound calls should have this check to prevent "sound stacking"
     //
     if (this.scene.sound.isPlaying(SoundID.BulletCollide))
@@ -300,6 +307,9 @@ export class HomingBullet extends Projectile {
       scale: 1,
       radius: 1.5
     })
+
+    // HomingBullet is incompatible with the ricochet upgrade (see RicochetDef.incompatibleWith).
+    return true
   }
 
 }
@@ -372,8 +382,15 @@ export class ExplosiveBullet extends Projectile {
     return true
   }
 
-  OnObstacleCollide(): void {
+  OnObstacleCollide(obstacle?: Phaser.GameObjects.GameObject): boolean {
     this.spawnExplosion()
+
+    // We handle the ricochet upgrade here: bounce instead of dying if owned.
+    if (obstacle && UpgradeEffectSystem.hasEffect(UpgradeEffectID.Ricochet)) {
+      this.ricochet(obstacle)
+      return false
+    }
+    return true
   }
 }
 
@@ -568,7 +585,7 @@ export class BuckshotPellet extends Projectile
     return true
   }
 
-  OnObstacleCollide(_obstacle?: Phaser.GameObjects.GameObject): void {
+  OnObstacleCollide(obstacle?: Phaser.GameObjects.GameObject): boolean {
     // all sound calls should have this check to prevent "sound stacking"
     //
     if (this.scene.sound.isPlaying(SoundID.BulletCollide))
@@ -587,5 +604,12 @@ export class BuckshotPellet extends Projectile
       scale: 1,
       radius: 1.5
     })
+
+    // We handle the ricochet upgrade here: bounce instead of dying if owned.
+    if (obstacle && UpgradeEffectSystem.hasEffect(UpgradeEffectID.Ricochet)) {
+      this.ricochet(obstacle)
+      return false
+    }
+    return true
   }
 }
