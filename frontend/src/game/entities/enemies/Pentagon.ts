@@ -1,6 +1,12 @@
+import { Particle, SparkParticle } from '../particles'
 import { Enemy } from './Enemy'
 
 export class Pentagon extends Enemy {
+  private teleportX: number = 0
+  private teleportY: number = 0
+  private hasTeleportLocation: boolean = false
+  private minTeleportDistance: number = 150
+  private maxTeleportDistance: number = 300
   private teleportTimer: number = 3000 // milliseconds
   private teleportWindUpDuration: number = 300 // milliseconds
   private teleportWindDownDuration: number = 300 // milliseconds
@@ -15,10 +21,10 @@ export class Pentagon extends Enemy {
     this.sides = 5
     this.radius = 20
     this.color = 0xff8b1f
-    this.scoreChance = 0.5
-    this.speedCap = 4.5
+    this.scoreChance = 0.3
+    this.speedCap = 6.5
     this.knockbackResistance = 0.8
-    this.bundleDropChance = 0.12
+    this.bundleDropChance = 0.0 // use difficulty drop chance
   }
 
   AI(_playerX: number, _playerY: number): void
@@ -30,8 +36,39 @@ export class Pentagon extends Enemy {
     this.moveTowards(_playerX, _playerY)
 
     // Teleport countdown and logic
-    if (distance < 400)
+    if (distance > 200)
     {
+      // get teleport location relative to player if not already set
+      if (!this.hasTeleportLocation)
+      {
+        // get random location near the player, within visible range
+        const angle = Math.random() * Math.PI * 2
+        const teleportDistance = Phaser.Math.Between(this.minTeleportDistance, this.maxTeleportDistance)
+
+        this.teleportX = _playerX + Math.cos(angle) * teleportDistance
+        this.teleportY = _playerY + Math.sin(angle) * teleportDistance
+        this.hasTeleportLocation = true
+      }
+
+      // visualize teleport target location with particles
+      for (let i = 0; i < Phaser.Math.Between(3, 6); i++)
+      {
+        const particleAngle = Phaser.Math.FloatBetween(0, Math.PI * 2)
+        const particleDist = this.radius * Math.sqrt(Phaser.Math.FloatBetween(0, 1))
+      
+        Particle.NewParticle(SparkParticle,
+        this.teleportX + Math.cos(particleAngle) * particleDist,
+        this.teleportY + Math.sin(particleAngle) * particleDist,
+        0,
+        0,
+        {
+          radius: Phaser.Math.Between(1, 3),
+          color: this.color,
+          additive: true,
+          alpha: Phaser.Math.FloatBetween(0.3, 0.9),
+        }
+        )
+      }
       if (!this.isTeleporting)
       {
         this.teleportTimer -= this.scene.game.loop.delta
@@ -62,19 +99,9 @@ export class Pentagon extends Enemy {
       }
       // Teleport happens at end of wind up
       else if (teleportElapsed >= this.teleportWindUpDuration && teleportElapsed < this.teleportWindUpDuration + 50) {
-        // Teleport to random location relative to player, at distance + 100
-        const angle = Math.random() * Math.PI * 2
-        let teleportDistance = distance
-        if (distance < 200)
-        {
-          teleportDistance = distance + 100
-        }
 
-        const teleportX = _playerX + Math.cos(angle) * teleportDistance
-        const teleportY = _playerY + Math.sin(angle) * teleportDistance
-
-        this.container.x = teleportX
-        this.container.y = teleportY
+        this.container.x = this.teleportX
+        this.container.y = this.teleportY
 
         // Reset velocity after teleport
         this.velocityX = 0
@@ -90,6 +117,7 @@ export class Pentagon extends Enemy {
       else if (teleportElapsed >= totalTeleportDuration) {
         this.container.scale = 1.0
         this.isTeleporting = false
+        this.hasTeleportLocation = false
         this.teleportTimer = 3000 // Reset timer
       }
     }

@@ -54,15 +54,18 @@ async def startup():
     # Create indexes for collections
     db = get_database()
     from app.repositories.game_save_repository import GameSaveRepository
+    from app.repositories.game_run_repository import GameRunRepository
 
     user_repo = UserRepository(db)
     player_stats_repo = PlayerStatsRepository(db)
     game_save_repo = GameSaveRepository(db)
+    game_run_repo = GameRunRepository(db)
     token_blacklist_repo = TokenBlacklistRepository(db)
 
     await user_repo.create_indexes()
     await player_stats_repo.create_indexes()
     await game_save_repo.create_indexes()
+    await game_run_repo.create_indexes()
     await token_blacklist_repo.create_indexes()
 
 

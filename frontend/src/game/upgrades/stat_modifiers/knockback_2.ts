@@ -14,6 +14,7 @@ export const Knockback2Def: UpgradeDef = {
   isMultiplier: true,
   stackable: true,
   maxStacks: 3,
+  incompatibleWith: ["homing_bullets"],
 }
 
 export class Knockback2 extends Upgrade {}

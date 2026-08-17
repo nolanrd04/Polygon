@@ -14,10 +14,12 @@ from app.models.wave_token import WaveValidationToken
 from app.models.player_stats import PlayerStats
 from app.models.flagged_wave import FlaggedWave, FlagReason
 from app.models.game_save import GameSave, DeathFrozenState
+from app.models.game_run import GameRun, WaveSnapshot, OfferRoll, GAME_VERSION
 from app.repositories.player_stats_repository import PlayerStatsRepository
 from app.repositories.game_save_repository import GameSaveRepository
+from app.repositories.game_run_repository import GameRunRepository
 from app.core.upgrade_data import UPGRADES, can_apply_upgrade, get_upgrade
-from app.core.enemy_data import calculate_minimum_damage_required, validate_enemy_spawn, get_enemy_score_chance, get_split_children, get_enemy_bundle_drop_chance
+from app.core.enemy_data import calculate_minimum_damage_required, calculate_expected_health_spawned, validate_enemy_spawn, get_enemy_score_chance, get_split_children, get_enemy_bundle_drop_chance
 from app.core.projectile_data import (
     resolve_active_projectile,
     get_fire_cooldown_ms,
@@ -40,6 +42,7 @@ class WaveService:
         self.flagged_waves_collection = database["flagged_waves"]
         self.player_stats_repo = PlayerStatsRepository(database)
         self.game_save_repo = GameSaveRepository(database)
+        self.game_run_repo = GameRunRepository(database)
 
     async def start_wave(
         self,
@@ -121,7 +124,10 @@ class WaveService:
             # Real anti-cheat protection against "hold the token open to
             # inflate my apparent play time" lives in the capped elapsed-time
             # fed to the fire-rate ceiling in complete_wave(), not here.
-            expiry_seconds=self.WAVE_TOKEN_LIFETIME_SECONDS
+            expiry_seconds=self.WAVE_TOKEN_LIFETIME_SECONDS,
+            # Affordability baseline for this wave's opening offer (70 is the
+            # new-game starting bonus the wave-1 save below is created with).
+            points_at_roll=game_save.current_points if game_save else 70
         )
 
         # Save token to database
@@ -146,6 +152,20 @@ class WaveService:
             )
             await self.game_save_repo.create(new_save)
             print(f"Created new game save for user {user_id} at wave 1 with offered upgrades")
+
+            # A new run is beginning: retire any run left "active" by a save
+            # that was deleted mid-run (it never got a death submission, so
+            # nothing else will ever close it - and a stale active run would
+            # steal the new run's snapshot pushes), then open this run's
+            # permanent analytics document. Unlike GameSave, GameRun is
+            # append-only and never deleted - it's the balancing dataset.
+            await self.game_run_repo.abandon_active_runs(user_id)
+            await self.game_run_repo.create(GameRun(
+                user_id=user_id,
+                seed=seed,
+                difficulty_id=new_save.difficulty_id
+            ))
+            print(f"Created new game run for user {user_id}")
 
         return token, offered_upgrades
 
@@ -369,7 +389,10 @@ class WaveService:
             # Create/update game save after wave completion
             new_current_points = await self._save_game_state(
                 user_id, wave_data, token.wave_number, points_earned_total, is_death,
-                token.bundle_upgrades, milestone_upgrade
+                token.bundle_upgrades, milestone_upgrade,
+                wave_duration_seconds=wave_duration_seconds,
+                token=token,
+                flags=flags
             )
         else:
             print(f"CRITICAL FLAGS DETECTED - Stats not updated: {critical_flags}")
@@ -388,7 +411,10 @@ class WaveService:
         current_upgrades: List[str],
         attack_type: str,
         wave_number: int,
-        difficulty_id: str = "normal"
+        difficulty_id: str = "normal",
+        token_string: Optional[str] = None,
+        reroll_cost: int = 0,
+        points_after_reroll: Optional[int] = None
     ) -> Dict[str, Any]:
         """
         Reroll upgrades for the current wave.
@@ -404,6 +430,33 @@ class WaveService:
             difficulty=difficulty
         )
         print(f"Rerolled upgrades for user {user_id}: {[u['id'] for u in offered_upgrades]}")
+
+        # Record the reroll on the wave's own (still-open) validation token,
+        # matched by exact token string for the same reason as
+        # collect_upgrade_bundle: a mid-wave reload can leave two open tokens
+        # for one wave, and the exact match guarantees the counters land on
+        # the token that will actually be submitted at /waves/complete, where
+        # they're read into the wave's GameRun snapshot. The new offer is
+        # appended to offers_rolled too - a rerolled-away offer is a "seen
+        # and not picked" event the pick-rate denominator needs. Best-effort:
+        # this is analytics, not validation, so a stale/missing token logs and
+        # moves on rather than blocking a reroll the save already paid for.
+        if token_string:
+            result = await self.wave_tokens_collection.update_one(
+                {"token": token_string, "user_id": user_id, "used": False},
+                {
+                    "$inc": {"rerolls_used": 1, "reroll_points_spent": reroll_cost},
+                    "$push": {"offers_rolled": {
+                        "upgrades": [u["id"] for u in offered_upgrades],
+                        # What the player has left while looking at this new
+                        # offer (reroll cost already deducted) - the
+                        # affordability baseline for these three slots.
+                        "points_at_roll": points_after_reroll,
+                    }}
+                }
+            )
+            if result.matched_count == 0:
+                print(f"Reroll token not matched for user {user_id} - reroll not recorded on any wave token")
 
         # Create OfferedUpgrade objects with purchased=False
         from app.models.game_save import OfferedUpgrade
@@ -691,12 +744,23 @@ class WaveService:
         # flat wave-level rate - difficulty.get_bundle_drop_chance() is only
         # the fallback for enemy types with no chance of their own. Weight
         # each type's share of this wave's spawn pool by its real drop chance.
+        # Scheduled boss spawns (e.g. wave 10's dodecahedron, bundle_drop_chance=1.0)
+        # sit outside the regular spawn_weights pool entirely - mirrors
+        # calculate_expected_enemy_health_spawned, which adds them "on top" for
+        # the same reason. Omitting them here undercounts boss waves' expected
+        # bundles, so a boss's own high-chance drops exhaust the cap and get
+        # rejected with a false "grant limit reached" right as the player picks
+        # them up.
         enemy_count = difficulty.get_enemy_count(wave_number)
         spawn_weights = difficulty.get_spawn_weights(wave_number)
         total_weight = sum(w["weight"] for w in spawn_weights) or 1.0
         expected = sum(
             enemy_count * (w["weight"] / total_weight) * get_enemy_bundle_drop_chance(w["type"], difficulty, wave_number)
             for w in spawn_weights
+        )
+        expected += sum(
+            get_enemy_bundle_drop_chance(boss_type, difficulty, wave_number)
+            for boss_type in (difficulty.get_scheduled_boss_spawns(wave_number) or [])
         )
         max_grants = max(
             self.MIN_BUNDLE_GRANTS_PER_WAVE,
@@ -749,6 +813,14 @@ class WaveService:
             (t for t, rarity in enumerate(self.BUNDLE_RARITY_ORDER) if weights.get(rarity, 0) > 0),
             default=0
         )
+        # Dodecahedron always force-drops 1-2 legendary-tier bundles client-side
+        # (Dodecahedron.ts's DropBundles, the only enemy that does this),
+        # independent of the wave's own organic bundle-rarity odds. A wave's
+        # weights having legendary at 0 means legendary shouldn't be won by
+        # luck yet, not that a dodecahedron's own guaranteed drop is fake -
+        # recognize it as a legitimate claim on any wave one is scheduled.
+        if "dodecahedron" in (difficulty.get_scheduled_boss_spawns(wave_number) or []):
+            max_possible_tier = max(max_possible_tier, self.BUNDLE_RARITY_ORDER.index("legendary"))
         bundle_tier = max(0, min(client_bundle_tier, max_possible_tier))
 
         # First slot always a regular upgrade at the bundle's own tier
@@ -1317,13 +1389,24 @@ class WaveService:
         points_earned: int,
         is_death: bool,
         bundle_upgrades: Optional[List[str]] = None,
-        milestone_upgrade: Optional[str] = None
+        milestone_upgrade: Optional[str] = None,
+        wave_duration_seconds: float = 0.0,
+        token: Optional[WaveValidationToken] = None,
+        flags: Optional[List[FlagReason]] = None
     ) -> int:
         """
         Save/update game state after a validated wave submission (normal
         completion or death). current_speed/current_max_health/
         current_polygon_sides/unlocked_attacks are always recomputed from the
         authorized upgrade list rather than trusted from the client.
+
+        Also appends this wave's WaveSnapshot to the user's active GameRun
+        (the permanent per-run analytics document - see app/models/game_run.py),
+        and finalizes that run on death, right alongside where DeathFrozenState
+        gets frozen onto the save. wave_duration_seconds/token/flags carry the
+        completion context the snapshot needs: the server-computed duration,
+        the wave's own token (reroll counters recorded there by
+        reroll_upgrades), and every anti-cheat flag this submission raised.
 
         bundle_upgrades are this wave's mid-wave loot-bundle grants (see
         collect_upgrade_bundle) - never written to the save at grant time, so
@@ -1411,6 +1494,23 @@ class WaveService:
                 existing_save.id,
                 save_data
             )
+
+            await self._record_wave_snapshot(
+                user_id=user_id,
+                existing_save=existing_save,
+                wave_data=wave_data,
+                wave_number=wave_number,
+                points_earned=points_earned,
+                is_death=is_death,
+                derived_stats=derived_stats,
+                polygon_sides=polygon_sides,
+                authorized_upgrades=authorized_upgrades,
+                newly_recorded=newly_recorded,
+                wave_duration_seconds=wave_duration_seconds,
+                token=token,
+                flags=flags or []
+            )
+
             return new_points
         else:
             # Create new save (shouldn't happen since wave 1 creates it)
@@ -1431,4 +1531,136 @@ class WaveService:
                 **save_data
             )
             await self.game_save_repo.create(new_save)
+            # No snapshot on this defensive path: without the pre-existing
+            # save there's no upgrade history, offer, or difficulty context
+            # to build one from (and no GameRun was created either - runs
+            # are only opened by start_wave's wave-1 branch).
             return points_earned
+
+    async def _record_wave_snapshot(
+        self,
+        user_id: ObjectId,
+        existing_save: GameSave,
+        wave_data: Dict[str, Any],
+        wave_number: int,
+        points_earned: int,
+        is_death: bool,
+        derived_stats: Dict[str, float],
+        polygon_sides: int,
+        authorized_upgrades: List[str],
+        newly_recorded: List[str],
+        wave_duration_seconds: float,
+        token: Optional[WaveValidationToken],
+        flags: List[FlagReason]
+    ) -> None:
+        """
+        Build this completed wave's WaveSnapshot and $push it onto the user's
+        active GameRun; on death, also finalize the run (status/ended_at/
+        final_wave/denormalized totals). Purely additive analytics - a
+        missing run (e.g. a save from before this system shipped, which never
+        got a GameRun) just logs and skips, never fails the completion.
+        """
+        run = await self.game_run_repo.find_active_by_user_id(user_id)
+        if not run:
+            print(f"No active game run for user {user_id} - wave {wave_number} snapshot skipped")
+            return
+
+        difficulty = get_difficulty(existing_save.difficulty_id)
+
+        # Shop purchases for this wave already live in upgrade_history with
+        # their wave number (select_upgrade writes them at buy time), and
+        # existing_save was read before this completion appended anything -
+        # so filtering by wave gives exactly this wave's shop buys, never
+        # this wave's bundle/milestone grants (those are newly_recorded).
+        purchased_entries = [
+            e for e in existing_save.upgrade_history if e.wave_number == wave_number
+        ]
+        points_spent = sum(
+            (get_upgrade(e.upgrade_id) or {}).get("cost", 0) for e in purchased_entries
+        )
+
+        highest_flag_severity = None
+        if flags:
+            highest_flag_severity = max(
+                (f.severity for f in flags),
+                key=lambda s: ["low", "medium", "high", "critical"].index(s)
+            )
+
+        hits = wave_data.get("hits", {})
+        # Theoretical damage output, not realized damage - see WaveSnapshot's
+        # player_projectile_damage/player_explosion_damage docstring. Reuses
+        # the anti-cheat ceiling calc (_calculate_max_damage_per_hit) instead
+        # of re-deriving the damage pipeline. max_explosion is nonzero there
+        # even with no explosion upgrade owned (it's a validation ceiling,
+        # only ever consulted when hits.explosion > 0) - gate it here so a
+        # build that can never actually explode doesn't get a phantom
+        # explosion-damage stat.
+        max_damage = self._calculate_max_damage_per_hit(authorized_upgrades)
+        explosion_active = (
+            "explosion_on_kill" in authorized_upgrades
+            or "explosive_bullets" in authorized_upgrades
+        )
+        snapshot = WaveSnapshot(
+            wave_number=wave_number,
+            wave_duration_seconds=wave_duration_seconds,
+            game_version=GAME_VERSION,
+            damage_dealt=wave_data.get("total_damage", 0),
+            damage_taken=wave_data.get("damage_taken", 0),
+            kills=wave_data.get("kills", 0),
+            shots_fired=len(wave_data.get("shots_fired", [])),
+            hits_primary=hits.get("primary", 0),
+            hits_explosion=hits.get("explosion", 0),
+            player_health_start=existing_save.current_health,
+            player_health_end=wave_data.get("current_health", existing_save.current_health),
+            player_max_health=derived_stats["max_health"],
+            player_speed=int(derived_stats["speed"]),
+            player_polygon_sides=polygon_sides,
+            attack_type=existing_save.current_attack_type,
+            player_projectile_damage=max_damage["max_primary"] * polygon_sides,
+            player_explosion_damage=max_damage["max_explosion"] if explosion_active else 0.0,
+            enemy_total_health_spawned=calculate_expected_health_spawned(wave_number, difficulty),
+            enemy_health_multiplier=difficulty.get_health_multiplier(wave_number - 1),
+            points_earned=points_earned,
+            points_spent=points_spent,
+            rerolls=token.rerolls_used if token else 0,
+            reroll_points_spent=token.reroll_points_spent if token else 0,
+            upgrade_offers=[
+                OfferRoll(
+                    upgrades=offer.upgrades,
+                    points_at_roll=offer.points_at_roll,
+                    # Resolved here, with this run's live costs, so a future
+                    # cost rebalance can't rewrite old runs' affordability.
+                    unaffordable=(
+                        [] if offer.points_at_roll is None else [
+                            uid for uid in offer.upgrades
+                            if (get_upgrade(uid) or {}).get("cost", 0) > offer.points_at_roll
+                        ]
+                    )
+                )
+                for offer in (token.offers_rolled if token else [])
+            ],
+            upgrades_purchased=[e.upgrade_id for e in purchased_entries],
+            upgrades_obtained_free=newly_recorded,
+            flag_count=len(flags),
+            highest_flag_severity=highest_flag_severity
+        )
+
+        await self.game_run_repo.append_wave_snapshot(run.id, snapshot)
+
+        if is_death:
+            now = datetime.utcnow()
+            all_snapshots = list(run.wave_snapshots) + [snapshot]
+            await self.game_run_repo.finalize(
+                run.id,
+                final_wave=wave_number,
+                ended_at=now,
+                totals={
+                    "total_kills": sum(s.kills for s in all_snapshots),
+                    "total_damage_dealt": sum(s.damage_dealt for s in all_snapshots),
+                    "total_damage_taken": sum(s.damage_taken for s in all_snapshots),
+                    "total_points_earned": sum(s.points_earned for s in all_snapshots),
+                    # Wall clock, mirroring DeathFrozenState.time_survived.
+                    "total_time_seconds": int((now - run.started_at).total_seconds()),
+                }
+            )
+            print(f"Finalized game run {run.id} at wave {wave_number} (death)")

@@ -28,14 +28,15 @@ const SPAWN_WEIGHTS: Record<number, EnemySpawnWeight[]> = {
   8: [{ type: 'triangle', weight: 40 }, { type: 'square', weight: 15 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 10 }, { type: 'diamond', weight: 15 }],
   9: [{ type: 'triangle', weight: 30 }, { type: 'square', weight: 20 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 15 }],
   10: [{ type: 'triangle', weight: 30 }, { type: 'square', weight: 20 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 15 }],
-  11: [{ type: 'triangle', weight: 25 }, { type: 'square', weight: 20 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 15 }, { type: 'hexagon', weight: 5 }],
-  12: [{ type: 'triangle', weight: 20 }, { type: 'square', weight: 20 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 20 }, { type: 'hexagon', weight: 5 }],
-  13: [{ type: 'triangle', weight: 10 }, { type: 'square', weight: 20 }, { type: 'super_triangle', weight: 45 }, { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 10 }],
-  14: [{ type: 'triangle', weight: 10 }, { type: 'square', weight: 10 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 45 }],
-  15: [{ type: 'square', weight: 30 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 20 }, { type: 'hexagon', weight: 5 }, { type: 'octogon', weight: 10 }],
-  16: [{ type: 'square', weight: 25 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 15 }, { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 15 }],
-  17: [{ type: 'triangle', weight: 20 }, { type: 'square', weight: 35 }, { type: 'super_triangle', weight: 15 }, { type: 'octogon', weight: 5 }, { type: 'super_square', weight: 25 }],
-  18: [{ type: 'square', weight: 40 }, { type: 'super_triangle', weight: 15 }, { type: 'octogon', weight: 10 }, { type: 'super_square', weight: 35 }],
+
+  11: [{ type: 'triangle', weight: 15 }, { type: 'square', weight: 20 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 15 }, { type: 'hexagon', weight: 15 }],
+  12: [{ type: 'triangle', weight: 10 }, { type: 'square', weight: 15 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 20 }, { type: 'diamond', weight: 20 }, { type: 'hexagon', weight: 15 }],
+  13: [{ type: 'square', weight: 10 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 45 }, { type: 'hexagon', weight: 10 }],
+  14: [{ type: 'square', weight: 30 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 20 }, { type: 'hexagon', weight: 5 }, { type: 'octogon', weight: 10 }],
+  15: [{ type: 'square', weight: 25 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 15 }, { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 15 }],
+  16: [{ type: 'triangle', weight: 20 }, { type: 'square', weight: 35 }, { type: 'super_triangle', weight: 15 }, { type: 'octogon', weight: 5 }, { type: 'super_square', weight: 25 }],
+  17: [{ type: 'square', weight: 40 }, { type: 'super_triangle', weight: 15 }, { type: 'octogon', weight: 10 }, { type: 'super_square', weight: 35 }],
+  18: [{ type: 'square', weight: 20 }, { type: 'super_triangle', weight: 10 }, { type: 'pentagon', weight: 5 }, { type: 'diamond', weight: 15 }, { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 15 }, { type: 'super_square', weight: 25 }],
   19: [{ type: 'square', weight: 20 }, { type: 'super_triangle', weight: 10 }, { type: 'pentagon', weight: 5 }, { type: 'diamond', weight: 15 }, { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 15 }, { type: 'super_square', weight: 25 }],
   20: [{ type: 'square', weight: 20 }, { type: 'super_triangle', weight: 10 }, { type: 'pentagon', weight: 5 }, { type: 'diamond', weight: 15 }, { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 15 }, { type: 'super_square', weight: 25 }],
 
@@ -187,35 +188,35 @@ export const NormalDifficulty: Difficulty = {
     {
       return 925
     }
-    else if (wave < 15)
+    else if (wave <= 15)
     {
-      return 1075 - wave * 25  // 800, 775, 750, 725, 700
+      return 1085 - wave * 35  // 700, 665, 630, 595, 560
     }
     else if (wave < 20)
     {
-      return 1000 - wave * 20  // 700, 680, 660, 640, 620
+      return 870 - wave * 20  // 550, 530, 510, 490
     }
     else if (wave == 20)
     {
-      return 900
+      return 700
     }
     else if (wave < 30)
     {
-      return 965 - wave * 15  // 650, 635, 620, 605, 590, 575, 560, 545, 530
+      return 765 - wave * 15  // 450 to 300
     }
     if (wave == 30)
     {
-      return 750
+      return 550
     }
     else if (wave < 40)
     {
-      return 1170 - wave * 20  // 550, 530, 510, 490, 470, 450, 430, 410, 390
+      return 765 - wave * 15  // 300 to 150
     }
     if (wave == 40)
     {
-      return 500
+      return 400
     }
-    return Math.max(50, 1220 - wave * 20)  // 400, 380, 360, ... down 20/wave, floors at 50 from wave 59
+    return Math.max(50, 560 - wave * 10)  // 150 to 50
   },
 
   getScheduledBossSpawns(wave: number): string[] | null {

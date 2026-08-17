@@ -12,10 +12,10 @@ SetDefaults(): void {
     this.sides = 8
     this.radius = 35
     this.color = 0x4287f5
-    this.scoreChance = .4
-    this.speedCap = 4.5
+    this.scoreChance = .1
+    this.speedCap = 6.5
     this.knockbackResistance = 0.8
-    this.bundleDropChance = 0.12
+    this.bundleDropChance = 0.0 // use difficulty drop chance
   }
 
   OnDeath(): void {

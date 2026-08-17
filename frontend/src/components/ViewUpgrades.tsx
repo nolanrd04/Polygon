@@ -43,14 +43,26 @@ const rarityText: Record<UpgradeDef['rarity'], string> = {
 // imported into this summary screen).
 const ALL_UPGRADES: UpgradeDef[] = getAllUpgrades().filter(u => !u.curse)
 
+function formatUnit(unit: string): string {
+  return unit.replace(/([A-Z])/g, ' $1').trim().toLowerCase()
+}
+
 function formatValue(unit: string, total: number, isMultiplier: boolean): string {
+  let sign = '+'
+  if (total < 0)
+  {
+    sign = ''
+  }
+
+  const label = formatUnit(unit)
+
   if (isMultiplier) {
     const pct = total * 100
     const rounded = Math.abs(pct) < 0.01 ? pct.toFixed(3) : pct.toFixed(2).replace(/\.?0+$/, '')
-    return `+${rounded}% ${unit}`
+    return `${sign}${rounded}% ${label}`
   }
   const rounded = Number.isInteger(total) ? total.toString() : total.toFixed(2).replace(/\.?0+$/, '')
-  return `+${rounded} ${unit}`
+  return `${sign}${rounded} ${label}`
 }
 
 function buildGroups(applied: string[]): UpgradeGroup[] {

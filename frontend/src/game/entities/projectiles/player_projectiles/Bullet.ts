@@ -157,7 +157,7 @@ export class HomingBullet extends Projectile {
     this.pierce = 1
     this.color = 0x00ff00
     this.timeLeft = 3000 // Despawn after 3 seconds
-    this.knockback = 1 // Push enemies back on hit
+    this.knockback = 0
     this.spawnSound = SoundID.BulletShot
     this.cooldown = 300
   }
@@ -444,6 +444,7 @@ export class BulletExplosion extends Projectile {
 
   PreDraw(): boolean {
     this.swapToCustomCircle({ fillAlpha: 0.4 })
+    this.sprite.setBlendMode(Phaser.BlendModes.ADD)
     return true
   }
 

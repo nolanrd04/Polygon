@@ -536,7 +536,11 @@ export class WaveValidationService {
 
       const response = await axios.post('/api/waves/reroll', {
         wave: wave,
-        reroll_cost: rerollCost
+        reroll_cost: rerollCost,
+        // Same reasoning as bundle-pickup: the exact token string tells the
+        // backend which open wave token this reroll belongs to, so it's
+        // recorded into that wave's run-analytics snapshot at /waves/complete.
+        token: this.waveToken
       }, {
         headers: {
           'Authorization': `Bearer ${token}`

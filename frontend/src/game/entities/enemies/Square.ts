@@ -12,8 +12,8 @@ export class Square extends Enemy {
     this.radius = 20
     this.color = 0x33ff33
     this.scoreChance = 0.4
-    this.speedCap = 4.5
+    this.speedCap = 6.5
     this.knockbackResistance = 0.9
-    this.bundleDropChance = 0.1
+    this.bundleDropChance = 0.0 // use difficulty drop chance
   }
 }

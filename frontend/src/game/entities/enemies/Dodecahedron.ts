@@ -5,7 +5,7 @@ import { TrailRenderer } from '../../utils/TrailRenderer'
 import { DodecahedronBullet } from '../projectiles/enemy_projectiles/DodecahedronBullet'
 import { BundleRarity, DifficultyID, SoundID } from '../../data/ID'
 import { getDefaultVolume } from '../../../game/core/AudioRegistry'
-import { Particle, SmokeParticle, PolygonParticle } from '../particles'
+import { Particle, SmokeParticle, PolygonParticle, SparkParticle } from '../particles'
 
 
 export class Dodecahedron extends Enemy {
@@ -49,10 +49,14 @@ export class Dodecahedron extends Enemy {
   private shotBulletInterval: number = 750 // milliseconds between shots in bullet storm
 
   // teleport
+
+  private teleportX: number = 0
+  private teleportY: number = 0
   private maxTeleportDistance: number = 400
   private minTeleportDistance: number = 200
   private teleportWindUpDuration: number = 500 // milliseconds
   private teleportWindDownDuration: number = 500 // milliseconds
+  private teleportTargetSet: boolean = false
 
   // visuals
   private particleTimer: number = 0
@@ -65,7 +69,7 @@ export class Dodecahedron extends Enemy {
     this.radius = 80
     this.color = this.defaultColor
     this.scoreChance = 1
-    this.speedCap = 1
+    this.speedCap = 1.5
     this.isBoss = true
     this.knockbackResistance = 1
     this.barWidth = 60
@@ -286,6 +290,7 @@ export class Dodecahedron extends Enemy {
         this.phaseStartTime = now  // Reset timer for move phase
         this.shotBulletCounter = 0
         this.speed = 60 // reset speed
+        this.teleportTargetSet = false
       }
       else
       {
@@ -313,10 +318,40 @@ export class Dodecahedron extends Enemy {
     }
     else if (this.phaseStyle === 4) // random teleport
     {
+      // Calculate random teleport position relative to player ONCE at the start of the phase
+      if (!this.teleportTargetSet)
+      {
+        const angle = Math.random() * Math.PI * 2
+        const distance = Phaser.Math.Between(this.minTeleportDistance, this.maxTeleportDistance)
+
+        this.teleportX = _playerX + Math.cos(angle) * distance
+        this.teleportY = _playerY + Math.sin(angle) * distance
+        this.teleportTargetSet = true
+      }
 
       this.speed = 60 // reset speed
       const totalTeleportDuration = this.teleportWindUpDuration + this.teleportWindDownDuration
       const teleportStartScale = 0.7
+
+      // visualize teleport target location with particles
+      for (let i = 0; i < Phaser.Math.Between(7, 10); i++)
+      {
+        const particleAngle = Phaser.Math.FloatBetween(0, Math.PI * 2)
+        const particleDist = this.radius * Math.sqrt(Phaser.Math.FloatBetween(0, 1))
+
+        Particle.NewParticle(SparkParticle,
+          this.teleportX + Math.cos(particleAngle) * particleDist,
+          this.teleportY + Math.sin(particleAngle) * particleDist,
+          0,
+          0,
+          {
+            radius: Phaser.Math.Between(1, 5),
+            color: this.color,
+            additive: true,
+            alpha: Phaser.Math.FloatBetween(0.3, 0.9),
+          }
+        )
+      }
       
       // console.log(`Teleport phase! Elapsed: ${phaseElapsed}ms`)
       
@@ -329,20 +364,12 @@ export class Dodecahedron extends Enemy {
       // Teleport happens at end of wind up
       else if (phaseElapsed === this.teleportWindUpDuration || (phaseElapsed >= this.teleportWindUpDuration && phaseElapsed < this.teleportWindUpDuration + 50)) {
         if (phaseElapsed < this.teleportWindUpDuration + 50) {
-          console.log('Executing teleport!')
+          // console.log('Executing teleport!')
           // Teleport to random location relative to player, within distance bounds
-          let teleportX: number
-          let teleportY: number
-          
-          const angle = Math.random() * Math.PI * 2
-          const distance = Phaser.Math.Between(this.minTeleportDistance, this.maxTeleportDistance)
-            
-          teleportX = _playerX + Math.cos(angle) * distance
-          teleportY = _playerY + Math.sin(angle) * distance
 
-          this.container.x = teleportX
-          this.container.y = teleportY
-          console.log(`Teleported to ${this.container.x}, ${this.container.y}`)
+          this.container.x = this.teleportX
+          this.container.y = this.teleportY
+          // console.log(`Teleported to ${this.container.x}, ${this.container.y}`)
 
           // Reset velocity after teleport
           this.velocityX = 0

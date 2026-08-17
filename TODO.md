@@ -2,15 +2,16 @@
 
 ## Waves & progression
 - [~] Fixed progression for first 30 waves — Normal.ts hardcodes 1-27; extend through 30
-- [ ] Improve waves 11+ on scaling. Right now its slow pacing, we gotta make it faster.
 - [ ] Add difficulties beyond Normal (Difficulty interface is in place in systems/difficulty/)
 - [ ] After wave 30 is complete, start adding bosses to the regular enemy pool
+- [ ] Stat scaling balancing: right now, player stats outpace the rate of increase of enemy stats. Need to fix this somehow.
 
 ## Enemies
 - [ DONE ] Super pentagon — sprints toward player, explodes, leaves behind a fire pool
 - [ DONE ] Super hexagon
 - [ ] Super Octogon
 - [ ] Hexagon: add visual indication for shield health
+- [ ] Vampire (triangle?): if it hits the player the player can't regen health
 
 ## Bosses
 - [ DONE ] First boss phase 1

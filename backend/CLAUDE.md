@@ -40,7 +40,7 @@ app/core/       → Config, database connection, security utils, game data defin
 
 **Entry point:** `app/main.py` — sets up FastAPI app, CORS (localhost:3000), routers, MongoDB connection lifecycle, and index creation on startup.
 
-**API routes are prefixed:** `/api/auth`, `/api/users`, `/api/saves`, `/api/waves`, `/api/runs`
+**API routes are prefixed:** `/api/auth`, `/api/users`, `/api/saves`, `/api/waves`
 
 ## Key Systems
 
@@ -62,8 +62,10 @@ The core gameplay loop. Located primarily in `app/services/wave_service.py`:
 ### Upgrade System
 ~100 upgrades defined in `app/core/upgrade_data.py`. Each has: id, type (stat_modifier/effect/variant/ability), target (player/attack/bullet/laser), rarity (common→legendary), stackability, dependencies (`dependentOn`), and conflicts (`incompatibleWith`, `replaces`).
 
-### Run System
-Canonical save system in `app/services/run_service.py`. One active run per user. States: ACTIVE (mutable) or DEAD (immutable). Tracks wave, points, upgrades (append-only), kills, damage, and time survived.
+### Run Analytics (GameRun)
+Permanent per-run balancing dataset in the `game_runs` collection (`app/models/game_run.py`, `app/repositories/game_run_repository.py`). One `GameRun` document per playthrough with one embedded `WaveSnapshot` appended per validated wave completion (damage, kills, accuracy inputs, economy, upgrades, enemy health pool, anti-cheat flag context). Unlike `GameSave` (one-per-user, deleted on new game), `GameRun` is append-only and never deleted — it exists so per-wave metrics can be graphed across hundreds of runs for balancing.
+
+Lifecycle, all inside `wave_service.py`: created by `start_wave()`'s wave-1 branch (which also marks any stale active run `abandoned`), grown by `_record_wave_snapshot()` from `_save_game_state()`, finalized (`status="dead"`, `final_wave`, denormalized totals) on the death submission. Reroll counts reach the snapshot via `$inc` counters on the wave's own `WaveValidationToken` (same exact-token-match pattern as bundle pickups). `death_cause` exists on the model but stays `None` until a proper death system records what killed the player. There is no query API — analysis runs locally via `scripts/analyze_runs.py` (per-wave trend tables/CSV/PNG plots, survival curves, pick rates, flag-severity exclusion filters). Full documentation: `documentation/RUN_ANALYTICS.md`.
 
 ### Enemy Data
 Enemy health calculations and spawn rules in `app/core/enemy_data.py`. Used by anti-cheat to validate expected kill counts and damage.

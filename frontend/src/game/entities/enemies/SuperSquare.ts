@@ -20,10 +20,10 @@ export class SuperSquare extends Enemy {
     this.sides = 4
     this.radius = 20
     this.color = 0x33ff33
-    this.scoreChance = 0.5
-    this.speedCap = 4.5
+    this.scoreChance = 0.04
+    this.speedCap = 6.5
     this.knockbackResistance = 0.8
-    this.bundleDropChance = 0.15
+    this.bundleDropChance = 0.0 // use difficulty drop chance
   }
 
   /**

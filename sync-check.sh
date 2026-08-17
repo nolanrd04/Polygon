@@ -38,12 +38,23 @@ if ! python3 "$REPO_ROOT/scripts/enemy_defs_sync.py"; then
 fi
 
 echo ""
+
+# Value-parity check: parses Normal.ts's per-wave tables (enemy counts, spawn
+# weights, scheduled boss spawns, bundle rarity weights) and diffs against
+# backend/app/core/data/difficulty_normal.json.
+# See scripts/difficulty_defs_sync.py for the parser/diff logic.
+if ! python3 "$REPO_ROOT/scripts/difficulty_defs_sync.py"; then
+    STATUS=1
+fi
+
+echo ""
 if [ "$STATUS" -ne 0 ]; then
     echo "Next steps:"
     echo "  1. If the frontend defs are correct, regenerate the backend copy:"
     echo "       python3 scripts/upgrade_defs_sync.py --write"
     echo "       python3 scripts/projectile_defs_sync.py --write"
     echo "       python3 scripts/enemy_defs_sync.py --write"
+    echo "       python3 scripts/difficulty_defs_sync.py --write"
     echo "  2. If a mismatch is unintentional, fix the source (usually the frontend def)"
     echo "     and re-run this script."
 fi

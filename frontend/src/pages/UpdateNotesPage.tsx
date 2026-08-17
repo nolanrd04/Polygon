@@ -10,6 +10,23 @@ interface UpdateNote {
 // Add new updates at the top of this array
 const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: 'v0.2.2',
+    date: '2026-08-XX',
+    title: 'Wave changes, enemy changes, upgrade changes, and statistical tracking',
+    changes: [
+      'Enemies spawn faster after wave 10 onward.',
+      'Change enemy spawn types for different waves.',
+      'Added statistical tracking for player performance and future balancing.',
+      'Homing bullets no longer knockback enemies, GET MOVING KID!',
+      'Pentagon now teleports closer to the player, rather than away from the player.',
+      'All teleporting enemies now visualize where they will teleport to.',
+      'All enemies have a higher speed cap.',
+      'View Upgrades page is easier to read.',
+      'Enemies no longer use their own bundle drop chance, but instead use the difficulty drop chance.',
+      'Reduced enemy score drop chances making it more difficult to get points.',
+    ]
+  },
+  {
     version: 'v0.2.1',
     date: '2026-08-11',
     title: 'Added new boss: Arrow Head',

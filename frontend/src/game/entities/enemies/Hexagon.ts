@@ -20,10 +20,10 @@ export class Hexagon extends Enemy {
     this.sides = 6
     this.radius = 30
     this.color = 0xff00ff
-    this.scoreChance = .65
-    this.speedCap = 4.5
+    this.scoreChance = .2
+    this.speedCap = 6.5
     this.knockbackResistance = 0.8
-    this.bundleDropChance = 0.16
+    this.bundleDropChance = 0.0 // use difficulty drop chance
   }
 
   PreAI(): boolean {
@@ -73,7 +73,7 @@ export class Hexagon extends Enemy {
 
   private activateShield(): void {
     this.shielded = true
-    this.maxShieldHealth = this.health * 0.65
+    this.maxShieldHealth = this.maxHealth * 0.65
     this.shieldHealth = this.maxShieldHealth
     console.log(`Hexagon ${this.id} shield activated: ${this.shieldHealth} HP`)
 

@@ -18,8 +18,8 @@ export class Diamond extends Enemy {
     this.sides = 4
     this.radius = 22
     this.color = 0xfcf003
-    this.scoreChance = .45
-    this.speedCap = 4.5
+    this.scoreChance = .07
+    this.speedCap = 6.5
     this.doOldPositionTracking = true
     this.doOldRotationTracking = true  // NEW: Track rotation for trails
     this.oldTrackingCounter = 3
@@ -28,7 +28,7 @@ export class Diamond extends Enemy {
     this.baseSpeed = this.speed
     this.frameCounter = 0
     this.knockbackResistance = .95
-    this.bundleDropChance = 0.1
+    this.bundleDropChance = 0 // use difficulty drop chance
   }
 
   PreAI(): boolean {

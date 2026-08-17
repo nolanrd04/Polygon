@@ -73,6 +73,13 @@ class UpgradeSelectRequest(BaseModel):
 class RerollRequest(BaseModel):
     wave: int
     reroll_cost: int = Field(..., ge=0)
+    # The client's active wave-validation token - same reasoning as
+    # BundlePickupRequest.token: the exact string identifies which of
+    # possibly-several open tokens for this wave will actually be submitted
+    # at /waves/complete, so the reroll counters (analytics for the wave's
+    # GameRun snapshot) land on that one. Optional because the reroll itself
+    # doesn't depend on it - an old client just doesn't get rerolls recorded.
+    token: Optional[str] = Field(default=None)
 
 
 class RerollResponse(BaseModel):
@@ -387,7 +394,10 @@ async def reroll_upgrades(
         current_upgrades=game_save.current_upgrades,
         attack_type=game_save.current_attack_type,
         wave_number=game_save.current_wave,
-        difficulty_id=game_save.difficulty_id
+        difficulty_id=game_save.difficulty_id,
+        token_string=request.token,
+        reroll_cost=request.reroll_cost,
+        points_after_reroll=updated_points
     )
 
     # Update game save with new points and new offered upgrades

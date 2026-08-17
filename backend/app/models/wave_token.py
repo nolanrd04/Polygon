@@ -1,7 +1,18 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
-from pydantic import Field
+from pydantic import BaseModel, Field
 from app.models.base import BaseMongoModel, PyObjectId
+
+
+class RolledOffer(BaseModel):
+    """One shop offer shown against a wave (the wave-start roll or a reroll)."""
+    upgrades: List[str] = Field(default_factory=list)
+    # Points the player had at the moment this roll appeared (post reroll-cost
+    # for rerolls). Points only ever decrease during a shop phase, so this is
+    # the most the player could have put toward any one upgrade in this roll -
+    # the affordability baseline for pick-rate analysis. None on offers
+    # recorded before this field existed.
+    points_at_roll: Optional[int] = Field(default=None)
 
 
 class WaveValidationToken(BaseMongoModel):
@@ -36,6 +47,23 @@ class WaveValidationToken(BaseMongoModel):
     # which does complete it) drops them, the same as it drops in-progress
     # kills/damage.
     bundle_upgrades: List[str] = Field(default_factory=list)
+
+    # Reroll usage against this wave's offer (see WaveService.reroll_upgrades)
+    # - incremented via $inc on the exact token string, same pattern as
+    # bundles_granted above. Pure analytics for the wave's GameRun snapshot;
+    # nothing here gates or validates the reroll itself (point costs are
+    # already enforced in the reroll route against the save's own balance).
+    rerolls_used: int = Field(default=0)
+    reroll_points_spent: int = Field(default=0)
+
+    # Every shop offer shown against this wave, in roll order: the offer the
+    # token was created with (first entry, set in create_for_wave), plus one
+    # entry $push-ed per reroll. This is the pick-rate denominator - a
+    # rerolled-away offer is a "seen and not picked" event that
+    # offered_upgrades alone (final offer only) can't represent. Bundle and
+    # milestone grants are deliberately absent: those are forced random
+    # grants, not choices, so they don't belong in a pick rate.
+    offers_rolled: List[RolledOffer] = Field(default_factory=list)
 
     class Config(BaseMongoModel.Config):
         json_schema_extra = {
@@ -76,7 +104,8 @@ class WaveValidationToken(BaseMongoModel):
         current_upgrades: List[str],
         offered_upgrades: List[str],
         seed: int,
-        expiry_seconds: int = 30
+        expiry_seconds: int = 30,
+        points_at_roll: Optional[int] = None
     ) -> "WaveValidationToken":
         """Create a new wave validation token"""
         token_string = cls.create_token_string(str(user_id), wave_number)
@@ -90,7 +119,13 @@ class WaveValidationToken(BaseMongoModel):
             expected_player_stats=player_stats,
             allowed_upgrades=current_upgrades,
             offered_upgrades=offered_upgrades,
-            seed=seed
+            seed=seed,
+            # The offer this wave opens with (rolled fresh or reused on a
+            # reload) - rerolls append their new offers after it.
+            offers_rolled=(
+                [RolledOffer(upgrades=list(offered_upgrades), points_at_roll=points_at_roll)]
+                if offered_upgrades else []
+            )
         )
 
     def is_valid(self) -> bool:

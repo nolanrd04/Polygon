@@ -26,10 +26,10 @@ export class SuperHexagon extends Enemy {
     this.sides = 6
     this.radius = 23
     this.color = 0xff00ff
-    this.scoreChance = .65
-    this.speedCap = 4.5
+    this.scoreChance = .06
+    this.speedCap = 6.5
     this.knockbackResistance = 0.8
-    this.bundleDropChance = 0.16
+    this.bundleDropChance = 0.0 // use difficulty drop chances
   }
 
   PreAI(): boolean {
@@ -104,7 +104,7 @@ export class SuperHexagon extends Enemy {
 
   private activateShield(): void {
     this.shielded = true
-    this.maxShieldHealth = this.health * 0.65
+    this.maxShieldHealth = this.maxHealth * 0.65
     this.shieldHealth = this.maxShieldHealth
 
     // Create shield visual as sprite using cached texture
