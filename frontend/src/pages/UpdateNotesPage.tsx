@@ -10,8 +10,16 @@ interface UpdateNote {
 // Add new updates at the top of this array
 const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: 'v0.2.3',
+    date: '2026-08-17',
+    title: 'Settings fixes',
+    changes: [
+      'Sound sliders now work as intended.',
+    ]
+  },
+  {
     version: 'v0.2.2',
-    date: '2026-08-XX',
+    date: '2026-08-17',
     title: 'Wave changes, enemy changes, upgrade changes, and statistical tracking',
     changes: [
       'Enemies spawn faster after wave 10 onward.',

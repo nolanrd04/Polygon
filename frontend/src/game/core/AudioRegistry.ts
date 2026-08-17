@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import { SETTINGS } from './SettingsStorage'
 
 export interface AudioDefinition {
   key: string
@@ -42,7 +43,9 @@ export function preloadAllAudio(scene: Phaser.Scene): void {
 }
 
 export function getDefaultVolume(key: string): number {
-  return defaultVolumeByKey.get(key) ?? 1
+  const baseVolume = defaultVolumeByKey.get(key) ?? 1
+  const userScale = key === 'background_music' ? SETTINGS.musicVolume : SETTINGS.sfxVolume
+  return baseVolume * userScale
 }
 
 /**

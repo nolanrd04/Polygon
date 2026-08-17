@@ -1,6 +1,7 @@
 import Phaser from 'phaser'
 import { BootScene } from '../scenes/BootScene'
 import { MainScene } from '../scenes/MainScene'
+import { SETTINGS } from './SettingsStorage'
 
 export const GAME_WIDTH = 1280
 export const GAME_HEIGHT = 720
@@ -45,29 +46,7 @@ export const COLORS = {
   flamer: 0xff6600
 }
 
-// Helper function to get settings from localStorage
-function getSettingsFromStorage() {
-  const saved = localStorage.getItem('gameSettings')
-  if (saved) {
-    try {
-      return JSON.parse(saved)
-    } catch {
-      return null
-    }
-  }
-  return null
-}
-
-export const DEV_SETTINGS = {
-  get showEnemyHealthBar(): boolean {
-    const settings = getSettingsFromStorage()
-    return settings?.showEnemyHealthBar ?? true
-  },
-  get showEnemyHealthNumber(): boolean {
-    const settings = getSettingsFromStorage()
-    return settings?.showEnemyHealthNumber ?? true
-  }
-}
+export const DEV_SETTINGS = SETTINGS
 
 // Rarity weights for upgrade rolls live on the Difficulty interface.
 // See: frontend/src/game/systems/difficulty/Normal.ts (getRarityWeights)

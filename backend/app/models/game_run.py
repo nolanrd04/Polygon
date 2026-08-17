@@ -22,7 +22,7 @@ from app.models.base import BaseMongoModel, PyObjectId
 # Bump manually whenever a balance-relevant change ships (difficulty curves,
 # enemy stats, upgrade values, economy), so runs recorded under different
 # tuning don't silently blend together at analysis time.
-GAME_VERSION = "0.2.2"
+GAME_VERSION = "0.2.3"
 
 
 class OfferRoll(BaseModel):

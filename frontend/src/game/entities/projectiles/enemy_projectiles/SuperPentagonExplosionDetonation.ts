@@ -3,6 +3,7 @@ import { SuperPentagonExplosion } from './SuperPentagonExplosion'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
 import { SoundID } from '../../../../game/data/ID'
 import { Particle, SparkParticle } from '../../particles'
+import { getDefaultVolume } from '../../../core/AudioRegistry'
 
 export class SuperPentagonExplosionDetonation extends Projectile {
   private baseColor = 0xf74f25
@@ -51,7 +52,7 @@ export class SuperPentagonExplosionDetonation extends Projectile {
         // Solid yellow with enhanced glow (500-1000ms)
         if (cycleTime == 500)
         {
-          this.scene.sound.play(SoundID.DetonationWarning, { volume: .9 })
+          this.scene.sound.play(SoundID.DetonationWarning, { volume: getDefaultVolume(SoundID.DetonationWarning) * 0.9 })
         }
         this.color = 0xffff00
         glowAlpha = 0.8
@@ -104,7 +105,7 @@ export class SuperPentagonExplosionDetonation extends Projectile {
     // all sound calls should have this check to prevent "sound stacking"
     //
 
-    this.scene.sound.play(SoundID.Explosion, { volume: 1.2 })
+    this.scene.sound.play(SoundID.Explosion, { volume: getDefaultVolume(SoundID.Explosion) * 1.2 })
     //
   }
 }
