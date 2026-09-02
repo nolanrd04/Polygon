@@ -10,6 +10,15 @@ interface UpdateNote {
 // Add new updates at the top of this array
 const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: 'v0.2.5',
+    date: '2026-09-02',
+    title: 'Lighting System improvements',
+    changes: [
+      'Removed the computationally expensive radius parameter.',
+      'Added lighting to most entities.',
+    ]
+  },
+  {
     version: 'v0.2.4',
     date: '2026-08-18',
     title: 'Advanced Lighting System and Balancing',
