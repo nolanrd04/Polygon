@@ -1,6 +1,6 @@
 import { Enemy } from './Enemy'
 import { LightingSystem } from '../../systems/LightingSystem'
-import { LightingRadiusID } from '../../data/ID'
+import { LightingIntensityID } from '../../data/ID'
 
 /**
  * Basic triangle enemy - weak and fast.
@@ -27,6 +27,6 @@ export class Triangle extends Enemy {
    * knocked back or otherwise skipping its AI hook.
    */
   PostDraw(): void {
-    LightingSystem.AddLight(this.x, this.y, this.color, 2, LightingRadiusID.PlayerRadius)
+    LightingSystem.AddLight(this.x, this.y, this.color, LightingIntensityID.Entity)
   }
 }

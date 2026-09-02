@@ -2,7 +2,7 @@ import { TextureGenerator } from '../../utils/TextureGenerator'
 import { SuperPentagonExplosionDetonation } from '../projectiles/enemy_projectiles/SuperPentagonExplosionDetonation'
 import { Enemy } from './Enemy'
 import { LightingSystem } from '../../systems/LightingSystem'
-import { LightingRadiusID } from '../../data/ID'
+import { LightingIntensityID } from '../../data/ID'
 import { Particle, SparkParticle } from '../particles'
 
 export class SuperPentagon extends Enemy {
@@ -171,6 +171,6 @@ export class SuperPentagon extends Enemy {
    * on every hit.
    */
   PostDraw(): void {
-    LightingSystem.AddLight(this.x, this.y, this.color, 2, LightingRadiusID.PlayerRadius * this.radius / 15)
+    LightingSystem.AddLight(this.x, this.y, this.color, LightingIntensityID.Entity * this.radius / 35)
   }
 }

@@ -2,7 +2,7 @@ import { Enemy } from './Enemy'
 import { TrailRenderer } from '../../utils/TrailRenderer'
 import { TextureGenerator } from '../../utils/TextureGenerator'
 import { LightingSystem } from '../../../game/systems/LightingSystem'
-import { LightingRadiusID } from '../../../game/data/ID'
+import { LightingIntensityID } from '../../../game/data/ID'
 
 export class Diamond extends Enemy {
     private baseSpeed: number = 100
@@ -114,7 +114,7 @@ export class Diamond extends Enemy {
     // Emitted here rather than from AI(): Enemy gates AI() on the knockback
     // timer, and lights are immediate-mode, so a light emitted from AI() blinks
     // out for the ~6 frames of every knockback.
-    LightingSystem.AddLight(this.x, this.y, this.color, 2, LightingRadiusID.PlayerRadius * this.radius / 15)
+    LightingSystem.AddLight(this.x, this.y, this.color, LightingIntensityID.Entity * this.radius / 35)
 
     if (this.doOldPositionTracking && this.oldPositionX.length > 0) {
       // Generate diamond trail texture (same as main sprite)

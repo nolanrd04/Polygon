@@ -43,7 +43,8 @@ export default function PerfOverlay() {
 
   if (!enabled) return null
 
-  const { fps, updateMs, lightingMs, lightGroups, enemies, projectiles } = PerfStats
+  const { fps, updateMs, lightingMs, lightGroups, lights, lightsCulled, lightWindow, enemies, projectiles } =
+    PerfStats
   const pct = (ms: number) => ((ms / FRAME_BUDGET_MS) * 100).toFixed(0)
 
   const row = (label: string, value: string, color?: string) => (
@@ -67,7 +68,7 @@ export default function PerfOverlay() {
         border: '1px solid rgba(255,255,255,0.15)',
         color: '#e5e7eb',
         font: '11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace',
-        minWidth: 172,
+        minWidth: 198,
         pointerEvents: 'auto',
         userSelect: 'none'
       }}
@@ -77,6 +78,8 @@ export default function PerfOverlay() {
       {row('update', `${updateMs.toFixed(2)}ms ${pct(updateMs)}%`, budgetColor(updateMs))}
       {row('└ lighting', `${lightingMs.toFixed(2)}ms ${pct(lightingMs)}%`, budgetColor(lightingMs))}
       {row('light groups', String(lightGroups), lightGroups > 3 ? '#fbbf24' : undefined)}
+      {row('lights', `${lights} lit / ${lightsCulled} culled`)}
+      {row('flood window', `${(lightWindow * 100).toFixed(0)}% of grid`, lightWindow > 0.75 ? '#fbbf24' : '#4ade80')}
       <div style={{ height: 1, background: 'rgba(255,255,255,0.12)', margin: '5px 0' }} />
       {row('peak update', `${PerfPeaks.updateMs.toFixed(2)}ms`, budgetColor(PerfPeaks.updateMs))}
       {row('peak lighting', `${PerfPeaks.lightingMs.toFixed(2)}ms`, budgetColor(PerfPeaks.lightingMs))}

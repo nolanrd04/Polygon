@@ -24,6 +24,16 @@ export const PerfStats = {
   lightingMs: 0,
   /** Flood groups the light map ran - see LightingSystem.GroupCount. */
   lightGroups: 0,
+  /** Lights that survived viewport culling and were actually flooded. */
+  lights: 0,
+  /** Lights dropped for being off-screen. Zero here means culling did nothing. */
+  lightsCulled: 0,
+  /**
+   * Fraction of the light grid the flood swept, 0-1. This multiplies the cost of
+   * every group, so it is the other half of the lighting budget: 6 groups over a
+   * third of the grid costs what 2 groups over all of it does.
+   */
+  lightWindow: 1,
   /** Live enemies, for correlating cost spikes with what is on screen. */
   enemies: 0,
   /** Live player projectiles. */

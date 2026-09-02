@@ -1,5 +1,7 @@
+import { LightingSystem } from '../../../../game/systems/LightingSystem'
 import { ArrowHeadBody } from './ArrowHeadBody'
 import { type ArrowHeadRole } from './ArrowHeadConfig'
+import { LightingIntensityID } from '../../../../game/data/ID'
 
 /**
  * ============================================================================
@@ -18,5 +20,9 @@ export class ArrowHeadTail extends ArrowHeadBody {
   /** The tail sits at the far end of every per-segment curve. */
   protected get fallbackT(): number {
     return 1
+  }
+
+  PostDraw(): void {
+    LightingSystem.AddLight(this.x, this.y, this.color, LightingIntensityID.Entity * this.radius / 35)
   }
 }

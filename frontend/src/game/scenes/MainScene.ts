@@ -628,6 +628,9 @@ export class MainScene extends Phaser.Scene {
     PerfStats.updateMs = performance.now() - perfStart
     PerfStats.fps = this.game.loop.actualFps
     PerfStats.lightGroups = LightingSystem.GroupCount
+    PerfStats.lights = LightingSystem.LightCount
+    PerfStats.lightsCulled = LightingSystem.CulledCount
+    PerfStats.lightWindow = LightingSystem.WindowTiles / LightingSystem.TotalTiles
     PerfStats.enemies = this.enemyManager.getEnemies().length
     PerfStats.projectiles = this.player.getProjectiles().length
     recordPeaks()

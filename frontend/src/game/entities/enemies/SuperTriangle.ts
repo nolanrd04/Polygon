@@ -3,7 +3,7 @@ import { Enemy } from './Enemy'
 import { LightingSystem } from '../../systems/LightingSystem'
 import { EnemyBullet } from '../projectiles/enemy_projectiles/EnemyBullet'
 import { TextureGenerator } from '../../utils/TextureGenerator'
-import { SoundID, LightingRadiusID } from '../../../game/data/ID'
+import { SoundID, LightingIntensityID } from '../../../game/data/ID'
 import { getDefaultVolume } from '../../../game/core/AudioRegistry'
 
 export class SuperTriangle extends Enemy {
@@ -96,6 +96,6 @@ export class SuperTriangle extends Enemy {
    * on every hit.
    */
   PostDraw(): void {
-    LightingSystem.AddLight(this.x, this.y, this.color, 2, LightingRadiusID.PlayerRadius * this.radius / 15)
+    LightingSystem.AddLight(this.x, this.y, this.color, LightingIntensityID.Entity * this.radius / 25)
   }
 }

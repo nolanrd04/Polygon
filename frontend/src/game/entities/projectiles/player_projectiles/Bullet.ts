@@ -1,7 +1,7 @@
 import { Projectile } from '../Projectile'
 import { COLORS } from '../../../core/GameConfig'
 import { UpgradeSystem, UpgradeModifierSystem, UpgradeEffectSystem } from '../../../systems/upgrades'
-import { UpgradeTargetID, UpgradeStatID, SoundID, UpgradeEffectID, LightingRadiusID } from '../../../data/ID'
+import { UpgradeTargetID, UpgradeStatID, SoundID, UpgradeEffectID, LightingIntensityID } from '../../../data/ID'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
 import { LightingSystem } from '../../../systems/LightingSystem'
 import { getDefaultVolume } from '../../../core/AudioRegistry'
@@ -79,7 +79,7 @@ export class Bullet extends Projectile {
 
     // Bullets carry a small light. Kept on Bullet rather than Projectile so
     // emitting light stays a per-projectile-class choice.
-    LightingSystem.AddLight(this.positionX, this.positionY, this.color, 0.7, LightingRadiusID.ProjectileRadius)
+    LightingSystem.AddLight(this.positionX, this.positionY, this.color, LightingIntensityID.Projectile)
 
     // Simple sparkle:
     if (this.particleTimer % 10 === 0) {

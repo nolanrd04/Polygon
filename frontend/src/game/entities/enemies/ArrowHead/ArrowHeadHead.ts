@@ -11,9 +11,10 @@ import {
 } from './ArrowHeadConfig'
 import { EnemyBullet } from '../../projectiles/enemy_projectiles/EnemyBullet'
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../../../core/GameConfig'
-import { SoundID } from '../../../data/ID'
+import { LightingIntensityID, SoundID } from '../../../data/ID'
 import { getDefaultVolume } from '../../../core/AudioRegistry'
 import type { Enemy } from '../Enemy'
+import { LightingSystem } from '../../../../game/systems/LightingSystem'
 
 /**
  * ============================================================================
@@ -195,7 +196,10 @@ export class ArrowHeadHead extends ArrowHeadPart {
     this.EmitAmbientParticles()
     this.UpdateChain(playerX, playerY)
   }
-    
+  
+  PostDraw(): void {
+    LightingSystem.AddLight(this.x, this.y, this.color, LightingIntensityID.Entity * this.radius / 35)
+  }
 
   /**
    * Advance the far-movement state machine and report whether it is active.

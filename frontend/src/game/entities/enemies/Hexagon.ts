@@ -1,6 +1,6 @@
 import { Enemy } from './Enemy'
 import { LightingSystem } from '../../systems/LightingSystem'
-import { LightingRadiusID } from '../../data/ID'
+import { LightingIntensityID } from '../../data/ID'
 import { TextureGenerator } from '../../utils/TextureGenerator'
 
 /**
@@ -126,6 +126,6 @@ export class Hexagon extends Enemy {
    * on every hit.
    */
   PostDraw(): void {
-    LightingSystem.AddLight(this.x, this.y, this.color, 2, LightingRadiusID.PlayerRadius * this.radius / 15)
+    LightingSystem.AddLight(this.x, this.y, this.color, LightingIntensityID.Entity * this.radius / 35)
   }
 }

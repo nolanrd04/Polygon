@@ -1,7 +1,7 @@
 import { Enemy } from './Enemy'
 import { TextureGenerator } from '../../utils/TextureGenerator'
 import { SuperHexagonProj } from '../projectiles/enemy_projectiles/SuperHexagonProj.ts'
-import { LightingRadiusID, SoundID } from '../../../game/data/ID.ts'
+import { LightingIntensityID, SoundID } from '../../../game/data/ID.ts'
 import { getDefaultVolume } from '../../../game/core/AudioRegistry.ts'
 import { LightingSystem } from '../../../game/systems/LightingSystem.ts'
 
@@ -92,7 +92,7 @@ export class SuperHexagon extends Enemy {
    * the ~6 frames of every knockback.
    */
   PostDraw(): void {
-    LightingSystem.AddLight(this.x, this.y, this.color, 2, LightingRadiusID.PlayerRadius * this.radius / 15)
+    LightingSystem.AddLight(this.x, this.y, this.color, LightingIntensityID.Entity * this.radius / 35)
   }
 
   OnHit(_damage: number, _source: any): boolean {

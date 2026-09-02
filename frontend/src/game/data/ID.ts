@@ -101,18 +101,24 @@ export const enum SoundtrackID
 }
 
 /**
- * World-pixel reach for LightingSystem.AddLight.
+ * Baseline brightness for LightingSystem.AddLight.
  *
- * A SHARED PALETTE ON PURPOSE. The light map floods the whole tile grid once per
- * distinct radius, so cost tracks how many DIFFERENT radii are on screen, not how
- * many lights: 2000 bullets at one radius cost ~0.9ms, but five bespoke radii cost
- * ~4.4ms even with one light each. Reusing these values keeps entities sharing a
- * flood pass. Watch LightingSystem.GroupCount if you add more.
+ * Intensity is the ONLY light-size control - there is no radius parameter, since
+ * a per-light radius means a per-light flood pass. Reach is logarithmic in these
+ * values: at the shipped settings 2 reaches ~250px and 0.7 reaches ~160px, which
+ * is where entity and projectile lights sat under the old radius parameter.
+ *
+ * Unlike the radius values these replaced, varying them is FREE - intensity does
+ * not split the flood into more passes, so scale them per entity as you like.
+ * Use LightingSystem.Reach() / IntensityFor() to convert to and from pixels, and
+ * see INTENSITY IS THE ONLY KNOB in LightingSystem.ts for the curve's shape.
  */
-export const enum LightingRadiusID
+export const enum LightingIntensityID
 {
-  /** Players and enemies. */
-  PlayerRadius = 250,
-  /** Projectiles. */
-  ProjectileRadius = 150,
+  /** Players and enemies. ~250px. */
+  Entity = 2,
+  /** Projectiles. ~160px. */
+  Projectile = 0.7,
+  /** Specific player override */
+  Player = 1.2
 }

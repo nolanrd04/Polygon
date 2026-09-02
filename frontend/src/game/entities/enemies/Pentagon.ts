@@ -1,7 +1,7 @@
 import { Particle, SparkParticle } from '../particles'
 import { Enemy } from './Enemy'
 import { LightingSystem } from '../../systems/LightingSystem'
-import { LightingRadiusID } from '../../data/ID'
+import { LightingIntensityID } from '../../data/ID'
 
 export class Pentagon extends Enemy {
   private teleportX: number = 0
@@ -133,6 +133,6 @@ export class Pentagon extends Enemy {
    * on every hit.
    */
   PostDraw(): void {
-    LightingSystem.AddLight(this.x, this.y, this.color, 2, LightingRadiusID.PlayerRadius * this.radius / 15)
+    LightingSystem.AddLight(this.x, this.y, this.color, LightingIntensityID.Entity * this.radius / 35)
   }
 }

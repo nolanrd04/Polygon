@@ -3,7 +3,7 @@ import { Enemy } from './Enemy'
 import { TrailRenderer } from '../../utils/TrailRenderer'
 // import { EnemyBullet } from '../projectiles/enemy_projectiles/EnemyBullet'
 import { DodecahedronBullet } from '../projectiles/enemy_projectiles/DodecahedronBullet'
-import { BundleRarity, DifficultyID, LightingRadiusID, SoundID } from '../../data/ID'
+import { BundleRarity, DifficultyID, LightingIntensityID, SoundID } from '../../data/ID'
 import { getDefaultVolume } from '../../../game/core/AudioRegistry'
 import { Particle, SmokeParticle, PolygonParticle, SparkParticle } from '../particles'
 import { LightingSystem } from '../../../game/systems/LightingSystem'
@@ -488,7 +488,7 @@ export class Dodecahedron extends Enemy {
       // Emitted here rather than from AI(): Enemy gates AI() on the knockback
       // timer, and lights are immediate-mode, so a light emitted from AI() blinks
       // out for the ~6 frames of every knockback.
-      LightingSystem.AddLight(this.x, this.y, this.defaultColor, 2, LightingRadiusID.PlayerRadius * this.radius / 25)
+      LightingSystem.AddLight(this.x, this.y, this.defaultColor, LightingIntensityID.Entity * this.radius / 35)
 
       if (this.showTrail && this.oldPositionX.length > 0) {
         const textureKey = TextureGenerator.getOrCreatePolygon(this.scene, {

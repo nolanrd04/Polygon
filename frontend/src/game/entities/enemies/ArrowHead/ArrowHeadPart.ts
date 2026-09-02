@@ -13,6 +13,8 @@ import {
   type ArrowHeadRole,
   type ChevronShape,
 } from './ArrowHeadConfig'
+import { LightingSystem } from '../../../../game/systems/LightingSystem'
+import { LightingIntensityID } from '../../../../game/data/ID'
 
 /**
  * ============================================================================
@@ -185,6 +187,10 @@ export abstract class ArrowHeadPart extends Enemy {
 
     return container
   }
+
+  PostDraw(): void {
+    LightingSystem.AddLight(this.x, this.y, this.color, LightingIntensityID.Entity * this.radius / 35)
+  }   
 
   /** Build (or fetch from cache) the concave arrow texture for this part. */
   protected getChevronTextureKey(): string {

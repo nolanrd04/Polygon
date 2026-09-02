@@ -9,7 +9,7 @@ import { Flame } from './projectiles/player_projectiles/Flame'
 import { Spinner } from './projectiles/player_projectiles/Spinner'
 import { AttackType } from '../data/attackTypes'
 import { UpgradeSystem, UpgradeEffectSystem, UpgradeModifierSystem } from '../systems/upgrades'
-import { UpgradeTargetID, UpgradeStatID, LightingRadiusID } from '../data/ID'
+import { UpgradeTargetID, UpgradeStatID, LightingIntensityID } from '../data/ID'
 import type { Enemy } from './enemies/Enemy'
 import { TextureGenerator } from '../utils/TextureGenerator'
 import { LightingSystem } from '../systems/LightingSystem'
@@ -580,7 +580,7 @@ export class Player extends Phaser.GameObjects.Container {
 
     // The player is the main light source. Brightness and reach are independent
     // knobs now: intensity is how hard the centre glows, radius how far it carries.
-    LightingSystem.AddLight(this.x, this.y, COLORS.player, 2, LightingRadiusID.PlayerRadius)
+    LightingSystem.AddLight(this.x, this.y, COLORS.player, LightingIntensityID.Player)
 
     // Update dash state
     this.updateDash()

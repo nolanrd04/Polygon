@@ -10,7 +10,7 @@ overlay. It is not Phaser's `Light2D`.
 |------|----------|
 | `frontend/src/game/systems/LightingSystem.ts` | The whole system — flood, bake, tone map, overlay |
 | `frontend/src/game/systems/MapManager.ts` | Registers occluders + emissive grid/obstacles; owns the albedo colours |
-| `frontend/src/game/data/ID.ts` | `LightingRadiusID` — the shared radius palette |
+| `frontend/src/game/data/ID.ts` | `LightingIntensityID` — the shared intensity baselines |
 | `frontend/src/game/core/PerfStats.ts` | Per-frame timing written by `MainScene` |
 | `frontend/src/components/PerfOverlay.tsx` | On-screen readout (`?perf=1`) |
 
@@ -160,10 +160,16 @@ emission lands on the obstacle's own tiles and shows through as bright bands
 running across it — obstacles render *below* the overlay, so they get multiplied
 by whatever light hits their tiles.
 
-> The occluder mask is a separate `Uint8Array`, not inferred from the `decay`
-> float array. `Float32Array` stores `0.93` as `0.9300000071525574`, so comparing
-> an entry back against the float64 `airDecay` is never equal and every tile
-> silently reports "solid" — which would delete the entire grid glow.
+> The occluder mask is a `Uint8Array` and there is **no per-tile decay array
+> beside it**. With one global decay rate a tile's decay is one of exactly two
+> numbers, so `propagate()` carries `air`/`solid` (and their `^shape` diagonal
+> versions) as four scalars and branches on the mask. The per-tile version cost a
+> 14,400-entry rebuild with a `Math.pow` per tile, *per group, per frame*.
+>
+> The mask was always separate rather than inferred from those decay values, for
+> a reason worth keeping: `Float32Array` stores `0.93` as `0.9300000071525574`,
+> so comparing an entry back against the float64 `airDecay` is never equal and
+> every tile silently reports "solid" — which would delete the entire grid glow.
 
 ---
 
@@ -180,8 +186,12 @@ LightingSystem.SetOccluders(obstacleData)
 LightingSystem.BakeLight(x, y, color, intensity, radius?, skipSolid?)
 LightingSystem.ClearBaked()
 
-// Any entity, any frame, any hook
-LightingSystem.AddLight(x, y, color, intensity, radius?, shape?)
+// Any entity, any frame, any hook. Intensity is the ONLY size control.
+LightingSystem.AddLight(x, y, color, intensity, shape?)
+
+// Authoring helpers for picking an intensity — see the section below
+LightingSystem.Reach(intensity)      // -> world px
+LightingSystem.IntensityFor(radius)  // -> intensity
 
 // Once at the END of MainScene.update()
 LightingSystem.UpdateAll()
@@ -212,54 +222,110 @@ Any value between blends them continuously — 1.7 is a rounded diamond.
 
 ---
 
-## Light radius, and the cost model
+## Intensity is the only knob
 
 **Read this before adding lights to anything new.**
 
-Radius is solved into a decay rate:
+**There is no per-light radius.** A sweep has exactly one decay rate, and decay is
+what sets how far light travels, so a light asking for its own radius asks for
+its own full-grid flood pass.
+
+An earlier version *did* offer one, and it is worth knowing how that went. The
+ArrowHead boss taper (`ArrowHeadConfig.radiusRatio` lerps 0.78 → 0.42) meant each
+of its 12 segments derived a different radius, so a single boss cost **12 flood
+passes and ~12.5ms a frame** — 84% of the frame budget, on wave 1.
+
+So, as in Terraria: one global `airDecay`, and reach emerges from how much
+brightness a light injects.
 
 ```
-d = (ambient / intensity) ^ (tileSize / radius)
+reach = tileSize * ln(ambient / intensity) / ln(airDecay)
 ```
 
-Intensity alone is a poor radius control — reach goes as
-`log(ambient / intensity) / log(airDecay)`, which is **logarithmic**: each
-doubling of intensity adds a fixed ~150px, and doubling an intensity-1 light's
-radius would take intensity 10, long past the point its centre blows out.
+### What that buys, and what it costs
 
-### The cost is variety, not quantity
+**Light count and brightness are both free.** 2000 lights at 40 different
+intensities cost exactly one pass, the same as one light. Vary intensity per
+entity as freely as you like — that is what the enemies do
+(`LightingIntensityID.Entity * this.radius / 25`), and it costs nothing.
 
-The flood sweeps **all 14,400 tiles** regardless of how many lights are in it, so
-every light in one pass propagates simultaneously. But **one sweep has exactly
-one decay rate**, and decay *is* radius. Lights needing different radii cannot
-share a sweep.
+**Reach is logarithmic in intensity**, so size is the expensive axis:
 
-Measured on a desktop Mac:
+| intensity | 0.5 | 0.7 | 1 | 2 | 4 | 8 | 40 |
+|---|---|---|---|---|---|---|---|
+| reach (px) | 134 | 162 | 192 | **249** | 307 | 364 | 498 |
+| centre (tone-mapped) | 0.39 | 0.50 | 0.63 | **0.86** | 0.98 | 1.00 | 1.00 |
 
-| lights (1 radius) | cost | | distinct radii (12 lights) | cost |
-|---|---|---|---|---|
-| 1 | ~0.9 ms | | 1 | 0.88 ms |
-| 50 | ~0.9 ms | | 2 | 1.77 ms |
-| 500 | ~0.9 ms | | 3 | 2.61 ms |
-| 2000 | ~0.9 ms | | 5 | 4.38 ms |
+Doubling intensity adds a flat **~58px**, every time. Going 250px → 500px costs
+**20× the intensity**.
 
-**~0.87ms per additional distinct radius, regardless of light count.** 2000
-bullets at one radius are free; five bespoke radii cost 4.4ms with one light each.
+Note the two rows saturating at different rates. That is the thing to internalise:
 
-This inverts the usual intuition — budget by *how many kinds of light*, not how
-many lights.
+- **Below ~2**, intensity is mostly a **brightness** control — the centre climbs
+  fast, the radius barely moves.
+- **Above ~3**, the centre is pinned at white and intensity is mostly a **size**
+  control, bought at a steep exchange rate.
+
+Physically that is correct — a brighter lamp *does* blow out its core and spread
+its glow — but it means **you cannot make a light much bigger without making it
+look blown out.** If you want everything bigger, move `airDecay`. If you want to
+change the shape of the curve itself, move `ambient`: it sets the `−ln(ambient)`
+constant, and raising it widens the reach spread across a given intensity range.
+
+Use `LightingSystem.Reach(i)` and `LightingSystem.IntensityFor(px)` rather than
+eyeballing this. `LightingIntensityID` in `ID.ts` holds the shared baselines.
 
 ### Grouping details
 
-Lights are grouped by the **`(shape, decay)`** pair. Decay folds in *both* radius
-and intensity, so two lights sharing a radius but differing in intensity land in
-**different** groups. Decay is quantised to 0.005 steps, which is roughly a ±1.5%
-window on radius — narrow enough that a radius varying continuously (e.g. scaled
-from a projectile's `size`) splits groups almost immediately. Snap such a radius
-to buckets first.
+Lights are grouped by **`shape` alone**. Every light in the game uses
+`SHAPE_ROUND`, so the game runs at **one flood pass**, always — regardless of
+light count, intensity, or what is on screen. Only introducing a second *shape*
+adds a pass. Watch `LightingSystem.GroupCount`; if it is ever above 1, something
+passed a custom shape.
 
-`LightingRadiusID` in `ID.ts` exists to keep entities sharing passes. Watch
-`LightingSystem.GroupCount` when adding lights.
+### Viewport culling: the other half of the budget
+
+Total cost is **groups × window area**. Group count is above; this is the
+other factor, and it is why cost tracks the *screen* and not the world.
+
+Two independent mechanisms, both automatic:
+
+**Emitter culling.** `AddLight` drops any light whose reach cannot touch the
+padded camera rect — an off-screen enemy emits nothing, the same rule Terraria
+uses. Callers never need an on-screen check; call `AddLight` unconditionally.
+This matters more than the raw saving suggests, because a dropped light also
+cannot open a **flood group** of its own.
+
+**Flood windowing.** Every buffer pass — clear, seed, sweep, merge, upload —
+runs over a tile window around the camera rather than the whole grid.
+
+The window is the camera rect grown by `cullPadding` **plus the distance of the
+furthest surviving emitter outside the view**. Note what that margin is *not*:
+it is not the largest light **radius**. A light inside the view needs no margin
+at all, because the flood only has to be correct where it is visible — what that
+light does off-screen is never sampled. Sizing the margin by radius would grow
+the window past the whole grid at current settings and save nothing.
+
+Measured (desktop Mac, 2560×1440 world, 1280×720 camera):
+
+| scenario | per-light radius, full grid | one decay, full grid | one decay + culling | window |
+|---|---|---|---|---|
+| ArrowHead boss on screen (12 segments) | 12.48 ms | 0.97 ms | **0.36 ms** | 37% |
+| 12 enemies + player + 20 bullets, spread over world | 2.01 ms | 1.00 ms | **0.84 ms** | 84% |
+
+Killing the radius parameter did the heavy lifting (12 passes → 1); culling then
+took another 2.7x off the boss case. Net **35x** on the case that was actually
+dropping frames.
+
+The second row is the honest limit of *culling specifically*: **this world is
+only 2× the camera in each axis**, and scattered enemies mean some survivor is
+usually a few hundred px off-screen, which pushes the window back out. Windowing
+is a huge win in Terraria because its world is ~100× its screen; here it pays off
+mainly when the lights that matter are the ones you are looking at — which is
+exactly the boss case.
+
+`PerfStats.lightWindow` and the `flood window` / `lights` rows on the perf
+overlay report this live.
 
 ---
 
@@ -270,25 +336,43 @@ to buckets first.
 | option | default | effect |
 |--------|---------|--------|
 | `tileSize` | 16 | world px per light tile; smaller = sharper, costlier |
-| `airDecay` | 0.93 | open-space decay when no radius is given |
+| `airDecay` | **0.825** | open-space decay — the GLOBAL size control for every light |
 | `solidDecay` | 0.15 | decay through an occluder |
 | `ambient` | **0.10** | global light floor |
 | `exposure` | 1.0 | highlight rolloff |
 | `iterations` | 2 | forward+backward sweep pairs per group |
+| `cullPadding` | 96 | world-px slack around the camera for viewport culling |
 
-`LightingRadiusID`: `PlayerRadius = 250`, `ProjectileRadius = 150`.
+`airDecay = 0.825` is chosen so intensity 2 reaches ~250px and intensity 0.7
+reaches ~160px — where entity and projectile lights sat under the old per-light
+radius parameter. Lower it to shrink every light at once.
 
-Emitters:
+`LightingIntensityID`: `Entity = 2` (~250px), `Projectile = 0.7` (~160px),
+`Player = 1.2` (~207px) — a deliberate override so the player's own glow does not
+out-reach the enemies it is meant to reveal.
 
-| entity | hook | intensity | radius |
-|--------|------|-----------|--------|
-| `Player` | `update()` | 2 | `PlayerRadius` |
-| `Bullet` | `AI()` | 0.7 | `ProjectileRadius` |
-| `Triangle` | `PostDraw()` | 2 | `PlayerRadius` |
-| `Square`, `Pentagon`, `Hexagon`, `Octogon` | `PostDraw()` | 2 | `PlayerRadius * radius / 15` |
-| `SuperTriangle`, `SuperSquare`, `SuperPentagon` | `PostDraw()` | 2 | `PlayerRadius * radius / 15` |
-| `Diamond`, `SuperHexagon` | `AI()` | 2 | `PlayerRadius * radius / 15` |
-| `Dodecahedron` | `AI()` | 2 | `PlayerRadius * radius / 15` |
+Emitters — all reach `Reach(intensity)` px, all in one flood pass:
+
+| entity | hook | intensity |
+|--------|------|-----------|
+| `Player` | `update()` | `Player` (1.2) |
+| `Bullet` | `AI()` | `Projectile` |
+| `Triangle` | `PostDraw()` | `Entity` — no size scaling |
+| `SuperTriangle` | `PostDraw()` | `Entity * radius / 25` |
+| `Square`, `Pentagon`, `Hexagon`, `Octogon` | `PostDraw()` | `Entity * radius / 35` |
+| `SuperSquare`, `SuperPentagon` | `PostDraw()` | `Entity * radius / 35` |
+| `Diamond`, `SuperHexagon` | `AI()` | `Entity * radius / 35` |
+| `Dodecahedron` | `AI()` | `Entity * radius / 35` |
+| `ArrowHeadHead`, `ArrowHeadPart`, `ArrowHeadTail` | `PostDraw()` | `Entity * radius / 35` |
+
+Size scaling is carried by **intensity**, so bigger enemies glow both brighter
+and wider — and it is free, since intensity does not split passes.
+
+The divisor is a size dial for the whole roster. Because reach is logarithmic,
+**changing it shifts every enemy's reach by the same flat amount** rather than
+scaling them: 25 → 35 took ~28px off every enemy regardless of size. A radius-25
+enemy sits at ~221px and a radius-46 boss head at ~272px. `Triangle` and
+`SuperTriangle` are deliberately left out of the 35 group.
 
 Enemies use `this.color`, **not** a stored default — the damage flash tints the
 *sprite* and leaves `this.color` alone (`Enemy.takeDamage`), so the light does not
@@ -360,12 +444,17 @@ fps              60          below ~58 sustained = dropping frames
 update         2.14ms  13%   your logic's share of the 16.67ms frame
 └ lighting     1.77ms  11%
 light groups        2
+lights         18 lit / 6 culled   viewport culling; 0 culled = it did nothing
+flood window   66% of grid         multiplies the cost of EVERY group
 peak update    4.82ms
 peak lighting  2.03ms
 peak groups         3
 enemies            37
 projectiles        12
 ```
+
+Read `light groups` and `flood window` together — they multiply. 6 groups over a
+third of the grid costs what 2 groups over all of it does.
 
 `update` is the headroom number. `fps` is vsync-locked, so it reads a flat 60
 right up until work overruns the frame and then falls to 30 — it tells you the
@@ -377,10 +466,23 @@ unconditional. Only the overlay is gated.
 
 ### Measured reality
 
-On-device testing found **lighting is not the bottleneck**. Frame drops tracked
-projectile count and enemy count, not `light groups` — 6 groups held 60fps on a
-phone. Budget accordingly: the group-count arithmetic above is real, but entity
-update cost is what currently limits this game.
+Early on-device testing suggested lighting was not the bottleneck: 6 groups held
+60fps on a phone while frame drops tracked projectile and enemy count.
+
+**That conclusion did not survive giving the ArrowHead boss lighting.** Its
+segments taper (`ArrowHeadConfig.radiusRatio` lerps 0.78 → 0.42), and the enemy
+call site derives radius from `this.radius`, so **every segment landed in its own
+flood group** — 11–12 groups from a single boss, with lighting at ~84% of a 14ms
+frame on wave 1. The group-count arithmetic above predicted it exactly.
+
+**That is what killed the radius parameter.** A per-light radius is a per-light
+flood pass, and a multi-part entity multiplies that by its part count — the API
+made the expensive thing look free. With one global decay the same boss costs one
+pass and 0.36ms, and there is no longer a way to write that bug.
+
+The current numbers, on the same desktop Mac: **0.36ms** for the boss, **0.84ms**
+for a scattered wave-10-ish load, both at 1 group. Whether entity and projectile
+update cost is now the binding constraint is still open — see next steps.
 
 ---
 
@@ -388,17 +490,20 @@ update cost is what currently limits this game.
 
 ```ts
 import { LightingSystem } from '../../systems/LightingSystem'
-import { LightingRadiusID } from '../../data/ID'
+import { LightingIntensityID } from '../../data/ID'
 
 PostDraw(): void {
-  LightingSystem.AddLight(this.x, this.y, this.color, 2, LightingRadiusID.PlayerRadius)
+  LightingSystem.AddLight(this.x, this.y, this.color, LightingIntensityID.Entity)
 }
 ```
 
 1. Emit from **`PostDraw()`**, not `AI()` — see the knockback note above.
-2. Reuse a **`LightingRadiusID`** value rather than a bespoke number, and match an
-   existing intensity where you can. Both feed the group key.
+2. **Pick any intensity you like.** It is free: it does not split a flood pass,
+   and off-screen emitters are culled for you, so there is no on-screen check to
+   write. Start from a `LightingIntensityID` baseline and scale it; use
+   `LightingSystem.Reach(i)` if you want to know what that is in pixels.
 3. Keep it in the **entity's own hook override**, not in `Enemy`/`Projectile` —
    which classes glow is a per-class decision, matching how the codebase places
    other class-varying behaviour.
-4. Load with `?perf=1` and confirm `light groups` did not climb.
+4. Do **not** pass a custom `shape` unless you mean it — that is the one argument
+   that costs a pass. Load with `?perf=1` and confirm `light groups` is still 1.

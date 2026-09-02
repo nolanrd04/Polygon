@@ -72,6 +72,85 @@ import { WORLD_WIDTH, WORLD_HEIGHT } from '../core/GameConfig'
  * model - Terraria has the same property, and a single block casts no real
  * shadow there either. Sharp shadows from small obstacles need a different
  * technique (analytic shadow cones or raycasting) layered on top.
+ *
+ * ----------------------------------------------------------------------------
+ * INTENSITY IS THE ONLY KNOB
+ *
+ * There is no per-light radius. A sweep has exactly ONE decay rate, and decay is
+ * what sets how far light travels, so a light asking for its own radius asks for
+ * its own full-grid flood pass. An earlier version did offer one, and a single
+ * boss whose 12 segments each derived a radius from their own size cost 12
+ * passes and ~12ms a frame.
+ *
+ * So, as in Terraria: one global `airDecay`, and reach emerges from how much
+ * brightness a light injects.
+ *
+ *   reach = tileSize * ln(ambient / intensity) / ln(airDecay)
+ *
+ * Two consequences worth internalising:
+ *
+ * 1. LIGHT COUNT AND BRIGHTNESS ARE BOTH FREE. 2000 lights of 40 different
+ *    intensities cost exactly one pass, the same as one light. Vary intensity
+ *    per entity as freely as you like.
+ *
+ * 2. REACH IS LOGARITHMIC IN INTENSITY, so size is the expensive axis. Reach
+ *    goes as `ln(intensity) - ln(ambient)`, which at the shipped settings means:
+ *
+ *      intensity  0.5    1     2     4     8     40
+ *      reach      134   192   249   307   364   498  (px)
+ *      centre    0.39  0.63  0.86  0.98  1.00  1.00  (after tone mapping)
+ *
+ *    Doubling intensity adds a FLAT ~58px, every time. Going from 250px to
+ *    500px costs 20x the intensity.
+ *
+ *    Note the two columns saturating at different rates. Below ~2, intensity is
+ *    mostly a BRIGHTNESS control - the centre climbs fast and the radius barely
+ *    moves. Above ~3 the centre is pinned at white and intensity is mostly a
+ *    SIZE control, bought at a steep exchange rate.
+ *
+ *    That is physically the right behaviour - a brighter lamp does blow out its
+ *    core and spread its glow - but it means you cannot make a light twice as
+ *    big without making it look blown out. To change everything's size at once,
+ *    move `airDecay` instead; to shift the whole curve's shape, move `ambient`,
+ *    which sets the `-ln(ambient)` constant above.
+ *
+ * Use LightingSystem.Reach(i) and LightingSystem.IntensityFor(px) rather than
+ * eyeballing this.
+ *
+ * ----------------------------------------------------------------------------
+ * VIEWPORT CULLING
+ *
+ * Cost is tied to SCREEN area, not world area. Two independent mechanisms:
+ *
+ * 1. EMITTER CULLING. AddLight drops any light whose reach cannot touch the
+ *    padded camera rect. An off-screen enemy emits nothing - the same rule
+ *    Terraria uses. This is the one that matters most, because a dropped light
+ *    also cannot open a flood group of its own (see AddLight's radius note), and
+ *    groups are the system's real cost driver.
+ *
+ * 2. FLOOD WINDOWING. Every buffer pass - clear, seed, sweep, merge, upload -
+ *    runs over a tile window around the camera instead of the whole grid.
+ *
+ * The window is the camera rect grown by `cullPadding` PLUS the distance of the
+ * furthest surviving emitter outside the view, so an off-screen light still has
+ * its own tile inside the window and a path from there to the screen.
+ *
+ * Note what that margin is NOT: it is not the largest light RADIUS. A light
+ * inside the view needs no margin at all, because the flood only has to be
+ * correct where it is visible - what that light does to tiles off-screen is
+ * never sampled. Sizing the margin by radius instead would grow the window past
+ * the whole grid here and save nothing.
+ *
+ * The cost is that light no longer routes far outside the view and back, which
+ * would only matter for an obstacle sitting right on the screen edge, and
+ * `cullPadding` covers that.
+ *
+ * Tiles outside the window keep stale values from earlier frames. That is safe
+ * ONLY because the window always contains the camera rect with padding to spare,
+ * so nothing stale is ever on screen - including under the overlay's bilinear
+ * filtering, which reaches one texel past what it samples. Anything that widens
+ * what the overlay shows (a camera zoom-out, a larger displayed size) has to
+ * widen the window with it.
  */
 
 /** A light added this frame. Cleared by every UpdateAll(). */
@@ -81,21 +160,31 @@ interface Emitter {
   r: number
   g: number
   b: number
-  shape: number
   /**
-   * Per-tile air decay for this light, derived from its requested radius.
-   * Lights sharing a (shape, decay) pair are flooded together - see UpdateAll().
+   * Distance metric for this light's falloff. The only per-light property that
+   * is also a property of the SWEEP, so lights sharing a shape flood together
+   * and each distinct shape costs a pass - see UpdateAll().
    */
-  decay: number
+  shape: number
 }
 
 export interface LightingOptions {
   /** World pixels per light tile. Terraria uses 16. Smaller = sharper, costlier. */
   tileSize?: number
   /**
-   * Per-tile survival fraction through open space. A light fades from `intensity`
-   * to `ambient` after `log(ambient / intensity) / log(airDecay)` tiles, so at the
-   * default 0.93 an intensity-1.3 light pools out to ~17 tiles (~270px).
+   * Per-tile survival fraction through open space, and the GLOBAL SIZE CONTROL
+   * for every light in the game. A light fades from `intensity` to `ambient`
+   * after `log(ambient / intensity) / log(airDecay)` tiles.
+   *
+   * There is exactly one of these because a sweep has exactly one decay rate -
+   * that is what keeps the whole game at a single flood pass. Lower it to shrink
+   * every light at once, raise it to grow them; per-light size is `intensity`.
+   *
+   * The default 0.825 puts an intensity-2 light at ~250px and an intensity-0.7
+   * light at ~160px, which is where the game's entity and projectile lights sat
+   * under the old per-light radius parameter.
+   *
+   * Must be below 1. At 1 light never fades and floods the entire world.
    */
   airDecay?: number
   /**
@@ -123,6 +212,16 @@ export interface LightingOptions {
    * properly. Above 2 the difference is not visible.
    */
   iterations?: number
+  /**
+   * Slack in world pixels around the camera, used by viewport culling for two
+   * things: how far outside the view a light may sit and still be kept, and how
+   * far past the view the flood window extends. See VIEWPORT CULLING.
+   *
+   * It absorbs the one-frame lag in the camera rect and gives light a few tiles
+   * of off-screen room to route around obstacles near the edge. Raising it costs
+   * flood area; lowering it below ~64 risks light popping at the screen edge.
+   */
+  cullPadding?: number
 }
 
 export class LightingSystem {
@@ -171,36 +270,69 @@ export class LightingSystem {
   private static warnedUninitialized = false
 
   private static tileSize = 16
-  private static airDecay = 0.93
+  private static airDecay = 0.825
   private static solidDecay = 0.15
   private static ambient = 0.38
   private static iterations = 2
   private static exposure = 1
+  private static cullPadding = 96
 
   private static cols = 0
   private static rows = 0
+
+  // ---- Viewport culling state (see VIEWPORT CULLING) ----
+
+  /**
+   * Camera rect in world pixels, cached once per frame.
+   *
+   * Phaser updates `camera.worldView` during render, which happens AFTER
+   * scene.update() - so every AddLight this frame reads LAST frame's rect. With
+   * the follow lerp that is a handful of pixels, and `cullPadding` absorbs it.
+   */
+  private static viewL = 0
+  private static viewT = 0
+  private static viewR = 0
+  private static viewB = 0
+  /** Game frame the rect above was sampled on, so we sample it once per frame. */
+  private static viewFrame = -1
+
+  /**
+   * Furthest any surviving emitter sits outside the camera rect this frame, in
+   * world pixels (Chebyshev, matching the rectangular window). Accumulated by
+   * AddLight, consumed by computeWindow, reset by UpdateAll.
+   */
+  private static maxOutside = 0
+
+  /** Inclusive tile bounds of the region flooded this frame. */
+  private static winX0 = 0
+  private static winY0 = 0
+  private static winX1 = 0
+  private static winY1 = 0
+
+  /** Lights kept / dropped last frame, and window size. Exposed for the perf HUD. */
+  private static lastLightCount = 0
+  private static lastCulledCount = 0
+  private static lastWindowTiles = 0
+  /**
+   * Culled lights so far this frame. Snapshotted into lastCulledCount by
+   * UpdateAll, because the HUD reads the getters AFTER UpdateAll has run and a
+   * counter reset in place would always read zero.
+   */
+  private static culledThisFrame = 0
 
   /** Final light level per tile, 3 floats (RGB) per tile. */
   private static light: Float32Array
   /** Scratch buffer for one shape group's flood, before it is merged into `light`. */
   private static scratch: Float32Array
   /**
-   * Per-tile decay factor for the group currently being flooded. Rebuilt from
-   * `solid` on every propagate() call, since a light's radius sets its own air
-   * decay and so each group has a different map.
-   */
-  private static decay: Float32Array
-  /**
    * Per-tile occluder flag - the durable geometry, baked once by SetOccluders.
    *
-   * Kept as its own mask rather than inferred from `decay`, because `decay` is a
-   * Float32Array: it stores 0.93 as 0.9300000071525574, so comparing an entry
-   * back against the float64 `airDecay` is never equal and every test silently
-   * reports "solid".
+   * There is deliberately no per-tile DECAY array beside it. With one global
+   * decay rate a tile's decay is one of exactly two numbers, so propagate()
+   * carries them as scalars and branches on this mask. The per-tile version cost
+   * a 14,400-entry rebuild with a Math.pow per tile, per group, per frame.
    */
   private static solid: Uint8Array
-  /** `decay ^ shape` for the group currently being flooded. See propagate(). */
-  private static diagDecay: Float32Array
   /**
    * Light the world emits by itself, baked once - glowing grid lines, obstacles
    * that give off their own colour. Merged in every frame without being flooded,
@@ -232,21 +364,34 @@ export class LightingSystem {
     this.scene = scene
     this.warnedUninitialized = false
     this.tileSize = options.tileSize ?? 16
-    this.airDecay = options.airDecay ?? 0.93
+    // Below 1, or light never fades and the first flood fills the whole world.
+    this.airDecay = Math.min(options.airDecay ?? 0.825, 0.995)
     this.solidDecay = options.solidDecay ?? 0.15
     this.ambient = options.ambient ?? 0.38
     this.iterations = options.iterations ?? 2
     this.exposure = options.exposure ?? 1
+    this.cullPadding = options.cullPadding ?? 96
 
     this.cols = Math.ceil(WORLD_WIDTH / this.tileSize)
     this.rows = Math.ceil(WORLD_HEIGHT / this.tileSize)
 
+    // Start with the window covering everything. The first UpdateAll narrows it,
+    // but BakeLight and SetOccluders may run before then and write world-wide.
+    this.viewFrame = -1
+    this.maxOutside = 0
+    this.winX0 = 0
+    this.winY0 = 0
+    this.winX1 = this.cols - 1
+    this.winY1 = this.rows - 1
+    this.lastLightCount = 0
+    this.lastCulledCount = 0
+    this.lastWindowTiles = 0
+    this.culledThisFrame = 0
+
     const tiles = this.cols * this.rows
     this.light = new Float32Array(tiles * 3)
     this.scratch = new Float32Array(tiles * 3)
-    this.decay = new Float32Array(tiles).fill(this.airDecay)
     this.solid = new Uint8Array(tiles)
-    this.diagDecay = new Float32Array(tiles)
     this.emission = new Float32Array(tiles * 3)
     this.hasEmission = false
 
@@ -328,6 +473,34 @@ export class LightingSystem {
     return this.lastGroupCount
   }
 
+  /** Lights that survived viewport culling on the last UpdateAll(). */
+  static get LightCount(): number {
+    return this.lastLightCount
+  }
+
+  /**
+   * Lights dropped by viewport culling on the last UpdateAll(). Non-zero means
+   * culling is doing something; a flat zero on a big map means every emitter is
+   * on screen, or that the camera rect is not being read (see refreshView).
+   */
+  static get CulledCount(): number {
+    return this.lastCulledCount
+  }
+
+  /**
+   * Tiles the last flood actually swept, against `cols * rows` for the whole
+   * grid. This is the per-group cost multiplier - halve it and every group gets
+   * twice as cheap.
+   */
+  static get WindowTiles(): number {
+    return this.lastWindowTiles
+  }
+
+  /** Total tiles in the grid, as the denominator for WindowTiles. */
+  static get TotalTiles(): number {
+    return this.cols * this.rows
+  }
+
   /**
    * Bake self-illumination into the world: light a surface gives off by itself,
    * rather than light falling on it. Grid lines and obstacles use this, which is
@@ -402,77 +575,187 @@ export class LightingSystem {
    * Add a light for this frame. Immediate-mode, so call it every frame the light
    * should exist and simply stop calling it when it should not.
    *
+   * Callers do NOT need to check whether they are on screen: a light that cannot
+   * reach the camera is dropped here (see VIEWPORT CULLING), which also stops it
+   * opening a flood group of its own. Call this unconditionally.
+   *
    * @param color Light colour as 0xRRGGBB.
-   * @param intensity Brightness at the source. ~0.6 is a faint enemy glow, ~1.3
-   *                  a player torch. Values above 1 are fine; the centre rolls
-   *                  off toward white rather than clamping (see `exposure`).
-   * @param radius Approximate world-pixel reach. Omit (or pass 0) to inherit the
-   *               global `airDecay`, which is the original behaviour.
+   * @param intensity Brightness at the source, and the ONLY size control - see
+   *                  INTENSITY IS THE ONLY KNOB above. ~0.7 is a projectile
+   *                  glow, ~2 a player or enemy. Values above 1 are fine; the
+   *                  centre rolls off toward white rather than clamping (see
+   *                  `exposure`), and past ~3 the centre is saturated and extra
+   *                  intensity buys reach rather than brightness.
    *
-   *               Intensity alone is a poor radius control: reach goes as
-   *               `log(ambient / intensity) / log(airDecay)`, so it is LOGARITHMIC
-   *               in intensity - each doubling adds a fixed ~150px, and doubling
-   *               the radius of an intensity-1 light would take intensity 10, long
-   *               past the point the centre blows out to white. This parameter
-   *               solves for the decay rate instead, so brightness and size are
-   *               independent knobs.
-   *
-   *               NOTE: like `shape`, radius is really a property of the SWEEP,
-   *               so lights are grouped by it and each distinct group costs a
-   *               full flood pass - measured at ~0.9ms on a 160x90 grid (1 group
-   *               0.96ms, 3 groups 2.70ms, 5 groups 4.52ms). Watch
-   *               `LightingSystem.GroupCount` while tuning.
-   *
-   *               Grouping is on the derived decay, which folds radius AND
-   *               intensity together, so two lights merge into one pass only when
-   *               both land on the same quantised decay. Changing either value on
-   *               one of them can silently split the group and add a pass.
+   *                  Free to vary: it does NOT split the flood into more passes.
    * @param shape SHAPE_ROUND (default), SHAPE_SQUARE, SHAPE_DIAMOND, or any value
    *              between 1 and 2 to blend them. See the LIGHT SHAPES block above.
+   *
+   *              This is the one property that IS a property of the sweep, so
+   *              each distinct shape in a frame costs a full flood pass. Leaving
+   *              it alone keeps the whole game at one pass. Watch
+   *              `LightingSystem.GroupCount`.
    */
   static AddLight(
     x: number,
     y: number,
     color: number,
     intensity: number = 1,
-    radius: number = 0,
     shape: number = LightingSystem.SHAPE_ROUND
   ): void {
     if (!this.scene) return this.warnUninitialized()
 
-    this.emitters.push({
-      x,
-      y,
-      r: ((color >> 16) & 0xff) / 255 * intensity,
-      g: ((color >> 8) & 0xff) / 255 * intensity,
-      b: (color & 0xff) / 255 * intensity,
-      shape,
-      decay: this.decayForRadius(radius, intensity)
-    })
+    const r = ((color >> 16) & 0xff) / 255 * intensity
+    const g = ((color >> 8) & 0xff) / 255 * intensity
+    const b = (color & 0xff) / 255 * intensity
+
+    // ---- Viewport cull ----
+    this.refreshView()
+
+    const pad = this.cullPadding
+    const reach = this.reachForIntensity(Math.max(r, g, b))
+
+    if (
+      x + reach < this.viewL - pad ||
+      x - reach > this.viewR + pad ||
+      y + reach < this.viewT - pad ||
+      y - reach > this.viewB + pad
+    ) {
+      this.culledThisFrame++
+      return
+    }
+
+    // How far outside the view this light sits. The window has to reach its tile
+    // or seed() would drop it, so the furthest survivor sets the window margin.
+    const outside = Math.max(
+      this.viewL - x,
+      x - this.viewR,
+      this.viewT - y,
+      y - this.viewB,
+      0
+    )
+    if (outside > this.maxOutside) this.maxOutside = outside
+
+    this.emitters.push({ x, y, r, g, b, shape })
   }
 
   /**
-   * Solve for the per-tile decay that makes a light of `intensity` fade to the
-   * ambient floor at `radius` world pixels - the point it stops being visible,
-   * since UpdateAll seeds the light buffer with ambient and merges by max.
+   * How far a light of this brightness carries, in world pixels - the point it
+   * falls to the ambient floor and stops contributing anything, since UpdateAll
+   * seeds the buffer with ambient and merges by max.
    *
-   *   intensity * d^(radius / tileSize) = ambient
-   *   d = (ambient / intensity) ^ (tileSize / radius)
+   * Solving `intensity * airDecay^n = ambient` for n:
    *
-   * Quantised so two lights with near-identical radii land in the same flood
-   * group instead of each paying for a pass of their own.
+   *   reach = tileSize * ln(ambient / intensity) / ln(airDecay)
+   *
+   * Used for viewport culling, and it is also the formula to reach for when
+   * picking an intensity - see Reach() for the public version.
    */
-  private static decayForRadius(radius: number, intensity: number): number {
-    if (radius <= 0) return this.airDecay
+  private static reachForIntensity(intensity: number): number {
+    const cap = WORLD_WIDTH + WORLD_HEIGHT
 
-    // A light no brighter than ambient is invisible anyway, and the ratio would
-    // give a decay >= 1 (light that never fades, filling the whole world).
-    if (intensity <= this.ambient) return this.airDecay
+    // Never brighter than the floor it decays to, so it is invisible everywhere.
+    if (intensity <= this.ambient) return 0
 
-    const d = Math.pow(this.ambient / intensity, this.tileSize / radius)
+    // Guard the log: airDecay is validated below 1 in Initialize, but a
+    // non-decaying light would divide by ~0 and reach forever.
+    if (this.airDecay >= 1) return cap
 
-    // Clamp below 1 so a huge radius cannot produce non-decaying light.
-    return Math.round(Math.min(d, 0.995) * 200) / 200
+    const tiles = Math.log(this.ambient / intensity) / Math.log(this.airDecay)
+    return Math.min(tiles * this.tileSize, cap)
+  }
+
+  /**
+   * World-pixel reach of a light at this intensity, under the current settings.
+   *
+   * Exposed because intensity is now the only size control and the mapping is
+   * logarithmic, so it is not something to eyeball. Use it to check a value:
+   * `LightingSystem.Reach(2)` is ~250px at the shipped configuration.
+   *
+   * The inverse - what intensity gives a target reach - is IntensityFor().
+   */
+  static Reach(intensity: number): number {
+    return this.reachForIntensity(intensity)
+  }
+
+  /**
+   * Intensity needed for a light to reach `radius` world pixels.
+   *
+   * The replacement for the old `radius` argument, but resolved at AUTHORING
+   * time rather than per frame: pick your number once, hard-code the intensity
+   * it gives you. Nothing about it splits a flood pass, so unlike the old
+   * parameter it is free to vary per entity.
+   *
+   * Beware the shape of it. Reach goes as `ln(intensity) - ln(ambient)`, so it
+   * is logarithmic: at the shipped settings, intensity 2 reaches ~250px and it
+   * takes intensity ~41 to reach 500px - long past the point the centre is a
+   * blown-out white disc. Doubling a light's size is expensive; nudging it is
+   * cheap. See INTENSITY IS THE ONLY KNOB.
+   */
+  static IntensityFor(radius: number): number {
+    if (radius <= 0) return 0
+    return this.ambient / Math.pow(this.airDecay, radius / this.tileSize)
+  }
+
+  /**
+   * Sample the camera rect, once per frame.
+   *
+   * A zero-size worldView (before the first render, or a torn-down camera) falls
+   * back to the whole world, which cleanly disables both culling and windowing
+   * for that frame rather than blacking the screen out.
+   */
+  private static refreshView(): void {
+    const scene = this.scene
+    if (!scene) return
+
+    const frame = scene.game.loop.frame
+    if (frame === this.viewFrame) return
+    this.viewFrame = frame
+
+    const view = scene.cameras?.main?.worldView
+    if (!view || view.width <= 0 || view.height <= 0) {
+      this.viewL = 0
+      this.viewT = 0
+      this.viewR = WORLD_WIDTH
+      this.viewB = WORLD_HEIGHT
+      return
+    }
+
+    this.viewL = view.x
+    this.viewT = view.y
+    this.viewR = view.right
+    this.viewB = view.bottom
+  }
+
+  /**
+   * Size the flood window to the camera rect plus `cullPadding` plus the
+   * furthest surviving emitter outside the view. See VIEWPORT CULLING for why
+   * the margin is emitter DISTANCE and not light radius.
+   */
+  private static computeWindow(): void {
+    this.refreshView()
+
+    const { tileSize, cols, rows } = this
+    const margin = this.maxOutside + this.cullPadding
+
+    this.winX0 = Math.max(0, Math.floor((this.viewL - margin) / tileSize))
+    this.winY0 = Math.max(0, Math.floor((this.viewT - margin) / tileSize))
+    this.winX1 = Math.min(cols - 1, Math.floor((this.viewR + margin) / tileSize))
+    this.winY1 = Math.min(rows - 1, Math.floor((this.viewB + margin) / tileSize))
+
+    this.lastWindowTiles = (this.winX1 - this.winX0 + 1) * (this.winY1 - this.winY0 + 1)
+  }
+
+  /**
+   * Fill the window's rows of an RGB buffer, one contiguous run per row.
+   * The buffer is 3 floats per tile, so a row spans [winX0, winX1] * 3.
+   */
+  private static fillWindow(buffer: Float32Array, value: number): void {
+    const { cols, winX0, winX1, winY0, winY1 } = this
+    for (let y = winY0; y <= winY1; y++) {
+      const row = y * cols
+      buffer.fill(value, (row + winX0) * 3, (row + winX1 + 1) * 3)
+    }
   }
 
   // ============================================================
@@ -486,53 +769,68 @@ export class LightingSystem {
   static UpdateAll(): void {
     if (!this.scene) return this.warnUninitialized()
 
-    this.light.fill(this.ambient)
+    // Everything below runs over the camera window only - see VIEWPORT CULLING.
+    // Must be computed before the first buffer touch, since it defines "window".
+    this.computeWindow()
 
-    // Self-illumination first, unflooded - see BakeLight().
+    this.fillWindow(this.light, this.ambient)
+
+    // Self-illumination first, unflooded - see BakeLight(). Baked world-wide,
+    // read back only where it is visible.
     if (this.hasEmission) {
-      const { light, emission } = this
-      for (let i = 0; i < light.length; i++) {
-        if (emission[i] > light[i]) light[i] = emission[i]
+      const { light, emission, cols, winX0, winX1, winY0, winY1 } = this
+      for (let y = winY0; y <= winY1; y++) {
+        const start = (y * cols + winX0) * 3
+        const end = (y * cols + winX1 + 1) * 3
+        for (let i = start; i < end; i++) {
+          if (emission[i] > light[i]) light[i] = emission[i]
+        }
       }
     }
 
-    // Both shape and radius are properties of the SWEEP rather than of an
-    // individual light: shape picks the distance metric the flood measures in,
-    // radius sets how fast it decays, and each governs the whole grid. So lights
-    // are grouped by the (shape, decay) pair, each group floods into scratch on
-    // its own, and the groups are merged by max.
+    // SHAPE is the only property of the SWEEP rather than of an individual
+    // light: it picks the distance metric the flood measures in, and that metric
+    // governs the whole grid. So lights are grouped by shape, each group floods
+    // into scratch on its own, and the groups are merged by max.
     //
-    // One group is the normal case and costs exactly what it did before; every
-    // additional distinct pair is one more flood pass (~0.5ms).
-    const groups = new Map<string, { shape: number; decay: number }>()
-    for (const e of this.emitters) {
-      const key = `${e.shape}|${e.decay}`
-      if (!groups.has(key)) groups.set(key, { shape: e.shape, decay: e.decay })
-    }
+    // Since every light in the game uses SHAPE_ROUND, this is one group and one
+    // pass no matter how many lights or how bright they are. Intensity is
+    // deliberately NOT a grouping key - see INTENSITY IS THE ONLY KNOB.
+    const shapes = new Set<number>()
+    for (const e of this.emitters) shapes.add(e.shape)
 
-    this.lastGroupCount = groups.size
+    this.lastGroupCount = shapes.size
+    this.lastLightCount = this.emitters.length
 
-    for (const { shape, decay } of groups.values()) {
-      this.scratch.fill(0)
-      this.seed(shape, decay)
-      this.propagate(shape, decay)
+    for (const shape of shapes) {
+      this.fillWindow(this.scratch, 0)
+      this.seed(shape)
+      this.propagate(shape)
       this.merge()
     }
 
     this.upload()
+
     this.emitters.length = 0
+    this.maxOutside = 0
+    this.lastCulledCount = this.culledThisFrame
+    this.culledThisFrame = 0
   }
 
   /** Inject one group's emitters into the scratch buffer. */
-  private static seed(shape: number, decay: number): void {
-    const { cols, rows, scratch, tileSize } = this
+  private static seed(shape: number): void {
+    const { cols, scratch, tileSize, winX0, winX1, winY0, winY1 } = this
 
     for (const e of this.emitters) {
-      if (e.shape !== shape || e.decay !== decay) continue
+      if (e.shape !== shape) continue
 
       const tx = Math.floor(e.x / tileSize)
       const ty = Math.floor(e.y / tileSize)
-      if (tx < 0 || ty < 0 || tx >= cols || ty >= rows) continue
+
+      // Window bounds, not grid bounds: outside the window the scratch buffer is
+      // neither cleared nor swept, so seeding there would leave a stale bright
+      // tile behind for later frames to pick up.
+      if (tx < winX0 || tx > winX1 || ty < winY0 || ty > winY1) continue
 
       // max, not add: two overlapping torches should not read as one blinding
       // one. Colours still blend during propagation, per channel.
@@ -553,53 +851,59 @@ export class LightingSystem {
    *
    * Diagonal neighbours are included, attenuated by `decay ^ shape`. Without them
    * the flood measures Manhattan distance and every light comes out a diamond.
-   *
-   * @param groupAirDecay Open-space decay for this group, from the requested
-   *        radius. The per-tile decay map is rebuilt from the occluder mask each
-   *        time, since a different radius means a different map.
    */
-  private static propagate(shape: number, groupAirDecay: number): void {
-    const { cols, rows, decay, diagDecay, solid } = this
+  private static propagate(shape: number): void {
+    const { cols, solid, winX0, winX1, winY0, winY1 } = this
 
-    // An occluder must never transmit light better than open air does, which it
-    // would for a light whose radius makes air decay steeper than solidDecay.
-    const groupSolidDecay = Math.min(this.solidDecay, groupAirDecay)
+    // Four scalars replace what used to be two 14,400-entry arrays rebuilt every
+    // group: with one global decay rate, a tile's decay is `air` or `solid`, and
+    // the diagonal versions are those two raised to `shape`. That turns a
+    // per-tile Math.pow rebuild into four, and each inner-loop attenuation
+    // lookup into a Uint8Array read.
+    const air = this.airDecay
+    // An occluder must never transmit light better than open air does.
+    const sol = Math.min(this.solidDecay, air)
+    const airDiag = Math.pow(air, shape)
+    const solDiag = Math.pow(sol, shape)
 
-    // Build this group's decay map, and hoist the diagonal attenuation out of
-    // the sweeps - inline it would be four Math.pow calls per tile per sweep;
-    // here it is one per tile per group.
-    for (let t = 0; t < decay.length; t++) {
-      decay[t] = solid[t] ? groupSolidDecay : groupAirDecay
-      diagDecay[t] = Math.pow(decay[t], shape)
-    }
-
+    // Sweeps stay strictly inside the window. Neighbour tests are against the
+    // window edges rather than the grid edges because tiles beyond the window
+    // hold stale scratch values - reading one would pull last frame's light in.
     for (let pass = 0; pass < this.iterations; pass++) {
       // Forward: left-to-right, top-to-bottom. Carries light down and right.
-      for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
+      for (let y = winY0; y <= winY1; y++) {
+        for (let x = winX0; x <= winX1; x++) {
           const t = y * cols + x
           const i = t * 3
-          const hasLeft = x > 0
-          const hasUp = y > 0
-          if (hasLeft) this.spread(i, (t - 1) * 3, decay[t - 1])
-          if (hasUp) this.spread(i, (t - cols) * 3, decay[t - cols])
-          if (hasLeft && hasUp) this.spread(i, (t - cols - 1) * 3, diagDecay[t - cols - 1])
-          if (hasUp && x < cols - 1) this.spread(i, (t - cols + 1) * 3, diagDecay[t - cols + 1])
+          const hasLeft = x > winX0
+          const hasUp = y > winY0
+          if (hasLeft) this.spread(i, (t - 1) * 3, solid[t - 1] ? sol : air)
+          if (hasUp) this.spread(i, (t - cols) * 3, solid[t - cols] ? sol : air)
+          if (hasLeft && hasUp) {
+            this.spread(i, (t - cols - 1) * 3, solid[t - cols - 1] ? solDiag : airDiag)
+          }
+          if (hasUp && x < winX1) {
+            this.spread(i, (t - cols + 1) * 3, solid[t - cols + 1] ? solDiag : airDiag)
+          }
         }
       }
 
       // Backward: right-to-left, bottom-to-top. Carries light up and left, and
       // lets it wrap around the far side of obstacles the forward pass missed.
-      for (let y = rows - 1; y >= 0; y--) {
-        for (let x = cols - 1; x >= 0; x--) {
+      for (let y = winY1; y >= winY0; y--) {
+        for (let x = winX1; x >= winX0; x--) {
           const t = y * cols + x
           const i = t * 3
-          const hasRight = x < cols - 1
-          const hasDown = y < rows - 1
-          if (hasRight) this.spread(i, (t + 1) * 3, decay[t + 1])
-          if (hasDown) this.spread(i, (t + cols) * 3, decay[t + cols])
-          if (hasRight && hasDown) this.spread(i, (t + cols + 1) * 3, diagDecay[t + cols + 1])
-          if (hasDown && x > 0) this.spread(i, (t + cols - 1) * 3, diagDecay[t + cols - 1])
+          const hasRight = x < winX1
+          const hasDown = y < winY1
+          if (hasRight) this.spread(i, (t + 1) * 3, solid[t + 1] ? sol : air)
+          if (hasDown) this.spread(i, (t + cols) * 3, solid[t + cols] ? sol : air)
+          if (hasRight && hasDown) {
+            this.spread(i, (t + cols + 1) * 3, solid[t + cols + 1] ? solDiag : airDiag)
+          }
+          if (hasDown && x > winX0) {
+            this.spread(i, (t + cols - 1) * 3, solid[t + cols - 1] ? solDiag : airDiag)
+          }
         }
       }
     }
@@ -618,32 +922,50 @@ export class LightingSystem {
 
   /** Merge the finished scratch flood into the accumulated light buffer. */
   private static merge(): void {
-    const { light, scratch } = this
-    for (let i = 0; i < light.length; i++) {
-      if (scratch[i] > light[i]) light[i] = scratch[i]
+    const { light, scratch, cols, winX0, winX1, winY0, winY1 } = this
+    for (let y = winY0; y <= winY1; y++) {
+      const start = (y * cols + winX0) * 3
+      const end = (y * cols + winX1 + 1) * 3
+      for (let i = start; i < end; i++) {
+        if (scratch[i] > light[i]) light[i] = scratch[i]
+      }
     }
   }
 
   /** Write the light buffer into the canvas texture and re-upload it. */
   private static upload(): void {
-    const { light, pixels, texture, imageData } = this
+    const { light, pixels, texture, imageData, cols, winX0, winX1, winY0, winY1 } = this
     if (!pixels || !texture || !imageData) return
 
-    const n = this.cols * this.rows
     const e = this.exposure
-    for (let t = 0; t < n; t++) {
-      const i = t * 3
-      const p = t * 4
-      // Tone-map rather than clamp. A hard clamp turns any light brighter than 1
-      // into a flat white disc with a hard edge - the "too bright in the lit
-      // areas" problem. This rolls off smoothly and never quite reaches 1, so a
-      // bright centre still reads as a gradient.
-      pixels[p] = (1 - Math.exp(-light[i] * e)) * 255
-      pixels[p + 1] = (1 - Math.exp(-light[i + 1] * e)) * 255
-      pixels[p + 2] = (1 - Math.exp(-light[i + 2] * e)) * 255
+    for (let y = winY0; y <= winY1; y++) {
+      const row = y * cols
+      for (let x = winX0; x <= winX1; x++) {
+        const t = row + x
+        const i = t * 3
+        const p = t * 4
+        // Tone-map rather than clamp. A hard clamp turns any light brighter than
+        // 1 into a flat white disc with a hard edge - the "too bright in the lit
+        // areas" problem. This rolls off smoothly and never quite reaches 1, so a
+        // bright centre still reads as a gradient.
+        pixels[p] = (1 - Math.exp(-light[i] * e)) * 255
+        pixels[p + 1] = (1 - Math.exp(-light[i + 1] * e)) * 255
+        pixels[p + 2] = (1 - Math.exp(-light[i + 2] * e)) * 255
+      }
     }
 
-    texture.context.putImageData(imageData, 0, 0)
+    // Dirty-rect upload: outside the window the pixel buffer holds stale values
+    // that were never recomputed, so writing them back would be wasted work. The
+    // canvas keeps whatever it had there, which is off-screen by construction.
+    texture.context.putImageData(
+      imageData,
+      0,
+      0,
+      winX0,
+      winY0,
+      winX1 - winX0 + 1,
+      winY1 - winY0 + 1
+    )
     texture.refresh()
   }
 
