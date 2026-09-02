@@ -7,6 +7,7 @@ import WaveComplete from '../components/WaveComplete'
 import GameHUD from '../components/GameHUD'
 import PauseMenu from '../components/PauseMenu'
 import DevTools from '../components/DevTools'
+import PerfOverlay from '../components/PerfOverlay'
 import AbilityDisplay from '../components/AbilityDisplay'
 import { EventBus } from '../game/core/EventBus'
 import { SaveManager } from '../game/services/SaveManager'
@@ -251,6 +252,11 @@ export default function GamePage() {
       )}
       
       <div ref={containerRef} className="w-full h-full" />
+
+      {/* Perf readout. Separate from DevTools because that hides itself on
+          mobile, and mobile is where the frame budget actually binds.
+          Enable with ?perf=1 in the URL. */}
+      <PerfOverlay />
 
       <GameHUD
         health={playerStats.health}

@@ -16,7 +16,7 @@ export const RicochetDef: UpgradeDef = {
   effect: "ricochet",
   effectValue: 1,
   stackable: true,
-  maxStacks: 2,
+  maxStacks: 1,
   dependentOn: [{ ids: ["bullet_pierce_1"] }],
   incompatibleWith: ["homing_bullets"],
 }

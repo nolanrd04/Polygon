@@ -1,4 +1,6 @@
 import { Enemy } from './Enemy'
+import { LightingSystem } from '../../systems/LightingSystem'
+import { LightingRadiusID } from '../../data/ID'
 import { TextureGenerator } from '../../utils/TextureGenerator'
 
 /**
@@ -20,7 +22,7 @@ export class Hexagon extends Enemy {
     this.sides = 6
     this.radius = 30
     this.color = 0xff00ff
-    this.scoreChance = .2
+    this.scoreChance = .25
     this.speedCap = 6.5
     this.knockbackResistance = 0.8
     this.bundleDropChance = 0.0 // use difficulty drop chance
@@ -114,5 +116,16 @@ export class Hexagon extends Enemy {
 
     // Update sprite alpha (no redrawing needed!)
     this.shieldSprite.setAlpha(alpha)
+  }
+
+  /**
+   * Emissive glow, sized to the enemy so bigger shapes light more of the room.
+   *
+   * Uses this.color, not a stored default: the damage flash tints the SPRITE and
+   * leaves this.color alone (Enemy.takeDamage), so the light will not strobe white
+   * on every hit.
+   */
+  PostDraw(): void {
+    LightingSystem.AddLight(this.x, this.y, this.color, 2, LightingRadiusID.PlayerRadius * this.radius / 15)
   }
 }

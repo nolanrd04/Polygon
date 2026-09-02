@@ -10,6 +10,16 @@ interface UpdateNote {
 // Add new updates at the top of this array
 const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: 'v0.2.4',
+    date: '2026-08-18',
+    title: 'Advanced Lighting System and Balancing',
+    changes: [
+      'Buckshot Pellets can now multi-hit bosses for extra damage. Each extra hit counts as a pierce.',
+      'Increased enemy score drop chance.',
+      'Added advanced lighting system.'
+    ]
+  },
+  {
     version: 'v0.2.3',
     date: '2026-08-17',
     title: 'Settings fixes',

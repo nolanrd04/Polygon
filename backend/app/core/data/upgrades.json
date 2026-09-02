@@ -1038,7 +1038,7 @@
     "effect": "ricochet",
     "effectValue": 1,
     "stackable": true,
-    "maxStacks": 2,
+    "maxStacks": 1,
     "dependentOn": [
       {
         "ids": [

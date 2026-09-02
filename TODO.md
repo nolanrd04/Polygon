@@ -53,8 +53,34 @@
 - [ ] Lighting
 
 ## Bullet upgrades (future)
-- [ ] Napalm (exploding bullets)
-- [ DONE ] Buckshot bullet variant.
+### tier 2 variant upgrade ideas
+**Homing Bullets**
+
+**Explosive Bullets**
+- [ ] STA Missle: Explosive Bullets now have a chance to be a high velocity missle that shoots toward the mouse cursor with increased explosive power.
+Requires: explosive bullets, 10 bullet velocity upgrades, 5 explosion radius upgrades
+Upgrades: increased velocity, increased missle spawn chance, increased blast power (size + knockback)
+
+- [ ] Cluster Bombs: Explosive bullets now explode into smaller explosives. Explosives dont do contact damage but explode after a time.
+Requires: explosive bullets, 10 explosion radius upgrades
+Upgrades: More cluster bombs, higher cluster bomb explosion radius, decreased detonation time
+
+- [ ] Napalm: Explosive bullets leave behind a constant-damaging area of napalm on detonation.
+Requires: explosive bullets, 2 piercing shot upgrades
+Upgrades: Larger radius, longer duration
+
+**Buckshot Bullets**
+- [ ] Tactical Marker: has a chance to temporarily mark an enemy. Hitting marked enemies deals increased damage
+Requires: buckshot bullets, 2 denser shell upgrades
+Upgrades: increased marker chance, increased marker duration, increase marker damage
+
+- [ ] Slug Shells: Shoots the pellets together in a high velocity bullet that separates on impact or after a certain range
+Requires: buckshot bullets, 10 velocity upgrades, 2 bullet choke upgrades
+Upgrades: increased velocity, increase distance before separation, increased pellets on separation
+
+- [ ] Shredder: Fires smaller, weaker pellets, but fires more of them with an increased fire rate.
+Requires: buckshot bullets, 2 longer shell upgrades
+Upgrades: increased pellet count, increased fire rate, increased close-quarters damage (show visibly with a 0 damage projectile around the player)
 
 ## MOBILE
 - [ ] Remove Fullscreen button

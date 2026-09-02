@@ -16,7 +16,7 @@ from app.repositories.token_blacklist_repository import TokenBlacklistRepository
 app = FastAPI(
     title="Polygon Game API",
     description="Backend API for the Polygon survival/tower-defense game",
-    version="0.2.3"
+    version="0.2.4"
 )
 
 app.state.limiter = limiter

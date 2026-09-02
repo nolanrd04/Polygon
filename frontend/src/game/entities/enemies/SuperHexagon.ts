@@ -1,8 +1,9 @@
 import { Enemy } from './Enemy'
 import { TextureGenerator } from '../../utils/TextureGenerator'
 import { SuperHexagonProj } from '../projectiles/enemy_projectiles/SuperHexagonProj.ts'
-import { SoundID } from '../../../game/data/ID.ts'
+import { LightingRadiusID, SoundID } from '../../../game/data/ID.ts'
 import { getDefaultVolume } from '../../../game/core/AudioRegistry.ts'
+import { LightingSystem } from '../../../game/systems/LightingSystem.ts'
 
 /**
  * Super Hexagon enemy - tanky enemy with shield ability. Shield breaks into close range projectiles when broken.
@@ -26,7 +27,7 @@ export class SuperHexagon extends Enemy {
     this.sides = 6
     this.radius = 23
     this.color = 0xff00ff
-    this.scoreChance = .06
+    this.scoreChance = .25
     this.speedCap = 6.5
     this.knockbackResistance = 0.8
     this.bundleDropChance = 0.0 // use difficulty drop chances
@@ -82,6 +83,16 @@ export class SuperHexagon extends Enemy {
             //
         }
     }
+
+  }
+
+  /**
+   * Emitted here rather than from AI(): Enemy gates AI() on the knockback timer,
+   * and lights are immediate-mode, so a light emitted from AI() blinks out for
+   * the ~6 frames of every knockback.
+   */
+  PostDraw(): void {
+    LightingSystem.AddLight(this.x, this.y, this.color, 2, LightingRadiusID.PlayerRadius * this.radius / 15)
   }
 
   OnHit(_damage: number, _source: any): boolean {

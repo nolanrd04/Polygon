@@ -1,8 +1,9 @@
 import Phaser from 'phaser'
 import { Enemy } from './Enemy'
+import { LightingSystem } from '../../systems/LightingSystem'
 import { EnemyBullet } from '../projectiles/enemy_projectiles/EnemyBullet'
 import { TextureGenerator } from '../../utils/TextureGenerator'
-import { SoundID } from '../../../game/data/ID'
+import { SoundID, LightingRadiusID } from '../../../game/data/ID'
 import { getDefaultVolume } from '../../../game/core/AudioRegistry'
 
 export class SuperTriangle extends Enemy {
@@ -17,7 +18,7 @@ export class SuperTriangle extends Enemy {
     this.sides = 3
     this.radius = 15
     this.color = 0xff0000
-    this.scoreChance = 0.07
+    this.scoreChance = 0.08
     this.speedCap = 6.5
     this.knockbackResistance = 0.8
     this.bundleDropChance = 0.0 // use difficulty drop chance
@@ -85,5 +86,16 @@ export class SuperTriangle extends Enemy {
         //
       }
     }
+  }
+
+  /**
+   * Emissive glow, sized to the enemy so bigger shapes light more of the room.
+   *
+   * Uses this.color, not a stored default: the damage flash tints the SPRITE and
+   * leaves this.color alone (Enemy.takeDamage), so the light will not strobe white
+   * on every hit.
+   */
+  PostDraw(): void {
+    LightingSystem.AddLight(this.x, this.y, this.color, 2, LightingRadiusID.PlayerRadius * this.radius / 15)
   }
 }

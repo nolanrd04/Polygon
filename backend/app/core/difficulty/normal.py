@@ -68,16 +68,18 @@ class NormalDifficulty(Difficulty):
 
     def get_bundle_drop_chance(self, wave: int) -> float:
         if wave <= 4:
-            return 0.12
+            return 0.13
         if wave <= 9:
-            return 0.1
+            return 0.12
         if wave <= 14:
-            return 0.07
+            return 0.11
         if wave <= 19:
-            return 0.05
+            return 0.1
         if wave <= 24:
-            return 0.04
-        return 0.03
+            return 0.09
+        if wave <= 29:
+            return 0.08
+        return 0.07
 
     def get_bundle_rarity_weights(self, wave: int) -> RarityWeights:
         return BUNDLE_RARITY_WEIGHTS_BY_WAVE.get(wave, FALLBACK_BUNDLE_RARITY_WEIGHTS)

@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../core/GameConfig'
+import { LightingSystem } from './LightingSystem'
 
 interface Obstacle {
   x: number
@@ -11,6 +12,18 @@ interface Obstacle {
 }
 
 export class MapManager {
+  /** World-pixel spacing of the background grid. Drawing and light baking share it. */
+  private static readonly GRID_SIZE = 50
+
+  /**
+   * Self-illumination baked into the light map (see LightingSystem.BakeLight).
+   * These are what keep unlit areas from being a featureless void: the grid
+   * glows faintly on its own, so darkness still has structure. Keep them well
+   * below a real light's intensity or the whole world flattens into haze.
+   */
+  private static readonly GRID_EMISSION = 0.50
+  private static readonly OBSTACLE_EMISSION = 1
+
   private scene: Phaser.Scene
   private obstacles: Phaser.GameObjects.Group
   private obstacleData: Obstacle[] = []
@@ -66,6 +79,48 @@ export class MapManager {
 
     // Draw background grid
     this.drawBackground(config)
+
+    // Hand the same geometry to the light map: what blocks light, and what emits it.
+    this.bakeLighting(config)
+  }
+
+  /**
+   * Register the map with the LightingSystem.
+   *
+   * Obstacles occlude AND emit; grid lines only emit. Baked light is not flooded,
+   * so the grid stays a crisp lattice rather than bleeding into a uniform glow -
+   * see LightingSystem.BakeLight.
+   */
+  private bakeLighting(config: { gridColor: number; obstacleColor: number }): void {
+    LightingSystem.SetOccluders(this.obstacleData)
+    LightingSystem.ClearBaked()
+
+    for (const o of this.obstacleData) {
+      LightingSystem.BakeLight(o.x, o.y, config.obstacleColor, MapManager.OBSTACLE_EMISSION, o.radius)
+    }
+
+    // Walk each grid line at light-tile resolution so the line is continuous in
+    // the light map rather than a row of dots.
+    //
+    // skipSolid matters here: the grid is painted on the FLOOR, and the floor is
+    // not there where an obstacle covers it. Without it, grid emission gets baked
+    // into the obstacle's own tiles and shows through as bright bands running
+    // across the obstacle - it renders below the light overlay, so it is
+    // multiplied by whatever light lands on it. The drawn grid lines are already
+    // hidden correctly (obstacles are opaque and sit above them); this is purely
+    // about the light map agreeing with that.
+    const step = LightingSystem.TileSize
+    const g = MapManager.GRID_SIZE
+    for (let x = 0; x <= WORLD_WIDTH; x += g) {
+      for (let y = 0; y < WORLD_HEIGHT; y += step) {
+        LightingSystem.BakeLight(x, y, config.gridColor, MapManager.GRID_EMISSION, 0, true)
+      }
+    }
+    for (let y = 0; y <= WORLD_HEIGHT; y += g) {
+      for (let x = 0; x < WORLD_WIDTH; x += step) {
+        LightingSystem.BakeLight(x, y, config.gridColor, MapManager.GRID_EMISSION, 0, true)
+      }
+    }
   }
 
   private getBiomeConfig(biome: string): {
@@ -75,27 +130,47 @@ export class MapManager {
     backgroundColor: number
     gridColor: number
   } {
+    // ALBEDO, NOT FINAL COLOUR - AND ALSO THE EMISSION COLOUR.
+    // LightingSystem multiplies a light map over the world, so each value here
+    // is the colour a surface shows when FULLY LIT; unlit it is scaled down by
+    // LightingSystem's `ambient` (0.10, set in MainScene).
+    //
+    // gridColor and obstacleColor do double duty: they are what the map is DRAWN
+    // with (drawBackground / createObstacle) and also the colour of the light
+    // those surfaces EMIT (bakeLighting). GRID_EMISSION / OBSTACLE_EMISSION scale
+    // that light's intensity only - to give a surface a glow of a different hue
+    // than itself, these would need to be split into separate emission colours.
+    //
+    // backgroundColor is the one to be careful with: it covers the entire screen,
+    // so if `ambient` is raised much, brightness here stops reading as lighting
+    // and becomes uniform haze over the whole frame. It is kept dark enough that
+    // at ambient 0.10 it lands at ~0x040406. The GRID and OBSTACLES are what
+    // light is meant to reveal, and they additionally emit light of their own -
+    // see bakeLighting().
+    //
+    // Raise gridColor/obstacleColor to make lit areas pop harder; lower
+    // `ambient` in MainScene to make unlit areas darker.
     const biomes: Record<string, ReturnType<typeof this.getBiomeConfig>> = {
       default: {
         obstacleCount: 60,  // Increased for larger map (was 15 for 1280x720)
         obstacleSize: 40,
-        obstacleColor: 0x333344,
-        backgroundColor: 0x0a0a0f,
-        gridColor: 0x1a1a2f
+        obstacleColor: 0x4a4a62,     // unlit ~0x070709 (was 0x333344)
+        backgroundColor: 0x2a2a3a,   // unlit ~0x040406 (was 0x0a0a0f)
+        gridColor: 0x7a7ab8          // unlit ~0x0c0c12 (was 0x1a1a2f)
       },
       void: {
         obstacleCount: 20,
         obstacleSize: 35,
-        obstacleColor: 0x220033,
-        backgroundColor: 0x050508,
-        gridColor: 0x110022
+        obstacleColor: 0x3d1a5c,     // unlit ~0x060209 (was 0x220033)
+        backgroundColor: 0x16161f,   // unlit ~0x020203 (was 0x050508)
+        gridColor: 0x5c1aa8          // unlit ~0x090311 (was 0x110022)
       },
       neon: {
         obstacleCount: 12,
         obstacleSize: 45,
-        obstacleColor: 0x002244,
-        backgroundColor: 0x000510,
-        gridColor: 0x003355
+        obstacleColor: 0x0a5c9e,     // unlit ~0x010910 (was 0x002244)
+        backgroundColor: 0x102030,   // unlit ~0x020305 (was 0x000510)
+        gridColor: 0x2a9ec4          // unlit ~0x041014 (was 0x003355)
       }
     }
 
@@ -134,7 +209,7 @@ export class MapManager {
     }
 
     graphics.fillStyle(obstacle.color, 1)
-    graphics.lineStyle(2, 0x555566, 1)
+    graphics.lineStyle(2, 0x6a6a88, 1)  // albedo; unlit ~0x282833 (was 0x555566)
 
     graphics.beginPath()
     graphics.moveTo(vertices[0].x, vertices[0].y)
@@ -144,6 +219,10 @@ export class MapManager {
     graphics.closePath()
     graphics.fillPath()
     graphics.strokePath()
+
+    // Below LightingSystem.OVERLAY_DEPTH (-5) so obstacles are lit by the light
+    // map, but above the background grid (-10).
+    graphics.setDepth(-9)
 
     this.obstacles.add(graphics)
 
@@ -171,7 +250,7 @@ export class MapManager {
 
     // Grid
     graphics.lineStyle(1, config.gridColor, 0.3)
-    const gridSize = 50
+    const gridSize = MapManager.GRID_SIZE
 
     for (let x = 0; x <= WORLD_WIDTH; x += gridSize) {
       graphics.beginPath()

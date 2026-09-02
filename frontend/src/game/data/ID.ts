@@ -99,3 +99,20 @@ export const enum SoundtrackID
 {
   BackgroundMusic = 'background_music'
 }
+
+/**
+ * World-pixel reach for LightingSystem.AddLight.
+ *
+ * A SHARED PALETTE ON PURPOSE. The light map floods the whole tile grid once per
+ * distinct radius, so cost tracks how many DIFFERENT radii are on screen, not how
+ * many lights: 2000 bullets at one radius cost ~0.9ms, but five bespoke radii cost
+ * ~4.4ms even with one light each. Reusing these values keeps entities sharing a
+ * flood pass. Watch LightingSystem.GroupCount if you add more.
+ */
+export const enum LightingRadiusID
+{
+  /** Players and enemies. */
+  PlayerRadius = 250,
+  /** Projectiles. */
+  ProjectileRadius = 150,
+}

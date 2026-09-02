@@ -6,6 +6,11 @@ import RegisterPage from './pages/RegisterPage'
 import SettingsPage from './pages/SettingsPage'
 import AttackSelectPage from './pages/AttackSelectPage'
 import UpdateNotesPage from './pages/UpdateNotesPage'
+import { initPerfFlag } from './game/core/PerfStats'
+
+// Read ?perf=1 before the router can drop the query string on navigation, so the
+// flag can be typed once at the menu URL and still reach the game page.
+initPerfFlag()
 
 function App() {
   return (

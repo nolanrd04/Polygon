@@ -4,6 +4,8 @@ import { EnemyManager } from '../systems/EnemyManager'
 import { WaveManager } from '../systems/WaveManager'
 import { CollisionManager } from '../systems/CollisionManager'
 import { MapManager } from '../systems/MapManager'
+import { LightingSystem } from '../systems/LightingSystem'
+import { PerfStats, recordPeaks } from '../core/PerfStats'
 import { EventBus } from '../core/EventBus'
 import { GameManager } from '../core/GameManager'
 import { GAME_HEIGHT, WORLD_WIDTH, WORLD_HEIGHT } from '../core/GameConfig'
@@ -63,7 +65,15 @@ export class MainScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT)
     this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT)
 
-    // Initialize map
+    // Tile light map. MUST come BEFORE generateMap(), which bakes the map's
+    // occluders and self-illumination into it (and Initialize clears both).
+    // Tuning lives here: `ambient` is the global light floor - low on purpose,
+    // since it is the glowing grid rather than ambient that makes dark areas
+    // legible; `airDecay` sets how far lights reach; `exposure` how hard bright
+    // centres roll off.
+    LightingSystem.Initialize(this, { ambient: 0.10, exposure: 1.0 })
+
+    // Initialize map (registers occluders + emissive grid with the light map)
     this.mapManager = new MapManager(this)
     this.mapManager.generateMap()
 
@@ -512,6 +522,11 @@ export class MainScene extends Phaser.Scene {
     // DONT UPDATE IF PAUSED
     if (GameManager.getState().isPaused) return
 
+    // Perf sampling. Two performance.now() calls per frame is far below the
+    // resolution of anything being measured, so this stays in for release
+    // builds - the overlay that reads it is what is gated.
+    const perfStart = performance.now()
+
     // UPDATE TOUCH CONTROLS
     if (this.touchControls) {
       this.touchControls.update()
@@ -603,6 +618,19 @@ export class MainScene extends Phaser.Scene {
     } else {
       this.debugGraphics.clear()
     }
+
+    // Flood and upload the light map. MUST come last: lights are immediate-mode,
+    // so every AddLight for this frame has to land before we propagate.
+    const lightStart = performance.now()
+    LightingSystem.UpdateAll()
+    PerfStats.lightingMs = performance.now() - lightStart
+
+    PerfStats.updateMs = performance.now() - perfStart
+    PerfStats.fps = this.game.loop.actualFps
+    PerfStats.lightGroups = LightingSystem.GroupCount
+    PerfStats.enemies = this.enemyManager.getEnemies().length
+    PerfStats.projectiles = this.player.getProjectiles().length
+    recordPeaks()
   }
 
   /**

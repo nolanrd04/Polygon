@@ -1,6 +1,8 @@
 import { TextureGenerator } from '../../utils/TextureGenerator'
 import { SuperPentagonExplosionDetonation } from '../projectiles/enemy_projectiles/SuperPentagonExplosionDetonation'
 import { Enemy } from './Enemy'
+import { LightingSystem } from '../../systems/LightingSystem'
+import { LightingRadiusID } from '../../data/ID'
 import { Particle, SparkParticle } from '../particles'
 
 export class SuperPentagon extends Enemy {
@@ -24,7 +26,7 @@ export class SuperPentagon extends Enemy {
     this.sides = 5
     this.radius = 20
     this.color = 0xff8b1f
-    this.scoreChance = 0.05
+    this.scoreChance = 0.15
     this.speedCap = 3
     this.knockbackResistance = 0.5
     this.bundleDropChance = 0.0 // use difficulty drop chance
@@ -160,4 +162,15 @@ export class SuperPentagon extends Enemy {
       }
     }
   
+
+  /**
+   * Emissive glow, sized to the enemy so bigger shapes light more of the room.
+   *
+   * Uses this.color, not a stored default: the damage flash tints the SPRITE and
+   * leaves this.color alone (Enemy.takeDamage), so the light will not strobe white
+   * on every hit.
+   */
+  PostDraw(): void {
+    LightingSystem.AddLight(this.x, this.y, this.color, 2, LightingRadiusID.PlayerRadius * this.radius / 15)
+  }
 }

@@ -44,6 +44,7 @@ Backend API  (see BACKEND_CONNECTION.md)
 | [COLLISION_MANAGER.md](COLLISION_MANAGER.md) | CollisionManager in detail |
 | [ENEMY_MANAGER.md](ENEMY_MANAGER.md) | EnemyManager in detail |
 | [MAP_MANAGER.md](MAP_MANAGER.md) | MapManager in detail |
+| [LIGHTING.md](LIGHTING.md) | LightingSystem — Terraria-style tile light map, radius/shape groups, perf overlay |
 | [PROJECTILE_MANAGER.md](PROJECTILE_MANAGER.md) | ProjectileManager (legacy) |
 | [TOUCH_CONTROL_MANAGER.md](TOUCH_CONTROL_MANAGER.md) | Mobile touch input |
 | [WAVE_MANAGER.md](WAVE_MANAGER.md) | WaveManager in detail |

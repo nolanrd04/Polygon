@@ -1,7 +1,8 @@
 import { Enemy } from './Enemy'
+import { LightingSystem } from '../../systems/LightingSystem'
 import { AcidBullet } from '../projectiles/enemy_projectiles/AcidBullet'
 import { TextureGenerator } from '../../utils/TextureGenerator'
-import { SoundID } from '../../../game/data/ID'
+import { SoundID, LightingRadiusID } from '../../../game/data/ID'
 import { getDefaultVolume } from '../../../game/core/AudioRegistry'
 
 /**
@@ -20,7 +21,7 @@ export class SuperSquare extends Enemy {
     this.sides = 4
     this.radius = 20
     this.color = 0x33ff33
-    this.scoreChance = 0.04
+    this.scoreChance = 0.1
     this.speedCap = 6.5
     this.knockbackResistance = 0.8
     this.bundleDropChance = 0.0 // use difficulty drop chance
@@ -75,4 +76,15 @@ export class SuperSquare extends Enemy {
     }
   }
 
+
+  /**
+   * Emissive glow, sized to the enemy so bigger shapes light more of the room.
+   *
+   * Uses this.color, not a stored default: the damage flash tints the SPRITE and
+   * leaves this.color alone (Enemy.takeDamage), so the light will not strobe white
+   * on every hit.
+   */
+  PostDraw(): void {
+    LightingSystem.AddLight(this.x, this.y, this.color, 2, LightingRadiusID.PlayerRadius * this.radius / 15)
+  }
 }

@@ -1,5 +1,7 @@
 import { Particle, SparkParticle } from '../particles'
 import { Enemy } from './Enemy'
+import { LightingSystem } from '../../systems/LightingSystem'
+import { LightingRadiusID } from '../../data/ID'
 
 export class Pentagon extends Enemy {
   private teleportX: number = 0
@@ -121,5 +123,16 @@ export class Pentagon extends Enemy {
         this.teleportTimer = 3000 // Reset timer
       }
     }
+  }
+
+  /**
+   * Emissive glow, sized to the enemy so bigger shapes light more of the room.
+   *
+   * Uses this.color, not a stored default: the damage flash tints the SPRITE and
+   * leaves this.color alone (Enemy.takeDamage), so the light will not strobe white
+   * on every hit.
+   */
+  PostDraw(): void {
+    LightingSystem.AddLight(this.x, this.y, this.color, 2, LightingRadiusID.PlayerRadius * this.radius / 15)
   }
 }

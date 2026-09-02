@@ -167,6 +167,9 @@ export const NormalDifficulty: Difficulty = {
   getEnemyCount(wave: number): number {
     const explicit = ENEMY_COUNTS[wave]
     if (explicit !== undefined) return explicit
+    // NOT auto-synced - fallback formula is hand-ported as code, not table
+    // data. If you change this, manually update the matching fallback in
+    // backend/app/core/difficulty/normal.py get_enemy_count().
     return Math.floor(100 + wave * 2 + Math.pow(wave, 1.2))
   },
 
@@ -175,6 +178,9 @@ export const NormalDifficulty: Difficulty = {
   },
 
   getSpawnDelay(wave: number): number {
+    // No backend copy - Difficulty.get_spawn_delay() has no caller in
+    // wave_service.py, so there's nothing server-side to keep this in sync
+    // with. Frontend-only, safe to change without touching the backend.
     // Earlier waves use gentler scaling so the very first waves don't feel frantic.
     if (wave < 6) 
     {
@@ -223,32 +229,48 @@ export const NormalDifficulty: Difficulty = {
     return SCHEDULED_BOSS_SPAWNS[wave] ?? null
   },
 
+  // NOT auto-synced - RARITY_WEIGHTS_BY_WAVE/FALLBACK_RARITY_WEIGHTS above are
+  // a manually-mirrored table, not covered by scripts/difficulty_defs_sync.py.
+  // If you change a wave's weights (or the fallback), manually update
+  // backend/app/core/data/rarity_weights.json to match.
   getRarityWeights(wave: number): RarityWeights {
     return RARITY_WEIGHTS_BY_WAVE[wave] ?? FALLBACK_RARITY_WEIGHTS
   },
 
+  // NOT auto-synced - closed-form formula, hand-ported as code. If you change
+  // any threshold/value here, manually update
+  // backend/app/core/difficulty/normal.py get_bundle_drop_chance().
   getBundleDropChance(wave: number): number {
-    if (wave <= 4)  return 0.12
-    if (wave <= 9)  return 0.1
-    if (wave <= 14) return 0.07
-    if (wave <= 19) return 0.05
-    if (wave <= 24) return 0.04
-    if (wave <= 29) return 0.03
-    return 0.03
+    if (wave <= 4)  return 0.13
+    if (wave <= 9)  return 0.12
+    if (wave <= 14) return 0.11
+    if (wave <= 19) return 0.1
+    if (wave <= 24) return 0.09
+    if (wave <= 29) return 0.08
+    return 0.07
   },
 
   getBundleRarityWeights(wave: number): RarityWeights {
     return BUNDLE_RARITY_WEIGHTS_BY_WAVE[wave] ?? FALLBACK_BUNDLE_RARITY_WEIGHTS
   },
 
+  // NOT auto-synced - closed-form formula, hand-ported as code. If you change
+  // the divisor (or the formula shape), manually update
+  // backend/app/core/difficulty/normal.py get_health_multiplier().
   getHealthMultiplier(wave: number): number {
     return Math.exp(wave / 8)
   },
 
+  // NOT auto-synced - closed-form formula, hand-ported as code. If you change
+  // the divisor (or the formula shape), manually update
+  // backend/app/core/difficulty/normal.py get_damage_multiplier().
   getDamageMultiplier(wave: number): number {
     return Math.exp(wave / 8)
   },
 
+  // NOT auto-synced - closed-form formula, hand-ported as code. If you change
+  // the coefficient (or the formula shape), manually update
+  // backend/app/core/difficulty/normal.py get_speed_multiplier().
   getSpeedMultiplier(wave: number, speedCap: number): number {
     const speedMult = 1 + (wave * 0.05)
     return Math.min(speedCap, speedMult)
