@@ -4,6 +4,7 @@ import { BundleRarity } from '../../data/ID'
 import { Particle } from '../particles/Particle'
 import { PolygonParticle } from '../particles/PolygonParticle'
 import { SparkParticle } from '../particles/BasicParticles'
+import { LightingSystem } from '../../../game/systems/LightingSystem'
 
 const RARITY_COLORS: number[] = [
   0xaaaaaa, // 0 common
@@ -193,6 +194,11 @@ export class DroppedUpgradeBundle {
       })
       }
     }
+
+    // This class has no Projectile/Enemy render pipeline, so PostDraw is called
+    // here. It has to run every frame the bundle is alive - lights are
+    // immediate-mode and only exist for the frame they are added.
+    this.PostDraw()
   }
 
   destroy(): void {
@@ -207,5 +213,9 @@ export class DroppedUpgradeBundle {
 
   get isDestroyed(): boolean {
     return this._isDestroyed
+  }
+
+  PostDraw(): void {
+    LightingSystem.AddLight(this.container.x, this.container.y, this.color, this.upgradeValue + 1)
   }
 }

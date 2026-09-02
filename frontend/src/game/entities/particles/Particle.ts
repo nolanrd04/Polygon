@@ -242,9 +242,9 @@ export abstract class Particle {
 
   /**
    * Pushes this particle's state onto its sprite. Override for custom
-   * rendering. There is deliberately no Graphics path and no PostDraw hook:
-   * particles are leaf visuals spawned in bulk, and per-particle Graphics
-   * would erase the performance advantage of the pool.
+   * rendering. There is deliberately no Graphics path: particles are leaf
+   * visuals spawned in bulk, and per-particle Graphics would erase the
+   * performance advantage of the pool.
    */
   Draw(): void {
     const sprite = this.sprite
@@ -268,6 +268,18 @@ export abstract class Particle {
       sprite.setScale(displaySize)
     }
   }
+
+  /**
+   * Called after Draw(), and skipped along with it when PreDraw() returns false.
+   * For effects that are not the sprite itself - the one in practice being
+   * LightingSystem.AddLight(), which is immediate-mode and so has to be re-added
+   * every frame the particle should glow.
+   *
+   * Keep it to that. This runs once per live particle per frame against a pool
+   * of up to MAX_PARTICLES, so anything that allocates or touches the scene
+   * graph here is paid thousands of times a second.
+   */
+  PostDraw(): void {}
 
   // ============================================================
   // INSTANCE METHODS
@@ -411,7 +423,10 @@ export abstract class Particle {
     this.OnSpawn()
 
     // Draw immediately so the particle is visible on its spawn frame
-    if (this.PreDraw()) this.Draw()
+    if (this.PreDraw()) {
+      this.Draw()
+      this.PostDraw()
+    }
   }
 
   /** @internal Picks the cached texture for this particle's shape */
@@ -479,7 +494,10 @@ export abstract class Particle {
       return
     }
 
-    if (this.PreDraw()) this.Draw()
+    if (this.PreDraw()) {
+      this.Draw()
+      this.PostDraw()
+    }
   }
 
   /** @internal Hides the sprite and hands the instance back to the free list */

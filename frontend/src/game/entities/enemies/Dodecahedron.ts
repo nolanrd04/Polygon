@@ -6,6 +6,7 @@ import { DodecahedronBullet } from '../projectiles/enemy_projectiles/Dodecahedro
 import { BundleRarity, DifficultyID, LightingIntensityID, SoundID } from '../../data/ID'
 import { getDefaultVolume } from '../../../game/core/AudioRegistry'
 import { Particle, SmokeParticle, PolygonParticle, SparkParticle } from '../particles'
+import type { ParticleType } from '../particles'
 import { LightingSystem } from '../../../game/systems/LightingSystem'
 
 
@@ -121,7 +122,7 @@ export class Dodecahedron extends Enemy {
     {
       for(let i = 0; i < Phaser.Math.Between(4, 8); i++)
       {
-        let type = PolygonParticle
+        let type: ParticleType = PolygonParticle
         if (Phaser.Math.Between(0,1) === 0)
         {
           type = SmokeParticle

@@ -79,7 +79,7 @@ export class Bullet extends Projectile {
 
     // Bullets carry a small light. Kept on Bullet rather than Projectile so
     // emitting light stays a per-projectile-class choice.
-    LightingSystem.AddLight(this.positionX, this.positionY, this.color, LightingIntensityID.Projectile)
+    LightingSystem.AddLight(this.positionX, this.positionY, this.color, LightingIntensityID.Projectile * this.size / 5)
 
     // Simple sparkle:
     if (this.particleTimer % 10 === 0) {
@@ -317,6 +317,10 @@ export class HomingBullet extends Projectile {
     return true
   }
 
+  PostDraw(): void {
+    LightingSystem.AddLight(this.positionX, this.positionY, this.color, LightingIntensityID.Projectile * this.size / 6)
+  }
+
 }
 
 /**
@@ -397,7 +401,12 @@ export class ExplosiveBullet extends Projectile {
     }
     return true
   }
+
+  PostDraw(): void {
+    LightingSystem.AddLight(this.positionX, this.positionY, this.color, LightingIntensityID.Explosion * this.size / 7)
+  }
 }
+
 
 /**
  * Stationary AOE explosion. Spawned by ExplosiveBullet on impact (default
@@ -456,6 +465,10 @@ export class BulletExplosion extends Projectile {
   Draw(): void {
     const elapsed = this.scene.time.now - this.spawnTime
     this.sprite.setAlpha(Math.max(0, 1 - elapsed / this.timeLeft))
+  }
+
+  PostDraw(): void {
+    LightingSystem.AddLight(this.positionX, this.positionY, this.color, LightingIntensityID.Explosion * (this.size / 7) * this.sprite.alpha)
   }
 
   OnHitNPC(_enemy: any): boolean {
@@ -617,5 +630,9 @@ export class BuckshotPellet extends Projectile
       return false
     }
     return true
+  }
+
+  PostDraw(): void {
+    LightingSystem.AddLight(this.positionX, this.positionY, this.color, LightingIntensityID.Projectile * this.size / 3)
   }
 }

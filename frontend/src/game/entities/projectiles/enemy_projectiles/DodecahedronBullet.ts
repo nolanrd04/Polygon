@@ -1,6 +1,7 @@
 import { Projectile } from '../Projectile'
 import { TrailRenderer } from '../../../utils/TrailRenderer'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
+import { LightingSystem } from '../../../../game/systems/LightingSystem'
 
 export class DodecahedronBullet extends Projectile {
 
@@ -46,6 +47,7 @@ export class DodecahedronBullet extends Projectile {
         scaleDecay: true
       })
     }
+    LightingSystem.AddLight(this.positionX, this.positionY, this.color, .85)
   }
 
 }

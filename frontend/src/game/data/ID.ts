@@ -120,5 +120,6 @@ export const enum LightingIntensityID
   /** Projectiles. ~160px. */
   Projectile = 0.7,
   /** Specific player override */
-  Player = 1.2
+  Player = 1.2,
+  Explosion = 1.3,
 }

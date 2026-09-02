@@ -1,5 +1,7 @@
 import Phaser from 'phaser'
 import { Particle } from './Particle'
+import { LightingIntensityID } from '../../../game/data/ID'
+import { LightingSystem } from '../../../game/systems/LightingSystem'
 
 export class PolygonParticle extends Particle {
   SetDefaults(): void {
@@ -14,5 +16,9 @@ export class PolygonParticle extends Particle {
   OnSpawn(): void {
     this.rotation = Phaser.Math.FloatBetween(0, Math.PI * 2)
     this.rotationVelocity = Phaser.Math.FloatBetween(-8, 8)
+  }
+
+  PostDraw(): void {
+    LightingSystem.AddLight(this.posX, this.posY, this.color, LightingIntensityID.Projectile * this.radius / 10 * this.sprite.alpha)
   }
 }

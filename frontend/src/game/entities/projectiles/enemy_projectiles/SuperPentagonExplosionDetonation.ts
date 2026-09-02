@@ -4,6 +4,7 @@ import { TextureGenerator } from '../../../utils/TextureGenerator'
 import { SoundID } from '../../../../game/data/ID'
 import { Particle, SparkParticle } from '../../particles'
 import { getDefaultVolume } from '../../../core/AudioRegistry'
+import { LightingSystem } from '../../../../game/systems/LightingSystem'
 
 export class SuperPentagonExplosionDetonation extends Projectile {
   private baseColor = 0xf74f25
@@ -45,6 +46,7 @@ export class SuperPentagonExplosionDetonation extends Projectile {
       if (cycleTime < 250) {
         // Grow bright (0-250ms)
         this.color = this.lerpColor(this.baseColor, this.bleepColor, cycleTime / 250)
+        LightingSystem.AddLight(this.positionX, this.positionY, this.color, 1.2)
       } else if (cycleTime < 500) {
         // Grow dark (250-500ms)
         this.color = this.lerpColor(this.bleepColor, this.baseColor, (cycleTime - 250) / 250)

@@ -1,6 +1,8 @@
 import { Projectile } from '../Projectile'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
 import { Particle, SmokeParticle, SparkParticle } from '../../particles'
+import { LightingSystem } from '../../../../game/systems/LightingSystem'
+import { LightingIntensityID } from '../../../data/ID'
 
 export class AcidExplosion extends Projectile {
   private expansionTime: number = 0
@@ -141,5 +143,18 @@ export class AcidExplosion extends Projectile {
   OnHitNPC(_enemy: any): boolean {
     // Always return true to prevent being destroyed on hit
     return true
+  }
+
+  PostDraw(): void {
+    // Grows in with the blast and fades out with the sprite. Scaled off maxRadius
+    // rather than currentRadius so the light is sized like every other explosion
+    // (intensity is the only reach control - see LightingSystem).
+    const expansion = Phaser.Math.Clamp(this.currentRadius / this.maxRadius, 0, 1)
+    LightingSystem.AddLight(
+      this.positionX,
+      this.positionY,
+      this.color,
+      LightingIntensityID.Explosion * (this.maxRadius / 20) * expansion * this.sprite.alpha
+    )
   }
 }

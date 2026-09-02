@@ -1,5 +1,7 @@
 import Phaser from 'phaser'
 import { Particle } from './Particle'
+import { LightingSystem } from '../../../game/systems/LightingSystem'
+import { LightingIntensityID } from '../../../game/data/ID'
 
 /**
  * ============================================================================
@@ -35,6 +37,10 @@ export class SparkParticle extends Particle {
     this.scale *= Phaser.Math.FloatBetween(0.6, 1.3)
     this.timeLeft *= Phaser.Math.FloatBetween(0.7, 1.3)
     this.maxTimeLeft = this.timeLeft
+  }
+
+  PostDraw(): void {
+    LightingSystem.AddLight(this.posX, this.posY, this.color, LightingIntensityID.Projectile * this.radius / 2.5 * this.sprite.alpha)
   }
 }
 

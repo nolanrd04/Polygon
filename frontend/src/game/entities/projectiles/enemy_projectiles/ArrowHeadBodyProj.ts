@@ -2,6 +2,7 @@ import { Projectile } from '../Projectile'
 import { TrailRenderer } from '../../../utils/TrailRenderer'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
 import { Particle, SparkParticle, StreakParticle } from '../../particles'
+import { LightingSystem } from '../../../../game/systems/LightingSystem'
 
 export class ArrowHeadBodyProj extends Projectile {
     private particleTimer: number = 0
@@ -72,6 +73,8 @@ export class ArrowHeadBodyProj extends Projectile {
         scaleDecay: true
       })
     }
+    LightingSystem.AddLight(this.positionX, this.positionY, this.color, .85)
+    
   }
 
   onHit(): void {

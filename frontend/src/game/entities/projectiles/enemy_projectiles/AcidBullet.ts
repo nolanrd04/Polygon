@@ -5,6 +5,7 @@ import { TextureGenerator } from '../../../utils/TextureGenerator'
 import { SoundID } from '../../../../game/data/ID'
 import { getDefaultVolume } from '../../../../game/core/AudioRegistry'
 import { Particle, SparkParticle } from '../../particles'
+import { LightingSystem } from '../../../../game/systems/LightingSystem'
 
 export class AcidBullet extends Projectile {
   private particleTimer: number = 0
@@ -69,6 +70,7 @@ export class AcidBullet extends Projectile {
         scaleDecay: true
       })
     }
+    LightingSystem.AddLight(this.positionX, this.positionY, this.color, 1.2)
   }
 
   OnKill(): void {

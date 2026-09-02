@@ -2,6 +2,7 @@ import { Projectile } from '../Projectile'
 import { TrailRenderer } from '../../../utils/TrailRenderer'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
 import { Particle, StreakParticle } from '../../particles'
+import { LightingSystem } from '../../../../game/systems/LightingSystem'
 
 export class SuperHexagonProj extends Projectile {
   private particleTimer: number = 0
@@ -62,5 +63,6 @@ export class SuperHexagonProj extends Projectile {
         scaleDecay: true
       })
     }
+    LightingSystem.AddLight(this.positionX, this.positionY, this.color, .85)
   }
 }

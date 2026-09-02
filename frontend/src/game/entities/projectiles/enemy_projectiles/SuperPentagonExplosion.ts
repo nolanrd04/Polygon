@@ -1,4 +1,6 @@
+import { LightingSystem } from '../../../../game/systems/LightingSystem'
 import { Projectile } from '../Projectile'
+import { LightingIntensityID } from '../../../../game/data/ID'
 
 export class SuperPentagonExplosion extends Projectile {
   SetDefaults(): void {
@@ -20,5 +22,9 @@ export class SuperPentagonExplosion extends Projectile {
   Draw(): void {
     const elapsed = this.scene.time.now - this.spawnTime
     this.sprite.setAlpha(Math.max(0, 1 - elapsed / this.timeLeft))
+  }
+
+  PostDraw(): void {
+    LightingSystem.AddLight(this.positionX, this.positionY, this.color, LightingIntensityID.Explosion * (this.size / 40) * this.sprite.alpha)
   }
 }
