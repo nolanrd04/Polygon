@@ -45,12 +45,18 @@
 - [ ] New "buffs" which are temporary upgrades to the player
 - [ ] "Largenes": reduces damage taken but reduced movement speed and increases size. All values dependent on rarity. Cannot roll from bundles.
 - [ ] "Lightweight: reduced size and increases speed but increases the damage taken. All values dependent on rarity. Cannot roll from bundles.
+- [ ] Healing refactor: add a keybind to restore health instantly. Add upgrades below:
+- [ ] Healing refactor upgrade: Increase insta heal slots +1
+- [ ] Healing refactor upgrade: Decrease insta heal cooldown
+- [ ] Healing refactor upgrade: Increase insta heal amount (percentage based)
+- [ ] Healing refactor: change vampirism to heal per chance. upgrades increase chance but not value
+- [ ] Healing refactor: New upgrade: syphon. Syphon will heal a killed enemy for x amount on kill.
 
 ## Visuals
 - [ DONE ] Implement 'dusts' (see terraria)
-- [ ] Ensure settings actually work
+- [ ~ ] Ensure settings actually work
 - [ ] Add color customization for the player
-- [ ] Lighting
+- [ DONE ] Lighting
 
 ## Bullet upgrades (future)
 ### tier 2 variant upgrade ideas

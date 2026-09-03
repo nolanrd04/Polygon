@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { clearPerfFlag } from '../game/core/PerfStats'
 
 interface Settings {
   musicVolume: number
   sfxVolume: number
   fullscreen: boolean
   showFPS: boolean
+  showDiagnostics: boolean
   screenShake: boolean
   showEnemyHealthBar: boolean
   showEnemyHealthNumber: boolean
@@ -20,6 +22,7 @@ export default function SettingsPage() {
       sfxVolume: 80,
       fullscreen: false,
       showFPS: false,
+      showDiagnostics: false,
       screenShake: true,
       showEnemyHealthBar: true,
       showEnemyHealthNumber: true
@@ -28,6 +31,9 @@ export default function SettingsPage() {
 
   const updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => {
     const newSettings = { ...settings, [key]: value }
+    // A ?perf=1 from an earlier session is persisted and forces the overlay to
+    // full diagnostics, which would silently override these two toggles.
+    if (key === 'showFPS' || key === 'showDiagnostics') clearPerfFlag()
     setSettings(newSettings)
     localStorage.setItem('gameSettings', JSON.stringify(newSettings))
   }
@@ -96,6 +102,26 @@ export default function SettingsPage() {
             />
           </button>
         </div>
+
+        {/* Nested under Show FPS: the diagnostics rows are meaningless without
+            the readout itself, so this only appears once it is enabled. */}
+        {settings.showFPS && (
+          <div className="flex justify-between items-center py-2 pl-6 border-l-2 border-gray-700 -mt-4">
+            <span className="text-gray-400 text-sm">Show Diagnostics</span>
+            <button
+              onClick={() => updateSetting('showDiagnostics', !settings.showDiagnostics)}
+              className={`w-12 h-6 rounded-full transition-colors ${
+                settings.showDiagnostics ? 'bg-polygon-primary' : 'bg-gray-600'
+              }`}
+            >
+              <div
+                className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                  settings.showDiagnostics ? 'translate-x-6' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+          </div>
+        )}
 
         <div className="flex justify-between items-center py-2 border-t border-gray-700">
           <span className="text-gray-300">Screen Shake</span>

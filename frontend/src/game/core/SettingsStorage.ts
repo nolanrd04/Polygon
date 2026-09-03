@@ -7,6 +7,8 @@ interface StoredSettings {
   sfxVolume?: number
   showEnemyHealthBar?: boolean
   showEnemyHealthNumber?: boolean
+  showFPS?: boolean
+  showDiagnostics?: boolean
 }
 
 function getSettingsFromStorage(): StoredSettings | null {
@@ -35,5 +37,17 @@ export const SETTINGS = {
   /** SFX volume as a 0-1 scale factor (SettingsPage stores it as 0-100). */
   get sfxVolume(): number {
     return (getSettingsFromStorage()?.sfxVolume ?? 80) / 100
+  },
+  /** Show the small player-facing readout: fps, enemies, projectiles. */
+  get showFPS(): boolean {
+    return getSettingsFromStorage()?.showFPS ?? false
+  },
+  /**
+   * Expand that readout with the developer timings (update/lighting ms, light
+   * groups, flood window, peaks). Only offered while showFPS is on - see
+   * PerfOverlay for how the two combine.
+   */
+  get showDiagnostics(): boolean {
+    return getSettingsFromStorage()?.showDiagnostics ?? false
   }
 }

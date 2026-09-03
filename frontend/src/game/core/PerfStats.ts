@@ -85,6 +85,22 @@ export function initPerfFlag(): void {
   }
 }
 
+/**
+ * Drop the persisted ?perf=1 override.
+ *
+ * Called when the Settings toggles are touched. Without this the flag outlives
+ * the session that set it and silently beats the toggles - the overlay would
+ * show full diagnostics no matter what Show FPS says, with no UI anywhere that
+ * explains why. Whoever touched Settings last is who meant it.
+ */
+export function clearPerfFlag(): void {
+  try {
+    localStorage.removeItem(PERF_FLAG_KEY)
+  } catch {
+    // Private browsing; the URL check below is the only path left anyway.
+  }
+}
+
 export function isPerfEnabled(): boolean {
   try {
     if (localStorage.getItem(PERF_FLAG_KEY) === '1') return true

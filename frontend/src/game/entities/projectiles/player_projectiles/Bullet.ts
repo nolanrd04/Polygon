@@ -329,6 +329,8 @@ export class HomingBullet extends Projectile {
  */
 export class ExplosiveBullet extends Projectile {
   private particleTimer: number = 0
+  /** Tick of the last explosion, used to collapse collide+death into one. */
+  private lastExplosionTime: number = -1
   SetDefaults(): void {
     this.damage = 10
     this.speed = 350
@@ -339,9 +341,12 @@ export class ExplosiveBullet extends Projectile {
     this.spawnSound = 'bullet_shot'
     this.hitEnemyCooldown = 250
     this.cooldown = 300
+    this.timeLeft = 1250
   }
 
   AI(): void {
+    // this.velocityX *= 0.993
+    // this.velocityY *= 0.993
     if (this.particleTimer % 8 === 0) {
       let color: number = this.color
       let colorNum = Phaser.Math.Between(0, 2)
@@ -369,7 +374,17 @@ export class ExplosiveBullet extends Projectile {
     this.particleTimer++
   }
 
+  /**
+   * Spawns the explosion, at most once per tick. A collision that kills the
+   * bullet runs OnHitNPC/OnObstacleCollide and then _destroy() -> OnKill() in
+   * the same frame, so without this guard that single event would explode
+   * twice. Deaths on a later tick (timeLeft expiry, off-screen, or a ricochet
+   * that finally runs out of pierce) still get their own explosion.
+   */
   private spawnExplosion(): void {
+    if (this.scene.time.now === this.lastExplosionTime) return
+    this.lastExplosionTime = this.scene.time.now
+
     const scene = this.scene as Phaser.Scene & { spawnProjectile: Function }
     const explosion = new BulletExplosion()  
     explosion.SetDefaults()
@@ -389,6 +404,10 @@ export class ExplosiveBullet extends Projectile {
   OnHitNPC(_enemy: any): boolean {
     this.spawnExplosion()
     return true
+  }
+
+  OnKill(): void {
+    this.spawnExplosion()
   }
 
   OnObstacleCollide(obstacle?: Phaser.GameObjects.GameObject): boolean {

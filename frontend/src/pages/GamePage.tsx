@@ -255,7 +255,8 @@ export default function GamePage() {
 
       {/* Perf readout. Separate from DevTools because that hides itself on
           mobile, and mobile is where the frame budget actually binds.
-          Enable with ?perf=1 in the URL. */}
+          Enable with Settings > Show FPS (+ Show Diagnostics for the timings),
+          or ?perf=1 in the URL. */}
       <PerfOverlay />
 
       <GameHUD

@@ -10,6 +10,17 @@ interface UpdateNote {
 // Add new updates at the top of this array
 const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: 'v0.2.6',
+    date: '2026-09-02',
+    title: 'Balancing and fixes',
+    changes: [
+      'Reduced the active time of explosive bullets 3000 ms -> 1250 ms.',
+      'Explosive bullets explode on despawn.',
+      'Bonus points per wave now starts at 20, increases by 1, and caps at 50.',
+      'Show FPS setting now works as intended.',
+    ]
+  },
+  {
     version: 'v0.2.5',
     date: '2026-09-02',
     title: 'Lighting System improvements',

@@ -255,11 +255,10 @@ class GameManagerClass {
    */
   async completeWave(): Promise<void> {
     this.state.isWaveActive = false
-    // Base wave bonus of 10, scaled exponentially: 10 * e^(wave/8)
-    const baseBonus = 25
+    const baseBonus = 20
     // const waveMultiplier = Math.exp((this.state.wave - 1) / 16)
     // const score = Math.floor(baseBonus * waveMultiplier)
-    const score = Math.min(55, Math.floor(baseBonus + (this.state.wave) * 2))
+    const score = Math.min(50, Math.floor(baseBonus + this.state.wave))
 
     // Online: the backend computes and credits this same deterministic bonus
     // server-side (see WaveValidation.completeWave's current_points sync),
