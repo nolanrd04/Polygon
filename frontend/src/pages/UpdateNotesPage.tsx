@@ -10,6 +10,22 @@ interface UpdateNote {
 // Add new updates at the top of this array
 const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: 'v0.2.7',
+    date: '2026-09-03',
+    title: 'Ability implementation refactor, new Heal ability, fixed homing bullets, and balancing.',
+    changes: [
+      'Refactored how abilities are implemented and activated.',
+      'Added a new Heal ability that restores 10% of max health when activated. Upgrades increase the ability',
+      'Heal ability is now the default starting ability for all runs.',
+      'Refactored Vampirism upgrades to be a chance to heal for a percentage of damage dealt, rather than a flat percentage of damage dealt.',
+      'Stronger pierce now works as intended.',
+      'A bullet that pierces an enemy will now instantly home in to other nearby enemies rather than having the delay of the just-hit enemy.',
+      'Arrowheads segments no longer have significantly less health than the head, meaning the segments will remain alive longer.',
+      'Increased the size of the Super Pentagon explosion.',
+      'Reduced both pentagon and super pentagon teleport timers.',
+    ]
+  },
+  {
     version: 'v0.2.6',
     date: '2026-09-02',
     title: 'Balancing and fixes',

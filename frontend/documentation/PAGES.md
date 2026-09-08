@@ -54,7 +54,7 @@ The container for the running game session. Manages:
 - **Save on death** – listens for `player-death` and calls `SaveManager.saveOnDeath()` exactly once per session (guarded by a ref).
 - **Save on quit** – calls `SaveManager.saveOnQuit()` on component unmount and on the `beforeunload` DOM event.
 - **ESC key** – handled at the DOM level (not Phaser level) so that pause/resume works even while the Phaser scene itself is paused.
-- **Ability polling** – emits `request-ability-state` every 100 ms and receives `ability-state-update` from the scene to drive the `AbilityDisplay` cooldown bar.
+- **Ability polling** – emits `request-ability-state` every 100 ms and stores the `ability-state-update` payload (`{ slots }`, from `AbilitySystem.getSlots()`) in `abilitySlots` state, which it hands straight to `AbilityDisplay`. Both events are typed members of `GameEvents`; the page knows no ability by name.
 
 ---
 

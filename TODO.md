@@ -93,6 +93,22 @@ Upgrades: increased pellet count, increased fire rate, increased close-quarters 
 - [ ] improve zoom
 - [ ] add button layout customization
 
+## SIMULATION SCRIPT
+Simulates how a game is played. A single script with a single parameter:
+`cd backend && venv/bin/python scripts/simulate_run --WAVE_NUM`
+
+Here is what it does:
+1. Uses all our collected statistics to generate simulated run data to measure balancing.
+2. For each pre wave, get current points.
+3. For each pre wave, roll and pick upgrades based on `analyze_runs.py` pick rates for that wave.
+4. Repeat steps 2-3 until points are diminished. (I know this isnt proper, some players may decide to start a run with points still spendable).
+5. For each wave, calculate enemies to spawn.
+6. For each enemy spawned, calculate score chance and total for the wave.
+7. For each wave, calculate and total upgrade bundle drops.
+8. Apply calculate score chance and simulate bundle upgrade rolls.
+9. Repeat steps 2-8 until `WAVE_NUM` is reached.
+10. Display statistics like damage_scaling_ratio, which bullet variant was picked and on which wave, and upgrade list.
+
 # Systems
 
 ## Leaderboard

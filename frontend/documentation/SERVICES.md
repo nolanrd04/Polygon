@@ -115,6 +115,8 @@ In **offline/sandbox mode** (no `localStorage.token`) or when the player is dead
 | `selectUpgrade(upgradeId, wave)` | `POST /api/waves/select-upgrade` → returns authoritative new points | Deducts cost locally, returns new points |
 | `rerollUpgrades(wave, cost)` | `POST /api/waves/reroll` → returns new offered upgrades + points | Deducts cost locally, generates 3 new random upgrades |
 
+The offline roll draws from `getAllUpgrades()` filtered by `!curse`, `upgradeType !== 'visual_effect'`, `!starting`, and `UpgradeSystem.canApply()` — mirroring the backend's `_roll_upgrades`. `starting: true` upgrades are granted at run start and never sold (see [ABILITY_SYSTEM.md](ABILITY_SYSTEM.md#starting-true--permanent-never-offered-abilities)).
+
 ### Telemetry collected per wave
 
 | Field | Description |

@@ -35,22 +35,24 @@ The main game loop scene. All gameplay happens here.
 
 Initialization order matters:
 
-1. Register effect handlers via `registerEffectHandlers()`.
-2. Pre-generate sprite textures via `TextureGenerator.generateCommonTextures(this)`.
-3. Set world and camera bounds (`WORLD_WIDTH × WORLD_HEIGHT = 2560 × 1440`).
-4. Create `MapManager` and generate the map.
-5. Read `sessionStorage.selectedAttack` and spawn the `Player` at world center.
-6. Set the camera to follow the player (`lerp 0.5`, `roundPixels true`, `zoom 1.0`).
-7. Initialize `EnemyManager`, `WaveManager`, and `CollisionManager`.
-8. Register keyboard shortcuts: WASD/arrows for movement, SPACE for dash, E for shield.
-9. Subscribe to all `EventBus` events (pause, resume, wave transitions, explosions, upgrades, etc.).
-10. Initialize `TouchControlManager` for mobile.
-11. After a 500 ms delay:
+1. Pre-generate sprite textures via `TextureGenerator.generateCommonTextures(this)`.
+2. Set world and camera bounds (`WORLD_WIDTH × WORLD_HEIGHT = 2560 × 1440`).
+3. Create `MapManager` and generate the map.
+4. Read `sessionStorage.selectedAttack` and spawn the `Player` at world center.
+5. Set the camera to follow the player (`lerp 0.5`, `roundPixels true`, `zoom 1.0`).
+6. Initialize `EnemyManager`, `WaveManager`, and `CollisionManager`.
+7. Register movement keys (WASD/arrows) and call `AbilitySystem.bind(this)` — every ability keybind (SPACE dash, E shield, H heal, …) comes from the upgrade defs, not from this file. See [ABILITY_SYSTEM.md](ABILITY_SYSTEM.md).
+8. Subscribe to all `EventBus` events (pause, resume, wave transitions, explosions, upgrades, etc.).
+9. Initialize `TouchControlManager` for mobile.
+10. After a 500 ms delay:
     - Detect whether this is a new game or a loaded game (checks `points > 0`, `wave > 1`, or existing upgrades).
     - For new games: reset `GameManager`, grant 70 starting points.
     - For loaded games: re-apply saved upgrades via `UpgradeSystem.applyUpgrade()` (with `isRestore = true` to skip cost deduction and sound).
+    - **Both branches** then call `UpgradeSystem.grantStartingUpgrades()` and mirror the granted ids into `SaveManager`, so a save written before a `starting: true` ability existed picks it up on load.
     - Pre-load upgrades via `waveValidation.startWave()`.
     - Emit `show-upgrades` to open the `UpgradeModal` before the first wave.
+
+`shutdown` calls `AbilitySystem.unbind()`, dropping its keyboard listeners.
 
 ### update(time, delta)
 
@@ -93,6 +95,6 @@ Looks up the upgrade definition from the merged JSON arrays, verifies the player
 | `enemy-split` | Spawns child enemies at the split position |
 | `enemy-killed` | Records death for wave validation |
 | `damage-dealt` | Records damage for wave validation |
-| `request-ability-state` | Reads ability state from Player and emits `ability-state-update` |
+| `request-ability-state` | Emits `ability-state-update` with `AbilitySystem.getSlots()` |
 | `dev-spawn-enemy` | Spawns the requested enemy type near the player |
 | `clear-projectiles` | Calls `player.clearProjectiles()` |

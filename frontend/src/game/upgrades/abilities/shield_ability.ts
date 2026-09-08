@@ -1,4 +1,4 @@
-import { Upgrade, type UpgradeDef } from '../Upgrade'
+import { Upgrade, type UpgradeDef, type UpgradeContext } from '../Upgrade'
 import { RarityID, UpgradeTypeID } from '../../data/ID'
 
 export const ShieldAbilityDef: UpgradeDef = {
@@ -12,6 +12,19 @@ export const ShieldAbilityDef: UpgradeDef = {
   effect: "shield",
   stackable: true,
   maxStacks: 5,
+  // No cooldown: charges are the consumable `shield` effect counter, spent in
+  // Player.activateShield() and refilled only by buying another stack.
+  activation: {
+    key: "E",
+    label: "SHIELD",
+    buttonColor: 0x44dddd,
+    theme: "cyan",
+    slot: 0,
+  },
 }
 
-export class ShieldAbility extends Upgrade {}
+export class ShieldAbility extends Upgrade {
+  onActivate(ctx: UpgradeContext): boolean {
+    return ctx.player?.activateShield() ?? false
+  }
+}

@@ -12,17 +12,18 @@ import { GAME_HEIGHT, WORLD_WIDTH, WORLD_HEIGHT } from '../core/GameConfig'
 import { AttackType } from '../data/attackTypes'
 import { Projectile } from '../entities/projectiles/Projectile'
 import { Particle } from '../entities/particles/Particle'
-import { UpgradeSystem, UpgradeEffectSystem } from '../systems/upgrades'
+import { UpgradeSystem } from '../systems/upgrades'
 import { TextureGenerator } from '../utils/TextureGenerator'
 import { waveValidation } from '../services/WaveValidation'
 import { SaveManager } from '../services/SaveManager'
 import { getDefaultVolume, pauseBackgroundMusic, resumeBackgroundMusic, preloadAllAudio } from '../core/AudioRegistry'
 import { TouchControlManager } from '../systems/TouchControlManager'
+import { AbilitySystem } from '../systems/AbilitySystem'
 import { DroppedUpgradeBundle } from '../entities/upgrades/DroppedUpgradeBundle'
 import type { RarityWeights } from '../systems/difficulty/Difficulty'
 import { NormalDifficulty } from '../systems/difficulty/Normal'
 import { getAllUpgrades, getUpgrade, getUpgradeEntry } from '../upgrades'
-import { RarityID } from '../data/ID'
+import { RarityID, UpgradeTypeID } from '../data/ID'
 
 export class MainScene extends Phaser.Scene {
   player!: Player
@@ -71,7 +72,7 @@ export class MainScene extends Phaser.Scene {
     // since it is the glowing grid rather than ambient that makes dark areas
     // legible; `airDecay` sets how far lights reach; `exposure` how hard bright
     // centres roll off.
-    LightingSystem.Initialize(this, { ambient: 0.10, exposure: 1.0 })
+    LightingSystem.Initialize(this, { ambient: .10, exposure: 1.0 })
 
     // Initialize map (registers occluders + emissive grid with the light map)
     this.mapManager = new MapManager(this)
@@ -83,8 +84,17 @@ export class MainScene extends Phaser.Scene {
     // Initialize player at center with selected attack
     this.player = new Player(this, WORLD_WIDTH / 2, WORLD_HEIGHT / 2, selectedAttack)
 
+    // Bind every ability's key before the ledger is replayed, so charge
+    // upgrades (double_dash, ...) have queues to retune during onApply.
+    AbilitySystem.bind(this)
+
     // Engine surfaces handed to every upgrade hook (onApply, updatePlayer, ...)
-    UpgradeSystem.setContext({ gameManager: GameManager, player: this.player, scene: this })
+    UpgradeSystem.setContext({
+      gameManager: GameManager,
+      player: this.player,
+      scene: this,
+      abilities: AbilitySystem,
+    })
 
     // Make camera follow player smoothly with pixel rounding to prevent jitter
     // roundPixels: true forces full pixel rounding to eliminate sub-pixel jitter
@@ -217,15 +227,8 @@ export class MainScene extends Phaser.Scene {
     //   }
     // })
 
-    // Shield ability on E
-    this.input.keyboard!.on('keydown-E', () => {
-      this.player.activateShield()
-    })
-
-    // Dash ability on SPACE
-    this.input.keyboard!.on('keydown-SPACE', () => {
-      this.player.dash()
-    })
+    // Ability keys (SPACE dash, E shield, ...) are bound by AbilitySystem from
+    // each upgrade's `activation` def — nothing per-ability belongs here.
 
     // -------- -------- -------- //
 
@@ -327,22 +330,8 @@ export class MainScene extends Phaser.Scene {
     })
 
     // Handle ability state requests from UI
-    EventBus.on('request-ability-state' as any, () => {
-      const shieldCharges = UpgradeEffectSystem.getEffectValue('shield')
-      const hasDash = UpgradeEffectSystem.hasAbility('dash')
-      const dashCooldownProgress = this.player.getDashCooldownProgress()
-      const maxDashCharges = this.player.getMaxDashCharges()
-      const dashQueueProgress = this.player.getDashQueueProgress()
-      const readyDashCharges = this.player.getReadyDashCharges()
-
-      EventBus.emit('ability-state-update' as any, {
-        shieldCharges,
-        hasDash,
-        dashCooldownProgress,
-        maxDashCharges,
-        dashQueueProgress,
-        readyDashCharges
-      })
+    EventBus.on('request-ability-state', () => {
+      EventBus.emit('ability-state-update', { slots: AbilitySystem.getSlots() })
     })
 
     // Handle dev enemy spawning
@@ -417,6 +406,7 @@ export class MainScene extends Phaser.Scene {
       if (this.touchControls) {
         this.touchControls.destroy()
       }
+      AbilitySystem.unbind()
     })
 
     // -------- -------- -------- //
@@ -492,6 +482,18 @@ export class MainScene extends Phaser.Scene {
         } else {
           console.warn('WARNING: No saved upgrades to re-apply! This will lose effect state like shield charges.')
         }
+      }
+
+      // Permanent, never-offered abilities (heal). Runs for both branches: a
+      // new run has none yet, and a save written before a starting ability
+      // existed won't carry it either. Already-owned ones are skipped, so a
+      // normal load is a no-op.
+      const grantedStarting = UpgradeSystem.grantStartingUpgrades()
+      for (const upgradeId of grantedStarting) {
+        SaveManager.recordUpgradePurchase(upgradeId, GameManager.getState().wave)
+      }
+      if (grantedStarting.length > 0) {
+        console.log('Granted starting upgrades:', grantedStarting)
       }
 
       // Pre-load upgrades from backend using saved wave number
@@ -814,12 +816,16 @@ export class MainScene extends Phaser.Scene {
         if (u.curse) return false
         if (u.rarity !== rarity) return false
         if (exclude.includes(u.id)) return false
+        // Run-start abilities are never loot — mirrors the backend's own
+        // bundle pool filter in wave_service.collect_upgrade_bundle.
+        if (u.starting) return false
         if (!UpgradeSystem.canApply(u)) return false
-        // Bundles must not silently replace an already-active variant.
-        if (u.upgradeType === 'variant' && u.targetClass) {
-          const activeVariant = UpgradeSystem.getVariant(u.targetClass)
-          if (activeVariant !== null && activeVariant !== u.variantClass) return false
-        }
+        // Variants are never bundle loot — mirrors the backend's own bundle
+        // pool filter in wave_service.collect_upgrade_bundle. A bundle is a
+        // silent auto-apply, and swapping the player's bullet type (or any
+        // other target class) is a run-defining choice that belongs to the
+        // post-wave modal, where it's deliberate.
+        if (u.upgradeType === UpgradeTypeID.Variant) return false
         return true
       })
       if (candidates.length > 0) {

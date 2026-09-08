@@ -19,7 +19,7 @@ export default function GameHUD({ health, maxHealth, points, kills, wave }: Game
           <div className="text-sm text-gray-400">HEALTH</div>
           <div className="w-48 h-4 bg-gray-800 rounded-full overflow-hidden border border-gray-700">
             <div
-              className="h-full bg-gradient-to-r from-red-600 to-red-400 transition-all duration-300"
+              className="h-full bg-gradient-to-r from-red-600 to-red-400"
               style={{ width: `${healthPercent}%` }}
             />
           </div>

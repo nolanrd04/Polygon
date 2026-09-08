@@ -42,12 +42,20 @@ export interface UpgradeDef {
   effect?: string
   effectValue?: number
 
+  // For any upgrade the player triggers on demand — see AbilityActivation.
+  activation?: AbilityActivation
+
   // Offer filtering
   specificAttackType?: string
 
   // Stacking
   stackable: boolean
   maxStacks?: number
+
+  // Granted at the start of every run instead of bought: UpgradeSystem
+  // .grantStartingUpgrades() applies it, and the backend both seeds it into a
+  // new save's current_upgrades and keeps it out of the wave offer pool.
+  starting?: boolean
 
   // Upgrade tiers
   tier?: number
@@ -63,10 +71,64 @@ export interface UpgradeDef {
   curse?: boolean
 }
 
+/**
+ * How an on-demand ability is triggered and presented. AbilitySystem reads it
+ * for the keybind and charge queue, TouchControlManager for the mobile button,
+ * and AbilityDisplay for the HUD card — so adding an ability means adding a
+ * def here, not editing any of those three.
+ *
+ * Stays JSON-serializable like the rest of UpgradeDef, since defs are mirrored
+ * verbatim into backend/app/core/data/upgrades.json.
+ */
+export interface AbilityActivation {
+  /** Phaser key name — bound as `keydown-<key>`, e.g. 'SPACE'. */
+  key: string
+  /** Name on the HUD card and the mobile button. */
+  label: string
+  /** Short glyph for the HUD key chip. Defaults to `key`. */
+  keyLabel?: string
+  /** Mobile button fill (Phaser hex literal). */
+  buttonColor: number
+  /** HUD accent — a key into AbilityDisplay's THEMES table. */
+  theme: string
+  /** Display/layout order, low to high. Fixes HUD stacking and button sides. */
+  slot: number
+  /**
+   * Recharging abilities set both of these: `charges` is how many are held at
+   * once and `cooldown` is the per-charge recharge in ms. Leaving `cooldown`
+   * unset marks the ability consumable instead — its charge count is read
+   * from the UpgradeEffectSystem counter named by `effect`, and spending is
+   * the ability's own business (see ShieldAbility).
+   */
+  charges?: number
+  cooldown?: number
+  /** UpgradeStatID whose modifiers scale `cooldown` (e.g. 'dashCooldown'). */
+  cooldownStat?: string
+}
+
 /** Minimal structural view of Player needed by upgrade application. */
 export interface PlayerLike {
+  /** World-space position, for hooks that spawn effects at the player.
+   *  Read-only: upgrades never move the player through this. */
+  readonly x: number
+  readonly y: number
   updatePolygon(): void
-  setMaxDashCharges(charges: number): void
+  performDash(): boolean
+  activateShield(): boolean
+}
+
+/**
+ * Minimal structural view of AbilitySystem, so ability upgrades can retune
+ * their own charges without importing the system (and without Player growing
+ * an ability-specific setter for each one). Structural rather than a direct
+ * import because UpgradeSystem is what hands this out, and AbilitySystem
+ * imports UpgradeSystem.
+ */
+export interface AbilityRuntimeLike {
+  setCharges(abilityId: string, charges: number): void
+  addCharges(abilityId: string, delta: number): void
+  /** Engine-facing: drop every charge override back to its def baseline. */
+  resetCharges(): void
 }
 
 /** Engine surfaces handed to every hook that needs them. */
@@ -74,6 +136,7 @@ export interface UpgradeContext {
   gameManager: typeof GameManager
   player?: PlayerLike
   scene?: Phaser.Scene
+  abilities?: AbilityRuntimeLike
 }
 
 /** Mutable damage wrapper so modify* hooks can change damage in place. */
@@ -121,8 +184,9 @@ export abstract class Upgrade {
    * - stat_modifier → player base stats (maxHealth/speed/polygonSides) are
    *   mutated directly; everything else goes through UpgradeModifierSystem
    * - effect → UpgradeEffectSystem counter (shield charges, ricochet, ...)
-   * - visual_effect / ability → UpgradeEffectSystem flag
-   * - variant → nothing (UpgradeSystem tracks the active variant itself)
+   * - visual_effect → UpgradeEffectSystem flag
+   * - ability / variant → nothing; ownership of the ledger entry is itself
+   *   the state (AbilitySystem and UpgradeSystem read it directly)
    */
   onApply(ctx: UpgradeContext): void {
     const def = this.def
@@ -163,13 +227,6 @@ export abstract class Upgrade {
         break
 
       case UpgradeTypeID.Ability:
-        if (!def.effect) {
-          console.error('Invalid ability upgrade:', def)
-          return
-        }
-        UpgradeEffectSystem.addAbility(def.effect)
-        break
-
       case UpgradeTypeID.Variant:
         break
     }
@@ -202,6 +259,19 @@ export abstract class Upgrade {
 
   /** Per-frame logic — the ModBuff.Update equivalent. */
   updatePlayer(_player: Player, _delta: number): void {}
+
+  /**
+   * Fired when the player triggers this upgrade's `activation` binding (key
+   * or mobile button). AbilitySystem has already confirmed the upgrade is
+   * owned and, for recharging abilities, that a charge is ready.
+   *
+   * Return false to decline — nothing is spent and no cooldown starts, so
+   * conditions the ability cares about (already shielded, already at full
+   * health) belong here rather than in the caller.
+   */
+  onActivate(_ctx: UpgradeContext): boolean {
+    return false
+  }
 
   /** Mutate the parameters of any explosion the player creates. */
   modifyExplosion(_explosion: ExplosionSpec): void {}

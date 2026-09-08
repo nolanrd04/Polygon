@@ -16,6 +16,6 @@ export const TripleDashDef: UpgradeDef = {
 export class TripleDash extends Upgrade {
   onApply(ctx: UpgradeContext): void {
     super.onApply(ctx)
-    ctx.player?.setMaxDashCharges(3)
+    ctx.abilities?.setCharges('dash_ability', 3)
   }
 }

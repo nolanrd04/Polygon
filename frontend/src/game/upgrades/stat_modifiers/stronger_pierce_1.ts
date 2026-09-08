@@ -25,6 +25,6 @@ export class StrongerPierce1 extends Upgrade {
   onApply(): void {}
 
   modifyProjectileSpawn(projectile: Projectile): void {
-    if (projectile instanceof HomingBullet) projectile.minimumDamageMultiplier += this.def.value!
+    if (projectile instanceof HomingBullet) projectile.hitEnemyDamageReduction += this.def.value!
   }
 }

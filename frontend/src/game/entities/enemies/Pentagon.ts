@@ -9,7 +9,7 @@ export class Pentagon extends Enemy {
   private hasTeleportLocation: boolean = false
   private minTeleportDistance: number = 150
   private maxTeleportDistance: number = 300
-  private teleportTimer: number = 3000 // milliseconds
+  private teleportTimer: number = 2000 // milliseconds
   private teleportWindUpDuration: number = 300 // milliseconds
   private teleportWindDownDuration: number = 300 // milliseconds
   private teleportStartScale = 0.7

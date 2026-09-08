@@ -8,6 +8,7 @@ Systems live in `frontend/src/game/systems/`. They are classes instantiated once
 
 | System | File | Role |
 |--------|------|------|
+| [AbilitySystem](ABILITY_SYSTEM.md) | `AbilitySystem.ts` | Binds every ability's key, owns charge queues and cooldowns, dispatches `Upgrade.onActivate`, feeds the HUD and mobile buttons |
 | [CollisionManager](COLLISION_MANAGER.md) | `CollisionManager.ts` | Registers all Phaser overlap/collider callbacks; handles damage, knockback, pierce, and effects |
 | [EnemyManager](ENEMY_MANAGER.md) | `EnemyManager.ts` | Spawns, updates, and removes enemies; manages enemy projectiles; applies wave scaling |
 | [MapManager](MAP_MANAGER.md) | `MapManager.ts` | Generates the seeded obstacle layout and background grid |
@@ -24,7 +25,8 @@ Systems live in `frontend/src/game/systems/`. They are classes instantiated once
 MainScene.update()
     │
     ├── TouchControlManager.update()
-    │       └── calls player.move(), player.rotateTowards(), player.shoot(), player.dash(), player.activateShield()
+    │       ├── calls player.move(), player.rotateTowards(), player.shoot()
+    │       └── ability buttons → AbilitySystem.activate(id); visibility from AbilitySystem.isAvailable(id)
     │
     ├── UpgradeEffectSystem.onUpdate(delta)
     │       └── fires onUpdate handlers (e.g. regeneration heals GameManager)
@@ -67,7 +69,13 @@ EventBus (shared by all systems and React)
     ├── player-death → MainScene shows death text; GamePage saves death state
     ├── player-stats-update → GamePage updates HUD
     ├── enemy-explode → MainScene draws explosion + deals AOE
+    ├── request-ability-state → MainScene answers with ability-state-update { slots }
     └── evolution-milestone → MainScene applies polygon_upgrade
+
+AbilitySystem (event-driven, bound in create())
+    ├── keydown-<key> per binding → AbilitySystem.activate(id)
+    │       └── ownership + charge check → Upgrade.onActivate(ctx) → spend on true
+    └── getSlots() → HUD cards; getBindings() / isAvailable() → mobile buttons
 ```
 
 ### Key dependencies

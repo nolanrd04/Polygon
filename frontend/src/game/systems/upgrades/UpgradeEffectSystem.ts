@@ -3,17 +3,17 @@ import type { UpgradeDef } from '../../upgrades/Upgrade'
 /**
  * Stores upgrade-granted counters and flags that other systems poll:
  * - effect counters (shield charges, ricochet, multishot, ...)
- * - abilities (dash)
  * - visual effect flags (currently inert — nothing renders them)
  *
  * Event-driven behavior (lifesteal, regen, protection, thorns, explode on
  * kill) no longer lives here — each upgrade class implements it as engine
- * hooks dispatched by UpgradeSystem in ledger order.
+ * hooks dispatched by UpgradeSystem in ledger order. Ability ownership isn't
+ * mirrored here either: AbilitySystem reads the ledger, so there's one source
+ * of truth for "does the player have dash".
  */
 class UpgradeEffectSystemClass {
   private activeEffects: Map<string, number> = new Map() // effectId -> total value
   private visualEffects: Map<string, UpgradeDef> = new Map()
-  private activeAbilities: Set<string> = new Set()
 
   /**
    * Add an effect with a value (can be called multiple times to stack).
@@ -73,33 +73,11 @@ class UpgradeEffectSystemClass {
   }
 
   /**
-   * Add an ability.
-   */
-  addAbility(abilityId: string): void {
-    this.activeAbilities.add(abilityId)
-  }
-
-  /**
-   * Remove an ability.
-   */
-  removeAbility(abilityId: string): void {
-    this.activeAbilities.delete(abilityId)
-  }
-
-  /**
-   * Check if an ability is active.
-   */
-  hasAbility(abilityId: string): boolean {
-    return this.activeAbilities.has(abilityId)
-  }
-
-  /**
    * Reset all effects.
    */
   reset(): void {
     this.activeEffects.clear()
     this.visualEffects.clear()
-    this.activeAbilities.clear()
   }
 }
 

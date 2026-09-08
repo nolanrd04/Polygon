@@ -7,22 +7,23 @@ import { RarityID, UpgradeTypeID } from '../../data/ID'
 export const Vampirism1Def: UpgradeDef = {
   id: "vampirism_1",
   name: "Vampirism",
-  description: "Heal for 2% of damage dealt",
+  description: "5% chance to heal for 3% of damage dealt. Upgrade to increase chance.",
   rarity: RarityID.Rare,
   upgradeType: UpgradeTypeID.Effect,
   cost: 10,
   effect: "lifesteal",
-  effectValue: 0.02,
-  stackable: false,
-  maxStacks: 1,
-  tier: 1,
-  upgradesTo: "vampirism_2",
+  effectValue: 0.05,
+  stackable: true,
+  maxStacks: 5,
 }
 
 export class Vampirism1 extends Upgrade {
   onApply(): void {}
 
   onHitEnemy(_projectile: Projectile, _enemy: Enemy, damageDealt: number): void {
-    GameManager.heal(damageDealt * this.def.effectValue!)
+    if (Math.random() < this.def.effectValue!)
+    {
+      GameManager.heal(damageDealt * 0.03)
+    }
   }
 }

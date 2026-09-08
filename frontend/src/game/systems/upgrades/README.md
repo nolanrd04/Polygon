@@ -15,7 +15,7 @@ know nothing about any specific upgrade.
 systems/upgrades/
 ├── UpgradeSystem.ts          # Owned-instance ledger, replay, hook dispatch
 ├── UpgradeModifierSystem.ts  # Shared stat channels (additive & multiplicative)
-├── UpgradeEffectSystem.ts    # Polled counters/flags (shield charges, ricochet, dash)
+├── UpgradeEffectSystem.ts    # Polled counters/flags (shield charges, ricochet, multishot)
 ├── index.ts                  # Exports
 └── README.md                 # This file
 ```
@@ -34,10 +34,16 @@ there are no separate bookkeeping maps to drift.
 - **Removal** (`removeOne(id)`) / **restore from save** (`restore(entries)`)
   / **reset** are all the same operation: edit the ledger, then `replay()`.
 - **`replay()`** resets every derived surface to base (modifier channels,
-  effect counters, variants, base player stats, dash charges), then re-runs
-  `onApply` for each owned instance in ledger order. Current health is
-  snapshotted and clamped to the recomputed max, so loading a save never
-  double-applies maxHealth and removing an upgrade never heals.
+  effect counters, variants, base player stats, and `AbilitySystem
+  .resetCharges()`), then re-runs `onApply` for each owned instance in ledger
+  order. Current health is snapshotted and clamped to the recomputed max, so
+  loading a save never double-applies maxHealth and removing an upgrade never
+  heals.
+- **`grantStartingUpgrades()`** applies every `starting: true` def not already
+  owned, recording each in `appliedUpgrades` exactly as a purchase would, and
+  returns the granted ids. `MainScene` calls it after both the new-game and
+  save-restore branches. Routing the grant through the ledger is what lets
+  other upgrades `dependentOn` a starting ability.
 
 Because upgrades are permanent within a run, effects **accumulate once** on
 apply rather than being recomputed per tick (deliberate deviation from
@@ -71,16 +77,22 @@ at spawn.
 ### UpgradeEffectSystem — polled counters and flags
 
 What survives of the old effect system: counters and flags other systems poll
-(`shield` charges consumed by `Player.activateShield`, `ricochet` checked by
-`CollisionManager`, `dash` ability, `multishot`, inert visual-effect flags).
-Event-driven behavior (lifesteal, regen, protection, thorns, explode-on-kill)
-now lives on the upgrade classes as hooks.
+(`shield` charges consumed by `Player.activateShield`, `ricochet` checked in
+each `Projectile` subclass's `OnObstacleCollide()`, `multishot`, inert
+visual-effect flags). Event-driven behavior (lifesteal, regen, protection,
+thorns, explode-on-kill) now lives on the upgrade classes as hooks.
+
+There is **no ability flag store** — `addAbility / removeAbility / hasAbility`
+and the `activeAbilities` set are gone, and the default `onApply`'s `ability`
+case is a no-op. Ability ownership is read off the ledger by `AbilitySystem`
+(`../AbilitySystem.ts`), which also owns keybinds, charge queues, cooldown
+resolution and the `Upgrade.onActivate` dispatch.
 
 ## The flag pattern (what other files may know)
 
 Other files may branch on **whether** an upgrade or effect is active
 (`UpgradeSystem.hasUpgrade('homing_bullets')`,
-`UpgradeEffectSystem.hasAbility('dash')`) — but the **numbers and behavior
+`UpgradeEffectSystem.hasEffect('ricochet')`) — but the **numbers and behavior
 belong to the upgrade class**. If you find yourself writing an upgrade's value
 into an entity file, it should be a hook override instead.
 

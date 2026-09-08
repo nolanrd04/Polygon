@@ -362,7 +362,7 @@ export const ArrowHeadConfig = {
      */
     sharedHealth: false,
     /** Only used when `sharedHealth` is false: each part's own health, as a fraction of the head's. */
-    soloHealthRatio: 0.14,
+    soloHealthRatio: 0.20,
     /**
      * Share one contact-damage cooldown across the whole worm.
      *

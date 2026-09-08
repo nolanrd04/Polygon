@@ -7,6 +7,7 @@ import { LightingSystem } from '../../../systems/LightingSystem'
 import { getDefaultVolume } from '../../../core/AudioRegistry'
 import { Particle } from '../../particles/Particle'
 import { SparkParticle, StreakParticle, SmokeParticle, ShardParticle } from '../../particles/BasicParticles'
+import { Enemy } from '../..'
 
 /**
  * Standard bullet projectile.
@@ -27,7 +28,7 @@ export class Bullet extends Projectile {
     this.cooldown = 300
   }
 
-  OnHitNPC(_enemy: any): boolean {
+  OnHitNPC(_enemy: Enemy): boolean {
 
     for (let i = 0; i < 3; i++) {
 
@@ -135,8 +136,8 @@ export class HomingBullet extends Projectile {
 
   private turnSpeed: number = 0.08 // Increased from 0.05 for better tracking
   // private _lastTargetId: number = -1
-  private canHome: boolean = true
-  private homeDelay: number = 125 // Delay before homing re-activates after hit (milliseconds)
+  private homeDelay: number = 600 // How long the bullet ignores the enemy it just hit (milliseconds)
+  private homeDelayEnd: number = 0 // Absolute scene time that ignore expires — set on hit, NOT a duration
   private directionIndicator?: Phaser.GameObjects.Sprite
   // Public so homing upgrades can adjust them in modifyProjectileSpawn
   trackingDistance: number = 200
@@ -146,11 +147,13 @@ export class HomingBullet extends Projectile {
   private hasInitializedDamage: boolean = false
 
   // value to determine the flat damage reduction AFTER hitting an enemy
-  private hitEnemyDamageReduction: number = 0.3
+  hitEnemyDamageReduction: number = 0.3
   // Number of enemies already hit this bullet's lifetime (pierce). Reduction compounds per hit past the first.
   private hitCount: number = 0
+  private canHomeOnLastHit: boolean = true // No last hit yet on spawn — nothing to ignore
 
   private particleTimer: number = 0
+  private lastHitNPC: Enemy | null = null // Store the last hit enemy for can home logis
 
   // for ricochet detection
 
@@ -193,48 +196,51 @@ export class HomingBullet extends Projectile {
     }
 
     // Check if homing cooldown has expired
-    if (!this.canHome && this.scene.time.now >= this.homeDelay) {
-      this.canHome = true
+    if (!this.canHomeOnLastHit && this.scene.time.now >= this.homeDelayEnd) {
+      this.lastHitNPC = null
+      this.canHomeOnLastHit = true
     }
 
     // Find nearest enemy and adjust velocity towards it
+    // The scene's display list holds each enemy's CONTAINER, not the Enemy
+    // itself — the instance hangs off it as `enemyInstance` (see Enemy.ts's
+    // constructor). The predicate narrows GameObject -> Container so the
+    // loop below needs no cast.
     const enemies = this.scene.children.list.filter(
-      (obj: any) => obj.getData?.('isEnemy')
+      (obj): obj is Phaser.GameObjects.Container => obj.getData('isEnemy') === true
     )
 
     if (enemies.length === 0) return
 
-    if (this.canHome)
-    {
-      let nearest: any = null
-      let nearestDist = this.trackingDistance
+    let nearest: Enemy | null = null
+    let nearestDist = this.trackingDistance
 
-      for (const enemy of enemies) {
-        const e = enemy as Phaser.GameObjects.Container
-        const enemyInstance = e.getData('enemyInstance')
-        if (!enemyInstance || enemyInstance.isDestroyed) continue
+    for (const container of enemies) {
+      const enemyInstance = container.getData('enemyInstance') as Enemy | undefined
+      if (!enemyInstance || enemyInstance.isDestroyed || enemyInstance === this.lastHitNPC) continue
 
-        const dist = Phaser.Math.Distance.Between(this.positionX, this.positionY, e.x, e.y)
-        if (dist < nearestDist) {
-          nearestDist = dist
-          nearest = e
-        }
-      }
-
-      if (nearest) {
-        const targetAngle = Phaser.Math.Angle.Between(this.positionX, this.positionY, nearest.x, nearest.y)
-        const currentAngle = Math.atan2(this.velocityY, this.velocityX)
-
-        // Gradually turn towards target
-        const angleDiff = Phaser.Math.Angle.Wrap(targetAngle - currentAngle)
-        const newAngle = currentAngle + angleDiff * this.turnSpeed
-
-        this.velocityX = Math.cos(newAngle) * this.speed
-        this.velocityY = Math.sin(newAngle) * this.speed
-        this.container.rotation = newAngle
-        this.rotation = newAngle
+      const dist = Phaser.Math.Distance.Between(this.positionX, this.positionY, container.x, container.y)
+      if (dist < nearestDist) {
+        nearestDist = dist
+        nearest = enemyInstance
       }
     }
+
+    if (nearest) {
+      const targetAngle = Phaser.Math.Angle.Between(this.positionX, this.positionY, nearest.x, nearest.y)
+      const currentAngle = Math.atan2(this.velocityY, this.velocityX)
+
+      // Gradually turn towards target
+      const angleDiff = Phaser.Math.Angle.Wrap(targetAngle - currentAngle)
+      const newAngle = currentAngle + angleDiff * this.turnSpeed
+
+      this.velocityX = Math.cos(newAngle) * this.speed
+      this.velocityY = Math.sin(newAngle) * this.speed
+      this.container.rotation = newAngle
+      this.rotation = newAngle
+    }
+
+    
 
     if (this.particleTimer % 16 === 0) {
       const streak = Particle.NewParticlePerfect(StreakParticle, this.positionX, this.positionY, 0, 0, {
@@ -266,11 +272,16 @@ export class HomingBullet extends Projectile {
     return this.maximumSpawnDamageMultiplier - (halfLifeProgress * (this.maximumSpawnDamageMultiplier - this.minimumDamageMultiplier))
   }
 
-  OnHitNPC(_enemy: any): boolean {
+  OnHitNPC(_enemy: Enemy): boolean {
     console.log('Initial damage:', this.initialDamage, 'Current damage before hit:', this.damage, 'Damage multiplier:', this.getDamageMultiplier())
-    // Disable homing temporarily after hitting to prevent sticking
-    this.canHome = false
-    this.homeDelay = this.scene.time.now + 500 // Re-enable homing after 500ms
+    // Ignore this enemy for homeDelay ms so the bullet peels off toward a new
+    // target instead of curling straight back into the one it just pierced.
+    // Stamp the deadline here: AI() compares against scene.time.now, which is
+    // an absolute clock, so it needs an absolute time to compare against.
+    this.canHomeOnLastHit = false
+    this.homeDelayEnd = this.scene.time.now + this.homeDelay
+
+    this.lastHitNPC = _enemy
 
     // Per-hit reduction compounds off the original damage (not the decayed value), and
     // only applies starting on the second hit (i.e. pierce past the first enemy).
@@ -401,7 +412,7 @@ export class ExplosiveBullet extends Projectile {
     scene.spawnProjectile(explosion, this.positionX, this.positionY, this.positionX, this.positionY, 'player', this.ownerId)
   }
 
-  OnHitNPC(_enemy: any): boolean {
+  OnHitNPC(_enemy: Enemy): boolean {
     this.spawnExplosion()
     return true
   }
@@ -490,7 +501,7 @@ export class BulletExplosion extends Projectile {
     LightingSystem.AddLight(this.positionX, this.positionY, this.color, LightingIntensityID.Explosion * (this.size / 7) * this.sprite.alpha)
   }
 
-  OnHitNPC(_enemy: any): boolean {
+  OnHitNPC(_enemy: Enemy): boolean {
     return true
   }
 }
@@ -606,7 +617,7 @@ export class BuckshotPellet extends Projectile
     // }
   }
 
-  OnHitNPC(_enemy: any): boolean {
+  OnHitNPC(_enemy: Enemy): boolean {
 
     for (let i = 0; i < 3; i++) {
 

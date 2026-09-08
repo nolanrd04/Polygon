@@ -30,7 +30,7 @@ Backend API  (see BACKEND_CONNECTION.md)
 | [CORE.md](CORE.md) | GameManager, EventBus, GameConfig, AudioRegistry |
 | [DATA.md](DATA.md) | Attack types and legacy upgrade JSON reference (current upgrades are in UPGRADES.md) |
 | [ENTITIES.md](ENTITIES.md) | Overview of all in-game entities |
-| [PLAYER.md](PLAYER.md) | Player class – fields, methods, abilities |
+| [PLAYER.md](PLAYER.md) | Player class – fields, movement, shooting, damage |
 | [ENEMY.md](ENEMY.md) | Enemy base class and all enemy types |
 | [ARROW_HEAD.md](ARROW_HEAD.md) | Arrow Head boss — multi-part worm, chain math, shared health pool |
 | [PROJECTILE.md](PROJECTILE.md) | Projectile base class and all projectile types |
@@ -41,6 +41,7 @@ Backend API  (see BACKEND_CONNECTION.md)
 | [SCENES.md](SCENES.md) | BootScene and MainScene |
 | [SERVICES.md](SERVICES.md) | SaveManager, WaveValidation, LocalSaveManager, SaveTypes |
 | [SYSTEMS.md](SYSTEMS.md) | System overview and inter-system relationships |
+| [ABILITY_SYSTEM.md](ABILITY_SYSTEM.md) | AbilitySystem — on-demand abilities, keybinds, charge queues, `starting` upgrades |
 | [COLLISION_MANAGER.md](COLLISION_MANAGER.md) | CollisionManager in detail |
 | [ENEMY_MANAGER.md](ENEMY_MANAGER.md) | EnemyManager in detail |
 | [MAP_MANAGER.md](MAP_MANAGER.md) | MapManager in detail |

@@ -90,6 +90,8 @@ A typed publish/subscribe bus used to decouple systems. All event names and thei
 | `dev-apply-upgrade` | `string` | Dev tool: apply upgrade for free |
 | `evolution-milestone` | `number` | Every 6 waves: player polygon evolves |
 | `enemy-killed` | `{ type, x, y }` | Enemy died (used by wave validation) |
+| `request-ability-state` | — | HUD polls for ability state (every 100 ms from `GamePage`) |
+| `ability-state-update` | `{ slots: AbilitySlotState[] }` | `MainScene`'s answer, from `AbilitySystem.getSlots()` |
 | `damage-dealt` | `number` | Damage dealt to an enemy (wave validation) |
 
 ### API

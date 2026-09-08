@@ -175,7 +175,7 @@ Rarity colors: `#aaaaaa / #44cc66 / #4488ff / #cc44ff / #ffaa00`
 
 ### pickRegularUpgrade()
 
-Filters `getAllUpgrades()` (the single upgrade registry — every category folder, `curse: true` items excluded) by rarity tier, walking tiers downward from `maxRarity` until a candidate pool is non-empty, then checks `UpgradeSystem.canApply()`. Additionally blocks variant upgrades whose `variantClass` differs from the currently-active variant on the same `targetClass` — bundles must not silently swap your bullet type.
+Filters `getAllUpgrades()` (the single upgrade registry — every category folder, with `curse: true` and `starting: true` items excluded; a starting ability is granted at spawn and must never be winnable as loot, including on a legacy save that predates it) by rarity tier, walking tiers downward from `maxRarity` until a candidate pool is non-empty, then checks `UpgradeSystem.canApply()`. Additionally blocks **every** `upgradeType: variant` upgrade — bundles never hand out or swap a bullet type.
 
 ### pickCurse()
 
@@ -234,8 +234,8 @@ export const enum BundleRarity {
 **Item selection happens at collection time, not spawn time.**
 If the upgrade were selected at spawn, it could become invalid before pickup (e.g. a ricochet bundle spawns when you have 1/2 stacks, you pick another ricochet from the modal, and the bundle would now overflow the cap). `pickRegularUpgrade()` / `pickCurse()` run fresh on overlap, calling `UpgradeSystem.canApply()` against live state.
 
-**Variants that would replace an active variant are excluded from bundle rolls.**
-`canApply()` does not block variant swaps because the post-wave modal lets players intentionally switch bullet types. Bundles are silent auto-applies, so `pickRegularUpgrade()` adds an extra guard: if a variant's `variantClass` differs from the currently active variant on the same `target`, it's excluded.
+**Variants are excluded from bundle rolls entirely.**
+Picking a bullet type is a run-defining choice, and a bundle is a silent auto-apply — you don't get to say no. So `pickRegularUpgrade()` drops every `upgradeType: variant` upgrade from the pool, whether or not you already have one; variants are only obtainable from the post-wave modal, where the choice is deliberate. The server-side roll (`wave_service.collect_upgrade_bundle`'s `pick_from_pool`) applies the same `type != "variant"` filter, so online and offline pools match.
 
 **Slot 1 is structurally forced to `pickRegularUpgrade(upgradeValue)`.**
 This guarantees every bundle contains exactly one item at the bundle's tier. It's simpler than rolling all slots and re-rolling if all come up curse — no retry loop, deterministic count.

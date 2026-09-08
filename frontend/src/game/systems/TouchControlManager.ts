@@ -1,13 +1,13 @@
 import Phaser from 'phaser'
 import type { Player } from '../entities/Player'
 import { EventBus } from '../core/EventBus'
-import { UpgradeEffectSystem } from './upgrades'
+import { AbilitySystem } from './AbilitySystem'
 
 /**
  * Manages all touch-based input for mobile devices.
  * - Left joystick: movement
  * - Right joystick: rotation/shooting (inner = rotate, outer ring = shoot)
- * - Ability buttons: dash, shield
+ * - Ability buttons: one per AbilitySystem binding, shown while usable
  * - Pause button: open menu
  */
 export class TouchControlManager {
@@ -19,9 +19,8 @@ export class TouchControlManager {
   private leftJoystick: VirtualJoystick | null = null
   private rightJoystick: VirtualJoystick | null = null
 
-  // Ability buttons
-  private dashButton: TouchButton | null = null
-  private shieldButton: TouchButton | null = null
+  // Ability buttons, one per AbilitySystem binding, in slot order
+  private abilityButtons: { id: string; button: TouchButton }[] = []
 
   // Pause and fullscreen buttons
   private pauseButton: Phaser.GameObjects.Rectangle | null = null
@@ -96,46 +95,62 @@ export class TouchControlManager {
     this.rightJoystick = new VirtualJoystick(this.scene, rightX, bottomY, r, ir, 0xff6633)
   }
 
-  private abilityButtonPositions() {
+  /**
+   * Position for the ability button at `index` (its order in AbilitySystem's
+   * bindings). Buttons alternate sides — even indices left, odd right — and
+   * each further pair steps inward from the edge, so the first two land
+   * exactly where the original hardcoded shield/dash buttons did.
+   */
+  private abilityButtonPosition(index: number) {
     const p = TouchControlManager.EDGE_PAD
     const sz = TouchControlManager.PAUSE_BUTTON_SIZE
     const btnSize = TouchControlManager.BUTTON_SIZE
     const bottomY = this.joystickPositions().bottomY
     const r = TouchControlManager.JOYSTICK_RADIUS
 
+    const onLeft = index % 2 === 0
+    const rank = Math.floor(index / 2)  // 0 for the first pair, 1 for the next, ...
+
     if (this.H > 500) {
-      // Tall screen (portrait phone or any tablet): place above joysticks
+      // Tall screen (portrait phone or any tablet): place above joysticks,
+      // stacking later pairs upward.
       const sidePad = TouchControlManager.ABILITY_SIDE_PAD
-      const y = bottomY - r - 250 - btnSize / 2
+      const y = bottomY - r - 250 - btnSize / 2 - rank * (btnSize + 15)
       return {
-        shieldX: sidePad + btnSize / 2,          shieldY: y,
-        dashX:   this.W - sidePad - btnSize / 2, dashY:   y,
+        x: onLeft ? sidePad + btnSize / 2 : this.W - sidePad - btnSize / 2,
+        y,
       }
     } else {
-      // Short screen (landscape phone): place beside joysticks
+      // Short screen (landscape phone): place beside the pause button,
+      // spreading later pairs further out toward the edges.
       const spacing = 50
+      const step = rank * (btnSize + 20)
       const fsX = this.W / 2 - p / 2 - sz / 2
-      const shieldX = fsX - sz / 2 - spacing - btnSize / 2
       const pauseX = this.W / 2 + p / 2 + sz / 2
-      const dashX = pauseX + sz / 2 + spacing + btnSize / 2
-      const y = p + sz / 2
-      return { dashX, dashY: y, shieldX, shieldY: y }
+      return {
+        x: onLeft
+          ? fsX - sz / 2 - spacing - btnSize / 2 - step
+          : pauseX + sz / 2 + spacing + btnSize / 2 + step,
+        y: p + sz / 2,
+      }
     }
   }
 
   private createAbilityButtons(): void {
-    const { dashX, dashY, shieldX, shieldY } = this.abilityButtonPositions()
     const btnSize = TouchControlManager.BUTTON_SIZE
 
-    this.dashButton = new TouchButton(
-      this.scene, dashX, dashY, btnSize, 'DASH', 0x44dd44,
-      () => this.player.dash()
-    )
-
-    this.shieldButton = new TouchButton(
-      this.scene, shieldX, shieldY, btnSize, 'SHIELD', 0x44dddd,
-      () => this.player.activateShield()
-    )
+    this.abilityButtons = AbilitySystem.getBindings().map((binding, index) => {
+      const { x, y } = this.abilityButtonPosition(index)
+      return {
+        id: binding.id,
+        button: new TouchButton(
+          this.scene, x, y, btnSize,
+          binding.activation.label,
+          binding.activation.buttonColor,
+          () => AbilitySystem.activate(binding.id)
+        ),
+      }
+    })
   }
 
   private pauseButtonPosition() {
@@ -205,15 +220,16 @@ export class TouchControlManager {
 
   private repositionControls(): void {
     const { leftX, rightX, bottomY } = this.joystickPositions()
-    const { dashX, dashY, shieldX, shieldY } = this.abilityButtonPositions()
     const pause = this.pauseButtonPosition()
     // const fs = this.fullscreenButtonPosition()
 
     this.leftJoystick?.reposition(leftX, bottomY)
     this.rightJoystick?.reposition(rightX, bottomY)
 
-    this.dashButton?.reposition(dashX, dashY)
-    this.shieldButton?.reposition(shieldX, shieldY)
+    this.abilityButtons.forEach(({ button }, index) => {
+      const { x, y } = this.abilityButtonPosition(index)
+      button.reposition(x, y)
+    })
 
     if (this.pauseButton) this.pauseButton.setPosition(pause.x, pause.y)
     for (let i = 0; i < this.pauseSymbolLines.length; i++) {
@@ -284,15 +300,16 @@ export class TouchControlManager {
     if (this.leftJoystick) this.leftJoystick.update()
     if (this.rightJoystick) this.rightJoystick.update()
     this.updateJoystickInput()
-    this.dashButton?.setVisible(UpgradeEffectSystem.hasAbility('dash'))
-    this.shieldButton?.setVisible(UpgradeEffectSystem.getEffectValue('shield') > 0)
+    for (const { id, button } of this.abilityButtons) {
+      button.setVisible(AbilitySystem.isAvailable(id))
+    }
   }
 
   destroy(): void {
     if (this.leftJoystick) this.leftJoystick.destroy()
     if (this.rightJoystick) this.rightJoystick.destroy()
-    if (this.dashButton) this.dashButton.destroy()
-    if (this.shieldButton) this.shieldButton.destroy()
+    for (const { button } of this.abilityButtons) button.destroy()
+    this.abilityButtons = []
     if (this.pauseButton) this.pauseButton.destroy()
     for (const line of this.pauseSymbolLines) {
       line.destroy()

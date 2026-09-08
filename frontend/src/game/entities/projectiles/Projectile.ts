@@ -1,6 +1,7 @@
 import Phaser from 'phaser'
 import { GameManager } from '../../core/GameManager'
 import { TextureGenerator } from '../../utils/TextureGenerator'
+import { Enemy } from '../enemies'
 
 /**
  * Base class for all projectiles.
@@ -307,7 +308,7 @@ export abstract class Projectile {
    * }
    * ```
    */
-  OnHitNPC(_enemy: any): boolean {
+  OnHitNPC(_enemy: Enemy): boolean {
     return true
   }
 

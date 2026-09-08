@@ -4,7 +4,7 @@ Upgrades are modifications purchased during gameplay — simple stat increases, 
 
 ## Overview
 
-- **Upgrade files**: `frontend/src/game/upgrades/` — one file per upgrade (77), organized by type
+- **Upgrade files**: `frontend/src/game/upgrades/` — one file per upgrade (83), organized by type
 - **Registry**: `frontend/src/game/upgrades/index.ts` auto-registers every file in the category folders via `import.meta.glob` — `UPGRADE_REGISTRY` maps `id → { def, ctor }`
 - **Base class**: `Upgrade` (`frontend/src/game/upgrades/Upgrade.ts`) — declarative `UpgradeDef` + overridable engine hooks
 - **Engine**: `frontend/src/game/systems/upgrades/` — ledger, replay, hook dispatch, stat channels (see its README for engine internals)
@@ -60,6 +60,7 @@ The base class declares the hook set; the engine (`UpgradeSystem.dispatch*`) inv
 | `onHitEnemy(p, enemy, dealt)` | After a hit landed | `CollisionManager` | vampirism heals % of damage dealt |
 | `modifyPlayerHurt(dmg, source?)` | Player takes damage (`source` = melee enemy) | `Player.takeDamage` | armor reduces, fragility amplifies, thorns reflects at `source` |
 | `onEnemyKilled(enemy)` | Player kills an enemy | `CollisionManager` | explosion_on_kill emits an explosion |
+| `onActivate(ctx): boolean` | Player triggers the def's `activation` binding (key or mobile button) | `AbilitySystem.activate` | heal restores health; `false` declines and spends nothing |
 | `updatePlayer(player, delta)` | Every frame | `MainScene.update` | regeneration heals per second |
 | `modifyExplosion(explosion)` | Any player explosion is parameterized | `BulletExplosion.SetDefaults`, Chain Reaction | explosion_damage/radius upgrades |
 
@@ -72,7 +73,7 @@ The base `onApply` applies the def generically, keyed on `upgradeType`:
 - `stat_modifier` targeting player maxHealth/speed/polygonSides → mutates `GameManager` stats directly
 - any other `stat_modifier` → `UpgradeModifierSystem.addModifier()` (shared stat channels; formula `(base + additive) × (1 + multiplicative)`, multiplicative bonuses sum)
 - `effect` → `UpgradeEffectSystem.addEffect()` counter (shield charges, ricochet flag, ...)
-- `ability` → `UpgradeEffectSystem.addAbility()` flag
+- `ability` → nothing (ownership is read straight off the ledger; see below)
 - `visual_effect` → inert flag
 - `variant` → nothing (the engine tracks the active variant itself)
 
@@ -93,6 +94,25 @@ Some effects can't work that way because the *reaction* genuinely differs per en
 - The check-and-react code must live in the entity classes the effect is actually about (here: `Projectile` subclasses) — never hardcoded into unrelated generic infrastructure like `CollisionManager`. Generic infrastructure should stay ignorant of specific upgrade ids; it just calls the hook and respects what it returns.
 - Not every effect upgrade needs this — reach for it only when a single centralized check can't express the behavior. Most effects should still stay centralized (simpler, one place to read).
 
+### On-demand abilities
+
+An ability is an upgrade the player *triggers*, not one that just applies. It needs no special-casing anywhere in the engine: add an `activation` block to the def and override `onActivate`.
+
+```ts
+activation: {
+  key: 'H', label: 'HEAL', buttonColor: 0xdd4466, theme: 'rose', slot: 2,
+  charges: 1, cooldown: 8000, cooldownStat: UpgradeStatID.HealCooldown,
+}
+```
+
+`AbilitySystem` binds every def carrying that block at scene start (owned or not), owns the charge queue and cooldown math, and feeds both the HUD card and the mobile button from the same data — so shipping an ability touches no other file. Declaring `cooldown` makes it *recharging*; omitting it makes it *consumable* off the `UpgradeEffectSystem` counter named by `effect` (that is how shield works).
+
+`onActivate` returns `boolean`: `AbilitySystem` checks only ownership and charge availability, so every other condition (already shielded, already at full health) lives in the hook, and returning `false` spends nothing and starts no cooldown.
+
+Ability upgrades retune their own charges through `ctx.abilities?.setCharges(id, n)` / `addCharges(id, delta)` rather than reaching into `Player`.
+
+Full details — the two charge models, the sequential `ChargeQueue`, replay semantics, and `starting: true` — in **[ABILITY_SYSTEM.md](ABILITY_SYSTEM.md)**.
+
 ## Core Concepts
 
 ### Stacking
@@ -110,6 +130,8 @@ All declared on the def and enforced by `UpgradeSystem.canApply(def)`:
 - `incompatibleWith` — mutual exclusion (homing vs. explosive bullets)
 - `specificAttackType` — offer only for the matching equipped attack
 - `replaces` (variants) — purchasing evicts the replaced variant's instances from the ledger, then replays
+- `starting: true` — granted at run start by `UpgradeSystem.grantStartingUpgrades()` instead of bought, and excluded from every offer and bundle pool on both sides. It still enters the ledger like a purchase, so other upgrades can `dependentOn` it (`heal_ability` → the five heal upgrades). See [ABILITY_SYSTEM.md](ABILITY_SYSTEM.md#starting-true--permanent-never-offered-abilities)
+- `activation` — makes the upgrade an on-demand ability (see above)
 
 ### Dependency Examples
 
@@ -205,7 +227,7 @@ When a player collects an upgrade bundle (`MainScene` overlap handler):
 2. Roll item count: 1–4
 3. Rarity weights capped at the bundle's tier and re-normalized (a rare bundle never yields epics)
 4. Slot 1 is always a regular upgrade at the bundle's tier (falls back down-tier only if the pool is exhausted); remaining slots roll 30% curse / 70% regular
-5. Candidates are filtered through `UpgradeSystem.canApply()` and de-duplicated within the bundle; bundles never silently replace an active variant
+5. Candidates are filtered through `UpgradeSystem.canApply()`, skip `starting` upgrades and every `variant` upgrade, and are de-duplicated within the bundle; variants are post-wave-modal only
 6. Each pick goes through the normal `applyUpgrade` path (free) with staggered pickup text (rarity-colored; curses red)
 
 ## Debugging

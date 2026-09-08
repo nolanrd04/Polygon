@@ -9,6 +9,7 @@ import PauseMenu from '../components/PauseMenu'
 import DevTools from '../components/DevTools'
 import PerfOverlay from '../components/PerfOverlay'
 import AbilityDisplay from '../components/AbilityDisplay'
+import type { AbilitySlotState } from '../game/systems/AbilitySystem'
 import { EventBus } from '../game/core/EventBus'
 import { SaveManager } from '../game/services/SaveManager'
 import { GameManager } from '../game/core/GameManager'
@@ -25,7 +26,7 @@ export default function GamePage() {
   const [playerStats, setPlayerStats] = useState({ health: 100, maxHealth: 100, points: 0, kills: 0 })
   const [selectedAttack, setSelectedAttack] = useState('bullet')
   const [showCollisionBoxes, setShowCollisionBoxes] = useState(false)
-  const [abilityState, setAbilityState] = useState({ shieldCharges: 0, hasDash: false, dashCooldownProgress: 1, maxDashCharges: 1, dashQueueProgress: 1, readyDashCharges: 0 })
+  const [abilitySlots, setAbilitySlots] = useState<AbilitySlotState[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
 
   // Store last known game state in ref to survive game destruction
@@ -185,13 +186,13 @@ export default function GamePage() {
     })
 
     // Listen for ability state updates
-    EventBus.on('ability-state-update' as any, (state: { shieldCharges: number; hasDash: boolean; dashCooldownProgress: number; maxDashCharges: number; dashQueueProgress: number; readyDashCharges: number }) => {
-      setAbilityState(state)
+    EventBus.on('ability-state-update', (state) => {
+      setAbilitySlots(state.slots)
     })
 
-    // Poll for ability state (for dash cooldown which changes constantly)
+    // Poll for ability state (for cooldowns, which change constantly)
     const abilityInterval = setInterval(() => {
-      EventBus.emit('request-ability-state' as any)
+      EventBus.emit('request-ability-state')
     }, 100) // Update 10 times per second
 
     // Removed upgrade-applied listener - now handled by Start Wave button
@@ -267,14 +268,7 @@ export default function GamePage() {
         wave={waveData.wave}
       />
 
-      <AbilityDisplay
-        shieldCharges={abilityState.shieldCharges}
-        hasDash={abilityState.hasDash}
-        dashCooldownProgress={abilityState.dashCooldownProgress}
-        maxDashCharges={abilityState.maxDashCharges}
-        dashQueueProgress={abilityState.dashQueueProgress}
-        readyDashCharges={abilityState.readyDashCharges}
-      />
+      <AbilityDisplay slots={abilitySlots} />
 
       {isPaused && (
         <PauseMenu

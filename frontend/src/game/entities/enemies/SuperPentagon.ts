@@ -11,7 +11,7 @@ export class SuperPentagon extends Enemy {
   private hasTeleportLocation: boolean = false
   private minTeleportDistance: number = 50
   private maxTeleportDistance: number = 250
-  private teleportTimer: number = 2000 // milliseconds
+  private teleportTimer: number = 1500 // milliseconds
   private teleportWindUpDuration: number = 100 // milliseconds
   private teleportWindDownDuration: number = 100 // milliseconds
   private teleportStartScale = 0.7

@@ -3,6 +3,7 @@ import { GameManager } from '../../core/GameManager'
 import { UpgradeEffectSystem } from './UpgradeEffectSystem'
 import { UpgradeModifierSystem } from './UpgradeModifierSystem'
 import { UpgradeTargetID, UpgradeTypeID } from '../../data/ID'
+import { UPGRADE_REGISTRY } from '../../upgrades'
 import {
   Upgrade,
   type UpgradeDef,
@@ -50,6 +51,11 @@ class UpgradeSystemClass {
       this.ctx = { gameManager: GameManager }
     }
     return this.ctx
+  }
+
+  /** The surfaces hooks receive — AbilitySystem dispatches onActivate with it. */
+  getContext(): UpgradeContext {
+    return this.requireContext()
   }
 
   /**
@@ -192,7 +198,7 @@ class UpgradeSystemClass {
     UpgradeEffectSystem.reset()
     this.activeVariants.clear()
     ctx.gameManager.resetStatsToBase()
-    ctx.player?.setMaxDashCharges(1)
+    ctx.abilities?.resetCharges()
 
     for (const instance of this.owned) {
       const def = instance.def
@@ -221,6 +227,27 @@ class UpgradeSystemClass {
       UpgradeModifierSystem.reset()
       UpgradeEffectSystem.reset()
     }
+  }
+
+  /**
+   * Apply every upgrade flagged `starting` that the run doesn't already own,
+   * recording each in GameManager's ledger exactly as a purchase would.
+   *
+   * Called after a new-game reset and again after restoring a save, so a run
+   * always has its permanent abilities — including saves written before a
+   * given starting upgrade existed. Returns the ids actually granted so the
+   * caller can mirror them into the save history.
+   */
+  grantStartingUpgrades(): string[] {
+    const granted: string[] = []
+    for (const entry of Object.values(UPGRADE_REGISTRY)) {
+      if (!entry.def.starting || this.hasUpgrade(entry.def.id)) continue
+      if (this.apply(entry)) {
+        this.requireContext().gameManager.addAppliedUpgrade(entry.def.id)
+        granted.push(entry.def.id)
+      }
+    }
+    return granted
   }
 
   // ============================================================

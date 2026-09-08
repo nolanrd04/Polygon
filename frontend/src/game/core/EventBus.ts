@@ -1,3 +1,5 @@
+import type { AbilitySlotState } from '../systems/AbilitySystem'
+
 // Define all event types and their payloads
 export interface PlayerStatsPayload {
   health: number
@@ -29,6 +31,8 @@ export interface GameEvents {
   'enemy-killed': { type: string; x: number; y: number }  // Wave validation tracking
   'damage-dealt': { amount: number; source: 'primary' | 'explosion' }  // Wave validation tracking
   'upgrade-bundle': { x: number; y: number; bundleDropChance: number; forcedRarity?: number }
+  'request-ability-state': void  // HUD polls; MainScene answers with the slots below
+  'ability-state-update': { slots: AbilitySlotState[] }
 }
 
 type EventCallback<T = void> = T extends void ? () => void : (data: T) => void

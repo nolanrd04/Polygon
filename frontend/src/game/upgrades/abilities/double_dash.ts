@@ -16,6 +16,6 @@ export const DoubleDashDef: UpgradeDef = {
 export class DoubleDash extends Upgrade {
   onApply(ctx: UpgradeContext): void {
     super.onApply(ctx)
-    ctx.player?.setMaxDashCharges(2)
+    ctx.abilities?.setCharges('dash_ability', 2)
   }
 }

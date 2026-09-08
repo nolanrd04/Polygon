@@ -24,14 +24,19 @@ Props: `health`, `maxHealth`, `points`, `kills`, `wave`.
 
 **File:** `AbilityDisplay.tsx`
 
-Shows the status of the two player abilities: shield and dash.
+Renders one card per owned on-demand ability (shield, dash, heal, …). Fully data-driven — it knows no ability by name.
 
-- **Shield** – displays the number of remaining charges.
-- **Dash** – shows a cooldown progress bar. When `maxDashCharges > 1` (double/triple dash upgrades), shows multiple charge pips with queue-based recharge progress (`dashQueueProgress`).
+**Props:** `{ slots: AbilitySlotState[] }`. `GamePage` polls `request-ability-state` every 100 ms and stores the `ability-state-update` payload, which `MainScene` fills from `AbilitySystem.getSlots()` (owned abilities only, in `slot` order).
 
-Props: `shieldCharges`, `hasDash`, `dashCooldownProgress`, `maxDashCharges`, `dashQueueProgress`, `readyDashCharges`.
+Each `AbilitySlotState` carries `{ id, label, keyLabel, theme, ready, max, progress, recharges }`:
 
-Hidden entirely until the corresponding ability upgrade is purchased.
+- `recharges: true` (dash, heal) → progress bar plus an `x{n}` ready count.
+- `recharges: false` (shield) → one pip per remaining charge.
+- `theme` indexes a local `THEMES` table (`cyan`, `blue`, `rose`, `green`, …) supplying border/chip/text/bar/pip classes. A *recharging* ability sitting at full charges switches to the `green` theme regardless of its declared theme.
+
+> **Tailwind:** the class strings in `THEMES` are spelled out literally rather than interpolated. Tailwind only keeps classes it can see in source, so building them from the theme name would silently drop the styles at build time. Adding a theme means adding a full literal entry.
+
+The component renders nothing while `slots` is empty, so abilities appear only once owned. See [ABILITY_SYSTEM.md](ABILITY_SYSTEM.md).
 
 ---
 

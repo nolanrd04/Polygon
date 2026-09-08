@@ -352,7 +352,18 @@
     "type": "ability",
     "cost": 10,
     "effect": "dash",
-    "stackable": false
+    "stackable": false,
+    "activation": {
+      "key": "SPACE",
+      "keyLabel": "SPC",
+      "label": "DASH",
+      "buttonColor": 4513092,
+      "theme": "blue",
+      "slot": 1,
+      "charges": 1,
+      "cooldown": 1500,
+      "cooldownStat": "dashCooldown"
+    }
   },
   "dash_cooldown_1": {
     "id": "dash_cooldown_1",
@@ -672,6 +683,151 @@
     "stackable": true,
     "maxStacks": 1,
     "curse": true
+  },
+  "heal_ability": {
+    "id": "heal_ability",
+    "name": "Field Repair",
+    "description": "Press X to restore 10% of max health",
+    "rarity": "common",
+    "type": "ability",
+    "cost": 0,
+    "effect": "heal",
+    "effectValue": 0.1,
+    "stackable": false,
+    "starting": true,
+    "activation": {
+      "key": "X",
+      "label": "HEAL",
+      "buttonColor": 14500966,
+      "theme": "rose",
+      "slot": 2,
+      "charges": 1,
+      "cooldown": 8000,
+      "cooldownStat": "healCooldown"
+    }
+  },
+  "heal_amount_1": {
+    "id": "heal_amount_1",
+    "name": "Greater Healing",
+    "description": "+1% heal amount",
+    "rarity": "uncommon",
+    "type": "stat_modifier",
+    "cost": 6,
+    "target": "player",
+    "stat": "healAmount",
+    "value": 0.01,
+    "isMultiplier": true,
+    "stackable": true,
+    "maxStacks": 11,
+    "dependentOn": [
+      {
+        "ids": [
+          "heal_ability"
+        ]
+      }
+    ]
+  },
+  "heal_amount_2": {
+    "id": "heal_amount_2",
+    "name": "Greater Healing",
+    "description": "+3% heal amount",
+    "rarity": "epic",
+    "type": "stat_modifier",
+    "cost": 20,
+    "target": "player",
+    "stat": "healAmount",
+    "value": 0.03,
+    "isMultiplier": true,
+    "stackable": true,
+    "maxStacks": 3,
+    "dependentOn": [
+      {
+        "ids": [
+          "heal_ability"
+        ]
+      }
+    ]
+  },
+  "heal_amount_3": {
+    "id": "heal_amount_3",
+    "name": "Greater Healing",
+    "description": "+5% heal amount",
+    "rarity": "legendary",
+    "type": "stat_modifier",
+    "cost": 40,
+    "target": "player",
+    "stat": "healAmount",
+    "value": 0.05,
+    "isMultiplier": true,
+    "stackable": true,
+    "maxStacks": 2,
+    "dependentOn": [
+      {
+        "ids": [
+          "heal_ability"
+        ]
+      }
+    ]
+  },
+  "heal_charges_1": {
+    "id": "heal_charges_1",
+    "name": "Heal Charges",
+    "description": "Store one more heal.",
+    "rarity": "epic",
+    "type": "stat_modifier",
+    "cost": 20,
+    "effect": "heal_charges",
+    "stackable": true,
+    "maxStacks": 9,
+    "dependentOn": [
+      {
+        "ids": [
+          "heal_ability"
+        ]
+      }
+    ]
+  },
+  "heal_cooldown_1": {
+    "id": "heal_cooldown_1",
+    "name": "Quicker Fix",
+    "description": "-4% heal cooldown",
+    "rarity": "rare",
+    "type": "stat_modifier",
+    "cost": 10,
+    "target": "player",
+    "stat": "healCooldown",
+    "value": -0.04,
+    "isMultiplier": true,
+    "stackable": true,
+    "maxStacks": 5,
+    "dependentOn": [
+      {
+        "ids": [
+          "heal_ability"
+        ]
+      }
+    ]
+  },
+  "heal_cooldown_2": {
+    "id": "heal_cooldown_2",
+    "name": "Quicker Fix",
+    "description": "-10% heal cooldown",
+    "rarity": "epic",
+    "type": "stat_modifier",
+    "cost": 20,
+    "target": "player",
+    "stat": "healCooldown",
+    "value": -0.1,
+    "isMultiplier": true,
+    "stackable": true,
+    "maxStacks": 2,
+    "dependentOn": [
+      {
+        "ids": [
+          "heal_ability"
+        ]
+      }
+    ]
   },
   "health_reduc_1": {
     "id": "health_reduc_1",
@@ -1105,7 +1261,14 @@
     "value": 1,
     "effect": "shield",
     "stackable": true,
-    "maxStacks": 5
+    "maxStacks": 5,
+    "activation": {
+      "key": "E",
+      "label": "SHIELD",
+      "buttonColor": 4513245,
+      "theme": "cyan",
+      "slot": 0
+    }
   },
   "stronger_pierce_1": {
     "id": "stronger_pierce_1",
@@ -1223,42 +1386,37 @@
   "vampirism_1": {
     "id": "vampirism_1",
     "name": "Vampirism",
-    "description": "Heal for 2% of damage dealt",
+    "description": "5% chance to heal for 3% of damage dealt. Upgrade to increase chance.",
     "rarity": "rare",
     "type": "effect",
     "cost": 10,
     "effect": "lifesteal",
-    "effectValue": 0.02,
-    "stackable": false,
-    "maxStacks": 1,
-    "tier": 1,
-    "upgradesTo": "vampirism_2"
+    "effectValue": 0.05,
+    "stackable": true,
+    "maxStacks": 5
   },
   "vampirism_2": {
     "id": "vampirism_2",
     "name": "Vampirism",
-    "description": "Heal for 5% of damage dealt",
+    "description": "5% chance to heal for 10% of damage dealt. Upgrade to increase chance.",
     "rarity": "epic",
     "type": "effect",
     "cost": 20,
     "effect": "lifesteal",
     "effectValue": 0.05,
     "stackable": false,
-    "maxStacks": 1,
-    "tier": 2,
-    "upgradesTo": "vampirism_3"
+    "maxStacks": 3
   },
   "vampirism_3": {
     "id": "vampirism_3",
     "name": "Vampirism",
-    "description": "Heal for 12% of damage dealt",
+    "description": "5% chance to heal for 25% of damage dealt. Upgrade to increase chance.",
     "rarity": "legendary",
     "type": "effect",
     "cost": 40,
     "effect": "lifesteal",
-    "effectValue": 0.12,
+    "effectValue": 0.05,
     "stackable": false,
-    "maxStacks": 1,
-    "tier": 3
+    "maxStacks": 2
   }
 }

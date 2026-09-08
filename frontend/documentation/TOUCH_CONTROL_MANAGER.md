@@ -14,11 +14,16 @@ On mobile, the following controls are rendered as fixed-position Phaser game obj
 |---------|----------|---------|
 | Left joystick | Bottom-left | Movement |
 | Right joystick | Bottom-right | Aiming + shooting |
-| DASH button | Above joysticks (center-left) | Triggers `player.dash()` |
-| SHIELD button | Above joysticks (center-right) | Triggers `player.activateShield()` |
+| Ability buttons | Alternating sides, above/beside the joysticks | One per `AbilitySystem` binding — calls `AbilitySystem.activate(id)` |
 | Pause button | Top-center | Emits `game-pause` |
 
-Layout adapts to screen aspect ratio: "tall" screens (portrait phones) move ability buttons above the joysticks; "short" screens (landscape phones) place them between the joystick pairs.
+### Ability buttons
+
+There are no hardcoded DASH/SHIELD buttons. `createAbilityButtons()` maps over `AbilitySystem.getBindings()` (every def with an `activation` block, in `slot` order) and builds one `TouchButton` per binding, taking its label and fill from `activation.label` / `activation.buttonColor`. Adding an ability adds a button with no edit here — see [ABILITY_SYSTEM.md](ABILITY_SYSTEM.md).
+
+`abilityButtonPosition(index)` is index-driven: **even indices go left, odd right**, and each further pair steps inward from the edge (tall screens stack upward, short screens spread outward). Index 0 and 1 land exactly where the original hardcoded shield/dash pair sat.
+
+Layout adapts to screen aspect ratio: "tall" screens (`H > 500` — portrait phones and tablets) put ability buttons above the joysticks; "short" screens (landscape phones) place them beside the pause button.
 
 Positions are recalculated on every `resize` event from `this.scene.scale`.
 
@@ -45,8 +50,7 @@ Called every frame by `MainScene.update()`:
 1. Updates both joystick instances.
 2. Reads left joystick force → calls `player.move(fx, fy)`.
 3. Reads right joystick force → calls `player.rotateTowards()` and `player.shoot()` if magnitude exceeds 0.5.
-4. Sets DASH button visibility based on `UpgradeEffectSystem.hasAbility('dash')`.
-5. Sets SHIELD button visibility based on `UpgradeEffectSystem.getEffectValue('shield') > 0`.
+4. Sets each ability button's visibility from `AbilitySystem.isAvailable(id)` — owned, and (for consumable abilities like shield) still holding charges.
 
 ---
 

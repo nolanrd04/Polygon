@@ -6,7 +6,7 @@ export class SuperPentagonExplosion extends Projectile {
   SetDefaults(): void {
     this.damage = 10
     this.speed = 0
-    this.size = 40
+    this.size = 60
     this.pierce = 999999
     this.color = 0xed7d37
     this.timeLeft = 200

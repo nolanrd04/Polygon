@@ -47,6 +47,8 @@ export const enum UpgradeStatID {
   PolygonSides                 = 'polygonSides',
   DashSpeed                    = 'dashSpeed',
   DashCooldown                 = 'dashCooldown',
+  HealAmount                   = 'healAmount',
+  HealCooldown                 = 'healCooldown',
   ExplosionDamage              = 'explosionDamage',
   ExplosionRadius              = 'explosionRadius',
   TrackingDistance             = 'trackingDistance',

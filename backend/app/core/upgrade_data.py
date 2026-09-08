@@ -23,6 +23,14 @@ def _load_upgrades() -> Dict[str, Dict[str, Any]]:
 
 UPGRADES = _load_upgrades()
 
+# Upgrades every run begins with instead of buying (heal_ability). Mirrors the
+# frontend's `starting: true` defs, which UpgradeSystem.grantStartingUpgrades()
+# applies at run start. These are seeded into a new save's current_upgrades,
+# always count as authorized, and are excluded from the wave offer pool.
+STARTING_UPGRADES: List[str] = sorted(
+    upgrade_id for upgrade_id, upgrade in UPGRADES.items() if upgrade.get("starting")
+)
+
 
 def get_upgrade(upgrade_id: str) -> Dict[str, Any] | None:
     """Get upgrade definition by ID"""

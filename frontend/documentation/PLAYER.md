@@ -31,13 +31,12 @@ The player character. Rendered as a polygon whose number of sides grows with the
 | `activeFlame` | Reference to the currently active `Flame` projectile (continuous beam) |
 | `shielded` | Whether the shield ability is currently active |
 | `shieldSprite` | Cyan semi-transparent circle rendered when shield is active |
-| `isDashing` / `dashEndTime` | Dash state tracking |
+| `isDashing` / `dashEndTime` | Dash burst state tracking |
 | `dashSpeed` | Base dash speed (500 px/s) |
 | `dashDuration` | How long each dash lasts (200 ms) |
-| `dashCooldown` | Base cooldown between dash charges (1500 ms) |
-| `maxDashCharges` | Number of available dash charges (1 base, up to 3 with upgrades) |
-| `dashChargeReadyTimes` | Array of timestamps when each charge becomes available |
-| `dashChargeRechargeStartTimes` | Array of timestamps when each charge started recharging (for progress calculation) |
+| `dashDirection` | Unit vector the burst is travelling along |
+
+Only the burst itself lives here. Dash cooldown, charge count and charge timers moved to `AbilitySystem` — see [ABILITY_SYSTEM.md](ABILITY_SYSTEM.md).
 | `lastChargeReadyTime` | Latest ready time across all charges; used to queue sequential recharges |
 
 ---
@@ -74,12 +73,13 @@ The player character. Rendered as a polygon whose number of sides grows with the
 | Method | Description |
 |--------|-------------|
 | `takeDamage(amount)` | No-ops if shielded. Otherwise passes damage through `UpgradeEffectSystem.onPlayerDamage()` (armor reduction), records it for wave validation, triggers a red flash, and calls `GameManager.takeDamage()`. |
-| `activateShield()` | Consumes one shield charge from `UpgradeEffectSystem`, sets `shielded = true`, renders the shield sprite, and schedules `deactivateShield()` after 3 seconds. |
-| `dash()` | Checks for the `dash` ability via `UpgradeEffectSystem.hasAbility('dash')` and that a charge is available. Uses current velocity direction (or facing angle if stationary). Charges recharge sequentially — the second charge begins recharging only after the first finishes. |
-| `getDashCooldownProgress()` | Returns 0–1 progress for the earliest still-recharging charge (1 = ready). |
-| `getDashQueueProgress()` | Returns 0–1 progress for the next charge in queue (used for the multi-charge visual bar). |
-| `getReadyDashCharges()` | Count of charges whose ready time has already passed. |
-| `setMaxDashCharges(n)` | Called by `MainScene` when double_dash / triple_dash upgrades are applied. Resets all charge timers to ready. |
+| `activateShield()` | Consumes one shield charge from `UpgradeEffectSystem`, sets `shielded = true`, renders the shield sprite, and schedules `deactivateShield()` after 3 seconds. Returns `false` (consuming nothing) if already shielded or out of charges. |
+| `performDash()` | Fires the dash burst using current velocity direction (or facing angle if stationary). Always returns `true` — `AbilitySystem` has already confirmed a charge is ready. |
+| `updateDash()` | Per-frame dash state, called from `update()`. Drives the physics body for the duration of the burst. |
+
+**Abilities live in `AbilitySystem`, not here.** `Player` owns only the physics of the dash burst; charges, cooldowns, keybinds, ownership checks and HUD state are all in [ABILITY_SYSTEM.md](ABILITY_SYSTEM.md). The old `dash()`, `getDashCooldownProgress()`, `getDashQueueProgress()`, `getReadyDashCharges()` and `setMaxDashCharges(n)` no longer exist — the charge queue moved to `AbilitySystem.ChargeQueue` verbatim, and charge ceilings are now set through `ctx.abilities?.setCharges('dash_ability', n)`.
+
+Both `performDash()` and `activateShield()` return `boolean` because they are called from `DashAbility.onActivate` / `ShieldAbility.onActivate`, where `false` means "declined — spend nothing".
 
 ### Lifecycle
 

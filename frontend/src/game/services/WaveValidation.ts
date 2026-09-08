@@ -68,7 +68,9 @@ export class WaveValidationService {
         // Filter upgrades: exclude curses and visual_effects (matching the old JSON-era
         // offline roll, which never included visual_upgrades.json), plus incompatible,
         // dependent, and mismatched attack types
-        const validUpgrades = getAllUpgrades().filter(u => !u.curse && u.upgradeType !== 'visual_effect' && UpgradeSystem.canApply(u))
+        // `starting` upgrades are granted at run start and never sold — mirrors
+        // the backend's _roll_upgrades filter.
+        const validUpgrades = getAllUpgrades().filter(u => !u.curse && u.upgradeType !== 'visual_effect' && !u.starting && UpgradeSystem.canApply(u))
 
         // Pick 3 random valid upgrades using per-wave rarity weights
         const rarityWeights = NormalDifficulty.getRarityWeights(waveNumber)

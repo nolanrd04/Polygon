@@ -8,7 +8,7 @@ The model is tModLoader's `ModBuff`: **the engine calls the upgrade, never the r
 systems/upgrades/
 ├── UpgradeSystem.ts          # Owned-instance ledger, replay, hook dispatch
 ├── UpgradeModifierSystem.ts  # Shared stat channels (additive & multiplicative)
-├── UpgradeEffectSystem.ts    # Polled counters/flags (shield charges, ricochet, dash, multishot)
+├── UpgradeEffectSystem.ts    # Polled counters/flags (shield charges, ricochet, multishot)
 ├── index.ts                  # Exports
 └── README.md                 # Engine-internals reference (kept current — this doc summarizes it)
 ```
@@ -49,6 +49,10 @@ interface UpgradeDef {
 
   specificAttackType?: string       // offer-filter: only for the matching equipped attack
 
+  // on-demand abilities — see ABILITY_SYSTEM.md
+  activation?: AbilityActivation    // key, label, theme, slot, charges/cooldown
+  starting?: boolean                // granted at run start, never offered or sold
+
   stackable: boolean
   maxStacks?: number
   tier?: number
@@ -69,7 +73,9 @@ interface UpgradeDef {
 | `canApply(def)` | Checks dependencies (`dependentOn`), incompatibilities, stack limits, and `specificAttackType`. |
 | `removeOne(id)` | Removes the most recently purchased instance of `id`, runs `onRemove`, then replays. |
 | `restore(entries)` | Rebuilds the ledger from a saved id list, then replays. Used on save load. |
-| `replay()` | Resets every derived surface to base (modifier channels, effect counters, variants, base player stats, dash charges), then re-runs `onApply` for each owned instance in ledger order. Health is snapshotted/clamped across replay so loading never double-applies maxHealth and removing never heals. |
+| `replay()` | Resets every derived surface to base (modifier channels, effect counters, variants, base player stats, and `AbilitySystem.resetCharges()`), then re-runs `onApply` for each owned instance in ledger order. Health is snapshotted/clamped across replay so loading never double-applies maxHealth and removing never heals. |
+| `grantStartingUpgrades()` | Applies every `starting: true` def not already owned, records each in `appliedUpgrades` exactly as a purchase would, and returns the granted ids. Called by `MainScene` after **both** the new-game and save-restore branches, so an old save picks up an ability added since it was written. |
+| `getContext()` | The `UpgradeContext` handed to hooks (`gameManager`, `player`, `scene`, `abilities`). Used by `AbilitySystem` when dispatching `onActivate`. |
 | `getVariant(target)` | Active variant class name for a `targetClass`, or `null`. |
 | `hasUpgrade(id)` / `getStackCount(id)` | Ownership / stack queries used by `canApply`, bundle pickers, and dependency checks. |
 | `hasEffect(id)` / `getEffectValue(id)` | Delegate to `UpgradeEffectSystem`. |
@@ -91,6 +97,7 @@ interface UpgradeDef {
 | `onEnemyKilled(enemy)` | `CollisionManager` kill resolution | explosion_on_kill emits an explosion |
 | `updatePlayer(player, delta)` | `MainScene.update` | regeneration heals per second |
 | `modifyExplosion(explosion)` | `BulletExplosion.SetDefaults`, Chain Reaction | explosion_damage/radius upgrades |
+| `onActivate(ctx): boolean` | `AbilitySystem.activate` (keybind or mobile button) | heal restores health; `false` declines and spends no charge |
 
 ### Default `onApply` — why simple upgrades stay empty
 
@@ -102,7 +109,7 @@ Applies the def generically, keyed on `upgradeType`, when a class doesn't overri
 | any other `stat_modifier` | `UpgradeModifierSystem.addModifier()` |
 | `effect` | `UpgradeEffectSystem.addEffect()` counter |
 | `visual_effect` | `UpgradeEffectSystem.addVisualEffect()` flag |
-| `ability` | `UpgradeEffectSystem.addAbility()` flag |
+| `ability` | nothing — ownership is the ledger; `AbilitySystem` derives it from `getOwned()` |
 | `variant` | nothing — `UpgradeSystem` tracks the active variant itself |
 
 Because upgrades are permanent within a run, effects accumulate once on apply rather than being recomputed per tick.
@@ -147,9 +154,10 @@ What survives of the old event-driven effect-handler system: counters and flags 
 
 | Category | Storage | API |
 |----------|---------|-----|
-| Effects | counter map | `addEffect / removeEffect / hasEffect / getEffectValue` — e.g. `shield` charges consumed by `Player.activateShield`, `ricochet` checked by `CollisionManager` |
+| Effects | counter map | `addEffect / removeEffect / hasEffect / getEffectValue` — e.g. `shield` charges consumed by `Player.activateShield`, `ricochet` checked in each `Projectile` subclass's `OnObstacleCollide()` |
 | Visual effects | flag map | `addVisualEffect / removeVisualEffect / hasVisualEffect / getVisualEffect` — inert, read by rendering code |
-| Abilities | flag set | `addAbility / removeAbility / hasAbility` — `dash` ability flag, triggered by the SPACE keybind |
+
+There is **no ability flag store**. `addAbility / removeAbility / hasAbility` and the `activeAbilities` set were deleted: the ledger already knew who owned dash, and mirroring it into a flag meant two things to keep in step. `AbilitySystem` derives ownership from `UpgradeSystem.getOwned()`, and the default `onApply`'s `ability` case is a no-op alongside `variant`.
 
 Event-driven behavior that used to live in a separate `EffectHandlers.ts` registry (lifesteal, regen, armor, thorns, explode-on-kill) now lives directly on the owning upgrade's class as a hook override (`onHitEnemy`, `updatePlayer`, `modifyPlayerHurt`, `onEnemyKilled`) — there is no `EffectHandlers.ts` file or `registerEffectHandlers()` call anymore. `multishot`'s value is read straight from `UpgradeEffectSystem.getEffectValue('multishot')` by `Player.shoot()`.
 
@@ -157,7 +165,7 @@ Event-driven behavior that used to live in a separate `EffectHandlers.ts` regist
 
 ## The flag pattern (what other files may know)
 
-Other files may branch on **whether** an upgrade or effect is active (`UpgradeSystem.hasUpgrade('homing_bullets')`, `UpgradeEffectSystem.hasAbility('dash')`) — but the numbers and behavior belong to the upgrade class. If you find yourself writing an upgrade's value into an entity file, it should be a hook override instead.
+Other files may branch on **whether** an upgrade or effect is active (`UpgradeSystem.hasUpgrade('homing_bullets')`, `UpgradeEffectSystem.hasEffect('ricochet')`) — but the numbers and behavior belong to the upgrade class. If you find yourself writing an upgrade's value into an entity file, it should be a hook override instead.
 
 ## Debugging
 

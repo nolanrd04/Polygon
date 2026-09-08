@@ -46,7 +46,6 @@ export class SuperPentagonExplosionDetonation extends Projectile {
       if (cycleTime < 250) {
         // Grow bright (0-250ms)
         this.color = this.lerpColor(this.baseColor, this.bleepColor, cycleTime / 250)
-        LightingSystem.AddLight(this.positionX, this.positionY, this.color, 1.2)
       } else if (cycleTime < 500) {
         // Grow dark (250-500ms)
         this.color = this.lerpColor(this.bleepColor, this.baseColor, (cycleTime - 250) / 250)
@@ -59,6 +58,8 @@ export class SuperPentagonExplosionDetonation extends Projectile {
         this.color = 0xffff00
         glowAlpha = 0.8
         glowRadius = this.size * 1.2
+
+        LightingSystem.AddLight(this.positionX, this.positionY, this.color, 1.7)
       }
     } else {
       this.color = this.baseColor

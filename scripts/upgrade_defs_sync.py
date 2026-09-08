@@ -66,6 +66,17 @@ def _extract_object_literal(text: str, start: int) -> str:
                 continue
             if ch == in_string:
                 in_string = None
+        elif text.startswith("//", i):
+            # Skip the comment outright. Scanning it as code would treat an
+            # apostrophe ("it's never offered") as an unterminated string and
+            # swallow the rest of the literal.
+            newline = text.find("\n", i)
+            i = len(text) if newline == -1 else newline
+            continue
+        elif text.startswith("/*", i):
+            end = text.find("*/", i)
+            i = len(text) if end == -1 else end + 2
+            continue
         elif ch in "\"'`":
             in_string = ch
         elif ch == "{":
@@ -86,6 +97,9 @@ def _literal_to_json(literal: str, enums: dict[str, dict[str, str]]) -> str:
         literal = re.sub(rf"\b{enum_name}\.(\w+)\b", _sub, literal)
     literal = re.sub(r'([{,]\s*)([A-Za-z_]\w*)(\s*:)', r'\1"\2"\3', literal)  # quote bare keys
     literal = re.sub(r',(\s*[}\]])', r'\1', literal)  # drop trailing commas
+    # Hex colors (activation.buttonColor) are the one non-JSON number form the
+    # defs use; JSON only speaks decimal, and the value is identical either way.
+    literal = re.sub(r'\b0[xX]([0-9a-fA-F]+)\b', lambda m: str(int(m.group(1), 16)), literal)
     return literal
 
 

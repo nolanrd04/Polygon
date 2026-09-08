@@ -18,7 +18,7 @@ from app.models.game_run import GameRun, WaveSnapshot, OfferRoll, GAME_VERSION
 from app.repositories.player_stats_repository import PlayerStatsRepository
 from app.repositories.game_save_repository import GameSaveRepository
 from app.repositories.game_run_repository import GameRunRepository
-from app.core.upgrade_data import UPGRADES, can_apply_upgrade, get_upgrade
+from app.core.upgrade_data import UPGRADES, STARTING_UPGRADES, can_apply_upgrade, get_upgrade
 from app.core.enemy_data import calculate_minimum_damage_required, calculate_expected_health_spawned, validate_enemy_spawn, get_enemy_score_chance, get_split_children, get_enemy_bundle_drop_chance
 from app.core.projectile_data import (
     resolve_active_projectile,
@@ -68,7 +68,10 @@ class WaveService:
 
         # Get current game save to check current upgrades
         game_save = await self.game_save_repo.find_by_user_id(user_id)
-        current_upgrades = game_save.current_upgrades if game_save else []
+        # No save yet means wave 1 before the save below exists — the run still
+        # owns its starting abilities, and the offer roll and token snapshot
+        # both need to see them (heal_cooldown_* etc. depend on heal_ability).
+        current_upgrades = game_save.current_upgrades if game_save else list(STARTING_UPGRADES)
         difficulty = get_difficulty(game_save.difficulty_id if game_save else "normal")
 
         # Check if upgrades have already been offered for this wave (prevent reroll exploit)
@@ -146,7 +149,7 @@ class WaveService:
                 current_speed=200,
                 current_polygon_sides=3,
                 current_kills=0,
-                current_upgrades=[],
+                current_upgrades=list(STARTING_UPGRADES),
                 offered_upgrades=offered_upgrade_objs,
                 unlocked_attacks=["bullet"]
             )
@@ -245,6 +248,11 @@ class WaveService:
             valid_upgrades = set(game_save.current_upgrades) | set(token.bundle_upgrades)
         else:
             valid_upgrades = set(token.allowed_upgrades + token.offered_upgrades) | set(token.bundle_upgrades)
+        # Starting upgrades are authorized by definition — the client grants
+        # them at run start without ever going through /select_upgrade. Unioned
+        # here rather than relying on the save so that runs already in progress
+        # when a starting ability ships don't get flagged for owning it.
+        valid_upgrades |= set(STARTING_UPGRADES)
         difficulty = get_difficulty(game_save.difficulty_id if game_save else "normal")
         print(f"Validating upgrades: {upgrades_used} vs valid: {valid_upgrades}")
         print(f"DEBUG - Token allowed_upgrades: {token.allowed_upgrades}")
@@ -489,6 +497,12 @@ class WaveService:
             upgrade for upgrade in UPGRADES.values()
             if not upgrade.get("curse")
             and upgrade.get("type") != "visual_effect"
+            # Starting upgrades are granted at run start, never sold. They're
+            # already in current_upgrades, so can_apply_upgrade would reject
+            # the non-stackable ones anyway — but a stackable one would slip
+            # through, and offering something the player already has is a
+            # wasted slot either way.
+            and not upgrade.get("starting")
             and can_apply_upgrade(upgrade["id"], current_upgrades, attack_type)
         ]
 
@@ -596,10 +610,12 @@ class WaveService:
         print(f"Calculated player stats from {len(current_upgrades)} upgrades: speed={stats['speed']}, max_health={stats['max_health']}")
         return stats
 
-    # Dash mechanics mirror frontend/src/game/entities/Player.ts exactly (base
-    # values + charge/cooldown recurrence at Player.ts:632-692) — see
-    # dash_ability/dash_speed_*/dash_cooldown_*/double_dash/triple_dash in
-    # app/core/data/upgrades.json for the upgrade values applied below.
+    # Dash mechanics mirror the frontend exactly. Speed and duration are the
+    # burst itself, which lives on Player (dashSpeed/dashDuration in
+    # frontend/src/game/entities/Player.ts); the cooldown is the charge queue's,
+    # and it now sits in dash_ability's `activation` block — the same value is
+    # mirrored into app/core/data/upgrades.json, alongside the
+    # dash_speed_*/dash_cooldown_*/double_dash/triple_dash values applied below.
     DASH_BASE_SPEED = 500.0
     DASH_BASE_COOLDOWN_MS = 1500.0
     DASH_DURATION_MS = 200.0
@@ -608,8 +624,9 @@ class WaveService:
         """
         Calculate the player's max legitimate dash burst speed, cooldown, and
         charge count from owned upgrades. Dash is entirely gated on owning
-        dash_ability (Player.ts:634, UpgradeEffectSystem.hasAbility('dash')) —
-        without it, max_dash_charges is 0 and dash contributes nothing.
+        dash_ability — AbilitySystem.activate() refuses to dispatch onActivate
+        for an upgrade that isn't in the ledger, so without it max_dash_charges
+        is 0 and dash contributes nothing.
         """
         if "dash_ability" not in current_upgrades:
             return {
@@ -802,6 +819,16 @@ class WaveService:
                     if bool(u.get("curse")) == curse
                     and u["rarity"] == rarity
                     and u["id"] not in picked
+                    # Never drop a run-start ability from a bundle. Owning it
+                    # already makes can_apply_upgrade say no, but a save that
+                    # predates the ability would otherwise "win" it as loot.
+                    and not u.get("starting")
+                    # Variants are never bundle loot - mirrors
+                    # MainScene.pickRegularUpgrade. incompatibleWith already
+                    # stops a bundle swapping an ACTIVE variant, but a bundle
+                    # is a silent auto-apply and picking your bullet type is a
+                    # run-defining choice that belongs to the post-wave modal.
+                    and u.get("type") != "variant"
                     and can_apply_upgrade(u["id"], current_upgrades + picked, attack_type)
                 ]
                 if candidates:
