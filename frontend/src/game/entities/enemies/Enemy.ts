@@ -62,7 +62,7 @@ export abstract class Enemy {
   maxHealth: number = 50
   speed: number = 60
   damage: number = 10
-  defense: number = 0 // how much damage (int) is reduced when hit
+  defense: number = 0 // how much damage (int) is reduced when hit (see takeDamage's penetration)
   sides: number = 4
   radius: number = 20
   color: number = 0xff0000
@@ -87,6 +87,16 @@ export abstract class Enemy {
   knockbackEnemies: boolean = false
   /** Multiplier on the shove velocity when `knockbackEnemies` is true. 1 = shove at exactly this enemy's own speed. */
   knockbackEnemiesStrength: number = 1
+  /**
+   * When false, this enemy passes straight through other enemies - no
+   * separation, and no barge from `knockbackEnemies` in either direction.
+   *
+   * One side opting out is enough: the pair is skipped if EITHER enemy has
+   * this false, since a pass-through enemy cannot be half-solid.
+   *
+   * Enemy-vs-enemy only - the player and obstacles are unaffected.
+   */
+  collideWithEnemies: boolean = true
   barWidth: number = 20  // Health bar width
   barHeight: number = 4  // Health bar height
 
@@ -407,17 +417,29 @@ export abstract class Enemy {
     this.knockbackEndTime = this.scene.time.now + 100
   }
 
+  /**
+   * This enemy's armor after a hit's penetration is applied. Never negative,
+   * so penetration beyond `defense` is wasted rather than turning into damage.
+   */
+  effectiveDefense(penetration: number = 0): number {
+    return Math.max(0, this.defense - penetration)
+  }
+
   /*this.velocityX = velocityX * knockbackMultiplier
     this.velocityY = velocityY * knockbackMultiplier
     // Prevent AI from immediately overwriting knockback velocity for 100ms
     this.knockbackEndTime = this.scene.time.now + 100
    */
-  takeDamage(amount: number, source?: any): boolean {
+  /**
+   * @param penetration How much of this enemy's `defense` the hit ignores. Armor
+   *   is floored at 0, so excess penetration never becomes bonus damage.
+   */
+  takeDamage(amount: number, source?: any, penetration: number = 0): boolean {
     if (!this.OnHit(amount, source)) {
       return false
     }
 
-    const effectiveAmount = Math.max(1, amount - this.defense)
+    const effectiveAmount = Math.max(1, amount - this.effectiveDefense(penetration))
     this.health -= effectiveAmount
     this.drawHealthBar()
 
@@ -631,6 +653,12 @@ export abstract class Enemy {
   _destroy(): void {
     if (this._isDestroyed) return
     this._isDestroyed = true
+
+    // The bar and text live on the scene, not in the container, so destroying
+    // the container alone leaves them on screen forever (_die does the same).
+    if (this.healthBar) this.healthBar.destroy()
+    if (this.healthText) this.healthText.destroy()
+
     this.container?.destroy()
   }
 

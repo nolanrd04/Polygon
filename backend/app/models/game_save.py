@@ -73,6 +73,11 @@ class GameSave(BaseMongoModel):
     # Upgrades currently offered (for preventing reroll exploit)
     offered_upgrades: List[OfferedUpgrade] = Field(default_factory=list)
 
+    # Bundle-grant allowance the last completed wave left unspent (see
+    # WaveService.collect_upgrade_bundle) - copied onto the next wave's token
+    # so bundles left lying on the ground still have room to be granted.
+    bundle_grant_carryover: int = Field(default=0, ge=0)
+
     @field_validator('offered_upgrades', mode='before')
     @classmethod
     def convert_offered_upgrades(cls, v):

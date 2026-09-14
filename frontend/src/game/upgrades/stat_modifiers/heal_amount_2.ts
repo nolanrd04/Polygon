@@ -4,16 +4,16 @@ import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID } from '../../d
 export const HealAmount2Def: UpgradeDef = {
   id: "heal_amount_2",
   name: "Greater Healing",
-  description: "+3% heal amount",
+  description: "+6% heal amount",
   rarity: RarityID.Epic,
   upgradeType: UpgradeTypeID.StatModifier,
   cost: 20,
   targetClass: UpgradeTargetID.Player,
   fieldInTargetClass: UpgradeStatID.HealAmount,
-  value: 0.03,
+  value: 0.06,
   isMultiplier: true,
   stackable: true,
-  maxStacks: 3,
+  maxStacks: 2,
   dependentOn: [{ ids: ["heal_ability"] }],
 }
 

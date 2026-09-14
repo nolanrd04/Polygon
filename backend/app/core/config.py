@@ -1,6 +1,32 @@
+import json
+from pathlib import Path
+
 from pydantic import field_validator
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+
+
+# The backend's copy of the game version. frontend/version.json is the source
+# of truth (vite.config.ts inlines it as __GAME_VERSION__); this copy is
+# regenerated from it by scripts/version_sync.py, the same way the backend's
+# upgrade/enemy/difficulty data mirrors the frontend's. Two files rather than
+# one shared file because frontend and backend deploy separately - neither can
+# reach up to the repo root at runtime.
+#
+# A committed file rather than .env: .env is gitignored here, so a version read
+# from one would silently fall back to a placeholder in CI and on the host.
+VERSION_FILE = Path(__file__).resolve().parents[2] / "version.json"
+
+
+def _read_version() -> str:
+    try:
+        with open(VERSION_FILE) as f:
+            return json.load(f)["version"]
+    except (OSError, ValueError, KeyError):
+        # Deliberately obvious rather than a plausible-looking number: a run
+        # stamped 0.0.0-unknown in the analytics is a broken checkout, not a
+        # release to compare balance data against.
+        return "0.0.0-unknown"
 
 
 class Settings(BaseSettings):
@@ -18,6 +44,10 @@ class Settings(BaseSettings):
 
     # App
     debug: bool = True
+
+    # Game version, from version.json. Overridable by a GAME_VERSION env var
+    # for one-off builds, but the file is the source of truth.
+    game_version: str = _read_version()
 
     @field_validator("secret_key")
     @classmethod

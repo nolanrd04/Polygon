@@ -30,8 +30,28 @@ export class EnemyManager {
     this.scene.physics.add.collider(
       this.enemyGroup,
       this.enemyGroup,
-      this.handleEnemyEnemyCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback
+      this.handleEnemyEnemyCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
+      this.processEnemyEnemyCollision.bind(this) as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback
     )
+  }
+
+  /**
+   * Gate on enemy-vs-enemy contact, run before Arcade separates the bodies.
+   *
+   * Returning false skips both the separation and handleEnemyEnemyCollision,
+   * so a `collideWithEnemies = false` enemy passes clean through the crowd
+   * without being shoved or shoving.
+   */
+  private processEnemyEnemyCollision(
+    containerA: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    containerB: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody
+  ): boolean {
+    const enemyA = (containerA as Phaser.GameObjects.Container).getData('enemyInstance') as Enemy | undefined
+    const enemyB = (containerB as Phaser.GameObjects.Container).getData('enemyInstance') as Enemy | undefined
+
+    if (!enemyA || !enemyB) return true
+
+    return enemyA.collideWithEnemies && enemyB.collideWithEnemies
   }
 
   /**

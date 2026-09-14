@@ -25,7 +25,9 @@ def _load_enemy_data() -> tuple[
     Set[int],
     Set[str],
     Dict[str, List[str]],
-    Dict[str, float]
+    Dict[str, float],
+    Dict[str, int],
+    Dict[str, Dict[str, Any]]
 ]:
     data_path = Path(__file__).parent / "data" / "enemies.json"
     with open(data_path) as f:
@@ -40,6 +42,8 @@ def _load_enemy_data() -> tuple[
     boss_only = set(data["boss_only_enemies"])
     splits_into = data.get("splits_into", {})
     bundle_drop_chance = data.get("bundle_drop_chance", {})
+    bundle_drop_max = data.get("bundle_drop_max", {})
+    spawn_families = data.get("spawn_families", {})
 
     return (
         base_health,
@@ -51,6 +55,8 @@ def _load_enemy_data() -> tuple[
         boss_only,
         splits_into,
         bundle_drop_chance,
+        bundle_drop_max,
+        spawn_families,
     )
 
 (
@@ -63,7 +69,18 @@ def _load_enemy_data() -> tuple[
     BOSS_ONLY_ENEMIES,
     ENEMY_SPLITS_INTO,
     ENEMY_BUNDLE_DROP_CHANCE,
+    ENEMY_BUNDLE_DROP_MAX,
+    ENEMY_SPAWN_FAMILIES,
 ) = _load_enemy_data()
+
+# Enemy types that only exist as another enemy's minions (seeking squares).
+# They're real enemies for anti-cheat purposes - see _validate_kills - but the
+# analytics health pool leaves them out; see calculate_expected_health_spawned.
+MINION_TYPES: Set[str] = {
+    family["minion_type"]
+    for family in ENEMY_SPAWN_FAMILIES.values()
+    if family.get("minion_type")
+}
 
 
 def get_enemy_health(enemy_type: str, wave: int, difficulty: Difficulty) -> int:
@@ -114,6 +131,93 @@ def calculate_minimum_damage_required(wave: int, enemy_counts: Dict[str, int], d
     return total_damage
 
 
+def get_expected_natural_counts(wave: int, difficulty: Difficulty) -> Dict[str, float]:
+    """
+    Expected count per enemy type of a wave's own *natural* spawns: the wave's
+    spawn count split across its spawn weights, plus its scheduled bosses.
+
+    "Natural" excludes anything an enemy spawns itself (split children,
+    minions, the super octogon family below) - those are priced separately by
+    the callers that care, off these counts.
+    """
+    enemy_count = difficulty.get_enemy_count(wave)
+    spawn_weights = difficulty.get_spawn_weights(wave)
+    total_weight = sum(w["weight"] for w in spawn_weights) or 1.0
+
+    counts: Dict[str, float] = {
+        w["type"]: enemy_count * (w["weight"] / total_weight)
+        for w in spawn_weights
+    }
+    for boss_type in (difficulty.get_scheduled_boss_spawns(wave) or []):
+        counts[boss_type] = counts.get(boss_type, 0.0) + 1.0
+    return counts
+
+
+def get_family_members(enemy_type: str) -> Dict[str, float]:
+    """
+    Every extra enemy ONE natural spawn of `enemy_type` brings with it, as
+    type -> count. Empty for every enemy without a spawn family.
+
+    The one family today is the super octogon (SuperOctogon.ts):
+      - OnDeath() spawns 2 suspicious squares (`on_death`).
+      - Each suspicious square either dies as a square, or survives its growth
+        timer and becomes a super octogon (`grows_into`) - SuspiciousSquare.ts
+        calls _destroy() rather than dying, so the square that grows is never
+        reported as a kill. Either branch is exactly ONE kill, so the child is
+        counted once, as whichever of the two shapes costs the player more
+        health to clear - an upper bound that keeps this a ceiling.
+      - The chain terminates there: the grown octogon is flagged
+        canSpawnMinions = false, so it never spawns suspicious squares of its
+        own. Only `on_death` is gated by that flag, so all 1 + len(on_death)
+        octogons in the lineage do spawn seeking squares.
+      - Seeking squares are counted at `minion_max_total_per_spawner`, which
+        is SuperOctogon's own maxTotalMinions: a PER-OCTOGON lifetime budget,
+        so it's multiplied by every octogon in the lineage (and again, by the
+        caller, by how many lineages the wave is expected to produce). Its
+        other cap, maxMinions, only limits how many are alive at once and
+        bounds nothing over a wave - a killed square frees its slot and is
+        replaced 4s later. The lifetime budget is what makes the number of
+        enemies a wave can produce finite, and therefore priceable here.
+    """
+    family = ENEMY_SPAWN_FAMILIES.get(enemy_type)
+    if not family:
+        return {}
+
+    members: Dict[str, float] = {}
+
+    children = family.get("on_death", [])
+    grows_into = family.get("grows_into")
+    for child in children:
+        counted_as = child
+        if grows_into and ENEMY_BASE_HEALTH.get(grows_into, 0) > ENEMY_BASE_HEALTH.get(child, 0):
+            counted_as = grows_into
+        members[counted_as] = members.get(counted_as, 0.0) + 1.0
+
+    minion_type = family.get("minion_type")
+    if minion_type:
+        # The root plus every child that grows back into the root: each runs
+        # its own independent minion timer and its own lifetime budget.
+        spawners = 1 + (len(children) if grows_into == enemy_type else 0)
+        members[minion_type] = members.get(minion_type, 0.0) + (
+            spawners * family.get("minion_max_total_per_spawner", 0)
+        )
+
+    return members
+
+
+def calculate_family_spawn_counts(wave: int, difficulty: Difficulty) -> Dict[str, float]:
+    """
+    Expected count per enemy type of everything the wave's spawn-family enemies
+    add on top of their own natural spawns (see get_family_members), summed
+    over the wave's expected natural spawns of each family root.
+    """
+    totals: Dict[str, float] = {}
+    for enemy_type, natural_count in get_expected_natural_counts(wave, difficulty).items():
+        for member, per_parent in get_family_members(enemy_type).items():
+            totals[member] = totals.get(member, 0.0) + natural_count * per_parent
+    return totals
+
+
 def calculate_expected_health_spawned(wave: int, difficulty: Difficulty) -> int:
     """
     Expected total enemy health a wave puts on the field, for the GameRun
@@ -130,6 +234,18 @@ def calculate_expected_health_spawned(wave: int, difficulty: Difficulty) -> int:
     _validate_kills' split_bonus; one level deep, no current enemy chains
     splits). Scheduled boss spawns are added on top since they also spawn
     outside the regular pool.
+
+    A spawn family's deterministic half is added the same way: a super
+    octogon's 2 suspicious squares, priced at the grown octogon they become
+    (see get_family_members). Its MINION half - seeking squares - is excluded.
+    They're capped per octogon (maxTotalMinions), so a count exists, but it's
+    an upper bound nothing like the average: it assumes every octogon survives
+    long enough to spend its whole budget, and at wave 26 that alone is ~1100
+    enemies against 125 natural spawns. Folding that into the denominator
+    would swing this metric by multiples on exactly the waves it's meant to
+    measure. Caveat when reading the ratio: damage_dealt is not broken down by
+    target, so damage the player spent ON seeking squares is still in the
+    numerator - waves 25-27 read high.
     """
     def effective_health(enemy_type: str) -> float:
         health = float(get_enemy_health(enemy_type, wave, difficulty))
@@ -142,17 +258,15 @@ def calculate_expected_health_spawned(wave: int, difficulty: Difficulty) -> int:
             health += child_health
         return health
 
-    enemy_count = difficulty.get_enemy_count(wave)
-    spawn_weights = difficulty.get_spawn_weights(wave)
-    total_weight = sum(w["weight"] for w in spawn_weights) or 1.0
-
+    natural_counts = get_expected_natural_counts(wave, difficulty)
     total = sum(
-        enemy_count * (w["weight"] / total_weight) * effective_health(w["type"])
-        for w in spawn_weights
+        count * effective_health(enemy_type)
+        for enemy_type, count in natural_counts.items()
     )
     total += sum(
-        effective_health(boss_type)
-        for boss_type in (difficulty.get_scheduled_boss_spawns(wave) or [])
+        count * effective_health(member)
+        for member, count in calculate_family_spawn_counts(wave, difficulty).items()
+        if member not in MINION_TYPES
     )
     return int(total)
 
@@ -177,6 +291,17 @@ def get_enemy_bundle_drop_chance(enemy_type: str, difficulty: Difficulty, wave: 
     """
     chance = ENEMY_BUNDLE_DROP_CHANCE.get(enemy_type, 0.0)
     return chance if chance > 0 else difficulty.get_bundle_drop_chance(wave)
+
+
+def get_enemy_bundle_drop_max(enemy_type: str) -> int:
+    """
+    Most bundles one death of this enemy type can drop: the base
+    Enemy.DropBundles() roll's bundleDropMax (default 1), or the summed
+    `count.max` of a boss's fixed drop table (Dodecahedron.ts's NORMAL_DROPS,
+    ArrowHeadConfig.drops). Generated by scripts/enemy_defs_sync.py; types
+    with no entry drop at most 1.
+    """
+    return ENEMY_BUNDLE_DROP_MAX.get(enemy_type, 1)
 
 
 def get_split_children(enemy_type: str) -> List[str]:

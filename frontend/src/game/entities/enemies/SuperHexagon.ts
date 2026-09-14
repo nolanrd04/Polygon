@@ -21,9 +21,9 @@ export class SuperHexagon extends Enemy {
   private hasOutline: boolean = false
 
   SetDefaults(): void {
-    this.health = 800
+    this.health = 700
     this.speed = 62
-    this.damage = 100
+    this.damage = 70
     this.sides = 6
     this.radius = 23
     this.color = 0xff00ff
@@ -63,24 +63,40 @@ export class SuperHexagon extends Enemy {
         this.velocityY = 0
         if (now - this.lastFireTime > this.fireCooldown) {
             this.lastFireTime = now
-            // Spawn acid explosion on death
-            const scene = this.scene as Phaser.Scene & { spawnProjectile: Function }
-            const proj = new SuperHexagonProj()
-            proj.SetDefaults()
-    
-            // Scale explosion damage to match the bullet's scaled damage
-            proj.damage = this.damage
 
-            scene.spawnProjectile(proj, this.x, this.y, _playerX, _playerY, 'enemy', this.id)
-            // all sound calls should have this check to prevent "sound stacking"
-            //
-            if (this.scene.sound.isPlaying(SoundID.EnemyShoot1))
-            {
-              this.scene.sound.stopByKey(SoundID.EnemyShoot1)
-            }
+          // projectiles
+          for (let i = 0; i < this.sides; i++) {
+          // Calculate angle for this corner
+          const cornerAngle = (i / this.sides) * Math.PI * 2 + this.rotation - Math.PI / 2
+
+          // Calculate corner position
+          const cornerX = this.x + this.radius * Math.cos(cornerAngle)
+          const cornerY = this.y + this.radius * Math.sin(cornerAngle)
+
+          // Calculate target point radially outward from corner
+          const shootDistance = 500
+          const targetCornerX = cornerX + Math.cos(cornerAngle) * shootDistance
+          const targetCornerY = cornerY + Math.sin(cornerAngle) * shootDistance
+
+          // Create and spawn projectile using centralized method
+          const proj = new SuperHexagonProj()
+          proj.SetDefaults()
+          // Scale explosion damage to match the bullet's scaled damage
+          proj.damage = this.damage
+
+          const scene = this.scene as Phaser.Scene & { spawnProjectile: Function }
+          scene.spawnProjectile(proj, cornerX, cornerY, targetCornerX, targetCornerY, 'enemy', this.id)
+          }
+
+          // all sound calls should have this check to prevent "sound stacking"
+          //
+          if (this.scene.sound.isPlaying(SoundID.EnemyShoot1))
+          {
+            this.scene.sound.stopByKey(SoundID.EnemyShoot1)
+          }
         
-            this.scene.sound.play(SoundID.EnemyShoot1, { volume:  getDefaultVolume(SoundID.EnemyShoot1) })
-            //
+          this.scene.sound.play(SoundID.EnemyShoot1, { volume:  getDefaultVolume(SoundID.EnemyShoot1) })
+          //
         }
     }
 

@@ -118,6 +118,49 @@ import { WORLD_WIDTH, WORLD_HEIGHT } from '../core/GameConfig'
  * eyeballing this.
  *
  * ----------------------------------------------------------------------------
+ * BRIGHTNESS (the player-facing setting) IS NOT AMBIENT
+ *
+ * Raising `ambient` alone is the wrong knob for a brightness slider. Ambient is
+ * the FLOOR, so raising it closes the gap between unlit and lit without moving
+ * the lights - every torch loses contrast against its surroundings until the
+ * frame is uniform haze. That is the "my lights stopped mattering" failure.
+ *
+ * What a brightness control wants is to scale the WHOLE image: ambient, every
+ * emitter, and every baked emission, together, so the ratio between lit and
+ * unlit is untouched and only the overall level moves.
+ *
+ * That turns out to be one multiply, because everything between the emitters and
+ * the tone map is LINEAR in light value:
+ *
+ *   seed/merge/emission take a max     - max(kA, kB) = k * max(A, B)
+ *   spread multiplies by a decay       - (kA) * d    = k * (A * d)
+ *   the buffer is pre-filled with ambient, so scaling ambient scales the floor
+ *
+ * So scaling every input by `brightness` scales every tile of `light` by exactly
+ * `brightness`, and the only non-linear step is upload()'s tone map:
+ *
+ *   1 - exp(-(light * brightness) * exposure)  ==  1 - exp(-light * (exposure * brightness))
+ *
+ * `brightness` is therefore applied as an EXPOSURE MULTIPLIER at upload time -
+ * one multiply per frame rather than one per light - and is pixel-for-pixel
+ * identical to scaling ambient and every AddLight call by hand.
+ *
+ * Two things deliberately do NOT move with it:
+ *
+ * - REACH. A light's reach comes from `intensity / ambient` (see Reach()), and
+ *   scaling both leaves that ratio alone. Lights are the same SIZE at every
+ *   brightness, just brighter - which is what you want, since a brightness
+ *   slider that resized every light would change what the player can see coming.
+ * - COST. Nothing about it splits a flood group or adds a pass.
+ *
+ * What it does NOT dodge is the tone map's own ceiling. Past roughly 3x, lights
+ * are already pinned at white and only the ambient floor is still climbing, so
+ * contrast does start falling again - just far later, and far more gently, than
+ * raising ambient on its own. At the slider's 10x top end (ambient 1.0) the
+ * world is deliberately flat and fully lit; that is the point of that end of the
+ * range, not a bug in it.
+ *
+ * ----------------------------------------------------------------------------
  * VIEWPORT CULLING
  *
  * Cost is tied to SCREEN area, not world area. Two independent mechanisms:
@@ -207,6 +250,14 @@ export interface LightingOptions {
    */
   exposure?: number
   /**
+   * Global image brightness, the player-facing setting. 1 is the authored look;
+   * 2 is twice the light everywhere - ambient, emitters and baked emission all
+   * together - with the ratio between lit and unlit preserved, and light reach
+   * unchanged. See BRIGHTNESS IS NOT AMBIENT above for why this is not `ambient`
+   * and why it costs nothing. Changeable at any time via SetBrightness().
+   */
+  brightness?: number
+  /**
    * Forward+backward sweep pairs per shape group. One pair propagates light that
    * only ever travels down-right or up-left; a second lets it wrap corners
    * properly. Above 2 the difference is not visible.
@@ -275,6 +326,7 @@ export class LightingSystem {
   private static ambient = 0.38
   private static iterations = 2
   private static exposure = 1
+  private static brightness = 1
   private static cullPadding = 96
 
   private static cols = 0
@@ -370,6 +422,7 @@ export class LightingSystem {
     this.ambient = options.ambient ?? 0.38
     this.iterations = options.iterations ?? 2
     this.exposure = options.exposure ?? 1
+    this.brightness = LightingSystem.clampBrightness(options.brightness ?? 1)
     this.cullPadding = options.cullPadding ?? 96
 
     this.cols = Math.ceil(WORLD_WIDTH / this.tileSize)
@@ -461,6 +514,36 @@ export class LightingSystem {
   /** World pixels per light tile, for callers baking emission along a pattern. */
   static get TileSize(): number {
     return this.tileSize
+  }
+
+  /**
+   * Set the global brightness multiplier - ambient, emitters and baked emission
+   * all scale together, so lit-to-unlit contrast and light reach are unchanged.
+   * See BRIGHTNESS IS NOT AMBIENT above.
+   *
+   * Safe to call at any time, including mid-frame: it is read once per frame in
+   * upload() and touches no buffer, so there is nothing to rebuild and no cost
+   * to changing it. Unlike the other options it survives being set before
+   * Initialize() only by being passed through LightingOptions - Initialize()
+   * resets it to `options.brightness ?? 1` like every other setting.
+   */
+  static SetBrightness(brightness: number): void {
+    this.brightness = LightingSystem.clampBrightness(brightness)
+  }
+
+  /** Current global brightness multiplier. 1 is the authored look. */
+  static get Brightness(): number {
+    return this.brightness
+  }
+
+  /**
+   * Keep brightness positive and finite. Zero would be a black screen with no
+   * way back from inside the game, and a NaN from a malformed stored setting
+   * would silently blank the light map, so both fall back to the authored look.
+   */
+  private static clampBrightness(brightness: number): number {
+    if (!Number.isFinite(brightness) || brightness <= 0) return 1
+    return brightness
   }
 
   /**
@@ -937,7 +1020,10 @@ export class LightingSystem {
     const { light, pixels, texture, imageData, cols, winX0, winX1, winY0, winY1 } = this
     if (!pixels || !texture || !imageData) return
 
-    const e = this.exposure
+    // Brightness folds into exposure here rather than scaling ambient and every
+    // emitter upstream, because the flood is linear and the two are identical -
+    // see BRIGHTNESS IS NOT AMBIENT. One multiply per frame, not one per light.
+    const e = this.exposure * this.brightness
     for (let y = winY0; y <= winY1; y++) {
       const row = y * cols
       for (let x = winX0; x <= winX1; x++) {

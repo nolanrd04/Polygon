@@ -123,8 +123,8 @@ export class CollisionManager {
       UpgradeSystem.dispatchModifyHitEnemy(projectile, enemy, damage)
       const finalDamage = Math.ceil(damage.amount)
 
-      console.log(`Collision damage: base=${baseDamage}, final=${finalDamage}`)
-      killed = enemy.takeDamage(finalDamage)
+      console.log(`Collision damage: base=${baseDamage}, final=${finalDamage}, penetration=${projectile.penetration}`)
+      killed = enemy.takeDamage(finalDamage, undefined, projectile.penetration)
       // Emit damage event for wave validation, tagged with which hit produced
       // it so the backend can bound primary and explosion damage separately.
       EventBus.emit('damage-dealt', { amount: finalDamage, source: projectile.damageSource })

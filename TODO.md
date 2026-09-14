@@ -7,9 +7,9 @@
 - [ ] Stat scaling balancing: right now, player stats outpace the rate of increase of enemy stats. Need to fix this somehow.
 
 ## Enemies
-- [ DONE ] Super pentagon — sprints toward player, explodes, leaves behind a fire pool
-- [ DONE ] Super hexagon
-- [ ] Super Octogon
+- [x] Super pentagon — sprints toward player, explodes, leaves behind a fire pool
+- [x] Super hexagon
+- [x] Super Octogon - Continuously and slowly moves toward the player. Spawns fast moving square enemies that explode into an acid explosion on death. When kills, it splits into two 'suspicious square' enemies that actively avoid the player and grow into a super octogon over time. Only the original octogon can drop bundles or score. Need to make sure the damage calculation on the backend account for dynamically updating max health like this. Actually we can just cap the re-grow to one. Set a variable in the super octogon class CanSplit so when the suspicious squares spawn the octogon (regrow) we just set CanSplit to false
 - [ ] Hexagon: add visual indication for shield health
 - [ ] Vampire (triangle?): if it hits the player the player can't regen health
 
@@ -19,8 +19,11 @@
 
 ## Attacks
 - [ ] Laser
-- [ ] FLamer
-- [ ] Zapper
+-  [ ] Zapper
+- [ ] Zapper (**variant: lightning rod**: *still shoots out normal bolts but for each polygon side, the same number of nearest enemies get shocked by a chain reaction lightning bolt*; **-> lord of thunder**: *lightning bolts now have a 50% chance to spawn but attack 3x as fast, and one will periodically spawn on the player to attack enemies nearby.*; -> **mjolnir**: *a lightning-charged hammer now circles the player and zaps nearby enemies. Hammer colisions spawn multiple thunderbolts.*)
+
+- [ ] Flamer
+
 - [ ] Spinner
 - [ ] Healer
 - [ ] Controller
@@ -45,15 +48,15 @@
 - [ ] New "buffs" which are temporary upgrades to the player
 - [ ] "Largenes": reduces damage taken but reduced movement speed and increases size. All values dependent on rarity. Cannot roll from bundles.
 - [ ] "Lightweight: reduced size and increases speed but increases the damage taken. All values dependent on rarity. Cannot roll from bundles.
-- [ ] Healing refactor: add a keybind to restore health instantly. Add upgrades below:
-- [ ] Healing refactor upgrade: Increase insta heal slots +1
-- [ ] Healing refactor upgrade: Decrease insta heal cooldown
-- [ ] Healing refactor upgrade: Increase insta heal amount (percentage based)
-- [ ] Healing refactor: change vampirism to heal per chance. upgrades increase chance but not value
+- [x] Healing refactor: add a keybind to restore health instantly. Add upgrades below:
+- [x] Healing refactor upgrade: Increase insta heal slots +1
+- [x] Healing refactor upgrade: Decrease insta heal cooldown
+- [x] Healing refactor upgrade: Increase insta heal amount (percentage based)
+- [x] Healing refactor: change vampirism to heal per chance. upgrades increase chance but not value
 - [ ] Healing refactor: New upgrade: syphon. Syphon will heal a killed enemy for x amount on kill.
 
 ## Visuals
-- [ DONE ] Implement 'dusts' (see terraria)
+- [x] Implement 'dusts' (see terraria)
 - [ ~ ] Ensure settings actually work
 - [ ] Add color customization for the player
 - [ DONE ] Lighting
@@ -61,6 +64,13 @@
 ## Bullet upgrades (future)
 ### tier 2 variant upgrade ideas
 **Homing Bullets**
+- [ ] Stickies: Homing bullets leave behing projectiles that stick to the enemy to deal weaker continuous damage.
+Requires: Homing bullets, 2 pierce upgrades
+Upgrades: Freezing stickies (sticky projectiles slow enemies while attached), Weakening stickies (reduces the damage of enemies they are stuck to), Stronger stickies (stickies deal damage based on a percent of the homing bullet, increase the minimum possible damage of the stickies)
+
+- [ ] Speed Seekers: Greatly increases the velocity and fire rate of homing bullets but decreases power (size) (DOUBLE FIRE RATE, REDUCE DAMAGE BY 50%)
+- Requires: Homing bullets, 10 velocity upgrades
+- Upgrades: Fire rate, Velocity
 
 **Explosive Bullets**
 - [ ] STA Missle: Explosive Bullets now have a chance to be a high velocity missle that shoots toward the mouse cursor with increased explosive power.
@@ -92,22 +102,6 @@ Upgrades: increased pellet count, increased fire rate, increased close-quarters 
 - [ ] Remove Fullscreen button
 - [ ] improve zoom
 - [ ] add button layout customization
-
-## SIMULATION SCRIPT
-Simulates how a game is played. A single script with a single parameter:
-`cd backend && venv/bin/python scripts/simulate_run --WAVE_NUM`
-
-Here is what it does:
-1. Uses all our collected statistics to generate simulated run data to measure balancing.
-2. For each pre wave, get current points.
-3. For each pre wave, roll and pick upgrades based on `analyze_runs.py` pick rates for that wave.
-4. Repeat steps 2-3 until points are diminished. (I know this isnt proper, some players may decide to start a run with points still spendable).
-5. For each wave, calculate enemies to spawn.
-6. For each enemy spawned, calculate score chance and total for the wave.
-7. For each wave, calculate and total upgrade bundle drops.
-8. Apply calculate score chance and simulate bundle upgrade rolls.
-9. Repeat steps 2-8 until `WAVE_NUM` is reached.
-10. Display statistics like damage_scaling_ratio, which bullet variant was picked and on which wave, and upgrade list.
 
 # Systems
 

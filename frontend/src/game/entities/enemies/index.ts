@@ -21,12 +21,15 @@ import { Octogon } from './Octogon'
 import { SuperSquare } from './SuperSquare'
 import { SuperPentagon } from './SuperPentagon'
 import { SuperHexagon } from './SuperHexagon'
+import { SuperOctogon } from './SuperOctogon'
 
 // bosses
 import { Dodecahedron } from './Dodecahedron'
 // import { Exploder } from './Exploder'
 import { ArrowHeadHead, ArrowHeadBody, ArrowHeadTail, ARROW_HEAD_IDS } from './ArrowHead'
 import type { Enemy } from './Enemy'
+import { SeekingSquare } from './SeekingSquare'
+import { SuspiciousSquare } from './SuspiciousSquare'
 
 export type EnemyType = {
   id: string
@@ -50,6 +53,9 @@ export const ENEMY_TYPES: EnemyType[] = [
   { id: 'super_square', class: SuperSquare },
   { id: 'super_pentagon', class: SuperPentagon },
   { id: 'super_hexagon', class: SuperHexagon },
+  { id: 'super_octogon', class: SuperOctogon },
+  { id: 'seeking_square', class: SeekingSquare },
+  { id: 'suspicious_square', class: SuspiciousSquare },
   // { id: 'exploder', class: Exploder },
 
   // Arrow Head boss. The head is the only one a wave ever spawns directly -

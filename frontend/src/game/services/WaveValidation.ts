@@ -4,6 +4,18 @@ import { getAllUpgrades, getUpgrade } from '../upgrades'
 import { UpgradeSystem } from '../systems/upgrades'
 import { NormalDifficulty } from '../systems/difficulty/Normal'
 
+// Variant pity: on the wave-start offer for VARIANT_PITY_WAVE, a player who
+// owns none of their attack type's variants gets an offer made entirely of
+// them, so nobody walks into the boss without the option of an attack variant.
+// The pool is curated rather than derived from the upgrade defs so a future
+// variant can ship without automatically becoming a pity pick.
+// Mirrors VARIANT_PITY_WAVE / VARIANT_PITY_POOL in
+// backend/app/services/wave_service.py — keep the two in sync.
+const VARIANT_PITY_WAVE = 10
+const VARIANT_PITY_POOL: Record<string, string[]> = {
+  bullet: ['homing_bullets', 'explosive_bullets', 'buckshot_bullets'],
+}
+
 export interface FrameSample {
   frame: number
   timestamp: number
@@ -37,6 +49,94 @@ export class WaveValidationService {
   private pointsEarnedThisWave: number = 0
   private shotsFired: number[] = []  // ms since wave start, one per cooldown-gated Player.shoot() call
   private offeredUpgrades: any[] = []
+  // Which wave the cached sandbox offer above was rolled for. Sandbox mode has
+  // no backend to re-roll against, so the offer is cached to keep repeat
+  // startWave calls for the *same* wave from acting as a free reroll (both
+  // MainScene's scene-start call and GameManager.completeWave's preload hit
+  // it) - but it has to be re-rolled when the wave actually advances.
+  private offeredUpgradesWave: number | null = null
+
+  /**
+   * Offline/sandbox upgrade roll — the local mirror of the backend's
+   * WaveService._roll_upgrades. Used when there's no auth token (offline) or
+   * after death, where the backend no longer hands out offers.
+   *
+   * allowVariantPity is set by the wave-start roll only; rerolls pass false so
+   * a player can always buy their way back to an ordinary offer.
+   */
+  private rollUpgradesOffline(wave: number, allowVariantPity: boolean): any[] {
+    // Filter upgrades: exclude curses and visual_effects (matching the old JSON-era
+    // offline roll, which never included visual_upgrades.json), plus incompatible,
+    // dependent, and mismatched attack types
+    // `starting` upgrades are granted at run start and never sold — mirrors
+    // the backend's _roll_upgrades filter.
+    const validUpgrades = getAllUpgrades().filter(u => !u.curse && u.upgradeType !== 'visual_effect' && !u.starting && UpgradeSystem.canApply(u))
+
+    // Variant pity. Drawn from validUpgrades rather than every def so the
+    // forced picks still clear canApply — owning none of the pool already
+    // implies that today, but it stops being true the moment a variant gains a
+    // dependentOn. An attack type with no pool, or one whose picks all
+    // filtered out, falls through to the ordinary roll below.
+    if (allowVariantPity && wave === VARIANT_PITY_WAVE) {
+      const attackType = GameManager.getState().playerStats.unlockedAttacks[0] || 'bullet'
+      const pityPool = VARIANT_PITY_POOL[attackType] ?? []
+      if (pityPool.length > 0 && !pityPool.some(id => UpgradeSystem.hasUpgrade(id))) {
+        const forced = validUpgrades.filter((u: any) => pityPool.includes(u.id))
+        if (forced.length > 0) {
+          // Shuffle so the slot order isn't fixed, then take up to 3.
+          for (let i = forced.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1))
+            ;[forced[i], forced[j]] = [forced[j], forced[i]]
+          }
+          return forced.slice(0, 3).map((u: any) => ({ id: u.id, purchased: false }))
+        }
+      }
+    }
+
+    // Pick 3 random valid upgrades using per-wave rarity weights
+    const rarityWeights = NormalDifficulty.getRarityWeights(wave)
+    const selected: any[] = []
+    const maxAttempts = 100
+
+    let attemptCount = 0
+    while (selected.length < 3 && validUpgrades.length > 0 && attemptCount < maxAttempts) {
+      // Pick a rarity based on weights
+      const rand = Math.random()
+      let cumulative = 0
+      let pickedRarity = 'common'
+      for (const [rarity, weight] of Object.entries(rarityWeights)) {
+        cumulative += weight
+        if (rand < cumulative) {
+          pickedRarity = rarity
+          break
+        }
+      }
+
+      // Find upgrades with this rarity
+      const rarityUpgrades = validUpgrades.filter((u: any) => u.rarity === pickedRarity)
+
+      if (rarityUpgrades.length > 0) {
+        // Pick random upgrade from this rarity
+        const randomIdx = Math.floor(Math.random() * rarityUpgrades.length)
+        const upgrade = rarityUpgrades[randomIdx]
+
+        // Avoid duplicates unless stackable
+        const alreadySelected = selected.some((u: any) => u.id === upgrade.id)
+        if (!alreadySelected || upgrade.stackable) {
+          selected.push(upgrade)
+          // Remove from valid pool to avoid duplicates in selection
+          const poolIdx = validUpgrades.indexOf(upgrade)
+          if (poolIdx > -1) {
+            validUpgrades.splice(poolIdx, 1)
+          }
+        }
+      }
+
+      attemptCount++
+    }
+
+    return selected.map((u: any) => ({ id: u.id, purchased: false }))
+  }
 
   /**
    * Start a new wave - get token and upgrades from backend
@@ -63,53 +163,10 @@ export class WaveValidationService {
       this.pointsEarnedThisWave = 0
       this.shotsFired = []
 
-      // Generate initial upgrades if we don't have any yet
-      if (this.offeredUpgrades.length === 0) {
-        // Filter upgrades: exclude curses and visual_effects (matching the old JSON-era
-        // offline roll, which never included visual_upgrades.json), plus incompatible,
-        // dependent, and mismatched attack types
-        // `starting` upgrades are granted at run start and never sold — mirrors
-        // the backend's _roll_upgrades filter.
-        const validUpgrades = getAllUpgrades().filter(u => !u.curse && u.upgradeType !== 'visual_effect' && !u.starting && UpgradeSystem.canApply(u))
-
-        // Pick 3 random valid upgrades using per-wave rarity weights
-        const rarityWeights = NormalDifficulty.getRarityWeights(waveNumber)
-        const selected: any[] = []
-        const maxAttempts = 100
-
-        let attemptCount = 0
-        while (selected.length < 3 && validUpgrades.length > 0 && attemptCount < maxAttempts) {
-          const rand = Math.random()
-          let cumulative = 0
-          let pickedRarity = 'common'
-          for (const [rarity, weight] of Object.entries(rarityWeights)) {
-            cumulative += weight
-            if (rand < cumulative) {
-              pickedRarity = rarity
-              break
-            }
-          }
-
-          const rarityUpgrades = validUpgrades.filter((u: any) => u.rarity === pickedRarity)
-
-          if (rarityUpgrades.length > 0) {
-            const randomIdx = Math.floor(Math.random() * rarityUpgrades.length)
-            const upgrade = rarityUpgrades[randomIdx]
-
-            const alreadySelected = selected.some((u: any) => u.id === upgrade.id)
-            if (!alreadySelected || upgrade.stackable) {
-              selected.push(upgrade)
-              const poolIdx = validUpgrades.indexOf(upgrade)
-              if (poolIdx > -1) {
-                validUpgrades.splice(poolIdx, 1)
-              }
-            }
-          }
-
-          attemptCount++
-        }
-
-        this.offeredUpgrades = selected.map((u: any) => ({ id: u.id, purchased: false }))
+      // Roll a fresh offer whenever this is a wave we haven't rolled for yet.
+      if (this.offeredUpgrades.length === 0 || this.offeredUpgradesWave !== waveNumber) {
+        this.offeredUpgrades = this.rollUpgradesOffline(waveNumber, true)
+        this.offeredUpgradesWave = waveNumber
       }
 
       return this.offeredUpgrades // Return cached upgrades for sandbox play
@@ -418,6 +475,11 @@ export class WaveValidationService {
    * and grants them for free; returns the granted upgrade ids to apply
    * locally.
    */
+  /** The wave-validation token currently in play, or null between waves. */
+  getWaveToken(): string | null {
+    return this.waveToken
+  }
+
   async collectBundle(waveNumber: number, bundleTier: number): Promise<{ success: boolean; upgradeIds?: string[] }> {
     const token = localStorage.getItem('token')
     if (!token) return { success: false }
@@ -476,54 +538,13 @@ export class WaveValidationService {
       }
       GameManager.updatePlayerStats({ points: newPoints })
 
-      // Filter upgrades: exclude curses and visual_effects (matching the old JSON-era
-      // offline roll, which never included visual_upgrades.json), plus incompatible,
-      // dependent, and mismatched attack types
-      const validUpgrades = getAllUpgrades().filter(u => !u.curse && u.upgradeType !== 'visual_effect' && UpgradeSystem.canApply(u))
-
-      // Pick 3 random valid upgrades using per-wave rarity weights
-      const rarityWeights = NormalDifficulty.getRarityWeights(wave)
-      const selected: any[] = []
-      const maxAttempts = 100
-
-      let attemptCount = 0
-      while (selected.length < 3 && validUpgrades.length > 0 && attemptCount < maxAttempts) {
-        // Pick a rarity based on weights
-        const rand = Math.random()
-        let cumulative = 0
-        let pickedRarity = 'common'
-        for (const [rarity, weight] of Object.entries(rarityWeights)) {
-          cumulative += weight
-          if (rand < cumulative) {
-            pickedRarity = rarity
-            break
-          }
-        }
-
-        // Find upgrades with this rarity
-        const rarityUpgrades = validUpgrades.filter((u: any) => u.rarity === pickedRarity)
-
-        if (rarityUpgrades.length > 0) {
-          // Pick random upgrade from this rarity
-          const randomIdx = Math.floor(Math.random() * rarityUpgrades.length)
-          const upgrade = rarityUpgrades[randomIdx]
-
-          // Avoid duplicates unless stackable
-          const alreadySelected = selected.some((u: any) => u.id === upgrade.id)
-          if (!alreadySelected || upgrade.stackable) {
-            selected.push(upgrade)
-            // Remove from valid pool to avoid duplicates in selection
-            const poolIdx = validUpgrades.indexOf(upgrade)
-            if (poolIdx > -1) {
-              validUpgrades.splice(poolIdx, 1)
-            }
-          }
-        }
-
-        attemptCount++
-      }
-
-      this.offeredUpgrades = selected.map((u: any) => ({ id: u.id, purchased: false }))
+      // A reroll never re-forces the variant pity offer — a player who doesn't
+      // want the guaranteed variant paid to get out of it.
+      this.offeredUpgrades = this.rollUpgradesOffline(wave, false)
+      // Keep the cache keyed to this wave, so a startWave call for the same
+      // wave (scene reload, completeWave preload) doesn't undo the reroll the
+      // player just paid for - or re-force the pity offer they rerolled out of.
+      this.offeredUpgradesWave = wave
 
       console.log('[WAVE VALIDATION] Local reroll - new upgrades:', this.offeredUpgrades)
       return { upgrades: this.offeredUpgrades, newPoints }

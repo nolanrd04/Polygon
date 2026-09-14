@@ -205,7 +205,7 @@ export default function MainMenu() {
       </div>
 
       <div className="absolute bottom-8 text-gray-600 text-sm">
-        v0.2.6 - Early Development
+        v{__GAME_VERSION__} - Early Development
       </div>
 
       {showLoadModal && (

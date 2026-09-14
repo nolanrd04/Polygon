@@ -156,6 +156,7 @@ export class HomingBullet extends Projectile {
   private lastHitNPC: Enemy | null = null // Store the last hit enemy for can home logis
 
   // for ricochet detection
+  // private hasRicocheted: boolean = false
 
   SetDefaults(): void {
     this.damage = 10
@@ -246,7 +247,7 @@ export class HomingBullet extends Projectile {
       const streak = Particle.NewParticlePerfect(StreakParticle, this.positionX, this.positionY, 0, 0, {
         timeLeft: 300,
         color: this.color,
-        rotation: this.rotation
+        rotation: this.container.rotation
       })
       // 12px long, 3px thick. Pool returns null when full, so null-check.
       if (streak) 
@@ -324,7 +325,11 @@ export class HomingBullet extends Projectile {
       radius: 1.5
     })
 
-    // HomingBullet is incompatible with the ricochet upgrade (see RicochetDef.incompatibleWith).
+    // We handle the ricochet upgrade here: bounce instead of dying if owned.
+    if (_obstacle && UpgradeEffectSystem.hasEffect(UpgradeEffectID.Ricochet)) {
+      this.ricochet(_obstacle)
+      return false
+    }
     return true
   }
 
@@ -548,7 +553,7 @@ export class BuckshotBullet extends Projectile
         (pellet as Projectile)[stat] = UpgradeModifierSystem.applyModifiers(UpgradeTargetID.Bullet, stat, (pellet as Projectile)[stat])
       }
 
-      pellet.damage = this.damage * 0.3 // Each pellet does 30% of the main bullet's damage. Sounds low but see damage_report.py for min/max possible values and it makes more sense.
+      pellet.damage = this.damage * 0.6 // Each pellet does 60% of the main bullet's damage. Sounds low but see damage_report.py for min/max possible values and it makes more sense.
 
       scene.spawnProjectile(pellet, this.positionX, this.positionY, targetX, targetY, 'player', this.ownerId)
     }
@@ -596,6 +601,7 @@ export class BuckshotPellet extends Projectile
     this.color = COLORS.bullet
     this.knockback = 5
     this.timeLeft = 2000
+    this.penetration = 15 // pellets punch through armor; see BuckshotBulletsDef
   }
 
   OnSpawn(): void {

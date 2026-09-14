@@ -24,6 +24,15 @@ import type { RarityWeights } from '../systems/difficulty/Difficulty'
 import { NormalDifficulty } from '../systems/difficulty/Normal'
 import { getAllUpgrades, getUpgrade, getUpgradeEntry } from '../upgrades'
 import { RarityID, UpgradeTypeID } from '../data/ID'
+import { SETTINGS } from '../core/SettingsStorage'
+
+/**
+ * Ambient light level the game is AUTHORED at - the look every light intensity
+ * in the codebase was tuned against, and the 100% point of the Brightness
+ * setting's multiplier. Changing it rebalances every light at once; the player's
+ * Brightness slider is the knob to move instead.
+ */
+const BASE_AMBIENT = 0.10
 
 export class MainScene extends Phaser.Scene {
   player!: Player
@@ -72,7 +81,18 @@ export class MainScene extends Phaser.Scene {
     // since it is the glowing grid rather than ambient that makes dark areas
     // legible; `airDecay` sets how far lights reach; `exposure` how hard bright
     // centres roll off.
-    LightingSystem.Initialize(this, { ambient: .10, exposure: 1.0 })
+    //
+    // `brightness` is the player's Brightness setting, expressed as a multiplier
+    // over the authored look: the slider picks an AMBIENT it wants (5%-100%),
+    // and dividing by BASE_AMBIENT turns that into the factor that scales
+    // ambient and every light in the game together. Handing the slider straight
+    // to `ambient` instead would raise the floor without moving the lights and
+    // flatten the whole image - see BRIGHTNESS IS NOT AMBIENT in LightingSystem.
+    LightingSystem.Initialize(this, {
+      ambient: BASE_AMBIENT,
+      exposure: 1.0,
+      brightness: SETTINGS.brightness / BASE_AMBIENT
+    })
 
     // Initialize map (registers occluders + emissive grid with the light map)
     this.mapManager = new MapManager(this)
@@ -133,9 +153,6 @@ export class MainScene extends Phaser.Scene {
 
         const { x, y } = bundle.getContainer()
         const upgradeValue = bundle.upgradeValue
-        bundle.destroy()
-
-        this.sound.play('select_upgrade', { volume: getDefaultVolume('select_upgrade') })
 
         const rarityOrder: RarityID[] = [RarityID.Common, RarityID.Uncommon, RarityID.Rare, RarityID.Epic, RarityID.Legendary]
         const applyPickedUpgrades = (pickedIds: string[]) => {
@@ -155,15 +172,30 @@ export class MainScene extends Phaser.Scene {
         // can't trust a client-rolled result for what free upgrades to hand
         // out. Offline/sandbox has no backend to roll against, so it keeps
         // the old fully-local roll.
+        // The bundle only leaves the world once the server accepts the grant:
+        // a refused pickup (this wave's grant cap is spent, or no wave is in
+        // progress to grant against) leaves it on the ground to retry under
+        // the next wave's token instead of silently eating it.
         if (localStorage.getItem('token')) {
+          const waveToken = waveValidation.getWaveToken()
+          if (!waveToken || !bundle.canRequestPickup(waveToken)) return
+
+          bundle.beginPickup()
           const currentWave = GameManager.getState().wave
           waveValidation.collectBundle(currentWave, upgradeValue).then(result => {
-            if (result.success && result.upgradeIds) {
-              applyPickedUpgrades(result.upgradeIds)
+            if (!result.success) {
+              bundle.rejectPickup(waveToken)
+              return
             }
+            bundle.destroy()
+            this.sound.play('select_upgrade', { volume: getDefaultVolume('select_upgrade') })
+            applyPickedUpgrades(result.upgradeIds ?? [])
           })
           return
         }
+
+        bundle.destroy()
+        this.sound.play('select_upgrade', { volume: getDefaultVolume('select_upgrade') })
 
         // Roll how many upgrades/curses this bundle contains (1–4).
         // All upgrades are picked now so canApply() reflects current state.

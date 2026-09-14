@@ -14,6 +14,7 @@ An abstract base class for all projectiles. Handles spawning, physics movement, 
 |-------|------|---------|-------------|
 | `damage` | `number` | 10 | Damage per hit |
 | `damageMultiplier` | `number` | 1 | Multiplied against `damage` at collision time (e.g. 0.5 for reduced-damage hits) |
+| `penetration` | `number` | 0 | Armor penetration — how much of the enemy's `defense` this hit ignores. The enemy's armor is floored at 0, so excess penetration is wasted rather than becoming bonus damage. E.g. `BuckshotPellet` sets 15, so Dodecahedron's 25 defense only subtracts 10 |
 | `speed` | `number` | 400 | Travel speed (px/s) |
 | `size` | `number` | 5 | Radius in pixels; drives both the hitbox and sprite scale |
 | `pierce` | `number` | 1 | Maximum unique enemies this projectile can hit before being destroyed |

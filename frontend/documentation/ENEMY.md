@@ -17,6 +17,7 @@ An abstract base class all enemy types extend. Handles physics spawning, sprite 
 | `maxHealth` | `number` | 50 | Maximum HP (set from `health` on spawn) |
 | `speed` | `number` | 60 | Base movement speed (px/s) |
 | `damage` | `number` | 10 | Damage dealt on player contact |
+| `defense` | `number` | 0 | Flat damage subtracted from every incoming hit (min 1 damage always lands). Reduced per-hit by the attacker's `penetration` |
 | `sides` | `number` | 4 | Number of polygon sides for the sprite texture |
 | `radius` | `number` | 20 | Visual radius in pixels |
 | `color` | `number` | `0xff0000` | Hex tint color |
@@ -67,7 +68,8 @@ An abstract base class all enemy types extend. Handles physics spawning, sprite 
 |--------|-------------|
 | `moveTowards(tx, ty)` | Lerp velocity toward a target (smoothing factor 0.15). Also lerps rotation. |
 | `applyKnockback(vx, vy)` | Sets velocity directly, reduced by `knockbackResistance`. Suppresses AI for 100 ms. |
-| `takeDamage(amount, source?)` | Calls `OnHit`, subtracts health, redraws health bar, flashes white. Calls `_die()` if HP ≤ 0. |
+| `takeDamage(amount, source?, penetration?)` | Calls `OnHit`, subtracts `amount - effectiveDefense(penetration)` (min 1) from health, redraws health bar, flashes white. Calls `_die()` if HP ≤ 0. `CollisionManager` passes the hitting projectile's `penetration`. |
+| `effectiveDefense(penetration?)` | `defense` after penetration, floored at 0 — excess penetration never becomes bonus damage. |
 
 ### Internal methods (prefixed `_`)
 

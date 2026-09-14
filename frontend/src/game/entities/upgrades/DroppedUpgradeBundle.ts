@@ -48,6 +48,13 @@ export class DroppedUpgradeBundle {
   private layers: Layer[] = []
   private _isDestroyed: boolean = false
 
+  // Online pickup state (see MainScene's bundle overlap). The bundle stays in
+  // the world until the server accepts the grant, so a refused pickup isn't
+  // lost: it's hidden while the request is in flight, and after a refusal it
+  // won't retry until a different wave token is in play.
+  private pickupPending: boolean = false
+  private rejectedToken: string | null = null
+
   constructor(scene: Phaser.Scene, x: number, y: number, upgradeValue: number) {
     this.scene = scene
     this.upgradeValue = Math.max(BundleRarity.Common, Math.min(BundleRarity.Legendary, upgradeValue))
@@ -147,6 +154,9 @@ export class DroppedUpgradeBundle {
       this.container.setAlpha(this.timeLeft / 180)
     }
 
+    // Hidden while a pickup request is in flight - no spin, particles, or light.
+    if (this.pickupPending) return
+
     for (const layer of this.layers) {
       layer.rotation += layer.rotationSpeed
       layer.sprite.setRotation(layer.rotation)
@@ -205,6 +215,25 @@ export class DroppedUpgradeBundle {
     if (this._isDestroyed) return
     this._isDestroyed = true
     this.container.destroy()
+  }
+
+  /** Whether an online pickup may be sent under `waveToken` - not already in flight, and not already refused under this same token. */
+  canRequestPickup(waveToken: string): boolean {
+    return !this._isDestroyed && !this.pickupPending && this.rejectedToken !== waveToken
+  }
+
+  /** Hide the bundle while its pickup request is in flight. */
+  beginPickup(): void {
+    this.pickupPending = true
+    this.container.setVisible(false)
+  }
+
+  /** The server refused the pickup: show the bundle again and hold off retrying until a new wave token. */
+  rejectPickup(waveToken: string): void {
+    if (this._isDestroyed) return
+    this.pickupPending = false
+    this.rejectedToken = waveToken
+    this.container.setVisible(true)
   }
 
   getContainer(): Phaser.GameObjects.Container {

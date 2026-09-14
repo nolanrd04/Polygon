@@ -4,7 +4,7 @@ import { UpgradeTargetID, RarityID, UpgradeTypeID } from '../../data/ID'
 export const BuckshotBulletsDef: UpgradeDef = {
   id: "buckshot_bullets",
   name: "Buckshot Bullets",
-  description: "Fires smaller, less-powerful pellets in a spread pattern.",
+  description: "Fires smaller, less-powerful pellets in a spread pattern. Pellets ignore 15 defense.",
   rarity: RarityID.Epic,
   upgradeType: UpgradeTypeID.Variant,
   cost: 20,

@@ -64,6 +64,14 @@ export abstract class Projectile {
   damageMultiplier: number = 1
 
   /**
+   * How much of the enemy's `defense` this projectile ignores (armor penetration).
+   * The enemy's armor is reduced by this amount for this hit only, floored at 0 —
+   * it never turns into bonus damage. E.g. penetration 15 against Dodecahedron's
+   * 25 defense means only 10 damage is subtracted from the hit.
+   */
+  penetration: number = 0
+
+  /**
    * Tags which damage-dealing path this projectile represents, for wave
    * validation (see WaveValidationService.recordDamage). Override to
    * 'explosion' for AoE follow-up hits (e.g. BulletExplosion) so the backend

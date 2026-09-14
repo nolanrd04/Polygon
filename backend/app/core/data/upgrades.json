@@ -26,7 +26,7 @@
   "buckshot_bullets": {
     "id": "buckshot_bullets",
     "name": "Buckshot Bullets",
-    "description": "Fires smaller, less-powerful pellets in a spread pattern.",
+    "description": "Fires smaller, less-powerful pellets in a spread pattern. Pellets ignore 15 defense.",
     "rarity": "epic",
     "type": "variant",
     "cost": 20,
@@ -709,16 +709,16 @@
   "heal_amount_1": {
     "id": "heal_amount_1",
     "name": "Greater Healing",
-    "description": "+1% heal amount",
+    "description": "+2% heal amount",
     "rarity": "uncommon",
     "type": "stat_modifier",
     "cost": 6,
     "target": "player",
     "stat": "healAmount",
-    "value": 0.01,
+    "value": 0.02,
     "isMultiplier": true,
     "stackable": true,
-    "maxStacks": 11,
+    "maxStacks": 9,
     "dependentOn": [
       {
         "ids": [
@@ -730,16 +730,16 @@
   "heal_amount_2": {
     "id": "heal_amount_2",
     "name": "Greater Healing",
-    "description": "+3% heal amount",
+    "description": "+6% heal amount",
     "rarity": "epic",
     "type": "stat_modifier",
     "cost": 20,
     "target": "player",
     "stat": "healAmount",
-    "value": 0.03,
+    "value": 0.06,
     "isMultiplier": true,
     "stackable": true,
-    "maxStacks": 3,
+    "maxStacks": 2,
     "dependentOn": [
       {
         "ids": [
@@ -751,13 +751,13 @@
   "heal_amount_3": {
     "id": "heal_amount_3",
     "name": "Greater Healing",
-    "description": "+5% heal amount",
+    "description": "+10% heal amount",
     "rarity": "legendary",
     "type": "stat_modifier",
     "cost": 40,
     "target": "player",
     "stat": "healAmount",
-    "value": 0.05,
+    "value": 0.1,
     "isMultiplier": true,
     "stackable": true,
     "maxStacks": 2,
@@ -1201,9 +1201,6 @@
           "bullet_pierce_1"
         ]
       }
-    ],
-    "incompatibleWith": [
-      "homing_bullets"
     ]
   },
   "shattered_bullet_1": {
@@ -1386,7 +1383,7 @@
   "vampirism_1": {
     "id": "vampirism_1",
     "name": "Vampirism",
-    "description": "5% chance to heal for 3% of damage dealt. Upgrade to increase chance.",
+    "description": "5% chance to heal for 2% of damage dealt. Upgrade to increase chance.",
     "rarity": "rare",
     "type": "effect",
     "cost": 10,
@@ -1398,7 +1395,7 @@
   "vampirism_2": {
     "id": "vampirism_2",
     "name": "Vampirism",
-    "description": "5% chance to heal for 10% of damage dealt. Upgrade to increase chance.",
+    "description": "5% chance to heal for 5% of damage dealt. Upgrade to increase chance.",
     "rarity": "epic",
     "type": "effect",
     "cost": 20,
@@ -1410,7 +1407,7 @@
   "vampirism_3": {
     "id": "vampirism_3",
     "name": "Vampirism",
-    "description": "5% chance to heal for 25% of damage dealt. Upgrade to increase chance.",
+    "description": "5% chance to heal for 15% of damage dealt. Upgrade to increase chance.",
     "rarity": "legendary",
     "type": "effect",
     "cost": 40,

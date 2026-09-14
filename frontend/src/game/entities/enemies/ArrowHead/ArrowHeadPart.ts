@@ -303,11 +303,11 @@ export abstract class ArrowHeadPart extends Enemy {
   // DAMAGE ROUTING (tModLoader's NPC.realLife)
   // ========================================================================
 
-  takeDamage(amount: number, source?: any): boolean {
+  takeDamage(amount: number, source?: any, penetration: number = 0): boolean {
     const owner = ArrowHeadConfig.chain.sharedHealth ? this.owner : null
 
     if (!owner || owner === this || owner.isDestroyed) {
-      return super.takeDamage(amount, source)
+      return super.takeDamage(amount, source, penetration)
     }
 
     // Let this part veto/react to the hit (flash, sound, invulnerability).
@@ -320,8 +320,10 @@ export abstract class ArrowHeadPart extends Enemy {
     // reduce by *this* part's defense here. The head will subtract its own
     // defense inside its takeDamage, so add that back first and the pool ends
     // up losing exactly what this part let through.
-    const throughArmor = Math.max(1, amount - this.defense)
+    const throughArmor = Math.max(1, amount - this.effectiveDefense(penetration))
     owner.suppressHitSound = true
+    // Penetration was already spent on this part's armor, so the head takes the
+    // hit at full armor and we add exactly that back.
     const killed = owner.takeDamage(throughArmor + owner.defense, source)
     owner.suppressHitSound = false
 

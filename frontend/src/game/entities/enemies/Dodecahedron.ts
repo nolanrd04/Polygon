@@ -85,33 +85,33 @@ export class Dodecahedron extends Enemy {
     this.bundleDropChance = 1
   }
 
+  /**
+   * Normal-difficulty bundle scatter on death, same shape as
+   * ArrowHeadConfig.drops. Each row: `count` bundles of `rarity`, scattered
+   * `minRadius..maxRadius` pixels from the death position.
+   * scripts/enemy_defs_sync.py sums every row's `count.max` into the
+   * backend's bundle_drop_max (the per-wave bundle grant cap counts this
+   * whole pile), so keep the counts plain literals.
+   */
+  private static readonly NORMAL_DROPS = [
+    { rarity: BundleRarity.Legendary, count: { min: 1, max: 2 }, minRadius: 10, maxRadius: 30 },
+    { rarity: BundleRarity.Epic, count: { min: 2, max: 4 }, minRadius: 20, maxRadius: 50 },
+    { rarity: BundleRarity.Rare, count: { min: 3, max: 4 }, minRadius: 30, maxRadius: 60 },
+    { rarity: BundleRarity.Uncommon, count: { min: 4, max: 6 }, minRadius: 50, maxRadius: 80 },
+    { rarity: BundleRarity.Common, count: { min: 4, max: 6 }, minRadius: 70, maxRadius: 100 },
+  ]
+
   DropBundles(): void {
     const waveManager = (this.scene as any).waveManager
-    const difficultyId = waveManager.getDifficultyId()
+    if (waveManager.getDifficultyId() !== DifficultyID.Normal) return
 
-    if (difficultyId === DifficultyID.Normal) {
-      const legendaryCount = Phaser.Math.Between(1, 2)
-      const epicCount = Phaser.Math.Between(2, 4)
-      const rareCount = Phaser.Math.Between(3, 4)
-      const uncommonCount = Phaser.Math.Between(4, 6)
-      const commonCount = Phaser.Math.Between(4, 6)
-
-      const dropWithRadius = (count: number, rarity: number, minRadius: number, maxRadius: number) => {
-        for (let i = 0; i < count; i++) {
-          const angle = Math.random() * Math.PI * 2
-          const distance = Phaser.Math.Between(minRadius, maxRadius)
-          const offsetX = Math.cos(angle) * distance
-          const offsetY = Math.sin(angle) * distance
-          // console.log(`Rarity: ${rarity}, Angle: ${angle}, Distance: ${distance}, OffsetX: ${offsetX}, OffsetY: ${offsetY}`)
-          this.dropBundle(rarity, offsetX, offsetY)
-        }
+    for (const row of Dodecahedron.NORMAL_DROPS) {
+      const count = Phaser.Math.Between(row.count.min, row.count.max)
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2
+        const distance = Phaser.Math.Between(row.minRadius, row.maxRadius)
+        this.dropBundle(row.rarity, Math.cos(angle) * distance, Math.sin(angle) * distance)
       }
-
-      dropWithRadius(legendaryCount, BundleRarity.Legendary, 10, 30)
-      dropWithRadius(epicCount, BundleRarity.Epic, 20, 50)
-      dropWithRadius(rareCount, BundleRarity.Rare, 30, 60)
-      dropWithRadius(uncommonCount, BundleRarity.Uncommon, 50, 80)
-      dropWithRadius(commonCount, BundleRarity.Common, 70, 100)
     }
   }
 

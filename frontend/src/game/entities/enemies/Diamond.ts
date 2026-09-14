@@ -73,6 +73,7 @@ export class Diamond extends Enemy {
       this.speed = this.baseSpeed
       // Continue moving towards player during wait phase
       this.moveTowards(playerX, playerY)
+      this.collideWithEnemies = true
     }
     // Phase 2: Dash up (waitFrames - waitFrames + dashFrames)
     else if (this.frameCounter < this.waitFrames + this.dashFrames) {
@@ -88,6 +89,8 @@ export class Diamond extends Enemy {
       this.velocityX = Math.cos(this.dashDirection) * this.speed
       this.velocityY = Math.sin(this.dashDirection) * this.speed
       this.rotation = this.dashDirection + Math.PI / 2
+
+      this.collideWithEnemies = false
     }
     // Phase 3: Recover (waitFrames + dashFrames - total)
     else {

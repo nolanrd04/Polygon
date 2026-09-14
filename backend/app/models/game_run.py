@@ -17,12 +17,16 @@ from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field
 from app.models.base import BaseMongoModel, PyObjectId
+from app.core.config import settings
 
 
-# Bump manually whenever a balance-relevant change ships (difficulty curves,
-# enemy stats, upgrade values, economy), so runs recorded under different
-# tuning don't silently blend together at analysis time.
-GAME_VERSION = "0.2.4"
+# Stamped onto every WaveSnapshot so runs recorded under different tuning
+# (difficulty curves, enemy stats, upgrade values, economy) don't silently
+# blend together at analysis time. Sourced from version.json - the same file
+# the API version and the frontend's displayed version come from - because
+# hand-maintaining a second copy here is exactly how it ended up four
+# releases stale, silently mislabeling every run from 0.2.5 through 0.2.8.
+GAME_VERSION = settings.game_version
 
 
 class OfferRoll(BaseModel):

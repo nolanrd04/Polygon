@@ -20,34 +20,100 @@ const ENEMY_COUNTS: Record<number, number> = {
 const SPAWN_WEIGHTS: Record<number, EnemySpawnWeight[]> = {
   1: [{ type: 'triangle', weight: 100 }],
   2: [{ type: 'triangle', weight: 100 }],
+  // introduce square
   3: [{ type: 'triangle', weight: 70 }, { type: 'square', weight: 30 }],
   4: [{ type: 'triangle', weight: 60 }, { type: 'square', weight: 40 }],
+  // introduce super triange, the first projectile based enemy
   5: [{ type: 'triangle', weight: 60 }, { type: 'square', weight: 30 }, { type: 'super_triangle', weight: 10 }],
   6: [{ type: 'triangle', weight: 60 }, { type: 'square', weight: 30 }, { type: 'super_triangle', weight: 10 }],
+  // introduce pentagon
   7: [{ type: 'triangle', weight: 40 }, { type: 'square', weight: 25 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }],
-  8: [{ type: 'triangle', weight: 40 }, { type: 'square', weight: 15 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 10 }, { type: 'diamond', weight: 15 }],
-  9: [{ type: 'triangle', weight: 30 }, { type: 'square', weight: 20 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 15 }],
-  10: [{ type: 'triangle', weight: 30 }, { type: 'square', weight: 20 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 15 }],
+  // introduce diamond
+  8: [
+    { type: 'triangle', weight: 40 }, { type: 'square', weight: 15 }, { type: 'super_triangle', weight: 20 }, 
+    { type: 'pentagon', weight: 10 }, { type: 'diamond', weight: 15 }],
 
-  11: [{ type: 'triangle', weight: 15 }, { type: 'square', weight: 20 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 15 }, { type: 'hexagon', weight: 15 }],
-  12: [{ type: 'triangle', weight: 10 }, { type: 'square', weight: 15 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 20 }, { type: 'diamond', weight: 20 }, { type: 'hexagon', weight: 15 }],
-  13: [{ type: 'square', weight: 10 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 45 }, { type: 'hexagon', weight: 10 }],
-  14: [{ type: 'square', weight: 30 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 20 }, { type: 'hexagon', weight: 5 }, { type: 'octogon', weight: 10 }],
-  15: [{ type: 'square', weight: 25 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 15 }, { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 15 }],
-  16: [{ type: 'triangle', weight: 20 }, { type: 'square', weight: 35 }, { type: 'super_triangle', weight: 15 }, { type: 'octogon', weight: 5 }, { type: 'super_square', weight: 25 }],
-  17: [{ type: 'square', weight: 40 }, { type: 'super_triangle', weight: 15 }, { type: 'octogon', weight: 10 }, { type: 'super_square', weight: 35 }],
-  18: [{ type: 'square', weight: 20 }, { type: 'super_triangle', weight: 10 }, { type: 'pentagon', weight: 5 }, { type: 'diamond', weight: 15 }, { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 15 }, { type: 'super_square', weight: 25 }],
-  19: [{ type: 'square', weight: 20 }, { type: 'super_triangle', weight: 10 }, { type: 'pentagon', weight: 5 }, { type: 'diamond', weight: 15 }, { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 15 }, { type: 'super_square', weight: 25 }],
-  20: [{ type: 'square', weight: 20 }, { type: 'super_triangle', weight: 10 }, { type: 'pentagon', weight: 5 }, { type: 'diamond', weight: 15 }, { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 15 }, { type: 'super_square', weight: 25 }],
+  9: [
+    { type: 'triangle', weight: 30 }, { type: 'square', weight: 20 }, { type: 'super_triangle', weight: 20 }, 
+    { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 15 }],
+  // BOSS WAVE
+  10: [
+    { type: 'triangle', weight: 30 }, { type: 'square', weight: 20 }, { type: 'super_triangle', weight: 20 }, 
+    { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 15 }],
+  // introduce hexagon
+  11: [
+    { type: 'triangle', weight: 15 }, { type: 'square', weight: 20 }, { type: 'super_triangle', weight: 20 }, 
+    { type: 'pentagon', weight: 15 }, { type: 'diamond', weight: 15 }, { type: 'hexagon', weight: 15 }],
 
-  21: [{ type: 'triangle', weight: 10 }, { type: 'pentagon', weight: 15 }, { type: 'super_triangle', weight: 10 }, { type: 'diamond', weight: 25 }, { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 10 }, { type: 'super_square', weight: 10 }, { type: 'super_pentagon', weight: 10 }],
-  22: [{ type: 'pentagon', weight: 15 }, { type: 'super_triangle', weight: 15 }, { type: 'diamond', weight: 25 }, { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 10 }, { type: 'super_square', weight: 10 }, { type: 'super_pentagon', weight: 15 }],
-  23: [{ type: 'pentagon', weight: 10 }, { type: 'super_triangle', weight: 10 }, { type: 'diamond', weight: 35 }, { type: 'octogon', weight: 10 }, { type: 'super_square', weight: 10 }, { type: 'super_pentagon', weight: 25 }],
-  24: [{ type: 'pentagon', weight: 5 }, { type: 'super_triangle', weight: 10 }, { type: 'diamond', weight: 30 }, { type: 'octogon', weight: 10 }, { type: 'super_square', weight: 10 }, { type: 'super_pentagon', weight: 35 }],
+  12: [
+    { type: 'square', weight: 10 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 }, 
+    { type: 'diamond', weight: 45 }, { type: 'hexagon', weight: 10 }],
+  // introduce octogon
+  13: [
+    { type: 'square', weight: 30 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 },
+    { type: 'diamond', weight: 20 }, { type: 'hexagon', weight: 5 }, { type: 'octogon', weight: 10 }],
 
-  25: [{ type: 'super_triangle', weight: 15 }, { type: 'diamond', weight: 20 }, { type: 'octogon', weight: 10 }, { type: 'super_square', weight: 15 }, { type: 'super_pentagon', weight: 25 }, { type: 'super_hexagon', weight: 15 }],
-  26: [{ type: 'super_triangle', weight: 10 }, { type: 'diamond', weight: 20 }, { type: 'octogon', weight: 15 }, { type: 'super_square', weight: 15 }, { type: 'super_pentagon', weight: 20 }, { type: 'super_hexagon', weight: 20 }],
-  27: [{ type: 'diamond', weight: 20 }, { type: 'octogon', weight: 20 }, { type: 'super_square', weight: 20 }, { type: 'super_pentagon', weight: 20 }, { type: 'super_hexagon', weight: 20 }],
+  14: [
+    { type: 'square', weight: 25 }, { type: 'super_triangle', weight: 20 }, { type: 'pentagon', weight: 15 },
+    { type: 'diamond', weight: 15 }, { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 15 }],
+  // introduce super square, start prioritizing super variants
+  15: [
+    { type: 'triangle', weight: 20 }, { type: 'square', weight: 35 }, { type: 'super_triangle', weight: 15 },
+    { type: 'octogon', weight: 5 }, { type: 'super_square', weight: 25 }],
+
+  16: [
+    { type: 'square', weight: 40 }, { type: 'super_triangle', weight: 15 }, { type: 'octogon', weight: 10 },
+    { type: 'super_square', weight: 35 }],
+
+  17: [
+    { type: 'square', weight: 20 }, { type: 'super_triangle', weight: 10 }, { type: 'pentagon', weight: 5 }, { type: 'diamond', weight: 15 },
+    { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 15 }, { type: 'super_square', weight: 25 }],
+
+  // introduce super pentagon
+  18: [
+    { type: 'triangle', weight: 10 }, { type: 'pentagon', weight: 15 }, { type: 'super_triangle', weight: 10 }, { type: 'diamond', weight: 25 },
+    { type: 'hexagon', weight: 10 }, { type: 'octogon', weight: 10 }, { type: 'super_square', weight: 10 }, { type: 'super_pentagon', weight: 10 }],
+
+  19: [
+    { type: 'pentagon', weight: 15 }, { type: 'super_triangle', weight: 15 }, { type: 'diamond', weight: 25 }, { type: 'hexagon', weight: 10 },
+    { type: 'octogon', weight: 10 }, { type: 'super_square', weight: 10 }, { type: 'super_pentagon', weight: 15 }],
+
+  // BOSS WAVE
+  20: [
+    { type: 'pentagon', weight: 15 }, { type: 'super_triangle', weight: 20 }, { type: 'diamond', weight: 25 }, { type: 'hexagon', weight: 10 },
+    { type: 'octogon', weight: 10 }, { type: 'super_square', weight: 10 }, { type: 'super_pentagon', weight: 10 }],
+
+  21: [
+    { type: 'pentagon', weight: 5 }, { type: 'super_triangle', weight: 10 }, { type: 'diamond', weight: 30 },
+    { type: 'octogon', weight: 10 }, { type: 'super_square', weight: 10 }, { type: 'super_pentagon', weight: 35 }],
+
+    // introduce super hexagon
+  22: [
+    { type: 'super_triangle', weight: 15 }, { type: 'diamond', weight: 20 }, { type: 'octogon', weight: 10 },
+    { type: 'super_square', weight: 15 }, { type: 'super_pentagon', weight: 25 }, { type: 'super_hexagon', weight: 15 }],
+
+  23: [
+    { type: 'super_triangle', weight: 10 }, { type: 'diamond', weight: 20 }, { type: 'octogon', weight: 15 },
+    { type: 'super_square', weight: 15 }, { type: 'super_pentagon', weight: 20 }, { type: 'super_hexagon', weight: 20 }],
+
+    //maybe remove 23 or 24 later on.
+  24: [
+    { type: 'diamond', weight: 20 }, { type: 'octogon', weight: 20 }, { type: 'super_square', weight: 20 },
+    { type: 'super_pentagon', weight: 20 }, { type: 'super_hexagon', weight: 20 }],
+
+    // introduce super octogon
+  25: [
+    { type: 'diamond', weight: 15 }, { type: 'octogon', weight: 10 }, { type: 'super_square', weight: 20 },
+    { type: 'super_pentagon', weight: 15 }, { type: 'super_hexagon', weight: 10 }, {type: 'super_octogon', weight: 10}, {type: 'square', weight: 20}],
+
+  26: [
+    {type: 'square', weight: 15 }, { type: 'diamond', weight: 25 }, { type: 'super_square', weight: 15}, {type: 'super_pentagon', weight: 15}, 
+    {type: 'super_hexagon', weight: 10}, {type: 'octogon', weight: 10}, {type: 'super_octogon', weight: 10}],
+
+  27: [
+    {type: 'super_triangle', weight: 10 }, {type: 'super_square', weight: 20}, {type: 'super_pentagon', weight: 20}, 
+    {type: 'super_hexagon', weight: 20}, {type: 'super_octogon', weight: 15}, {type: 'diamond', weight: 15}]
+  
 }
 
 const FALLBACK_WEIGHTS: EnemySpawnWeight[] = [

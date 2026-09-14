@@ -40,6 +40,9 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
     { id: 'super_square', name: 'Super Square', description: 'Enhanced square that shoots an acid projectile' },
     { id: 'super_pentagon', name: 'Super Pentagon', description: 'Enemy that teleports and detonates on death' },
     { id: 'super_hexagon', name: 'Super Hexagon', description: 'Enemy with shield that shoots acid projectiles' },
+    { id: 'super_octogon', name: 'Super Octogon', description: 'Spawns seeking enemies. Splits on death and split NPCs grow back into Super Octogons' },
+    { id: 'seeking_square', name: 'Seeking Square', description: 'Seeking enemy' },
+    { id: 'suspicious_square', name: 'Suspicious Square', description: 'Suspicious enemy' },
     { id: 'dodecahedron', name: 'Dodecahedron', description: 'Boss enemy with high health' },
     { id: 'arrow_head', name: 'Arrow Head', description: 'Segmented worm boss - spawns its own body/tail chain' }
   ]

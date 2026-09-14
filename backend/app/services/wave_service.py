@@ -19,7 +19,7 @@ from app.repositories.player_stats_repository import PlayerStatsRepository
 from app.repositories.game_save_repository import GameSaveRepository
 from app.repositories.game_run_repository import GameRunRepository
 from app.core.upgrade_data import UPGRADES, STARTING_UPGRADES, can_apply_upgrade, get_upgrade
-from app.core.enemy_data import calculate_minimum_damage_required, calculate_expected_health_spawned, validate_enemy_spawn, get_enemy_score_chance, get_split_children, get_enemy_bundle_drop_chance
+from app.core.enemy_data import calculate_minimum_damage_required, calculate_expected_health_spawned, validate_enemy_spawn, get_enemy_score_chance, get_split_children, get_enemy_bundle_drop_chance, get_enemy_bundle_drop_max, calculate_family_spawn_counts
 from app.core.projectile_data import (
     resolve_active_projectile,
     get_fire_cooldown_ms,
@@ -31,6 +31,20 @@ from app.core.projectile_data import (
 )
 from app.core.difficulty import get_difficulty
 from app.core.difficulty.base import Difficulty
+
+
+# Variant pity: on the wave-start offer for VARIANT_PITY_WAVE, a player who
+# owns none of their attack type's variants gets an offer made entirely of
+# them, so nobody walks into the boss without the option of an attack variant.
+# The pool is curated rather than derived from UPGRADES so a future variant can
+# ship without automatically becoming a pity pick. Rerolls deliberately roll
+# normally (see _roll_upgrades' allow_variant_pity) - a player who doesn't want
+# a variant can always buy their way back to an ordinary offer.
+# Mirrored offline in frontend/src/game/services/WaveValidation.ts.
+VARIANT_PITY_WAVE = 10
+VARIANT_PITY_POOL: Dict[str, List[str]] = {
+    "bullet": ["homing_bullets", "explosive_bullets", "buckshot_bullets"],
+}
 
 
 class WaveService:
@@ -93,7 +107,8 @@ class WaveService:
                 current_upgrades=current_upgrades,
                 attack_type=game_save.current_attack_type if game_save else "bullet",
                 wave_number=wave_number,
-                difficulty=difficulty
+                difficulty=difficulty,
+                allow_variant_pity=True
             )
             print(f"Rolled new upgrades for wave {wave_number}: {[u['id'] for u in offered_upgrades]}")
 
@@ -130,7 +145,11 @@ class WaveService:
             expiry_seconds=self.WAVE_TOKEN_LIFETIME_SECONDS,
             # Affordability baseline for this wave's opening offer (70 is the
             # new-game starting bonus the wave-1 save below is created with).
-            points_at_roll=game_save.current_points if game_save else 70
+            points_at_roll=game_save.current_points if game_save else 70,
+            # Bundle-grant allowance the last completed wave left unspent
+            # (see _unspent_bundle_grants) - read fresh from the save, so a
+            # mid-wave reload's replacement token gets the same carryover.
+            bundle_grant_carryover=game_save.bundle_grant_carryover if game_save else 0
         )
 
         # Save token to database
@@ -484,9 +503,16 @@ class WaveService:
         attack_type: str,
         wave_number: int,
         difficulty: Difficulty,
-        count: int = 3
+        count: int = 3,
+        allow_variant_pity: bool = False
     ) -> List[Dict[str, Any]]:
-        """Roll random upgrades based on per-wave rarity weights"""
+        """
+        Roll random upgrades based on per-wave rarity weights.
+
+        allow_variant_pity is set by the wave-start roll only. Rerolls leave it
+        False so a player who doesn't want the guaranteed variant can reroll
+        into an ordinary offer.
+        """
         # Curses and visual effects are never part of the wave-start offer:
         # curses only surface through the client-side mid-wave bundle pickup,
         # and the frontend's offer-screen lookup table excludes both (see
@@ -508,6 +534,19 @@ class WaveService:
 
         if not available_upgrades:
             return []
+
+        # Variant pity (wave-start offer only). Drawn from available_upgrades
+        # rather than UPGRADES so the forced picks still clear
+        # can_apply_upgrade - owning none of the pool already implies that
+        # today, but it stops being true the moment a variant gains a
+        # dependentOn. An attack type with no pool, or one whose picks all
+        # filtered out, falls through to the ordinary roll below.
+        if allow_variant_pity and wave_number == VARIANT_PITY_WAVE:
+            pity_pool = VARIANT_PITY_POOL.get(attack_type, [])
+            if pity_pool and not any(v in current_upgrades for v in pity_pool):
+                forced = [u for u in available_upgrades if u["id"] in pity_pool]
+                if forced:
+                    return random.sample(forced, min(count, len(forced)))
 
         selected = []
         attempts = 0
@@ -709,10 +748,66 @@ class WaveService:
     # grants per wave against a generous multiple of the expected count
     # (enemy_count * drop_chance) - comfortably covers legitimate variance
     # while still bounding a script hammering this endpoint to a small,
-    # fixed number of free upgrades instead of unlimited.
+    # fixed number of free upgrades instead of unlimited. Guaranteed boss
+    # piles are added on top unmultiplied, and whatever a wave leaves unspent
+    # rolls into the next (see _bundle_grant_cap / _unspent_bundle_grants).
     BUNDLE_GRANT_SAFETY_MULTIPLIER = 4
     MIN_BUNDLE_GRANTS_PER_WAVE = 2
     BUNDLE_RARITY_ORDER = ["common", "uncommon", "rare", "epic", "legendary"]
+
+    def _bundle_grant_cap(self, difficulty: Difficulty, wave_number: int) -> int:
+        """
+        Bundle grants a wave's own token allows, before any carryover.
+
+        Random drops: each enemy type's share of the wave's spawn pool times
+        its own per-bundle drop chance (mirrors Enemy.ts's bundleDropChance;
+        difficulty.get_bundle_drop_chance() is only the fallback for types
+        with none of their own) and its bundle_drop_max, scaled by
+        BUNDLE_GRANT_SAFETY_MULTIPLIER.
+
+        Scheduled boss spawns (e.g. wave 10's dodecahedron) sit outside the
+        regular spawn_weights pool entirely - mirrors
+        calculate_expected_health_spawned, which adds them "on top" for the
+        same reason. A boss with a guaranteed drop scatters a fixed pile
+        (Dodecahedron.ts's NORMAL_DROPS / ArrowHeadConfig.drops, up to 22
+        bundles), so its full bundle_drop_max goes straight onto the cap
+        rather than into the multiplied expectation - counting the pile as
+        one expected bundle let the pile alone overrun the cap.
+        """
+        enemy_count = difficulty.get_enemy_count(wave_number)
+        spawn_weights = difficulty.get_spawn_weights(wave_number)
+        total_weight = sum(w["weight"] for w in spawn_weights) or 1.0
+        expected = sum(
+            enemy_count * (w["weight"] / total_weight)
+            * get_enemy_bundle_drop_chance(w["type"], difficulty, wave_number)
+            * get_enemy_bundle_drop_max(w["type"])
+            for w in spawn_weights
+        )
+        guaranteed = 0
+        for boss_type in (difficulty.get_scheduled_boss_spawns(wave_number) or []):
+            chance = get_enemy_bundle_drop_chance(boss_type, difficulty, wave_number)
+            if chance >= 1:
+                guaranteed += get_enemy_bundle_drop_max(boss_type)
+            else:
+                expected += chance * get_enemy_bundle_drop_max(boss_type)
+        return max(
+            self.MIN_BUNDLE_GRANTS_PER_WAVE,
+            math.ceil(expected * self.BUNDLE_GRANT_SAFETY_MULTIPLIER)
+        ) + guaranteed
+
+    def _unspent_bundle_grants(self, difficulty: Difficulty, token: WaveValidationToken) -> int:
+        """
+        Grant allowance a completed wave's token left unused. Bundles lie on
+        the ground for minutes (DroppedUpgradeBundle.timeLeft) and survive
+        wave transitions - e.g. a boss pile left alone through the shop and
+        collected next wave - so this becomes GameSave.bundle_grant_carryover
+        and is added onto the next wave's token. It already includes the
+        token's own carryover, so an untouched pile keeps rolling forward
+        until it's collected. Total grants over a run stay bounded by the sum
+        of every wave's cap - carryover only moves allowance, never adds it.
+        """
+        cap = self._bundle_grant_cap(difficulty, token.wave_number) + token.bundle_grant_carryover
+        return max(0, cap - token.bundles_granted)
 
     async def collect_upgrade_bundle(
         self,
@@ -756,33 +851,11 @@ class WaveService:
 
         difficulty = get_difficulty(game_save.difficulty_id)
 
-        # Bundle drop chance is per-enemy-type (mirrors Enemy.ts's own
-        # bundleDropChance, e.g. hexagon=0.16 vs triangle=0.08), not a single
-        # flat wave-level rate - difficulty.get_bundle_drop_chance() is only
-        # the fallback for enemy types with no chance of their own. Weight
-        # each type's share of this wave's spawn pool by its real drop chance.
-        # Scheduled boss spawns (e.g. wave 10's dodecahedron, bundle_drop_chance=1.0)
-        # sit outside the regular spawn_weights pool entirely - mirrors
-        # calculate_expected_enemy_health_spawned, which adds them "on top" for
-        # the same reason. Omitting them here undercounts boss waves' expected
-        # bundles, so a boss's own high-chance drops exhaust the cap and get
-        # rejected with a false "grant limit reached" right as the player picks
-        # them up.
-        enemy_count = difficulty.get_enemy_count(wave_number)
-        spawn_weights = difficulty.get_spawn_weights(wave_number)
-        total_weight = sum(w["weight"] for w in spawn_weights) or 1.0
-        expected = sum(
-            enemy_count * (w["weight"] / total_weight) * get_enemy_bundle_drop_chance(w["type"], difficulty, wave_number)
-            for w in spawn_weights
-        )
-        expected += sum(
-            get_enemy_bundle_drop_chance(boss_type, difficulty, wave_number)
-            for boss_type in (difficulty.get_scheduled_boss_spawns(wave_number) or [])
-        )
-        max_grants = max(
-            self.MIN_BUNDLE_GRANTS_PER_WAVE,
-            math.ceil(expected * self.BUNDLE_GRANT_SAFETY_MULTIPLIER)
-        )
+        # This wave's own cap, plus whatever earlier waves left unspent (the
+        # token's bundle_grant_carryover, added inside the filter below) -
+        # bundles left on the ground, like a boss pile ignored through the
+        # shop, get picked up against the NEXT wave's token.
+        max_grants = self._bundle_grant_cap(difficulty, wave_number)
 
         # Matched by the exact token string (not just user_id + wave_number,
         # which isn't guaranteed unique - a mid-wave reload can leave a
@@ -795,7 +868,11 @@ class WaveService:
                 "user_id": user_id,
                 "wave_number": wave_number,
                 "used": False,
-                "bundles_granted": {"$lt": max_grants}
+                # $ifNull: tokens issued before bundle_grant_carryover existed.
+                "$expr": {"$lt": [
+                    "$bundles_granted",
+                    {"$add": [max_grants, {"$ifNull": ["$bundle_grant_carryover", 0]}]}
+                ]}
             },
             {"$inc": {"bundles_granted": 1}}
         )
@@ -1238,6 +1315,23 @@ class WaveService:
         parent's own reported death credits exactly its own children (see
         get_split_children), so a wave full of splitting enemies doesn't
         false-flag as exceeding the ceiling.
+
+        Spawn-family enemies get the same treatment one level up, off the
+        wave's EXPECTED spawns rather than reported deaths: a super octogon's
+        lineage (2 suspicious squares, each either killed or grown into a
+        second-generation octogon - see get_family_members) contains more
+        super octogons, so crediting per reported death would let each
+        generation re-credit the one above it. Pricing the whole terminated
+        lineage off the wave's own expected natural super octogons keeps that
+        finite.
+
+        That lineage includes its seeking squares, which are only priceable
+        because each octogon has a lifetime budget of them (SuperOctogon's
+        maxTotalMinions). Its other cap, maxMinions, bounds nothing over a
+        wave: a killed square frees its slot and is replaced 4s later, so
+        without the lifetime budget an octogon left alive would be an infinite
+        source of kills against a fixed spawn count, and no honest ceiling
+        would exist at all.
         """
         flags = []
 
@@ -1247,7 +1341,12 @@ class WaveService:
             len(get_split_children(death.get("type", "triangle")))
             for death in enemy_deaths
         )
-        max_reasonable = base_ceiling + split_bonus
+        # Same 1.15 margin as base_ceiling: these counts come from the same
+        # expected-spawn math, so they carry the same spawn-variance slack.
+        family_bonus = int(
+            sum(calculate_family_spawn_counts(wave, difficulty).values()) * 1.15
+        )
+        max_reasonable = base_ceiling + split_bonus + family_bonus
 
         if kills > max_reasonable:
             deviation = ((kills - max_reasonable) / max_reasonable) * 100
@@ -1516,6 +1615,10 @@ class WaveService:
                 # Increment to NEXT wave (after completing wave_number, player advances to wave_number + 1)
                 save_data["current_wave"] = wave_number + 1
                 save_data["offered_upgrades"] = []  # Clear offered upgrades after wave completion
+                if token:
+                    save_data["bundle_grant_carryover"] = self._unspent_bundle_grants(
+                        get_difficulty(existing_save.difficulty_id), token
+                    )
 
             await self.game_save_repo.update_by_id(
                 existing_save.id,

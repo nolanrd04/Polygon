@@ -12,7 +12,7 @@ export class SuperHexagonProj extends Projectile {
     this.size = 6
     this.pierce = 999999999
     this.color = 0xd622ac
-    this.timeLeft = 2000
+    this.timeLeft = 1000
     this.doOldPositionTracking = true
     this.oldTrackingCounter = 4
     this.oldTrackingInterval = 55

@@ -8,7 +8,10 @@ Like projectiles (see projectile_defs_sync.py), enemy stats are imperative
 (frontend/src/game/entities/enemies/*.ts), not a declarative object like
 upgrades. This parses each class body, extracts SetDefaults()'s literal
 numeric assignments for the fields the backend anti-cheat actually consumes
-(health/damage/scoreChance/bundleDropChance), and maps class name -> enemy id
+(health/damage/scoreChance/bundleDropChance/bundleDropMax), plus each boss
+drop table's summed `count.max` as bundle_drop_max (see DROP_TABLES - those
+bosses override DropBundles() instead of using bundleDropMax), and maps
+class name -> enemy id
 via the same registry (index.ts's ENEMY_TYPES) EnemyManager itself uses -
 so a new enemy only needs adding there, same as the frontend already requires.
 
@@ -22,6 +25,10 @@ they stay hand-maintained in enemies.json:
     per-enemy data.
   - splits_into: behavioral (Octogon.OnDeath() spawning children), not a
     literal value.
+  - spawn_families: behavioral too, and spread across three classes - the
+    super octogon's OnDeath() suspicious squares, their growth back into a
+    super octogon (SuspiciousSquare.AI), and its AI()'s seeking-square
+    minion timer. See enemy_data.get_family_members().
   - arrow_head / arrow_head_body / arrow_head_tail (base_health, base_damage,
     score_chance, bundle_drop_chance): these three don't extend Enemy
     directly (ArrowHeadHead/Body/Tail extend ArrowHeadPart), and their
@@ -38,9 +45,11 @@ they stay hand-maintained in enemies.json:
       base_damage.arrow_head_body  = head.damage * segment.damageRatio(0)  # body's fallbackT
       base_damage.arrow_head_tail  = head.damage * segment.damageRatio(1)  # tail's fallbackT
       score_chance / bundle_drop_chance: head mirrors cfg.head.*, body/tail are always 0
+    (arrow_head's bundle_drop_max is the exception - it's parsed from
+    ArrowHeadConfig.drops via DROP_TABLES, so it IS checked.)
 
 Used by:
-  - `python3 scripts/enemy_defs_sync.py --write`   regenerate the 4 covered keys
+  - `python3 scripts/enemy_defs_sync.py --write`   regenerate the 5 covered keys
   - `python3 scripts/enemy_defs_sync.py`           value-parity check (exit 1 on drift)
   - `sync-check.sh`                                 same check, wired into the repo's sync workflow
 """
@@ -63,6 +72,17 @@ FIELDS = {
     "damage": "base_damage",
     "scoreChance": "score_chance",
     "bundleDropChance": "bundle_drop_chance",
+    "bundleDropMax": "bundle_drop_max",
+}
+
+# Enemies whose DropBundles() override scatters a fixed drop table (rows of
+# `count: { min, max }`) instead of the base bundleDropMin..bundleDropMax
+# roll: id -> (file, regex matching up to the table's opening `[`). Their
+# bundle_drop_max is the sum of every row's count.max - the most bundles one
+# death can scatter, which the backend's per-wave grant cap adds on top.
+DROP_TABLES = {
+    "dodecahedron": (ENEMIES_DIR / "Dodecahedron.ts", r"\bNORMAL_DROPS\s*=\s*\["),
+    "arrow_head": (ENEMIES_DIR / "ArrowHead" / "ArrowHeadConfig.ts", r"\bdrops:\s*\["),
 }
 
 # Enemy ids whose stats aren't literal SetDefaults() assignments (see the
@@ -75,11 +95,12 @@ HAND_MAINTAINED_ENEMY_IDS = {"arrow_head", "arrow_head_body", "arrow_head_tail"}
 NUMBER = r"-?(?:\d+\.\d+|\.\d+|\d+)"
 
 
-def _extract_balanced(text: str, start: int) -> str:
-    """Given `start` pointing at an opening `{`, return the balanced block
-    (inclusive). Skips string/template literals AND comments - a `//`
-    comment containing an unescaped apostrophe would otherwise be misread
-    as opening a string literal."""
+def _extract_balanced(text: str, start: int, open_ch: str = "{", close_ch: str = "}") -> str:
+    """Given `start` pointing at an opening `open_ch` (`{` by default, `[`
+    for arrays), return the balanced block (inclusive). Skips
+    string/template literals AND comments - a `//` comment containing an
+    unescaped apostrophe would otherwise be misread as opening a string
+    literal."""
     depth = 0
     in_string: str | None = None
     i = start
@@ -102,9 +123,9 @@ def _extract_balanced(text: str, start: int) -> str:
             continue
         elif ch in "\"'`":
             in_string = ch
-        elif ch == "{":
+        elif ch == open_ch:
             depth += 1
-        elif ch == "}":
+        elif ch == close_ch:
             depth -= 1
             if depth == 0:
                 return text[start:i + 1]
@@ -140,6 +161,22 @@ def _literal_fields(body: str) -> dict[str, float]:
     return found
 
 
+def _drop_table_max(ts_file: Path, anchor: str) -> int:
+    """Sum of every `count: { min, max }` row's max in the drop table whose
+    opening `[` `anchor` matches up to. Raises if the table (or its rows)
+    can't be found, so a rename fails the sync check loudly instead of
+    silently dropping the enemy's bundle_drop_max."""
+    text = ts_file.read_text()
+    m = re.search(anchor, text)
+    if not m:
+        raise ValueError(f"Drop table not found in {ts_file.relative_to(REPO_ROOT)} (pattern {anchor!r})")
+    table = _extract_balanced(text, m.end() - 1, "[", "]")
+    maxes = re.findall(rf"count:\s*\{{\s*min:\s*{NUMBER}\s*,\s*max:\s*({NUMBER})\s*\}}", table)
+    if not maxes:
+        raise ValueError(f"No `count: {{ min, max }}` rows in {ts_file.relative_to(REPO_ROOT)}'s drop table")
+    return sum(int(float(v)) for v in maxes)
+
+
 def _class_to_id() -> dict[str, str]:
     """Class name -> registry id, parsed from index.ts's ENEMY_TYPES array -
     the same registry EnemyManager itself resolves spawns through."""
@@ -170,6 +207,9 @@ def parse_frontend_enemies() -> dict[str, dict[str, float]]:
             for field, value in _literal_fields(set_defaults).items():
                 by_key[FIELDS[field]][enemy_id] = value
 
+    for enemy_id, (ts_file, anchor) in DROP_TABLES.items():
+        by_key["bundle_drop_max"][enemy_id] = _drop_table_max(ts_file, anchor)
+
     return by_key
 
 
@@ -182,7 +222,10 @@ def diff_enemies(frontend: dict[str, dict], backend: dict) -> list[str]:
     for key, fmap in frontend.items():
         bmap = backend.get(key, {})
         frontend_ids = set(fmap)
-        backend_ids = set(bmap) - HAND_MAINTAINED_ENEMY_IDS
+        # A hand-maintained id is only skipped for keys the frontend can't
+        # parse it for - e.g. arrow_head's bundle_drop_max comes from its
+        # config's drop table (DROP_TABLES), so that one is still checked.
+        backend_ids = set(bmap) - (HAND_MAINTAINED_ENEMY_IDS - frontend_ids)
 
         for missing in sorted(frontend_ids - backend_ids):
             issues.append(f"{key}: missing in backend: {missing}")

@@ -38,6 +38,13 @@ class WaveValidationToken(BaseMongoModel):
     # since bundles are collected before the wave completes.
     bundles_granted: int = Field(default=0)
 
+    # Unspent bundle-grant allowance carried in from the previous completed
+    # wave (GameSave.bundle_grant_carryover at start_wave time), added on top
+    # of this wave's own cap. Bundles lie on the ground for minutes, so ones
+    # dropped in an earlier wave (e.g. a boss's pile) can still be picked up
+    # against this token.
+    bundle_grant_carryover: int = Field(default=0, ge=0)
+
     # Upgrade ids granted via mid-wave bundle pickups on THIS wave's token.
     # Deliberately NOT written to the game save at grant time - only
     # authorized for this wave's own complete_wave() upgrade check (see
@@ -105,7 +112,8 @@ class WaveValidationToken(BaseMongoModel):
         offered_upgrades: List[str],
         seed: int,
         expiry_seconds: int = 30,
-        points_at_roll: Optional[int] = None
+        points_at_roll: Optional[int] = None,
+        bundle_grant_carryover: int = 0
     ) -> "WaveValidationToken":
         """Create a new wave validation token"""
         token_string = cls.create_token_string(str(user_id), wave_number)
@@ -120,6 +128,7 @@ class WaveValidationToken(BaseMongoModel):
             allowed_upgrades=current_upgrades,
             offered_upgrades=offered_upgrades,
             seed=seed,
+            bundle_grant_carryover=bundle_grant_carryover,
             # The offer this wave opens with (rolled fresh or reused on a
             # reload) - rerolls append their new offers after it.
             offers_rolled=(

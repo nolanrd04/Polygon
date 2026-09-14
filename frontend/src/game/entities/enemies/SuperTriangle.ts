@@ -53,9 +53,8 @@ export class SuperTriangle extends Enemy {
   AI(_playerX: number, _playerY: number): void {
     const distance = Phaser.Math.Distance.Between(this.x, this.y, _playerX, _playerY)
 
-    if (distance > 400) {
-      // Too far - move closer (base class already calls moveTowards, but we can adjust if needed)
-    } else {
+    if (distance <= 400 || Phaser.Math.Between(0, 1000) < 7)
+    {
       // In range - stop moving and shoot
       this.velocityX = 0
       this.velocityY = 0
@@ -65,17 +64,23 @@ export class SuperTriangle extends Enemy {
       if (now - this.lastFireTime >= this.fireCooldown) {
         this.lastFireTime = now
 
-        // Create and spawn projectile using centralized method
-        const projectile = new EnemyBullet()
-        projectile.SetDefaults()
-        // Scale damage based on enemy's damage stat
-        projectile.damage = this.damage
-        // console.log(`Shooter spawning projectile with damage: ${projectile.damage} (enemy damage: ${this.damage})`)
+        // fire at all points of the triangle
+        for (let i = 0; i < this.sides; i++) {
+          const angle = Phaser.Math.DegToRad((360 / this.sides) * i)
+          const targetPosX = this.x + Math.cos(angle) * this.radius
+          const targetPosY = this.y + Math.sin(angle) * this.radius
+          
+          // Create and spawn projectile using centralized method
+          const projectile = new EnemyBullet()
+          projectile.SetDefaults()
+          // Scale damage based on enemy's damage stat
+          projectile.damage = this.damage * 0.5 // reduce damage by 50%
+          // console.log(`Shooter spawning projectile with damage: ${projectile.damage} (enemy damage: ${this.damage})`)
 
-        const scene = this.scene as any
-        scene.spawnProjectile(projectile, this.x, this.y, _playerX, _playerY, 'enemy', this.id)
+          const scene = this.scene as any
+          scene.spawnProjectile(projectile, targetPosX, targetPosY, _playerX, _playerY, 'enemy', this.id)
+        }
 
-        
         // all sound calls should have this check to prevent "sound stacking"
         //
         if (this.scene.sound.isPlaying(SoundID.EnemyShoot1))
@@ -85,6 +90,15 @@ export class SuperTriangle extends Enemy {
         this.scene.sound.play(SoundID.EnemyShoot1, { volume: getDefaultVolume(SoundID.EnemyShoot1) })
         //
       }
+    }
+    else
+    {
+
+    }
+
+    if (distance > 400) {
+      // Too far - move closer (base class already calls moveTowards, but we can adjust if needed)
+    } else {
     }
   }
 

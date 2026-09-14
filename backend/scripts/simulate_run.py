@@ -219,7 +219,7 @@ def build_damage_profile(upgrades: List[str]) -> Dict[str, float]:
     }
 
     if projectile == "buckshot_bullets":
-        # max_primary already carries the 0.3 pellet fraction
+        # max_primary already carries the pellet fraction
         # (_calculate_max_damage_per_hit applies get_pellet_damage_fraction),
         # so it IS the per-pellet number. BuckshotBullet.OnSpawn fires
         # Between(minPellets, maxPellets) of them per vertex.

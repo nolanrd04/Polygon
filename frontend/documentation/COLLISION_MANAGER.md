@@ -37,7 +37,7 @@ Immediately calls `setupCollisions()` which registers six physics relationships:
 2. Checks `projectile._canHitEnemy(enemy.id)` — skips if the hit cooldown hasn't elapsed.
 3. Calls `UpgradeEffectSystem.onProjectileHit(projectile, enemy)` to trigger effects (e.g. lifesteal).
 4. Calls `projectile.OnHitNPC(enemy)` — if it returns `false`, damage is suppressed (used by `ExplosiveBullet`).
-5. If damage is applied: runs through `UpgradeModifierSystem` for final damage value, calls `enemy.takeDamage()`, emits `damage-dealt`.
+5. If damage is applied: runs through `UpgradeModifierSystem` for final damage value, calls `enemy.takeDamage(finalDamage, undefined, projectile.penetration)` so the projectile's armor penetration applies to this hit, emits `damage-dealt`.
 6. If the enemy dies: calls `GameManager.addKill()`, awards points via `GameManager.addPoints()` (probabilistic based on `enemy.scoreChance`), calls `UpgradeEffectSystem.onEnemyKill(enemy)`.
 7. Calls `projectile._recordHit(enemy.id)` — increments pierce count; destroys if exhausted.
 8. Applies knockback to the enemy if `projectile.knockback > 0` (also run through `UpgradeModifierSystem`).

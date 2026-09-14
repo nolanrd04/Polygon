@@ -18,7 +18,7 @@ export const RicochetDef: UpgradeDef = {
   stackable: true,
   maxStacks: 1,
   dependentOn: [{ ids: ["bullet_pierce_1"] }],
-  incompatibleWith: ["homing_bullets"],
+  // incompatibleWith: ["homing_bullets"],
 }
 
 export class Ricochet extends Upgrade {}

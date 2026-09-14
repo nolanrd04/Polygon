@@ -10,7 +10,7 @@ Enemies drop collectible in-world upgrade bundles on death. The player walks ove
 |------|------|
 | `src/game/entities/upgrades/DroppedUpgradeBundle.ts` | Renderable in-world pickup. Handles its own visuals, physics body, fade/expiry. |
 | `src/game/entities/enemies/Enemy.ts` | Base class owns `bundleDropChance`, `bundleDropMin`, `bundleDropMax`, `dropBundle()`, `DropBundles()`. |
-| `src/game/entities/enemies/Dodecahedron.ts` | Only enemy that currently overrides `DropBundles()` — guarantees a legendary on boss death. |
+| `src/game/entities/enemies/Dodecahedron.ts` | Overrides `DropBundles()` to scatter its `NORMAL_DROPS` table (14–22 forced-rarity bundles, 1–2 legendary) on boss death. `ArrowHeadHead.ts` does the same from `ArrowHeadConfig.drops`. `scripts/enemy_defs_sync.py` sums each table's `count.max` into the backend's `bundle_drop_max`, which the per-wave grant cap adds on top — keep those counts plain literals. |
 | `src/game/systems/CollisionManager.ts` | Calls `enemy.DropBundles()` on every projectile kill. |
 | `src/game/systems/WaveManager.ts` | Exposes `getBundleDropChance()`, `getBundleRarityWeights()`, `getRarityWeights()` as passthroughs to the Difficulty. |
 | `src/game/systems/difficulty/Difficulty.ts` | Interface — declares `getBundleDropChance(wave)` and `getBundleRarityWeights(wave)`. |
@@ -42,15 +42,18 @@ MainScene (registered once in create())
       → push to activeBundles[], add container to bundleGroup
 
 Player overlaps bundle (Phaser overlap, registered in create())
-  → bundle.destroy() called immediately to prevent double-pickup
-
   → ONLINE (localStorage has a token): waveValidation.collectBundle(wave, upgradeValue)
+      → skipped while no wave token is in play (between waves), or while
+        bundle.canRequestPickup(token) is false (request in flight / already refused under this token)
+      → bundle.beginPickup() hides it while the request is in flight (prevents double-pickup)
       → POST /api/waves/bundle-pickup { wave, bundle_tier, token: waveToken }
       → backend rolls the bundle's contents itself (WaveService.collect_upgrade_bundle) —
         the client-rolled tier/contents can't be trusted for what free upgrades to grant
-      → response.upgrade_ids applied locally via applyUpgrade(id, true)
+      → accepted: bundle.destroy(), pickup sound, response.upgrade_ids applied via applyUpgrade(id, true)
+      → refused (grant cap spent, token closed): bundle.rejectPickup(token) shows it again;
+        it retries once a new wave token is in play, so a refused bundle is never silently lost
 
-  → OFFLINE/SANDBOX (no token, no backend to roll against): fully local roll
+  → OFFLINE/SANDBOX (no token, no backend to roll against): bundle.destroy() + sound, then fully local roll
       → roll count (1–4 items)
       → build capped + re-normalized rarity weights for this bundle's tier
       → slot 1: pickRegularUpgrade(upgradeValue, exclude)        // guaranteed matching-tier item
@@ -256,6 +259,7 @@ A forced rarity implies a guaranteed spawn. If you want a forced rarity that sti
 ## Known Issues / Follow-up Work
 
 - **Backend sync gap — fixed for online mode.** Online play now routes through `waveValidation.collectBundle()`, which the backend validates and rolls itself (`WaveService.collect_upgrade_bundle`) instead of trusting a client roll. Offline/sandbox still applies locally with no server round-trip, which is fine — there's no backend to desync from in that mode.
+- **Per-wave grant cap (online).** The backend caps pickups per wave token (`WaveService._bundle_grant_cap`): `ceil(expected random drops × 4)` (min 2), plus the full `bundle_drop_max` of every scheduled boss with a guaranteed drop (22 for the dodecahedron/arrow head). Whatever a wave leaves unspent rolls into the next wave's token (`GameSave.bundle_grant_carryover`), since bundles last ~30000 ticks and routinely outlive the wave that dropped them — e.g. a boss pile left alone through the shop and collected next wave.
 - **`replaces` field type mismatch — fixed.** `UpgradeDef.replaces` is `string[]` and is stored/iterated as an actual array of ids (`for (const replacedId of entry.def.replaces)` in `UpgradeSystem`); the old JSON-string bug doesn't apply to the current def-based system.
 - **Curse variety.** 15 curses now exist across three stat-modifier families (`damage_reduc`, `health_reduc`, `shattered_bullet`) plus two effect-hook curses (`fragility_1/2`) — see [CURSES.md](./CURSES.md). `fragility_*` are additive-via-multiply on damage taken, not stat-channel additive, so the `UpgradeModifierSystem.addModifier` curse guard is exercised by `health_reduc_*`/`shattered_bullet_*` (both additive) but not by `fragility_*` or `damage_reduc_*` (both multiplicative-only).
 - **"Show highest rarity" on bundle visual** — the bundle's visual rarity is set at spawn (before items are rolled). This is effectively correct since `upgradeValue` IS the cap for item rarity, but revisit if multi-rarity bundles with items above the visual tier are ever added.

@@ -149,10 +149,12 @@ kill. `ArrowHeadPart.takeDamage()` does the routing:
 
 1. the struck part's own `OnHit` runs (flash, sound, invulnerability)
 2. the struck part's `defense` is applied — it's the part that got hit, so its
-   armor is the armor that matters
+   armor is the armor that matters. The hit's `penetration` is spent here, on
+   that part's armor
 3. the head's own `defense` is added back before forwarding, since
    `Enemy.takeDamage()` will subtract it again, so the pool loses exactly what
-   the struck part let through
+   the struck part let through. Penetration is *not* forwarded — it was already
+   spent in step 2, and forwarding it would apply the same penetration twice
 
 When the head dies, `OnDeath()` dissolves the chain back-to-front
 (`fx.deathStaggerMs`). Segments are removed with `_destroy()`, **not** a death —

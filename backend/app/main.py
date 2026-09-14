@@ -16,7 +16,7 @@ from app.repositories.token_blacklist_repository import TokenBlacklistRepository
 app = FastAPI(
     title="Polygon Game API",
     description="Backend API for the Polygon survival/tower-defense game",
-    version="0.2.7"
+    version=settings.game_version
 )
 
 app.state.limiter = limiter
@@ -76,7 +76,7 @@ async def shutdown():
 
 @app.get("/")
 async def root():
-    return {"message": "Polygon Game API", "version": "0.2.7"}
+    return {"message": "Polygon Game API", "version": settings.game_version}
 
 
 @app.get("/api/health")

@@ -10,6 +10,25 @@ interface UpdateNote {
 // Add new updates at the top of this array
 const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: 'v0.2.8',
+    date: '2026-09-08',
+    title: 'Balancing and New Enemy',
+    changes: [
+      'Reduced the health of the Super Hexagon from 800 to 700.',
+      'Super hexagon now shoots a projectile out of each corner but the projectiles die faster and had their damage reduced 100->70.',
+      'Nerfed vampirism heal percentage amounts from 3->2, 10->5, and 25->15. Chances remain the same.',
+      'Super triangle now shoots a projectile out of each corner and had its projectile damage reduced by 50%.',
+      'Super triangle also now has a 7% chance to shoot projectiles no matter what.',
+      'New enemy: SUPER OCTOGON. No spoilers here but it\'s more complex than most enemies.',
+      'Reworked waves to add SUPER OCTOGON.',
+      'On wave 10, you get to pick between 3 variant upgrades if you do not yet have one.',
+      'Buffed all heal amount upgrades by 2x, but reduced their max stacks.',
+      'Homing bullets can now ricochete.',
+      'Added brightness settings to the options menu.',
+      'Buckshot bullets now ignore 15 defense and pellets spawn damage increased from 30% to 60%.',
+    ]
+  },
+  {
     version: 'v0.2.7',
     date: '2026-09-03',
     title: 'Ability implementation refactor, new Heal ability, fixed homing bullets, and balancing.',

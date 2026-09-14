@@ -40,7 +40,7 @@ export class SuperPentagonExplosionDetonation extends Projectile {
     let glowRadius = this.size * 0.7
 
     // Flash 3 times over the first 3 seconds
-    if (timeElapsed < 3000) {
+    if (timeElapsed < 2000) {
       const cycleTime = timeElapsed % 1000  // 0-1000ms repeating each cycle
 
       if (cycleTime < 250) {
@@ -53,6 +53,10 @@ export class SuperPentagonExplosionDetonation extends Projectile {
         // Solid yellow with enhanced glow (500-1000ms)
         if (cycleTime == 500)
         {
+          if (this.scene.sound.isPlaying(SoundID.DetonationWarning))
+          {
+            this.scene.sound.stopByKey(SoundID.DetonationWarning)
+          } 
           this.scene.sound.play(SoundID.DetonationWarning, { volume: getDefaultVolume(SoundID.DetonationWarning) * 0.9 })
         }
         this.color = 0xffff00
