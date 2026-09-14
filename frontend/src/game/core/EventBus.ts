@@ -32,7 +32,11 @@ export interface GameEvents {
   'damage-dealt': { amount: number; source: 'primary' | 'explosion' }  // Wave validation tracking
   'upgrade-bundle': { x: number; y: number; bundleDropChance: number; forcedRarity?: number }
   'request-ability-state': void  // HUD polls; MainScene answers with the slots below
-  'ability-state-update': { slots: AbilitySlotState[] }
+  // `bindingCount` is every registered ability, not just the owned ones: the
+  // mobile pads are laid out in fixed slots, so their extent has to be known
+  // before the player owns them all.
+  'ability-state-update': { slots: AbilitySlotState[]; bindingCount: number }
+  'activate-ability': string  // HUD ability card tapped (mobile); id of the ability to fire
 }
 
 type EventCallback<T = void> = T extends void ? () => void : (data: T) => void

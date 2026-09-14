@@ -43,8 +43,13 @@ export default function AttackSelectPage() {
   }
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center bg-polygon-darker">
-      <h1 className="text-4xl font-bold text-polygon-primary mb-2">
+    // Vertical centring comes from the mt-auto/mb-auto pair on the first and last
+    // children, NOT from justify-center. Auto margins collapse to zero once the
+    // content is taller than the box, so it falls to the top and the whole grid
+    // stays scrollable; justify-center would instead push the heading out through
+    // the top edge, where no amount of scrolling can reach it.
+    <div className="w-full h-full overflow-y-auto flex flex-col items-center py-12 bg-polygon-darker">
+      <h1 className="mt-auto text-4xl font-bold text-polygon-primary mb-2">
         SELECT YOUR WEAPON
       </h1>
       <p className="text-gray-400 mb-8">Choose your starting attack type</p>
@@ -100,7 +105,7 @@ export default function AttackSelectPage() {
         </button>
       </div>
 
-      <div className="mt-8 text-gray-500 text-sm max-w-md text-center">
+      <div className="mb-auto mt-8 text-gray-500 text-sm max-w-md text-center px-4">
         You can unlock upgrades for your chosen attack during gameplay.
         Different attacks excel in different situations!
       </div>

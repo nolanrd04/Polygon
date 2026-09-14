@@ -4,18 +4,15 @@ import { getAllUpgrades } from '../game/upgrades'
 import type { UpgradeDef } from '../game/upgrades/Upgrade'
 import { EventBus } from '../game/core/EventBus'
 import { ATTACK_INFO, type AttackType } from '../game/data/attackTypes'
+import { IS_MOBILE } from '../game/core/Device'
 
 interface DevToolsProps {
   onToggleCollisionBoxes: () => void
   showCollisionBoxes: boolean
 }
 
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-
 export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }: DevToolsProps) {
   const [isOpen, setIsOpen] = useState(false)
-
-  if (isMobile) return null
   const [selectedCategory, setSelectedCategory] = useState<'stat' | 'effect' | 'variant' | 'visual' | 'ability' | 'enemies'>('stat')
   const [selectedAttack, setSelectedAttack] = useState<AttackType>('bullet')
   const [waveInput, setWaveInput] = useState('1')
@@ -86,11 +83,23 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
     console.log(`Spawned ${enemyType}`)
   }
 
+  // MOBILE LAYOUT
+  // Same tools, repacked — the panel used to be hidden on mobile outright, which
+  // made the touch ability buttons untestable without granting abilities the slow
+  // way. Two things have to move:
+  //   - the launcher sits bottom-CENTRE, in the gap between the two joysticks.
+  //     Bottom-right (the desktop spot) is directly under the aim stick.
+  //   - the panel goes full-bleed. Its 420px fixed width is wider than a phone
+  //     viewport, so it would otherwise hang off the right edge.
   if (!isOpen) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-lg z-50 font-mono text-sm"
+        className={`fixed bg-purple-600 hover:bg-purple-700 text-white rounded-lg shadow-lg z-50 font-mono ${
+          IS_MOBILE
+            ? 'bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 text-[11px]'
+            : 'bottom-4 right-4 px-4 py-2 text-sm'
+        }`}
       >
         DEV TOOLS
       </button>
@@ -98,7 +107,13 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
   }
 
   return (
-    <div className="fixed bottom-4 right-4 w-[420px] bg-gray-900 border-2 border-purple-500 rounded-lg shadow-2xl z-50 max-h-screen overflow-hidden flex flex-col">
+    <div
+      className={`fixed bg-gray-900 border-2 border-purple-500 rounded-lg shadow-2xl z-50 overflow-hidden flex flex-col ${
+        IS_MOBILE
+          ? 'inset-x-2 top-2 bottom-2'
+          : 'bottom-4 right-4 w-[420px] max-h-screen'
+      }`}
+    >
       {/* Header */}
       <div className="bg-purple-600 p-3 flex justify-between items-center">
         <h3 className="font-mono font-bold text-white">DEV TOOLS</h3>

@@ -95,13 +95,22 @@ export default function MainMenu() {
   }
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center bg-polygon-darker">
-      <h1 className="text-6xl font-bold text-polygon-primary mb-4 tracking-wider">
+    // Vertical centring comes from the mt-auto/mb-auto pair on the first and last
+    // IN-FLOW children, NOT from justify-center. Auto margins collapse to zero
+    // once the content is taller than the box, so it falls to the top and every
+    // button stays scrollable; justify-center would instead push the title out
+    // through the top edge, where no amount of scrolling can reach it.
+    //
+    // mb-auto goes on the button stack, not the version line below it: that one
+    // is absolutely positioned, so it is out of flow and carries no margins the
+    // flex layout would honour.
+    <div className="w-full h-full overflow-y-auto flex flex-col items-center py-12 px-4 bg-polygon-darker">
+      <h1 className="mt-auto text-6xl font-bold text-polygon-primary mb-4 tracking-wider">
         POLYGON
       </h1>
       <p className="text-gray-400 mb-12 text-lg">Survive. Evolve. Dominate.</p>
 
-      <div className="flex flex-col gap-4 w-64">
+      <div className="mb-auto flex flex-col gap-4 w-64">
         {/* Show backend connection status warning */}
         {!isBackendConnected && (
           <div className="px-4 py-3 bg-yellow-900/40 border-2 border-yellow-600 text-yellow-400 rounded text-center text-sm">

@@ -8,7 +8,7 @@ import { LightingSystem } from '../systems/LightingSystem'
 import { PerfStats, recordPeaks } from '../core/PerfStats'
 import { EventBus } from '../core/EventBus'
 import { GameManager } from '../core/GameManager'
-import { GAME_HEIGHT, WORLD_WIDTH, WORLD_HEIGHT } from '../core/GameConfig'
+import { WORLD_WIDTH, WORLD_HEIGHT, resolveCameraZoom } from '../core/GameConfig'
 import { AttackType } from '../data/attackTypes'
 import { Projectile } from '../entities/projectiles/Projectile'
 import { Particle } from '../entities/particles/Particle'
@@ -18,6 +18,7 @@ import { waveValidation } from '../services/WaveValidation'
 import { SaveManager } from '../services/SaveManager'
 import { getDefaultVolume, pauseBackgroundMusic, resumeBackgroundMusic, preloadAllAudio } from '../core/AudioRegistry'
 import { TouchControlManager } from '../systems/TouchControlManager'
+import { ScreenSpaceLayer } from '../utils/ScreenSpaceLayer'
 import { AbilitySystem } from '../systems/AbilitySystem'
 import { DroppedUpgradeBundle } from '../entities/upgrades/DroppedUpgradeBundle'
 import type { RarityWeights } from '../systems/difficulty/Difficulty'
@@ -47,6 +48,9 @@ export class MainScene extends Phaser.Scene {
   private showCollisionBoxes: boolean = false
   private upgradeMenuOpen: boolean = false
   private touchControls!: TouchControlManager
+
+  /** Screen-pixel layer for scene-owned HUD text (currently the death message). */
+  private screenUI!: ScreenSpaceLayer
 
   private bundleGroup!: Phaser.GameObjects.Group
   private activeBundles: DroppedUpgradeBundle[] = []
@@ -122,8 +126,14 @@ export class MainScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player, true, 0.5, 0.5)
     this.cameras.main.roundPixels = true
 
-    // Ensure camera zoom is exactly 1.0 (integer zoom prevents jitter)
-    this.cameras.main.setZoom(1.0)
+    // Desktop stays at exactly 1.0; mobile pulls back so a phone sees a useful
+    // slice of the world instead of the ~390px-wide keyhole a portrait viewport
+    // gives at zoom 1. See resolveCameraZoom() for the policy and its ceiling.
+    this.applyCameraZoom()
+    this.scale.on('resize', this.applyCameraZoom, this)
+
+    // Scene-owned HUD text. Must exist before any zoom-dependent layout reads it.
+    this.screenUI = new ScreenSpaceLayer(this, 10000)
 
     // Disable right-click context menu to prevent movement getting stuck
     this.input.mouse!.disableContextMenu()
@@ -325,10 +335,13 @@ export class MainScene extends Phaser.Scene {
       this.events.emit('explosion-damage', data)
     })
     EventBus.on('player-death', () => {
-      // Display death message
+      // Display death message, 20px in from the real bottom-left of the viewport.
+      // `this.scale.height`, not GAME_HEIGHT: under Scale.RESIZE the canvas is the
+      // device viewport, so the old 720 constant floated the text mid-screen on
+      // any phone taller than that.
       const deathText = this.add.text(
         20,
-        GAME_HEIGHT - 20,
+        this.scale.height - 20,
         'YOU DIED\nHealth reached 0',
         {
           fontSize: '24px',
@@ -338,8 +351,8 @@ export class MainScene extends Phaser.Scene {
         }
       )
       deathText.setOrigin(0, 1) // Anchor from bottom-left corner
-      deathText.setDepth(10000) // Render on top of everything
-      deathText.setScrollFactor(0) // Fix to screen space, don't move with camera
+      deathText.setScrollFactor(0) // Ignore camera scroll; the layer handles zoom
+      this.screenUI.add(deathText) // Keeps it screen-sized however far the camera is zoomed out
     })
 
     // Clear projectiles at end of wave
@@ -363,7 +376,17 @@ export class MainScene extends Phaser.Scene {
 
     // Handle ability state requests from UI
     EventBus.on('request-ability-state', () => {
-      EventBus.emit('ability-state-update', { slots: AbilitySystem.getSlots() })
+      EventBus.emit('ability-state-update', {
+        slots: AbilitySystem.getSlots(),
+        bindingCount: AbilitySystem.getBindings().length,
+      })
+    })
+
+    // Mobile fires abilities by tapping their HUD card — there are no separate
+    // on-canvas ability buttons. AbilitySystem.activate() applies the same
+    // ownership and charge guards the keyboard path goes through.
+    EventBus.on('activate-ability', (abilityId: string) => {
+      AbilitySystem.activate(abilityId)
     })
 
     // Handle dev enemy spawning
@@ -427,10 +450,8 @@ export class MainScene extends Phaser.Scene {
     // Enable multi-touch (allow 4 simultaneous pointers for both joysticks + 2 ability buttons)
     this.input.addPointer(3)
 
-    // No camera zoom - let the canvas fill the screen naturally with Scale.RESIZE
-    // This keeps joystick positioning predictable in screen space
-
-    // Initialize touch controls (mobile)
+    // Initialize touch controls (mobile). Their own ScreenSpaceLayer cancels the
+    // camera zoom applied above, so everything below stays in screen pixels.
     this.touchControls = new TouchControlManager(this, this.player)
 
     // Clean up touch controls on shutdown
@@ -438,6 +459,8 @@ export class MainScene extends Phaser.Scene {
       if (this.touchControls) {
         this.touchControls.destroy()
       }
+      this.scale.off('resize', this.applyCameraZoom, this)
+      this.screenUI?.destroy()
       AbilitySystem.unbind()
     })
 
@@ -549,6 +572,25 @@ export class MainScene extends Phaser.Scene {
     })
 
     // -------- -------- -------- //
+  }
+
+  /**
+   * Set the camera zoom for the current viewport, then re-pin everything that is
+   * laid out in screen pixels.
+   *
+   * Runs on create and on every resize/orientation change, because
+   * resolveCameraZoom()'s clamp depends on the viewport: a phone that rotates
+   * from portrait to landscape swaps which axis is the binding one.
+   *
+   * The two sync calls have to come AFTER setZoom, and doing them here rather
+   * than leaving each layer's own resize listener to it removes any dependence on
+   * the order Phaser happens to fire those listeners in.
+   */
+  private applyCameraZoom(): void {
+    this.cameras.main.setZoom(resolveCameraZoom(this.scale.width, this.scale.height))
+
+    this.screenUI?.sync()
+    this.touchControls?.syncToCamera()
   }
 
   update(_time: number, delta: number): void {

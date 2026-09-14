@@ -1,26 +1,37 @@
 import Phaser from 'phaser'
 import type { Player } from '../entities/Player'
 import { EventBus } from '../core/EventBus'
-import { AbilitySystem } from './AbilitySystem'
+import { IS_MOBILE } from '../core/Device'
+import { TOUCH_LAYOUT } from '../core/TouchLayout'
+import { ScreenSpaceLayer } from '../utils/ScreenSpaceLayer'
 
 /**
  * Manages all touch-based input for mobile devices.
  * - Left joystick: movement
  * - Right joystick: rotation/shooting (inner = rotate, outer ring = shoot)
- * - Ability buttons: one per AbilitySystem binding, shown while usable
  * - Pause button: open menu
+ *
+ * ABILITIES ARE NOT HERE. They are fired by tapping their HUD card in
+ * `AbilityDisplay.tsx`, which on mobile doubles as the button. This file used to
+ * draw a second, parallel set of on-canvas ability buttons that repeated
+ * everything the cards already showed — and the two then had to be laid out
+ * around each other, which is what the whole stack-clamping apparatus existed for.
+ *
+ * Every control lives on a ScreenSpaceLayer, so all the layout below is in plain
+ * screen pixels and stays that size no matter how far the mobile camera is zoomed
+ * out. See ScreenSpaceLayer for why pinning alone would not have been enough.
  */
 export class TouchControlManager {
   private scene: Phaser.Scene
   private player: Player
   private isMobileDevice: boolean
 
+  /** Screen-pixel layer holding every control. Null on desktop (nothing to show). */
+  private uiLayer: ScreenSpaceLayer | null = null
+
   // Joystick properties
   private leftJoystick: VirtualJoystick | null = null
   private rightJoystick: VirtualJoystick | null = null
-
-  // Ability buttons, one per AbilitySystem binding, in slot order
-  private abilityButtons: { id: string; button: TouchButton }[] = []
 
   // Pause and fullscreen buttons
   private pauseButton: Phaser.GameObjects.Rectangle | null = null
@@ -30,18 +41,16 @@ export class TouchControlManager {
 
   private resizeCallback: () => void = () => {}
 
-  // Layout constants (shared so repositionControls stays in sync)
-  private static readonly JOYSTICK_RADIUS = 55
-  private static readonly JOYSTICK_INNER_RADIUS = 30
-  // Distance from screen edge to joystick center (x and y independently)
-  private static readonly JOYSTICK_PAD_X = 100      // landscape / short screen
-  private static readonly JOYSTICK_PAD_X_TALL = 70  // portrait / tall screen — tune this
-  private static readonly JOYSTICK_PAD_Y = 77        // 55 radius + 22px bottom buffer
-  private static readonly JOYSTICK_PAD_Y_TALL = 140  // extra upward shift on tall screens
-  private static readonly BUTTON_SIZE = 65
-  private static readonly PAUSE_BUTTON_SIZE = 52
-  private static readonly EDGE_PAD = 14
-  private static readonly ABILITY_SIDE_PAD = 25  // X distance from edge for ability buttons on tall screens
+  // Layout constants. The values live in TOUCH_LAYOUT because the DOM ability
+  // pads are positioned against these same joysticks — see TouchLayout.ts.
+  private static readonly JOYSTICK_RADIUS = TOUCH_LAYOUT.joystickRadius
+  private static readonly JOYSTICK_INNER_RADIUS = TOUCH_LAYOUT.joystickInnerRadius
+  private static readonly JOYSTICK_PAD_X = TOUCH_LAYOUT.joystickPadX
+  private static readonly JOYSTICK_PAD_X_TALL = TOUCH_LAYOUT.joystickPadXTall
+  private static readonly JOYSTICK_PAD_Y = TOUCH_LAYOUT.joystickPadY
+  private static readonly JOYSTICK_PAD_Y_TALL = TOUCH_LAYOUT.joystickPadYTall
+  private static readonly PAUSE_BUTTON_SIZE = TOUCH_LAYOUT.pauseButtonSize
+  private static readonly EDGE_PAD = TOUCH_LAYOUT.edgePad
 
   constructor(scene: Phaser.Scene, player: Player) {
     this.scene = scene
@@ -54,15 +63,16 @@ export class TouchControlManager {
   }
 
   private detectMobileDevice(): boolean {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    )
+    return IS_MOBILE
   }
 
   private initializeTouchControls(): void {
+    // Depth 500 keeps the whole group above the play field (and well above the
+    // light overlay at -5, so the controls are never darkened). Children are
+    // added back to front inside it, since containers do not sort by depth.
+    this.uiLayer = new ScreenSpaceLayer(this.scene, 500)
 
     this.createJoysticks()
-    this.createAbilityButtons()
     this.createPauseButton()
     // this.createFullscreenButton()
     this.setupTouchHandlers()
@@ -93,64 +103,11 @@ export class TouchControlManager {
 
     this.leftJoystick = new VirtualJoystick(this.scene, leftX, bottomY, r, ir, 0x3366ff)
     this.rightJoystick = new VirtualJoystick(this.scene, rightX, bottomY, r, ir, 0xff6633)
-  }
 
-  /**
-   * Position for the ability button at `index` (its order in AbilitySystem's
-   * bindings). Buttons alternate sides — even indices left, odd right — and
-   * each further pair steps inward from the edge, so the first two land
-   * exactly where the original hardcoded shield/dash buttons did.
-   */
-  private abilityButtonPosition(index: number) {
-    const p = TouchControlManager.EDGE_PAD
-    const sz = TouchControlManager.PAUSE_BUTTON_SIZE
-    const btnSize = TouchControlManager.BUTTON_SIZE
-    const bottomY = this.joystickPositions().bottomY
-    const r = TouchControlManager.JOYSTICK_RADIUS
-
-    const onLeft = index % 2 === 0
-    const rank = Math.floor(index / 2)  // 0 for the first pair, 1 for the next, ...
-
-    if (this.H > 500) {
-      // Tall screen (portrait phone or any tablet): place above joysticks,
-      // stacking later pairs upward.
-      const sidePad = TouchControlManager.ABILITY_SIDE_PAD
-      const y = bottomY - r - 250 - btnSize / 2 - rank * (btnSize + 15)
-      return {
-        x: onLeft ? sidePad + btnSize / 2 : this.W - sidePad - btnSize / 2,
-        y,
-      }
-    } else {
-      // Short screen (landscape phone): place beside the pause button,
-      // spreading later pairs further out toward the edges.
-      const spacing = 50
-      const step = rank * (btnSize + 20)
-      const fsX = this.W / 2 - p / 2 - sz / 2
-      const pauseX = this.W / 2 + p / 2 + sz / 2
-      return {
-        x: onLeft
-          ? fsX - sz / 2 - spacing - btnSize / 2 - step
-          : pauseX + sz / 2 + spacing + btnSize / 2 + step,
-        y: p + sz / 2,
-      }
+    if (this.uiLayer) {
+      this.leftJoystick.attachTo(this.uiLayer)
+      this.rightJoystick.attachTo(this.uiLayer)
     }
-  }
-
-  private createAbilityButtons(): void {
-    const btnSize = TouchControlManager.BUTTON_SIZE
-
-    this.abilityButtons = AbilitySystem.getBindings().map((binding, index) => {
-      const { x, y } = this.abilityButtonPosition(index)
-      return {
-        id: binding.id,
-        button: new TouchButton(
-          this.scene, x, y, btnSize,
-          binding.activation.label,
-          binding.activation.buttonColor,
-          () => AbilitySystem.activate(binding.id)
-        ),
-      }
-    })
   }
 
   private pauseButtonPosition() {
@@ -185,6 +142,8 @@ export class TouchControlManager {
       line.setOrigin(0.5, 0.5).setDepth(501).setScrollFactor(0)
       this.pauseSymbolLines.push(line)
     }
+
+    this.uiLayer?.add(this.pauseButton, ...this.pauseSymbolLines)
 
     this.pauseButton.on('pointerdown', () => {
       EventBus.emit('game-pause')
@@ -225,11 +184,6 @@ export class TouchControlManager {
 
     this.leftJoystick?.reposition(leftX, bottomY)
     this.rightJoystick?.reposition(rightX, bottomY)
-
-    this.abilityButtons.forEach(({ button }, index) => {
-      const { x, y } = this.abilityButtonPosition(index)
-      button.reposition(x, y)
-    })
 
     if (this.pauseButton) this.pauseButton.setPosition(pause.x, pause.y)
     for (let i = 0; i < this.pauseSymbolLines.length; i++) {
@@ -300,23 +254,28 @@ export class TouchControlManager {
     if (this.leftJoystick) this.leftJoystick.update()
     if (this.rightJoystick) this.rightJoystick.update()
     this.updateJoystickInput()
-    for (const { id, button } of this.abilityButtons) {
-      button.setVisible(AbilitySystem.isAvailable(id))
-    }
   }
 
   destroy(): void {
     if (this.leftJoystick) this.leftJoystick.destroy()
     if (this.rightJoystick) this.rightJoystick.destroy()
-    for (const { button } of this.abilityButtons) button.destroy()
-    this.abilityButtons = []
     if (this.pauseButton) this.pauseButton.destroy()
     for (const line of this.pauseSymbolLines) {
       line.destroy()
     }
     // if (this.fullscreenButton) this.fullscreenButton.destroy()
     // if (this.fullscreenText) this.fullscreenText.destroy()
+    this.uiLayer?.destroy()
+    this.uiLayer = null
     this.scene.scale.off('resize', this.resizeCallback)
+  }
+
+  /**
+   * Re-pin the controls after the camera zoom changes. The layer already handles
+   * resizes itself; this is for zoom changes that arrive without one.
+   */
+  syncToCamera(): void {
+    this.uiLayer?.sync()
   }
 }
 
@@ -423,9 +382,12 @@ class VirtualJoystick {
     this.canvas.addEventListener('touchcancel', this.onTouchEnd, { passive: true })
   }
 
-  // Convert a DOM clientX/Y to Phaser game coordinates.
-  // Uses canvas.getBoundingClientRect() directly so it always matches the
-  // actual rendered position of scroll-factor-0 objects (no camera offset/zoom applied).
+  // Convert a DOM clientX/Y to screen-pixel game coordinates.
+  // Uses canvas.getBoundingClientRect() directly, so it survives CSS scaling and
+  // DPR differences. It carries no camera terms, which is exactly why the circles
+  // have to live on a ScreenSpaceLayer: that layer is what guarantees a control
+  // authored at (x, y) is still drawn at screen pixel (x, y) once the mobile
+  // camera zooms out, keeping this coordinate space and the visuals in agreement.
   private clientToGame(clientX: number, clientY: number): { x: number; y: number } {
     const rect = this.canvas.getBoundingClientRect()
     const scaleX = this.scene.scale.width / rect.width
@@ -477,6 +439,11 @@ class VirtualJoystick {
     this.knob.setPosition(newCenterX, newCenterY)
   }
 
+  /** Hand the graphics to a screen-pixel layer, back to front. */
+  attachTo(layer: ScreenSpaceLayer): void {
+    layer.add(this.outerCircle, this.innerCircle, this.knob)
+  }
+
   update(): void { /* reserved */ }
 
   destroy(): void {
@@ -487,73 +454,5 @@ class VirtualJoystick {
     this.outerCircle.destroy()
     this.innerCircle.destroy()
     this.knob.destroy()
-  }
-}
-
-/**
- * A touch-responsive button for abilities.
- */
-class TouchButton {
-  private button: Phaser.GameObjects.Rectangle
-  private text: Phaser.GameObjects.Text
-  private callback: () => void
-  private isPressed: boolean = false
-
-  constructor(
-    scene: Phaser.Scene,
-    x: number,
-    y: number,
-    size: number,
-    label: string,
-    color: number,
-    callback: () => void
-  ) {
-    this.callback = callback
-
-    this.button = scene.add
-      .rectangle(x, y, size, size, color, 0.9)
-      .setOrigin(0.5, 0.5)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(450)
-      .setScrollFactor(0)
-
-    this.text = scene.add
-      .text(x, y, label, { font: 'bold 13px Arial', color: '#000000' })
-      .setOrigin(0.5)
-      .setDepth(451)
-      .setScrollFactor(0)
-
-    this.button.on('pointerdown', () => {
-      this.isPressed = true
-      this.button.setAlpha(0.6)
-      this.callback()
-    })
-
-    this.button.on('pointerup', () => {
-      this.isPressed = false
-      this.button.setAlpha(0.9)
-    })
-
-    this.button.on('pointerout', () => {
-      if (this.isPressed) {
-        this.isPressed = false
-        this.button.setAlpha(0.9)
-      }
-    })
-  }
-
-  setVisible(visible: boolean): void {
-    this.button.setVisible(visible)
-    this.text.setVisible(visible)
-  }
-
-  reposition(newX: number, newY: number): void {
-    this.button.setPosition(newX, newY)
-    this.text.setPosition(newX, newY)
-  }
-
-  destroy(): void {
-    this.button.destroy()
-    this.text.destroy()
   }
 }

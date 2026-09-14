@@ -39,7 +39,7 @@ Initialization order matters:
 2. Set world and camera bounds (`WORLD_WIDTH × WORLD_HEIGHT = 2560 × 1440`).
 3. Create `MapManager` and generate the map.
 4. Read `sessionStorage.selectedAttack` and spawn the `Player` at world center.
-5. Set the camera to follow the player (`lerp 0.5`, `roundPixels true`, `zoom 1.0`).
+5. Set the camera to follow the player (`lerp 0.5`, `roundPixels true`), then `applyCameraZoom()` — `1.0` on desktop, pulled back on mobile. Create the `screenUI` layer for scene-owned HUD text.
 6. Initialize `EnemyManager`, `WaveManager`, and `CollisionManager`.
 7. Register movement keys (WASD/arrows) and call `AbilitySystem.bind(this)` — every ability keybind (SPACE dash, E shield, H heal, …) comes from the upgrade defs, not from this file. See [ABILITY_SYSTEM.md](ABILITY_SYSTEM.md).
 8. Subscribe to all `EventBus` events (pause, resume, wave transitions, explosions, upgrades, etc.).
@@ -52,7 +52,13 @@ Initialization order matters:
     - Pre-load upgrades via `waveValidation.startWave()`.
     - Emit `show-upgrades` to open the `UpgradeModal` before the first wave.
 
-`shutdown` calls `AbilitySystem.unbind()`, dropping its keyboard listeners.
+`shutdown` calls `AbilitySystem.unbind()` (dropping its keyboard listeners), removes the `resize` handler, and destroys `screenUI`.
+
+### applyCameraZoom()
+
+Runs on create and on every `resize`. Sets `camera.zoom` from `resolveCameraZoom(scale.width, scale.height)` — see [CORE.md](CORE.md) for why mobile needs it and what caps it — then re-pins both screen-pixel layers (`screenUI`, and the touch controls via `touchControls.syncToCamera()`).
+
+The two sync calls live here rather than in each layer's own `resize` listener so they are guaranteed to run **after** `setZoom`, with no dependence on the order Phaser happens to fire listeners in.
 
 ### update(time, delta)
 
@@ -96,5 +102,6 @@ Looks up the upgrade definition from the merged JSON arrays, verifies the player
 | `enemy-killed` | Records death for wave validation |
 | `damage-dealt` | Records damage for wave validation |
 | `request-ability-state` | Emits `ability-state-update` with `AbilitySystem.getSlots()` |
+| `activate-ability` | Mobile ability pad tapped → `AbilitySystem.activate(id)` |
 | `dev-spawn-enemy` | Spawns the requested enemy type near the player |
 | `clear-projectiles` | Calls `player.clearProjectiles()` |

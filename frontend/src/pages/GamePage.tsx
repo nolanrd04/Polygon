@@ -27,6 +27,9 @@ export default function GamePage() {
   const [selectedAttack, setSelectedAttack] = useState('bullet')
   const [showCollisionBoxes, setShowCollisionBoxes] = useState(false)
   const [abilitySlots, setAbilitySlots] = useState<AbilitySlotState[]>([])
+  // Every registered ability, owned or not — the mobile pads sit in fixed slots,
+  // so their layout depends on the full count rather than on what is owned yet.
+  const [abilityBindingCount, setAbilityBindingCount] = useState(0)
   const [loadError, setLoadError] = useState<string | null>(null)
 
   // Store last known game state in ref to survive game destruction
@@ -188,6 +191,7 @@ export default function GamePage() {
     // Listen for ability state updates
     EventBus.on('ability-state-update', (state) => {
       setAbilitySlots(state.slots)
+      setAbilityBindingCount(state.bindingCount)
     })
 
     // Poll for ability state (for cooldowns, which change constantly)
@@ -254,8 +258,8 @@ export default function GamePage() {
       
       <div ref={containerRef} className="w-full h-full" />
 
-      {/* Perf readout. Separate from DevTools because that hides itself on
-          mobile, and mobile is where the frame budget actually binds.
+      {/* Perf readout. Separate from DevTools because it has to stay legible
+          while playing, and the DevTools panel covers the screen on mobile.
           Enable with Settings > Show FPS (+ Show Diagnostics for the timings),
           or ?perf=1 in the URL. */}
       <PerfOverlay />
@@ -268,7 +272,7 @@ export default function GamePage() {
         wave={waveData.wave}
       />
 
-      <AbilityDisplay slots={abilitySlots} />
+      <AbilityDisplay slots={abilitySlots} bindingCount={abilityBindingCount} />
 
       {isPaused && (
         <PauseMenu

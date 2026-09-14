@@ -101,6 +101,14 @@ export interface AbilitySlotState {
   progress: number
   /** Recharging abilities draw a progress bar, consumable ones draw pips. */
   recharges: boolean
+  /**
+   * Position among ALL registered bindings, not among the owned ones.
+   *
+   * The mobile ability pads are laid out from this, so an ability holds the same
+   * on-screen slot for the whole run instead of sliding about as others are
+   * picked up. See abilityPadPosition() in TouchLayout.ts.
+   */
+  index: number
 }
 
 /** A registered activation binding — the def half, independent of ownership. */
@@ -205,7 +213,8 @@ class AbilitySystemClass {
     const now = this.scene?.time.now ?? 0
     const slots: AbilitySlotState[] = []
 
-    for (const binding of this.bindings) {
+    for (let index = 0; index < this.bindings.length; index++) {
+      const binding = this.bindings[index]
       if (!this.findOwned(binding.id)) continue
       const { activation } = binding
 
@@ -221,6 +230,7 @@ class AbilitySystemClass {
           max: queue?.getMax() ?? 1,
           progress: queue?.progress(now, cooldown) ?? 1,
           recharges: true,
+          index,
         })
       } else {
         const charges = this.chargesFromEffect(binding)
@@ -234,6 +244,7 @@ class AbilitySystemClass {
           max: binding.maxStacks ?? charges,
           progress: 1,
           recharges: false,
+          index,
         })
       }
     }

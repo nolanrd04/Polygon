@@ -1,6 +1,10 @@
+import { useEffect, useState } from 'react'
 import type { AbilitySlotState } from '../game/systems/AbilitySystem'
-
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+import { IS_MOBILE } from '../game/core/Device'
+import { EventBus } from '../game/core/EventBus'
+import { abilityPadPosition, TOUCH_LAYOUT } from '../game/core/TouchLayout'
+import { hudBlockBottom } from './GameHUD'
+import { perfOverlayBottom } from './PerfOverlay'
 
 interface Theme {
   border: string
@@ -51,6 +55,7 @@ const THEMES: Record<string, Theme> = {
   },
 }
 
+/** Desktop readout: a wide card in a top-left stack. Never interactive. */
 function AbilityCard({ slot }: { slot: AbilitySlotState }) {
   // A usable ability is green, regardless of available charges. If unusable then it flips color
   const atFullCharge = slot.recharges && slot.ready > 0
@@ -99,19 +104,182 @@ function AbilityCard({ slot }: { slot: AbilitySlotState }) {
 }
 
 /**
- * HUD stack of the player's usable abilities. Entirely driven by the slots
- * AbilitySystem reports, so a new ability shows up here with no edit.
+ * Mobile control: a square pad sitting in the slot the on-canvas ability button
+ * used to occupy, carrying the same readout the desktop card does.
+ *
+ * Shape and position both come from `abilityPadPosition()`, so these land exactly
+ * where the Phaser buttons did relative to the joysticks — the layout constants
+ * are shared with TouchControlManager rather than copied.
+ *
+ * The key chip is dropped: it is keyboard-only information, and in 65px the room
+ * is better spent on the name. Cooldown reads two ways at once — a scrim wiping
+ * down the pad, and the progress bar underneath the label.
  */
-export default function AbilityDisplay({ slots }: { slots: AbilitySlotState[] }) {
-  if (slots.length === 0) return null
+function AbilityPad({ slot, left, top, size }: {
+  slot: AbilitySlotState
+  left: number
+  top: number
+  size: number
+}) {
+  const atFullCharge = slot.recharges && slot.ready > 0
+  const theme = atFullCharge ? THEMES.green : THEMES[slot.theme] ?? THEMES.blue
+
+  // Firing with no charge left does nothing (AbilitySystem.activate guards it),
+  // but the pad should look inert rather than merely fail silently.
+  const usable = slot.ready > 0
 
   return (
-    <div className="absolute top-24 left-4 pointer-events-none" style={isMobile ? { transform: 'scale(0.5)', transformOrigin: 'top left' } : undefined}>
-      <div className="flex flex-col gap-2">
-        {slots.map(slot => (
-          <AbilityCard key={slot.id} slot={slot} />
-        ))}
+    <button
+      type="button"
+      aria-label={`Use ${slot.label}`}
+      disabled={!usable}
+      style={{ left, top, width: size, height: size }}
+      onPointerDown={event => {
+        // Fire on contact, not on release — waiting for pointerup feels laggy
+        // mid-fight. preventDefault keeps the tap from also becoming a synthetic
+        // mouse event on the canvas underneath.
+        event.preventDefault()
+        EventBus.emit('activate-ability', slot.id)
+      }}
+      className={`absolute overflow-hidden rounded-lg border bg-gray-900/80 p-1 pointer-events-auto touch-manipulation select-none transition-opacity active:opacity-60 ${theme.border} ${
+        usable ? '' : 'opacity-50'
+      }`}
+    >
+      {/* Cooldown wipe: covers the share of the pad still to recharge. */}
+      {!usable && slot.recharges && (
+        <div
+          className="absolute inset-x-0 top-0 bg-black/60 transition-all duration-100"
+          style={{ height: `${(1 - slot.progress) * 100}%` }}
+        />
+      )}
+
+      <div className="relative flex h-full flex-col items-center justify-center gap-1">
+        <span className={`font-bold leading-none text-[11px] ${theme.text}`}>{slot.label}</span>
+
+        {slot.recharges ? (
+          <div className="relative h-1.5 w-full overflow-hidden rounded-full border border-gray-700 bg-gray-800">
+            <div
+              className={`h-full transition-all duration-100 ${theme.bar}`}
+              style={{ width: `${slot.progress * 100}%` }}
+            />
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-0.5">
+            {Array.from({ length: Math.min(slot.ready, 5) }).map((_, i) => (
+              <div key={i} className={`h-2 w-2 rounded-sm ${theme.pip}`} />
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Charge count, only where more than one is possible. */}
+      {slot.max > 1 && (
+        <span className={`absolute bottom-0.5 right-1 text-[10px] font-bold leading-none ${theme.text}`}>
+          {slot.ready}
+        </span>
+      )}
+    </button>
+  )
+}
+
+/**
+ * Screen Y the ability pad stack must stay below: the bottom of whichever top HUD
+ * element reaches lowest, plus clearance.
+ *
+ * Each component reports its own extent rather than this file guessing at another
+ * one's Tailwind — `hudBlockBottom()` covers the health readout (left) and the
+ * wave/points block (right), `perfOverlayBottom()` the FPS readout parked under
+ * the wave block, returning 0 when it is switched off.
+ *
+ * One ceiling for both columns keeps the pairs level with each other. The right
+ * column is normally what sets it: the wave block is taller than the health
+ * block, and the perf overlay sits below that again.
+ */
+function abilityCeiling(): number {
+  return Math.max(hudBlockBottom(), perfOverlayBottom()) + TOUCH_LAYOUT.abilityHudClearance
+}
+
+/**
+ * Viewport size in CSS pixels, tracked so the pads can be placed against the
+ * joysticks. `Phaser.Scale.RESIZE` sizes the canvas 1:1 with the viewport, so
+ * this is the same coordinate space the canvas controls are laid out in.
+ */
+function useViewport() {
+  const [size, setSize] = useState(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }))
+
+  useEffect(() => {
+    const onResize = () => setSize({ width: window.innerWidth, height: window.innerHeight })
+    window.addEventListener('resize', onResize)
+    window.addEventListener('orientationchange', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      window.removeEventListener('orientationchange', onResize)
+    }
+  }, [])
+
+  return size
+}
+
+/**
+ * The player's usable abilities. Entirely driven by the slots AbilitySystem
+ * reports, so a new ability shows up here with no edit.
+ *
+ * DESKTOP: a passive readout, stacked top-left.
+ *
+ * MOBILE: THESE ARE THE ABILITY BUTTONS. Square pads in the slots the on-canvas
+ * buttons used to hold — see abilityPadPosition() in TouchLayout.ts. The two used
+ * to be drawn as separate things that duplicated every field except the key
+ * label, and then had to be laid out around each other; now there is one control
+ * that both shows the state and fires the ability, via `activate-ability`.
+ *
+ * The container is `pointer-events-none` so bare space still passes touches
+ * through to the canvas — the joysticks read raw DOM events on it — and each pad
+ * re-enables pointer events for itself.
+ */
+export default function AbilityDisplay({ slots, bindingCount }: {
+  slots: AbilitySlotState[]
+  bindingCount: number
+}) {
+  const viewport = useViewport()
+  // Captured once, like PerfOverlay captures its own mode: the FPS readout does
+  // not appear or disappear mid-run, and re-reading settings on every 100 ms poll
+  // would touch localStorage ten times a second for a value that cannot change.
+  const [ceiling] = useState(abilityCeiling)
+
+  if (slots.length === 0) return null
+
+  if (!IS_MOBILE) {
+    return (
+      <div className="absolute top-24 left-4 pointer-events-none">
+        <div className="flex flex-col gap-2">
+          {slots.map(slot => (
+            <AbilityCard key={slot.id} slot={slot} />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // bindingCount can still be 0 on the first frames, before MainScene has
+  // answered the first poll. Fall back to what is on screen so the pads are never
+  // laid out for an empty stack.
+  const padCount = Math.max(bindingCount, ...slots.map(slot => slot.index + 1))
+
+  return (
+    <div className="absolute inset-0 pointer-events-none">
+      {slots.map(slot => {
+        const { left, top, size } = abilityPadPosition(
+          slot.index,
+          viewport.width,
+          viewport.height,
+          ceiling,
+          padCount
+        )
+        return <AbilityPad key={slot.id} slot={slot} left={left} top={top} size={size} />
+      })}
     </div>
   )
 }

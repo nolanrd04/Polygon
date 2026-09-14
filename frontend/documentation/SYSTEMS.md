@@ -13,7 +13,7 @@ Systems live in `frontend/src/game/systems/`. They are classes instantiated once
 | [EnemyManager](ENEMY_MANAGER.md) | `EnemyManager.ts` | Spawns, updates, and removes enemies; manages enemy projectiles; applies wave scaling |
 | [MapManager](MAP_MANAGER.md) | `MapManager.ts` | Generates the seeded obstacle layout and background grid |
 | [ProjectileManager](PROJECTILE_MANAGER.md) | `ProjectileManager.ts` | Legacy — mostly unused; Player now manages its own projectiles directly |
-| [TouchControlManager](TOUCH_CONTROL_MANAGER.md) | `TouchControlManager.ts` | Virtual joysticks and ability buttons for mobile input |
+| [TouchControlManager](TOUCH_CONTROL_MANAGER.md) | `TouchControlManager.ts` | Virtual joysticks and pause button for mobile input (abilities are DOM pads — see [COMPONENTS.md](COMPONENTS.md)) |
 | [WaveManager](WAVE_MANAGER.md) | `WaveManager.ts` | Drives wave start/end flow; schedules enemy spawning; delegates difficulty to the `Difficulty` interface |
 | [Upgrade systems](UPGRADE_MANAGER.md) | `upgrades/` | UpgradeSystem, UpgradeEffectSystem, UpgradeModifierSystem, EffectHandlers |
 
@@ -25,8 +25,8 @@ Systems live in `frontend/src/game/systems/`. They are classes instantiated once
 MainScene.update()
     │
     ├── TouchControlManager.update()
-    │       ├── calls player.move(), player.rotateTowards(), player.shoot()
-    │       └── ability buttons → AbilitySystem.activate(id); visibility from AbilitySystem.isAvailable(id)
+    │       └── calls player.move(), player.rotateTowards(), player.shoot()
+    │           (abilities are DOM pads: activate-ability → AbilitySystem.activate(id))
     │
     ├── UpgradeEffectSystem.onUpdate(delta)
     │       └── fires onUpdate handlers (e.g. regeneration heals GameManager)
@@ -75,7 +75,8 @@ EventBus (shared by all systems and React)
 AbilitySystem (event-driven, bound in create())
     ├── keydown-<key> per binding → AbilitySystem.activate(id)
     │       └── ownership + charge check → Upgrade.onActivate(ctx) → spend on true
-    └── getSlots() → HUD cards; getBindings() / isAvailable() → mobile buttons
+    ├── activate-ability (mobile pad tapped) → AbilitySystem.activate(id)
+    └── getSlots() → desktop HUD cards AND mobile ability pads
 ```
 
 ### Key dependencies

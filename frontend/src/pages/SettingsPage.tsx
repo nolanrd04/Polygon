@@ -89,10 +89,15 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center bg-polygon-darker">
-      <h1 className="text-4xl font-bold text-polygon-primary mb-8">SETTINGS</h1>
+    // Vertical centring comes from the mt-auto/mb-auto pair on the first and last
+    // children, NOT from justify-center. Auto margins collapse to zero once the
+    // content is taller than the box, so it falls to the top and every row stays
+    // scrollable; justify-center would instead push the heading out through the
+    // top edge, where no amount of scrolling can reach it.
+    <div className="w-full h-full overflow-y-auto flex flex-col items-center py-12 px-4 bg-polygon-darker">
+      <h1 className="mt-auto text-4xl font-bold text-polygon-primary mb-8">SETTINGS</h1>
 
-      <div className="w-96 flex flex-col gap-6">
+      <div className="mb-auto w-96 max-w-full flex flex-col gap-6">
         {slider('musicVolume', 'Music Volume', 0, 100)}
         {slider('sfxVolume', 'SFX Volume', 0, 100)}
 

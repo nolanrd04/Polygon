@@ -5,10 +5,11 @@ import { SETTINGS } from '../game/core/SettingsStorage'
 /**
  * On-screen performance readout.
  *
- * DELIBERATELY NOT IN DevTools: that component early-returns null on mobile
- * (DevTools.tsx), and mobile is exactly where this matters - a mid-range phone
- * runs this JS several times slower than a desktop, so it is the device that
- * decides how much lighting the game can afford.
+ * DELIBERATELY NOT IN DevTools: this has to be readable WHILE playing, and the
+ * DevTools panel is a thing you open, which on mobile covers the screen and stops
+ * the frame you were trying to measure. Mobile is exactly where that matters - a
+ * mid-range phone runs this JS several times slower than a desktop, so it is the
+ * device that decides how much lighting the game can afford.
  *
  * THREE MODES:
  *   off   - nothing rendered.
@@ -81,6 +82,37 @@ function resolveMode(): Mode {
   if (isPerfEnabled()) return 'full'
   if (!SETTINGS.showFPS) return 'off'
   return SETTINGS.showDiagnostics ? 'full' : 'basic'
+}
+
+// Row counts for the JSX below: basic is fps + enemies + projectiles; full adds
+// five timing rows, three peak rows, and the two dividers between them.
+const ROWS_BASIC = 3
+const ROWS_FULL = 11
+const DIVIDERS_FULL = 2
+/** One `row()`: FONT_PX at line-height 1.45. */
+const ROW_HEIGHT = FONT_PX * 1.45
+/** One divider: 1px rule plus `margin: 4px 0`. */
+const DIVIDER_HEIGHT = 9
+
+/**
+ * Bottom edge of the readout in CSS pixels, or 0 when it is not rendered.
+ *
+ * Exported because the mobile ability pads have to stay clear of it: this is
+ * parked on the right under the wave block, exactly where the upper-right pads
+ * want to go. See `abilityPadPosition()` in game/core/TouchLayout.ts.
+ *
+ * Reads the mode fresh rather than taking it from component state, so a caller
+ * can ask without the overlay being mounted.
+ */
+export function perfOverlayBottom(): number {
+  const mode = resolveMode()
+  if (mode === 'off') return 0
+
+  const rows = mode === 'full' ? ROWS_FULL : ROWS_BASIC
+  const dividers = mode === 'full' ? DIVIDERS_FULL : 0
+  const borders = 2
+
+  return TOP_OFFSET + rows * ROW_HEIGHT + dividers * DIVIDER_HEIGHT + PAD_Y * 2 + borders
 }
 
 export default function PerfOverlay() {

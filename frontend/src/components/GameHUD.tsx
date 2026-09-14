@@ -1,5 +1,27 @@
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
+// Unscaled heights of the two top blocks, from the Tailwind below. Kept beside
+// the markup they describe so they cannot rot separately from it.
+/** `p-4` on the container — where both blocks start. */
+const TOP_PAD = 16
+/** HEALTH `text-sm` 20 + `gap-1` 4 + bar `h-4` + border 18 + `gap-1` 4 + `text-xs` 16. */
+const HEALTH_HEIGHT = 62
+/** WAVE `text-2xl` 32 + `gap-1` 4 + `text-lg` 28 + `gap-1` 4 + `text-sm` 20. */
+const WAVE_HEIGHT = 88
+
+/**
+ * Bottom edge of this HUD in CSS pixels — the taller of the health block (left)
+ * and the wave/points block (right).
+ *
+ * Exported because the mobile ability pads have to stay clear of it: they hang
+ * off the joysticks and grow upward, so on a short screen they would otherwise
+ * climb into this. See `abilityPadPosition()` in game/core/TouchLayout.ts.
+ */
+export function hudBlockBottom(): number {
+  const scale = isMobile ? 0.5 : 1
+  return TOP_PAD + Math.max(HEALTH_HEIGHT, WAVE_HEIGHT) * scale
+}
+
 interface GameHUDProps {
   health: number
   maxHealth: number

@@ -238,6 +238,13 @@ export default function UpdateNotesPage() {
       <h1 className="text-4xl font-bold text-polygon-primary mb-2 tracking-wider">UPDATE NOTES</h1>
       <p className="text-gray-500 text-sm mb-10">Polygon development changelog</p>
 
+      <button
+        onClick={() => navigate('/')}
+        className="mb-10 px-8 py-3 border-2 border-gray-600 text-gray-400 font-semibold rounded hover:border-gray-400 hover:text-white transition-all"
+      >
+        BACK TO MENU
+      </button>
+
       <div className="w-full max-w-xl flex flex-col gap-6">
         {UPDATE_NOTES.map((note) => (
           <div
@@ -260,13 +267,6 @@ export default function UpdateNotesPage() {
           </div>
         ))}
       </div>
-
-      <button
-        onClick={() => navigate('/')}
-        className="mt-10 px-8 py-3 border-2 border-gray-600 text-gray-400 font-semibold rounded hover:border-gray-400 hover:text-white transition-all"
-      >
-        BACK TO MENU
-      </button>
     </div>
   )
 }

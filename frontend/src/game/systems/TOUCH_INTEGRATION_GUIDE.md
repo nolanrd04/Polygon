@@ -161,13 +161,21 @@ const joystickInnerRadius = 40   // Inner circle radius in pixels
 
 ### Change Button Positions
 
-In `TouchControlManager.createAbilityButtons()`:
+Ability buttons are no longer drawn on the canvas. They are DOM pads rendered by
+`components/AbilityDisplay.tsx`, positioned by `abilityPadPosition()` in
+`core/TouchLayout.ts`. Tune them there:
 
 ```typescript
-const startX = width - 100  // X position
-const startY = height - 250 // Y position
-const buttonSize = 60       // Button width/height
+// core/TouchLayout.ts
+abilityButtonSize: 65,     // Pad width/height
+abilitySidePad: 25,        // Distance from the screen edge
+abilityStackOffset: 250,   // Gap above the joysticks
+abilityStackGap: 15,       // Gap between stacked pairs
 ```
+
+`TOUCH_LAYOUT` also holds the joystick and pause-button geometry that
+`TouchControlManager` reads, so the canvas controls and the DOM pads stay in
+agreement when you move either.
 
 ### Change Colors
 
@@ -180,33 +188,19 @@ Each component has a color parameter (in hex):
 // Right joystick color (orange)
 0xff6633
 
-// Dash button (green)
-0x00ff00
-
-// Shield button (cyan)
-0x00ffff
+// Pause button (dark blue)
+0x222266
 ```
+
+Ability pad colours come from each ability's `activation.theme`, resolved through
+the `THEMES` table in `components/AbilityDisplay.tsx`.
 
 ### Add More Ability Buttons
 
-In `TouchControlManager`, follow the pattern of `dashButton` and `shieldButton`:
-
-```typescript
-private myAbilityButton: TouchButton | null = null
-
-// In createAbilityButtons():
-this.myAbilityButton = new TouchButton(
-  this.scene,
-  x, y,
-  buttonSize,
-  'LABEL',
-  0xrrggbb,
-  () => this.player.myAbility()  // Call your ability method
-)
-
-// In destroy():
-if (this.myAbilityButton) this.myAbilityButton.destroy()
-```
+Nothing to do here. Ability pads are generated from every upgrade def that
+declares an `activation` block, in `slot` order — add the ability and its pad
+appears, on both desktop (as a card) and mobile (as a tappable pad). See
+`documentation/ABILITY_SYSTEM.md`.
 
 ## Desktop/Keyboard Controls
 
@@ -236,7 +230,7 @@ The touch controls automatically adapt to screen size:
 - Button positions scale with screen width/height
 - All touch targets are appropriately sized for fingers (minimum 50px)
 
-To further customize responsiveness, modify the positions in `createJoysticks()` and `createAbilityButtons()`:
+To further customize responsiveness, modify the geometry in `core/TouchLayout.ts`, which both `createJoysticks()` and the DOM ability pads read from:
 
 ```typescript
 const { width, height } = this.scene.scale
