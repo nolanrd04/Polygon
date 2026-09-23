@@ -37,7 +37,7 @@
 ## Curses
 - [ BASE CLASS IMPLEMENTED ] Similar to upgrades but give a negative effect
 - [ ] Poison: temporarily slows the player and deals damage per second over time. Time and damage dependent on rarity.
-- [ ] Frozen: Disables all movement and attacking for 3 seconds. Damage taken reduced by 99%.
+- [ ] Frozen (DEFERRED): Disables all movement and attacking for 3 seconds. Damage taken reduced by 99%.
 - [ ] Coldness: temporarily slows the player over time. Slowness amount and time dependent on rarity.
 - [ ] Burning: does damage over time. Damage and time dependent on rarity.
 - [ ] Bleeding: prevent healing for a time. Time dependent on rarity.

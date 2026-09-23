@@ -7,6 +7,33 @@ import { Particle } from '../particles/Particle'
 import { PolygonParticle } from '../particles/PolygonParticle'
 
 /**
+ * Compress a number down to its largest place value with a single decimal digit.
+ * 1100 -> "1.1K", 1050 -> "1.0K", 2_500_000 -> "2.5M", 940 -> "940"
+ *
+ * The decimal is truncated (not rounded) so the displayed value never reads
+ * higher than the real one.
+ */
+export function formatCompactNumber(value: number): string {
+  const rounded = Math.ceil(value)
+
+  const units: Array<{ threshold: number; suffix: string }> = [
+    { threshold: 1000000000, suffix: 'B' },
+    { threshold: 1000000, suffix: 'M' },
+    { threshold: 1000, suffix: 'K' }
+  ]
+
+  for (const { threshold, suffix } of units) {
+    if (rounded >= threshold) {
+      // Integer math first to avoid float drift (e.g. 1.1 * 10 = 11.000000000000002)
+      const tenths = Math.floor((rounded * 10) / threshold)
+      return `${(tenths / 10).toFixed(1)}${suffix}`
+    }
+  }
+
+  return `${rounded}`
+}
+
+/**
  * Base class for all enemies.
  *
  * ============================================================================
@@ -68,6 +95,7 @@ export abstract class Enemy {
   color: number = 0xff0000
   scoreChance: number = 0.5  // Chance to drop score on death (0 to 1)
   bundleDropChance: number = 0  // 0 = use difficulty default; override per enemy type
+  canDropBundle: boolean = true  // false = never drop bundles, regardless of bundleDropChance
   bundleDropMin: number = 1  // Minimum bundles to drop on death
   bundleDropMax: number = 1  // Maximum bundles to drop on death
   speedCap: number = 2  // Maximum speed multiplier (default 2x)
@@ -288,7 +316,7 @@ export abstract class Enemy {
     // Update health text position
     if (this.healthText) {
       this.healthText.setPosition(this.x - 30, this.y + this.radius + 10)
-      this.healthText.setText(`${Math.ceil(this.health)}/${Math.ceil(this.maxHealth)}`)
+      this.healthText.setText(`${formatCompactNumber(this.health)}/${formatCompactNumber(this.maxHealth)}`)
     }
   }
 
@@ -373,6 +401,8 @@ export abstract class Enemy {
    * Default: drops bundleDropMin..bundleDropMax bundles, scattered when count > 1.
    */
   DropBundles(): void {
+    if (!this.canDropBundle) return
+
     const count = Phaser.Math.Between(this.bundleDropMin, this.bundleDropMax)
     for (let i = 0; i < count; i++) {
       const offsetX = count > 1 ? (Math.random() - 0.5) * 40 : 0
@@ -517,7 +547,9 @@ export abstract class Enemy {
 
     // Create health text if enabled in dev settings (added to scene, not container, so it doesn't rotate)
     if (DEV_SETTINGS.showEnemyHealthNumber) {
-      this.healthText = scene.add.text(this.x - 20, this.y + this.radius + 10, `${Math.ceil(this.health)}/${Math.ceil(this.maxHealth)}`, {
+      const healthText = `${formatCompactNumber(this.health)}/${formatCompactNumber(this.maxHealth)}`
+
+      this.healthText = scene.add.text(this.x - 20, this.y + this.radius + 10, healthText, {
         fontSize: '12px',
         color: '#ffffff',
         align: 'center'

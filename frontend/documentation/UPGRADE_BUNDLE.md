@@ -20,7 +20,7 @@ Enemies drop collectible in-world upgrade bundles on death. The player walks ove
 | `src/game/systems/upgrades/UpgradeModifierSystem.ts` | `addModifier()` has a curse guard for additive modifiers to prevent going below 0. |
 | `src/game/core/EventBus.ts` | `'upgrade-bundle'` event type: `{ x, y, bundleDropChance, forcedRarity? }`. |
 | `src/game/scenes/MainScene.ts` | Bundle group, player-bundle overlap handler, item roll logic (offline), `collectBundle` call (online), pickup text, `_update()` tick. |
-| `src/game/services/WaveValidation.ts` | `collectBundle(waveNumber, bundleTier)` — online-mode pickup, posts to the backend instead of rolling locally. |
+| `src/game/services/WaveValidation.ts` | `collectBundle(waveNumber, bundleTier)` — online-mode pickup, posts to the backend instead of rolling locally. `getPendingOfferIds()` — the unbought wave-select offer, excluded from the offline roll (see *Bundles never roll what the shop is offering*). |
 | `src/game/data/ID.ts` | `const enum BundleRarity { Common=0, Uncommon=1, Rare=2, Epic=3, Legendary=4 }` — one of several enums in this file; see [UPGRADES.md](./UPGRADES.md) and its `ID.ts — Named Constants` section below for the rest. |
 | `src/game/upgrades/curses/` | 15 curse files (one per curse, `curse: true` on the def). See [CURSES.md](./CURSES.md). |
 
@@ -46,7 +46,7 @@ Player overlaps bundle (Phaser overlap, registered in create())
       → skipped while no wave token is in play (between waves), or while
         bundle.canRequestPickup(token) is false (request in flight / already refused under this token)
       → bundle.beginPickup() hides it while the request is in flight (prevents double-pickup)
-      → POST /api/waves/bundle-pickup { wave, bundle_tier, token: waveToken }
+      → POST /api/waves/bundle-pickup { wave, bundle_tier, token: waveToken, offer_open }
       → backend rolls the bundle's contents itself (WaveService.collect_upgrade_bundle) —
         the client-rolled tier/contents can't be trusted for what free upgrades to grant
       → accepted: bundle.destroy(), pickup sound, response.upgrade_ids applied via applyUpgrade(id, true)
@@ -56,6 +56,8 @@ Player overlaps bundle (Phaser overlap, registered in create())
   → OFFLINE/SANDBOX (no token, no backend to roll against): bundle.destroy() + sound, then fully local roll
       → roll count (1–4 items)
       → build capped + re-normalized rarity weights for this bundle's tier
+      → seed exclude with waveValidation.getPendingOfferIds() (the unbought
+        wave-select offer — the online path excludes the same ids server-side)
       → slot 1: pickRegularUpgrade(upgradeValue, exclude)        // guaranteed matching-tier item
       → slots 2–N: 30% curse / 70% regular → pickCurse(rollItemRarity()) or pickRegularUpgrade(rollItemRarity())
       → applyUpgrade(id, true) for each picked id
@@ -171,10 +173,11 @@ Rarity colors: `#aaaaaa / #44cc66 / #4488ff / #cc44ff / #ffaa00`
 1. **Roll count** — `Math.floor(Math.random() * 4) + 1` → 1, 2, 3, or 4 items.
 2. **Build capped rarity weights** — take the wave's `getRarityWeights()`, sum only the tiers ≤ `upgradeValue`, and use that sum as the random ceiling. This redistributes probability from higher tiers into the eligible range.
    - *Example:* rare bundle (tier 2) on wave 25 with weights `[0.22, 0.36, 0.30, 0.09, 0.03]`. Eligible sum = 0.88. Roll lands on common ~25%, uncommon ~41%, rare ~34%.
-3. **Slot 1 (`pickRegularUpgrade(upgradeValue, exclude)`)** — always a regular upgrade at the bundle's exact tier (with tier-by-tier fallback if the pool is exhausted). Guarantees every bundle has at least one non-curse item matching its tier.
-4. **Slots 2–N** — each independently rolled 30% curse / 70% regular: `pickCurse(rollItemRarity(), exclude)` or `pickRegularUpgrade(rollItemRarity(), exclude)`. The exclude list grows with each pick to prevent duplicates.
-5. **Apply all** — `applyUpgrade(id, true)` for each picked id (`true` = skip cost, no `waveValidation.selectUpgrade()` call).
-6. **Show pickup text** — `showBundlePickupText()` called once per item, staggered 220 ms apart. Curses appear in red; regular items in their rarity color.
+3. **Seed the exclude list** — `waveValidation.getPendingOfferIds()`: every id still unbought in the wave-select offer, but only while that offer is open (between waves). Empty mid-wave. See *Bundles never roll what the shop is offering* below.
+4. **Slot 1 (`pickRegularUpgrade(upgradeValue, exclude)`)** — always a regular upgrade at the bundle's exact tier (with tier-by-tier fallback if the pool is exhausted). Guarantees every bundle has at least one non-curse item matching its tier.
+5. **Slots 2–N** — each independently rolled 30% curse / 70% regular: `pickCurse(rollItemRarity(), exclude)` or `pickRegularUpgrade(rollItemRarity(), exclude)`. The exclude list grows with each pick to prevent duplicates.
+6. **Apply all** — `applyUpgrade(id, true)` for each picked id (`true` = skip cost, no `waveValidation.selectUpgrade()` call).
+7. **Show pickup text** — `showBundlePickupText()` called once per item, staggered 220 ms apart. Curses appear in red; regular items in their rarity color.
 
 ### pickRegularUpgrade()
 
@@ -236,6 +239,30 @@ export const enum BundleRarity {
 
 **Item selection happens at collection time, not spawn time.**
 If the upgrade were selected at spawn, it could become invalid before pickup (e.g. a ricochet bundle spawns when you have 1/2 stacks, you pick another ricochet from the modal, and the bundle would now overflow the cap). `pickRegularUpgrade()` / `pickCurse()` run fresh on overlap, calling `UpgradeSystem.canApply()` against live state.
+
+**Bundles never roll what the shop is offering.**
+The wave-select offer is rolled at wave *completion* — `GameManager.completeWave()` pre-loads the next wave via `waveValidation.startWave(nextWave)` before it even emits `'wave-complete'`. The scene keeps running behind the wave-complete screen and the upgrade modal, so the player can still walk over bundles left on the ground after that roll has already happened. Both rolls then see the same upgrade as unowned and can independently pick it: the bundle grants it, and the modal is left showing a card that `canApply()` now refuses — a dead pick (`MainScene.applyUpgrade` bails at `UpgradeSystem.apply()`, so no points are spent, but the card still greys itself out as bought). One-stack upgrades like `ricochet` are where this is visible.
+
+The fix is on the bundle side: both roll paths exclude every id still unbought in the current offer.
+
+| Path | Source of the exclusion |
+|------|-------------------------|
+| Offline/sandbox | `waveValidation.getPendingOfferIds()` seeds `exclude` in `MainScene`'s overlap handler |
+| Online | `game_save.offered_upgrades` where `not purchased`, filtered inside `pick_from_pool` (`wave_service.collect_upgrade_bundle`), gated on the request's `offer_open` |
+
+This also covers the mirror case — grabbing a bundle *while the modal is open* can't invalidate a card you're looking at.
+
+**The exclusion only applies while the offer is open** — the gap between a wave completing and the player pressing **Start Wave**, which is exactly `!GameManager.getState().isWaveActive` (`WaveValidation.isOfferOpen()`). Scoping matters: `offeredUpgrades` (and `game_save.offered_upgrades`) stays cached for the whole *following* wave, but there is no mid-wave reroll and no way to buy from it, so it isn't a live offer any more. Excluding those ids mid-wave would hold up to 3 upgrades out of the loot pool every single wave — and specifically the expensive ones the player couldn't afford, since that's the usual reason a card goes unbought.
+
+Within the window, an id leaves the pending set as soon as it's bought, or wholesale when a reroll replaces the offer. There is no "decline" action, and nothing records what a player rerolled past — `rollUpgradesOffline` and the backend's `_roll_upgrades` take only the current upgrades, wave, and attack type — so a rerolled-away id is bundle-eligible again immediately and can be re-offered by any later roll.
+
+| The player… | Effect |
+|-------------|--------|
+| Buys the card | Entry flips to `purchased` and leaves the pending set. It's owned now, so `canApply()` takes over |
+| Rerolls | Offer swapped out on the spot; old ids are bundle-eligible again immediately |
+| Presses Start Wave | Window closes — the whole exclusion switches off for the rest of the wave |
+
+**The window is a client claim.** The server can't derive it: `/waves/start` fires a wave early (at the *previous* wave's completion) and nothing is posted when the wave actually starts, so a between-waves pickup and a mid-wave one are identical requests. So `/bundle-pickup` carries an `offer_open` flag, defaulting to `true` server-side so an older client keeps the stricter behavior. This is a safe thing to trust: claiming `false` only widens the pool by ≤ 3 ids the player could have simply bought from the shop.
 
 **Variants are excluded from bundle rolls entirely.**
 Picking a bullet type is a run-defining choice, and a bundle is a silent auto-apply — you don't get to say no. So `pickRegularUpgrade()` drops every `upgradeType: variant` upgrade from the pool, whether or not you already have one; variants are only obtainable from the post-wave modal, where the choice is deliberate. The server-side roll (`wave_service.collect_upgrade_bundle`'s `pick_from_pool`) applies the same `type != "variant"` filter, so online and offline pools match.

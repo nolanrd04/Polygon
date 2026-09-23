@@ -96,6 +96,17 @@ class BundlePickupRequest(BaseModel):
     # weights, so it can't be used to claim a rarity this wave can't
     # legitimately drop (see WaveService.collect_upgrade_bundle).
     bundle_tier: int = Field(..., ge=0, le=4)
+    # Whether the wave-select offer is still buyable when this bundle is
+    # picked up - true only between a wave completing and the player pressing
+    # Start Wave. The server can't derive this: /waves/start fires a wave
+    # early (at the previous wave's completion) and nothing is posted when the
+    # wave actually starts, so a between-waves pickup and a mid-wave one are
+    # otherwise identical requests. Gates the offer exclusion in
+    # WaveService.collect_upgrade_bundle. Trusting the client is fine here -
+    # claiming False only widens the bundle pool by the <=3 ids the player
+    # could have simply bought from the shop. Defaults True so an older
+    # client keeps the stricter behavior.
+    offer_open: bool = True
     # The client's own active wave-validation token (same one /waves/complete
     # will eventually be called with). (user_id, wave) alone isn't unique
     # enough to find "the" token - a mid-wave reload can leave a second,
@@ -339,7 +350,8 @@ async def bundle_pickup(
         user_id=current_user.id,
         wave_number=request.wave,
         client_bundle_tier=request.bundle_tier,
-        token_string=request.token
+        token_string=request.token,
+        offer_open=request.offer_open
     )
     if not success:
         raise HTTPException(

@@ -7,6 +7,22 @@ import { IS_MOBILE } from './Device'
 export const GAME_WIDTH = 1280
 export const GAME_HEIGHT = 720
 
+/**
+ * Game logic runs at a fixed 60 ticks/sec on every device.
+ *
+ * Phaser drives `update` from requestAnimationFrame, so without this a 144Hz
+ * display ran all the frame-counting logic (enemy timers, heals, particle
+ * timers) 2.4x faster than a 60Hz one. MainScene accumulates real time and runs
+ * whole steps instead. Physics still integrates per rendered frame with the real
+ * delta, so movement stays smooth; `scene.time.now` cooldowns are unaffected.
+ *
+ * MAX_CATCHUP_STEPS bounds how far a slow frame may catch up - past it the game
+ * slows down rather than spiralling.
+ */
+export const LOGIC_HZ = 60
+export const FIXED_STEP_MS = 1000 / LOGIC_HZ
+export const MAX_CATCHUP_STEPS = 3
+
 // World size (larger than screen for camera follow)
 export const WORLD_WIDTH = 2560  // 2x wider
 export const WORLD_HEIGHT = 1440 // 2x taller

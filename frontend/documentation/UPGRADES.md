@@ -61,7 +61,7 @@ The base class declares the hook set; the engine (`UpgradeSystem.dispatch*`) inv
 | `modifyPlayerHurt(dmg, source?)` | Player takes damage (`source` = melee enemy) | `Player.takeDamage` | armor reduces, fragility amplifies, thorns reflects at `source` |
 | `onEnemyKilled(enemy)` | Player kills an enemy | `CollisionManager` | explosion_on_kill emits an explosion |
 | `onActivate(ctx): boolean` | Player triggers the def's `activation` binding (key or mobile button) | `AbilitySystem.activate` | heal restores health; `false` declines and spends nothing |
-| `updatePlayer(player, delta)` | Every frame | `MainScene.update` | regeneration heals per second |
+| `updatePlayer(player, delta)` | Every logic tick; `delta` is always `FIXED_STEP_MS` | `MainScene.stepLogic` | regeneration heals per second |
 | `modifyExplosion(explosion)` | Any player explosion is parameterized | `BulletExplosion.SetDefaults`, Chain Reaction | explosion_damage/radius upgrades |
 
 `Enemy` exposes `maxHealth`, `isBoss`, and `takeDamage()` — enough for hooks that scale off enemy stats.

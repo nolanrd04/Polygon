@@ -1,4 +1,5 @@
 import { Enemy } from './Enemy'
+import { FIXED_STEP_MS } from '../../core/GameConfig'
 import { LightingSystem } from '../../systems/LightingSystem'
 import { LightingIntensityID, SoundID } from '../../data/ID'
 import { TrailRenderer } from '../../utils/TrailRenderer'
@@ -75,7 +76,7 @@ export class SeekingSquare extends Enemy {
 
     // RotateTo steps toward the target by at most this amount, shortest way
     // around, and snaps once it is within range.
-    const maxTurn = this.turnRate * (this.scene.game.loop.delta / 1000)
+    const maxTurn = this.turnRate * (FIXED_STEP_MS / 1000)
     this.heading = Phaser.Math.Angle.RotateTo(this.heading, targetAngle, maxTurn)
 
     this.velocityX = Math.cos(this.heading) * this.speed

@@ -566,6 +566,17 @@ export abstract class Particle {
    *
    * Prefer `NewParticlePerfect()` unless you specifically want the handle -
    * it hands back the instance directly and skips the lookup.
+   * 
+   * Particle options:
+   * - timeLeft: Milliseconds before the particle despawns (default: 1000)
+   * - color: Hex tint, e.g. 0xff0000 (default: 0xffffff)
+   * - scale: Size multiplier (default: 1.0)
+   * - rotation: Initial rotation in radians (default: 0)
+   * - alpha: Base opacity (0-1, default: 1.0)
+   * - radius: Base radius in pixels before scale is applied (default: 4)
+   * - sides: Shape, 1 = circle, 2 = ellipse, 3+ = polygon with that many sides (default: 1)
+   * - depth: Render depth (default: 50)
+   * - additive: Render with additive blending (default: false)
    */
   static NewParticle<T extends Particle>(
     type: ParticleType<T>,

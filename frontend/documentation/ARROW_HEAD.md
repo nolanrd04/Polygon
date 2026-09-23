@@ -233,9 +233,12 @@ stretch it into a homing chase. `maxDurationMs` caps it, since an uncapped
 diagonal charge runs ~6.8s during which the head barely turns and (with
 `volley.skipWhileCharging`) never shoots.
 
-All movement is delta-based off `scene.game.loop.delta` (clamped to 50ms), not
-frame-counted — the game loop runs at display refresh, so frame-counted motion
-runs at double speed on a 120Hz display. See PARTICLE.md's notes on the same trap.
+All movement is expressed in real units and scaled by `FIXED_STEP_MS` rather than
+by a raw tick count, so the speeds in `ArrowHeadConfig` read as units per second.
+It used to scale by `scene.game.loop.delta`, which was correct back when logic ran
+at display refresh; now that logic runs on a fixed 60 Hz tick
+(see [CORE.md](CORE.md#fixed-logic-timestep)), `loop.delta` is the *render* delta
+and would run the worm at ~40% speed on a 144 Hz panel.
 
 `head.worldMargin` steers the head back toward the world center once it
 overshoots far enough outside the world bounds, so a bad arc can't park the

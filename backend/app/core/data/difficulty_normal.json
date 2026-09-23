@@ -5,7 +5,7 @@
     "11": 70, "12": 80, "13": 100, "14": 100, "15": 85,
     "16": 90, "17": 80, "18": 100, "19": 100, "20": 80,
     "21": 110, "22": 115, "23": 120, "24": 120, "25": 125,
-    "26": 125, "27": 125
+    "26": 125, "27": 125, "28": 125, "29": 130, "30": 100
   },
   "spawn_weights": {
     "1": [{"type": "triangle", "weight": 100}],
@@ -34,22 +34,29 @@
     "24": [{"type": "diamond", "weight": 20}, {"type": "octogon", "weight": 20}, {"type": "super_square", "weight": 20}, {"type": "super_pentagon", "weight": 20}, {"type": "super_hexagon", "weight": 20}],
     "25": [{"type": "diamond", "weight": 15}, {"type": "octogon", "weight": 10}, {"type": "super_square", "weight": 20}, {"type": "super_pentagon", "weight": 15}, {"type": "super_hexagon", "weight": 10}, {"type": "super_octogon", "weight": 10}, {"type": "square", "weight": 20}],
     "26": [{"type": "square", "weight": 15}, {"type": "diamond", "weight": 25}, {"type": "super_square", "weight": 15}, {"type": "super_pentagon", "weight": 15}, {"type": "super_hexagon", "weight": 10}, {"type": "octogon", "weight": 10}, {"type": "super_octogon", "weight": 10}],
-    "27": [{"type": "super_triangle", "weight": 10}, {"type": "super_square", "weight": 20}, {"type": "super_pentagon", "weight": 20}, {"type": "super_hexagon", "weight": 20}, {"type": "super_octogon", "weight": 15}, {"type": "diamond", "weight": 15}]
+    "27": [{"type": "super_triangle", "weight": 10}, {"type": "super_square", "weight": 20}, {"type": "super_pentagon", "weight": 20}, {"type": "super_hexagon", "weight": 20}, {"type": "super_octogon", "weight": 15}, {"type": "diamond", "weight": 15}],
+    "28": [{"type": "triangle", "weight": 5}, {"type": "super_triangle", "weight": 10}, {"type": "super_square", "weight": 10}, {"type": "pentagon", "weight": 5}, {"type": "diamond", "weight": 15}, {"type": "hexagon", "weight": 10}, {"type": "Octogon", "weight": 10}, {"type": "super_hexagon", "weight": 10}, {"type": "super_octogon", "weight": 5}, {"type": "super_diamond", "weight": 10}, {"type": "square", "weight": 10}],
+    "29": [{"type": "pentagon", "weight": 5}, {"type": "hexagon", "weight": 10}, {"type": "octogon", "weight": 5}, {"type": "diamond", "weight": 15}, {"type": "super_triangle", "weight": 10}, {"type": "super_square", "weight": 5}, {"type": "super_pentagon", "weight": 15}, {"type": "super_hexagon", "weight": 10}, {"type": "super_octogon", "weight": 5}, {"type": "super_diamond", "weight": 15}],
+    "30": [{"type": "triangle", "weight": 5}, {"type": "square", "weight": 10}, {"type": "diamond", "weight": 15}, {"type": "super_triangle", "weight": 15}, {"type": "super_square", "weight": 10}, {"type": "super_pentagon", "weight": 10}, {"type": "super_hexagon", "weight": 10}, {"type": "super_octogon", "weight": 5}, {"type": "super_diamond", "weight": 20}]
   },
   "fallback_spawn_weights": [
-    {"type": "super_triangle", "weight": 10},
-    {"type": "pentagon", "weight": 10},
+    {"type": "triangle", "weight": 3},
+    {"type": "square", "weight": 7},
+    {"type": "pentagon", "weight": 5},
     {"type": "hexagon", "weight": 10},
-    {"type": "diamond", "weight": 20},
-    {"type": "octogon", "weight": 15},
-    {"type": "super_square", "weight": 15},
+    {"type": "diamond", "weight": 10},
+    {"type": "octogon", "weight": 10},
+    {"type": "super_triangle", "weight": 10},
+    {"type": "super_square", "weight": 10},
     {"type": "super_pentagon", "weight": 10},
-    {"type": "super_hexagon", "weight": 10}
+    {"type": "super_hexagon", "weight": 10},
+    {"type": "super_octogon", "weight": 5},
+    {"type": "super_diamond", "weight": 10}
   ],
   "scheduled_boss_spawns": {
-    "10": ["hexagon", "hexagon", "hexagon", "dodecahedron"],
-    "20": ["hexagon", "hexagon", "hexagon", "arrow_head"],
-    "30": ["hexagon", "hexagon", "hexagon", "dodecahedron", "arrow_head"]
+    "10": ["dodecahedron"],
+    "20": ["arrow_head"],
+    "30": ["dodecahedron", "arrow_head"]
   },
   "bundle_rarity_weights": {
     "1": {"common": 0.65, "uncommon": 0.25, "rare": 0.09, "epic": 0.01, "legendary": 0.0},

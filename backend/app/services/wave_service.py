@@ -814,7 +814,8 @@ class WaveService:
         user_id: ObjectId,
         wave_number: int,
         client_bundle_tier: int,
-        token_string: str
+        token_string: str,
+        offer_open: bool = True
     ) -> Tuple[bool, List[str], Optional[str]]:
         """
         Roll and grant a mid-wave upgrade-bundle pickup.
@@ -832,6 +833,11 @@ class WaveService:
         own (still-open) validation token, not the claimed tier - a
         malicious client always claiming the best plausible tier still only
         gets a handful of grants per wave.
+
+        offer_open is the client's claim that the wave-select offer is still
+        buyable (see BundlePickupRequest); when set, whatever is unbought in
+        that offer is excluded from the roll so loot can't hand out - or
+        invalidate - a card the shop is about to sell.
 
         Free - no cost deducted, same as dev-tool upgrade grants. Recorded
         against this wave's own validation token (bundle_upgrades), NOT the
@@ -888,6 +894,31 @@ class WaveService:
         attack_type = game_save.current_attack_type
         picked: List[str] = []
 
+        # Whatever is still unbought in the player's wave-select offer is off
+        # the bundle table. The offer is rolled at wave *completion* (the
+        # client's GameManager.completeWave pre-loads the next wave via
+        # /waves/start), which is before the player has walked over the bundles
+        # still on the ground and before the modal is even opened - so without
+        # this, the offer roll and the bundle roll each see the upgrade as
+        # unowned and can both pick it. On a one-stack upgrade (ricochet) that
+        # leaves a card in the modal that can never be bought.
+        # Only while the offer is actually buyable (offer_open), which is just
+        # the gap between a wave completing and the player pressing Start
+        # Wave. offered_upgrades stays on the save for the whole following
+        # wave, but there's no mid-wave reroll and no way to buy from it, so
+        # excluding those ids then would hold <=3 upgrades out of the loot
+        # pool every single wave - and specifically the expensive ones the
+        # player couldn't afford, which is the normal reason cards go unbought.
+        # Within the window an id leaves the set as soon as it's bought, or
+        # wholesale when a reroll replaces the offer (nothing records what was
+        # rerolled past - there is no "decline").
+        # Mirrors MainScene.ts's offline roll (WaveValidation.getPendingOfferIds).
+        offered_ids = (
+            {u.id for u in game_save.offered_upgrades if not u.purchased}
+            if offer_open
+            else set()
+        )
+
         def pick_from_pool(curse: bool, max_tier: int) -> Optional[str]:
             for tier in range(max_tier, -1, -1):
                 rarity = self.BUNDLE_RARITY_ORDER[tier]
@@ -896,6 +927,7 @@ class WaveService:
                     if bool(u.get("curse")) == curse
                     and u["rarity"] == rarity
                     and u["id"] not in picked
+                    and u["id"] not in offered_ids
                     # Never drop a run-start ability from a bundle. Owning it
                     # already makes can_apply_upgrade say no, but a save that
                     # predates the ability would otherwise "win" it as loot.

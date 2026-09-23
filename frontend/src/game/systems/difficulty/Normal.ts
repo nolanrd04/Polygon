@@ -10,7 +10,7 @@ const ENEMY_COUNTS: Record<number, number> = {
   11: 70, 12: 80, 13: 100, 14: 100, 15: 85,
   16: 90, 17: 80, 18: 100, 19: 100, 20: 80,
   21: 110, 22: 115, 23: 120, 24: 120, 25: 125, 
-  26: 125, 27: 125
+  26: 125, 27: 125, 28: 125, 29: 130, 30: 100
 }
 
 /**
@@ -112,19 +112,42 @@ const SPAWN_WEIGHTS: Record<number, EnemySpawnWeight[]> = {
 
   27: [
     {type: 'super_triangle', weight: 10 }, {type: 'super_square', weight: 20}, {type: 'super_pentagon', weight: 20}, 
-    {type: 'super_hexagon', weight: 20}, {type: 'super_octogon', weight: 15}, {type: 'diamond', weight: 15}]
+    {type: 'super_hexagon', weight: 20}, {type: 'super_octogon', weight: 15}, {type: 'diamond', weight: 15}],
+
+  28: [
+    {type: 'triangle', weight: 5 }, {type: 'super_triangle', weight: 10}, {type: 'super_square', weight: 10}, {type: 'pentagon', weight: 5}, // 30
+    {type: 'diamond', weight: 15 }, {type: 'hexagon', weight: 10 }, {type: 'Octogon', weight: 10}, {type: 'super_hexagon', weight: 10}, // 45 + 30 = 75
+    {type: 'super_octogon', weight: 5}, {type: 'super_diamond', weight: 10}, // 15 + 75 = 90
+    {type: 'square', weight: 10}], // 10 + 90 = 100
+
+  29: [
+    {type: 'pentagon', weight: 5}, {type: 'hexagon', weight: 10}, {type: 'octogon', weight: 5}, //20
+    {type: 'diamond', weight: 15 }, { type: 'super_triangle', weight: 10}, {type: 'super_square', weight: 5}, // 35 + 20 = 55
+    {type: 'super_pentagon', weight: 15}, {type: 'super_hexagon', weight: 10}, {type: 'super_octogon', weight: 5}, // 30 + 55 = 85
+    {type: 'super_diamond', weight: 15 }], // 15 + 85 = 100
+
+  30: [ // boss wave
+    {type: 'triangle', weight: 5}, {type: 'square', weight: 10},  {type: 'diamond', weight: 15}, // 30
+    {type: 'super_triangle', weight: 15}, {type: 'super_square', weight: 10}, {type: 'super_pentagon', weight: 10}, // 35
+    {type: 'super_hexagon', weight: 10}, {type: 'super_octogon', weight: 5}, {type: 'super_diamond', weight: 20} // 35
+  ]
+  
   
 }
 
 const FALLBACK_WEIGHTS: EnemySpawnWeight[] = [
-  { type: 'super_triangle', weight: 10 },
-  { type: 'pentagon', weight: 10 },
+  { type: 'triangle', weight: 3 },
+  { type: 'square', weight: 7 }, // 10
+  { type: 'pentagon', weight: 5 }, // 15
   { type: 'hexagon', weight: 10 },
-  { type: 'diamond', weight: 20 },
-  { type: 'octogon', weight: 15 },
-  { type: 'super_square', weight: 15 },
-  { type: 'super_pentagon', weight: 10 },
-  { type: 'super_hexagon', weight: 10 }
+  { type: 'diamond', weight: 10 }, // 35
+  { type: 'octogon', weight: 10 }, // 45
+  { type: 'super_triangle', weight: 10 }, // 55
+  { type: 'super_square', weight: 10 }, // 65 
+  { type: 'super_pentagon', weight: 10 }, // 75
+  { type: 'super_hexagon', weight: 10 }, // 85
+  { type: 'super_octogon', weight: 5 }, // 90
+  { type: 'super_diamond', weight: 10 } // 100
 ]
 
 /**
@@ -164,8 +187,6 @@ const RARITY_WEIGHTS_BY_WAVE: Record<number, RarityWeights> = {
   28: { common: 0.20, uncommon: 0.34, rare: 0.32,  epic: 0.10, legendary: 0.04 },
   29: { common: 0.20, uncommon: 0.33, rare: 0.32,  epic: 0.11, legendary: 0.04 },
   30: { common: 0.20, uncommon: 0.31, rare: 0.33,  epic: 0.11, legendary: 0.05 },
-
-
 
 }
 
@@ -221,9 +242,9 @@ const FALLBACK_BUNDLE_RARITY_WEIGHTS: RarityWeights = {
  * trigger fires.
  */
 const SCHEDULED_BOSS_SPAWNS: Record<number, string[]> = {
-  10: ['hexagon', 'hexagon', 'hexagon', 'dodecahedron'],
-  20: ['hexagon', 'hexagon', 'hexagon', ARROW_HEAD_IDS.head],
-  30: ['hexagon', 'hexagon', 'hexagon', 'dodecahedron', ARROW_HEAD_IDS.head],
+  10: ['dodecahedron'],
+  20: [ARROW_HEAD_IDS.head],
+  30: ['dodecahedron', ARROW_HEAD_IDS.head],
 }
 
 export const NormalDifficulty: Difficulty = {

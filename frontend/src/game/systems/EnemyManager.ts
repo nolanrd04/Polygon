@@ -126,16 +126,18 @@ export class EnemyManager {
     enemy.typeId = typeId
     enemy.SetDefaults()
 
+    const originalScoreChance = enemy.scoreChance
+
     if (!dropScore) {
       enemy.scoreChance = 0
     }
 
     if (!dropScore && dropBundle) {
-      enemy.bundleDropChance = enemy.scoreChance
+      enemy.bundleDropChance = originalScoreChance
     }
 
     if (!dropBundle) {
-      enemy.bundleDropChance = 0
+      enemy.canDropBundle = false
     }
 
     // Apply wave scaling from difficulty

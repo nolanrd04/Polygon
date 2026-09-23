@@ -10,6 +10,20 @@ interface UpdateNote {
 // Add new updates at the top of this array
 const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: 'v0.2.9',
+    date: '2026-09-16',
+    title: 'Balancing, visual changes, new enemy, and waves 28-30 added.',
+    changes: [
+      'Improved mobile controls',
+      'Enemy health numbers now compress as the number grows.',
+      'Super octogon base health reduced from 1000 -> 800 and damage reduced from 30 -> 15.',
+      'Square base health 200 -> 150 and will now run away and heal when below 50% health.',
+      'Super hexagon shoots one projectile again, but moves while shooting.',
+      'Super hexagon projectiles now last longer (1s -> 4s) and fly faster (400 -> 500).',
+      'New enemy: Super Diamond. Dashes at the player more erratically. Tries to avoid the player when not dashing.'
+    ]
+  },
+  {
     version: 'v0.2.8',
     date: '2026-09-08',
     title: 'Balancing and New Enemy',

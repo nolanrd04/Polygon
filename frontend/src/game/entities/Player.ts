@@ -404,12 +404,12 @@ export class Player extends Phaser.GameObjects.Container {
     // Apply upgrade modifiers (player-specific)
     this.applyUpgradeModifiers(projectile)
 
-    // Use centralized spawn method with owner='player'
+    // Use centralized spawn method with owner='player'. That path is what registers
+    // the projectile for tracking (MainScene.spawnProjectile -> this.addProjectile),
+    // so do NOT push it here as well - a projectile in the list twice gets _update()
+    // called twice a frame, which doubles AI() ticks and the perf overlay's count.
     const scene = this.scene as any
     scene.spawnProjectile(projectile, startX, startY, targetX, targetY, 'player', 0)
-
-    // Add to player's tracking
-    this.projectiles.push(projectile)
 
     // console.log('Projectile damage after modifiers:', projectile.damage)
 
@@ -679,7 +679,12 @@ export class Player extends Phaser.GameObjects.Container {
     return this.projectiles
   }
 
-  /** Register a projectile for update tracking (used when spawning projectiles outside of Player.spawnProjectileOfType) */
+  /**
+   * Register a projectile for update tracking. Called by MainScene.spawnProjectile for
+   * every player-owned projectile - that is the single registration point, including for
+   * projectiles spawned by other projectiles (BulletExplosion, buckshot pellets). Callers
+   * of scene.spawnProjectile must not also push into the list themselves.
+   */
   addProjectile(projectile: Projectile): void {
     this.projectiles.push(projectile)
   }

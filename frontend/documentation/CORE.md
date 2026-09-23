@@ -124,8 +124,26 @@ Exports constants and the Phaser configuration object.
 | `MOBILE_CAMERA_ZOOM` | `0.6` | Target camera zoom on mobile. Desktop is always `1.0` |
 | `MAX_WORLD_VIEW_FRACTION` | `0.92` | Most of the world the camera may show, per axis |
 | `resolveCameraZoom(w, h)` | `(number, number) => number` | The zoom for a viewport of `w × h` CSS pixels |
+| `LOGIC_HZ` | `60` | Game logic ticks per second, on every device |
+| `FIXED_STEP_MS` | `1000 / 60` | Length of one logic tick |
+| `MAX_CATCHUP_STEPS` | `3` | Most logic ticks one rendered frame may run |
 
 `Phaser.Scale.RESIZE` is used without `autoCenter` to avoid CSS margin offsets that would desync touch pointer coordinates from game world coordinates.
+
+### Fixed logic timestep
+
+Phaser drives `Scene.update` from `requestAnimationFrame`, so it fires at the **display's** refresh rate — 60 Hz on a normal monitor, 120 Hz on ProMotion, 144 Hz+ on a gaming panel, less than 60 on anything struggling. Nearly all of this game's logic counts ticks rather than milliseconds (tModLoader style: `waitFrames = 240 // ~4 seconds`, `particleTimer % 4`, per-tick heals), so running it straight off rAF meant a 144 Hz player's game ran 2.4× faster than a 60 Hz player's.
+
+`MainScene.update` therefore accumulates real elapsed time and runs whole `FIXED_STEP_MS` ticks of `stepLogic()`. "Per frame" now means "per 1/60 s" everywhere, and every `// at 60fps` comment in the codebase is literally true.
+
+Not on this clock:
+
+- **Arcade physics**, which still integrates once per rendered frame with the real delta. Logic sets velocities; physics moves bodies, so movement stays smooth at 144 Hz even though logic ticks at 60.
+- **Anything keyed off `scene.time.now`** — knockback windows, weapon cooldowns, per-enemy hit cooldowns. Those were already wall-clock and are unaffected.
+
+When writing logic that must advance in real units, scale by `FIXED_STEP_MS`, **never** by `scene.game.loop.delta` — that is the render delta and is no longer the length of a tick.
+
+`MAX_CATCHUP_STEPS` bounds how far a slow frame may catch up. Without it a device that cannot hit 60 Hz would run more logic per frame, get slower, and run still more — the classic death spiral. Past the cap the game slows down instead.
 
 ### Mobile camera zoom
 

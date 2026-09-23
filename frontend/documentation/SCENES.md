@@ -62,18 +62,23 @@ The two sync calls live here rather than in each layer's own `resize` listener s
 
 ### update(time, delta)
 
-Called every frame (≈16 ms at 60 fps):
+Called once per rendered frame, at the display's refresh rate. It does no game logic itself — it skips if paused (dropping the accumulator so unpausing does not fire a burst), adds `delta` to `logicAccumulator`, clamps it to `FIXED_STEP_MS * MAX_CATCHUP_STEPS`, runs `stepLogic()` for each whole step owed, then writes `PerfStats`.
 
-1. Skip if paused.
-2. Tick `TouchControlManager`.
-3. Increment wave-validation frame counter; sample player state every 30 frames.
-4. Tick `UpgradeEffectSystem.onUpdate(delta)` for regeneration and other time-based effects.
-5. Read keyboard input and call `player.move()`. Joystick input takes priority on mobile.
-6. On desktop, rotate player toward mouse and shoot if pointer is down.
-7. Tick `player.update()` (projectile management, spinner/flame tracking).
+### stepLogic()
+
+One fixed 1/60 s slice of game logic — see [CORE.md](CORE.md) for why the game does not run off the frame delta:
+
+1. Tick `TouchControlManager`.
+2. Increment wave-validation frame counter; sample player state every 30 frames (exactly twice a second now the tick is fixed).
+3. Tick `UpgradeSystem.dispatchUpdatePlayer(player, FIXED_STEP_MS)` for regeneration and other time-based effects.
+4. Read keyboard input and call `player.move()`. Joystick input takes priority on mobile.
+5. On desktop, rotate player toward mouse and shoot if pointer is down.
+6. Tick `player.update()` (projectile management, spinner/flame tracking).
+7. Tick active `DroppedUpgradeBundle`s and `Particle.UpdateAll(FIXED_STEP_MS)`.
 8. Tick `enemyManager.update(playerX, playerY)`.
 9. Check `waveManager.isWaveComplete()` and call `waveManager.completeWave()` when true.
 10. Draw debug collision boxes if enabled.
+11. `LightingSystem.UpdateAll()` — must stay last, and must stay inside the tick: lights are immediate-mode, so a render-rate call would find an empty emitter list on frames that ran no tick.
 
 ### spawnProjectile(projectile, sx, sy, tx, ty, owner, ownerId)
 

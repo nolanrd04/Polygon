@@ -32,7 +32,7 @@ interface GameHUDProps {
 
 export default function GameHUD({ health, maxHealth, points, kills, wave }: GameHUDProps) {
   const healthPercent = (health / maxHealth) * 100
-
+  const isiInfiniteMode = wave > 30
   return (
     <div className="absolute top-0 left-0 right-0 p-4 pointer-events-none">
       <div className="flex justify-between items-start">
@@ -51,7 +51,7 @@ export default function GameHUD({ health, maxHealth, points, kills, wave }: Game
         {/* Wave & Points */}
         <div className="flex flex-col items-end gap-1" style={isMobile ? { transform: 'scale(0.5)', transformOrigin: 'top right' } : undefined}>
           <div className="text-polygon-primary text-2xl font-bold">
-            WAVE {wave}
+            {isiInfiniteMode ? `INFINITE MODE: WAVE ${wave}` : `WAVE ${wave}`}
           </div>
           <div className="text-polygon-warning text-lg">
             {points.toLocaleString()} PTS

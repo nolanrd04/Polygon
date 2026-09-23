@@ -583,7 +583,7 @@ Three touch points in `MainScene.ts`:
 | Call | Location | Purpose |
 |---|---|---|
 | `Particle.Initialize(this)` | `create()`, after `TextureGenerator.generateCommonTextures(this)` | Binds the pool to the scene. Safe to re-call on scene restart — all previous particles and their sprites are discarded |
-| `Particle.UpdateAll(delta)` | `update()` | Advances every live particle. Runs after the pause guard, so particles freeze with the game |
+| `Particle.UpdateAll(FIXED_STEP_MS)` | `stepLogic()` | Advances every live particle by one fixed tick. Runs after the pause guard, so particles freeze with the game |
 | `Particle.Clear()` | `'clear-projectiles'` handler | Kills everything at end of wave, alongside `player.clearProjectiles()` |
 
 `Particle.Count` reports how many are currently alive.
@@ -594,12 +594,10 @@ Three touch points in `MainScene.ts`:
 
 **`timeLeft` means something different here than on `Projectile`.** `Particle.timeLeft` is a real countdown, decremented by `delta` each frame. `Projectile.timeLeft` is a *constant lifetime budget* compared against `scene.time.now - spawnTime` and never mutates. Modulo tricks like `if (this.timeLeft % 50 === 0)` inside a projectile's `AI()` are therefore always true — `3000 % 50` is `0` on every frame.
 
-**`AI()` is not called at a fixed 60fps.** `gameConfig` sets no `fps` block, so Phaser drives the loop from `requestAnimationFrame` — the rate follows the display (120fps on a ProMotion Mac). Frame-counted spawn cadence emits twice as densely there as on a 60Hz screen. Gate on elapsed time instead:
+**`AI()` runs on the fixed 60 Hz logic tick, not per rendered frame.** `MainScene` accumulates real time and steps logic in whole `FIXED_STEP_MS` slices (see [CORE.md](CORE.md#fixed-logic-timestep)), and `Particle.UpdateAll` is passed `FIXED_STEP_MS` rather than the frame delta. A tick-counted spawn cadence (`if (this.timer % 4 === 0)`) is therefore stable across displays; gating on `scene.time.now` works equally well.
 
-```typescript
-if (this.scene.time.now - this.lastParticleTime >= 50) { ... }
-```
+This was not always true — the loop used to run at display refresh, so tick-counted cadence emitted twice as densely on a 120 Hz panel. Old code written to dodge that (scaling by `scene.game.loop.delta`) is now the broken form, since `loop.delta` is the render delta and no longer the length of a tick.
 
-Arcade physics is separate and does run a fixed 60Hz step, so a projectile's body position can repeat between two `AI()` calls on a high-refresh display — another reason a per-frame trail can look clumped.
+Arcade physics still integrates once per *rendered* frame, so on a high-refresh display a body keeps moving between two `AI()` calls — worth knowing when a trail looks clumped or a spawn position lags the sprite.
 
 **Randomness in particles should stay unseeded.** `Phaser.Math.Between` / `FloatBetween` are the right helpers here. They wrap `Math.random()` and are not seeded, which is fine because particles are purely visual and never touch wave validation.

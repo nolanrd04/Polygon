@@ -26,9 +26,9 @@ export class SuperOctogon extends Enemy {
 
     SetDefaults(): void 
     {
-        this.health = 1000
+        this.health = 800
         this.speed = 35
-        this.damage = 30
+        this.damage = 15
         this.sides = 8
         this.radius = 35
         this.color = 0x4287f5

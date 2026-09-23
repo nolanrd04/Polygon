@@ -19,6 +19,7 @@ export class SuperHexagon extends Enemy {
   private lastFireTime: number = 0
   private fireCooldown: number = 800
   private hasOutline: boolean = false
+  private slowSpeed: number = 32
 
   SetDefaults(): void {
     this.health = 700
@@ -38,6 +39,8 @@ export class SuperHexagon extends Enemy {
     if (!this.shielded && this.maxShieldHealth === 0) {
       this.activateShield()
     }
+
+    this.slowSpeed = this.speed * 0.5
     return true
   }
 
@@ -53,18 +56,26 @@ export class SuperHexagon extends Enemy {
     const now = this.scene.time.now
 
     // Try to recharge shield if it's broken and cooldown has passed
-    if (!this.shielded && this.shieldHealth <= 0 && now - this.lastShieldBreakTime > this.shieldRechargeDelay) {
+    if (!this.shielded && this.shieldHealth <= 0 && now - this.lastShieldBreakTime > this.shieldRechargeDelay) 
+    {
       this.activateShield()
     }
     else if (!this.shielded && now - this.lastShieldBreakTime <= this.shieldRechargeDelay)
     {
-        // dont move, shoot projectiles
-        this.velocityX = 0
-        this.velocityY = 0
-        if (now - this.lastFireTime > this.fireCooldown) {
-            this.lastFireTime = now
+      if (now - this.lastFireTime > this.fireCooldown) 
+      {
+        this.lastFireTime = now
 
-          // projectiles
+        const proj = new SuperHexagonProj()
+        proj.SetDefaults()
+        // Scale explosion damage to match the bullet's scaled damage
+        proj.damage = this.damage
+
+        const scene = this.scene as Phaser.Scene & { spawnProjectile: Function }
+        scene.spawnProjectile(proj, this.x, this.y, _playerX, _playerY, 'enemy', this.id)
+      }
+          // projectiles OLD
+          /*
           for (let i = 0; i < this.sides; i++) {
           // Calculate angle for this corner
           const cornerAngle = (i / this.sides) * Math.PI * 2 + this.rotation - Math.PI / 2
@@ -87,19 +98,41 @@ export class SuperHexagon extends Enemy {
           const scene = this.scene as Phaser.Scene & { spawnProjectile: Function }
           scene.spawnProjectile(proj, cornerX, cornerY, targetCornerX, targetCornerY, 'enemy', this.id)
           }
-
+          */
           // all sound calls should have this check to prevent "sound stacking"
           //
           if (this.scene.sound.isPlaying(SoundID.EnemyShoot1))
           {
             this.scene.sound.stopByKey(SoundID.EnemyShoot1)
           }
-        
+          
           this.scene.sound.play(SoundID.EnemyShoot1, { volume:  getDefaultVolume(SoundID.EnemyShoot1) })
           //
         }
-    }
+  }
 
+  moveTowards(targetX: number, targetY: number): void 
+  {
+    const now = this.scene.time.now
+    if (!this.shielded && now - this.lastShieldBreakTime <= this.shieldRechargeDelay)
+    {
+      const angle = Phaser.Math.Angle.Between(this.x, this.y, targetX, targetY)
+      const targetVelX = Math.cos(angle) * this.slowSpeed
+      const targetVelY = Math.sin(angle) * this.slowSpeed
+
+      // Lerp velocity for smooth movement (0.15 = smoothing factor)
+      const smoothing = 0.15
+      this.velocityX = Phaser.Math.Linear(this.velocityX, targetVelX, smoothing)
+      this.velocityY = Phaser.Math.Linear(this.velocityY, targetVelY, smoothing)
+
+      // Lerp rotation for smooth turning
+      this.rotation = Phaser.Math.Angle.RotateTo(this.rotation, angle + Math.PI / 2, 0.1)
+    }
+    else
+    {
+      super.moveTowards(targetX, targetY)
+      return
+    }
   }
 
   /**

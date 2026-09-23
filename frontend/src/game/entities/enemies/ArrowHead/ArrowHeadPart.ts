@@ -15,6 +15,7 @@ import {
 } from './ArrowHeadConfig'
 import { LightingSystem } from '../../../../game/systems/LightingSystem'
 import { LightingIntensityID } from '../../../../game/data/ID'
+import { FIXED_STEP_MS } from '../../../core/GameConfig'
 
 /**
  * ============================================================================
@@ -285,9 +286,9 @@ export abstract class ArrowHeadPart extends Enemy {
     // The segment's own `_update` will push this value into the body earlier in
     // the next frame, but the head updates last, so this line always has the
     // final say before the physics step.
-    const seconds = this.scene.game.loop.delta / 1000
-    this.velocityX = seconds > 0 ? (this.x - previousX) / seconds : 0
-    this.velocityY = seconds > 0 ? (this.y - previousY) / seconds : 0
+    const seconds = FIXED_STEP_MS / 1000
+    this.velocityX = (this.x - previousX) / seconds
+    this.velocityY = (this.y - previousY) / seconds
     this.body.setVelocity(0, 0)
 
     if (ArrowHeadConfig.chain.sharedHealth && this.owner) {

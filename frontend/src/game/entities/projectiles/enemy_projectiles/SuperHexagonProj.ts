@@ -8,11 +8,11 @@ export class SuperHexagonProj extends Projectile {
   private particleTimer: number = 0
   SetDefaults(): void {
     this.damage = 8
-    this.speed = 400
+    this.speed = 500
     this.size = 6
     this.pierce = 999999999
     this.color = 0xd622ac
-    this.timeLeft = 1000
+    this.timeLeft = 4000
     this.doOldPositionTracking = true
     this.oldTrackingCounter = 4
     this.oldTrackingInterval = 55

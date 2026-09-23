@@ -22,6 +22,8 @@ An abstract base class all enemy types extend. Handles physics spawning, sprite 
 | `radius` | `number` | 20 | Visual radius in pixels |
 | `color` | `number` | `0xff0000` | Hex tint color |
 | `scoreChance` | `number` | 0.5 | Probability (0–1) that killing this enemy awards 1 point |
+| `bundleDropChance` | `number` | 0 | Override chance (0–1) for `DropBundles()`'s emitted rolls; `0` means "use the difficulty's default chance", not "never drop" |
+| `canDropBundle` | `boolean` | `true` | Hard on/off switch for `DropBundles()` — `false` makes it a no-op regardless of `bundleDropChance`. Set to `false` via `EnemyManager.spawnEnemy(..., dropBundle: false)` for sub-spawns that shouldn't award their own bundles |
 | `speedCap` | `number` | 2 | Maximum speed multiplier from wave scaling |
 | `scale` | `number` | 1.0 | Visual + hitbox container scale |
 | `hitboxSize` | `number` | 1.0 | Collision radius as a fraction of `radius × scale` |
@@ -57,10 +59,14 @@ An abstract base class all enemy types extend. Handles physics spawning, sprite 
 
 | Hook | Description |
 |------|-------------|
-| `PreAI()` | Return `false` to skip AI this frame |
-| `AI(playerX, playerY)` | Custom per-frame behaviour. Default is empty — base movement toward player is always applied via `moveTowards()`. |
+| `PreAI()` | Return `false` to skip AI this tick |
+| `AI(playerX, playerY)` | Custom per-tick behaviour. Default is empty — base movement toward player is always applied via `moveTowards()`. |
 | `OnHit(damage, source)` | Called when taking damage. Return `false` to cancel the hit. Default plays hit sound. |
 | `OnDeath()` | Called when HP reaches 0. Default plays death sound. Override for drops, splits, explosions. |
+
+`AI()` runs on the fixed 60 Hz logic tick, not per rendered frame — see [CORE.md](CORE.md#fixed-logic-timestep). A tick counter is therefore a valid clock (`240 ticks = 4 s`), and anything expressed in real units should scale by `FIXED_STEP_MS`, never by `scene.game.loop.delta`.
+
+**There is no `OnSpawn()` hook on `Enemy`** (unlike `Particle` and `Projectile`, which have one). Per-spawn setup belongs in `SetDefaults()`; `maxHealth` is captured by `_spawn()` after all stat modifiers, so read `this.maxHealth` rather than caching `health` yourself.
 
 ### Public methods
 
@@ -70,6 +76,12 @@ An abstract base class all enemy types extend. Handles physics spawning, sprite 
 | `applyKnockback(vx, vy)` | Sets velocity directly, reduced by `knockbackResistance`. Suppresses AI for 100 ms. |
 | `takeDamage(amount, source?, penetration?)` | Calls `OnHit`, subtracts `amount - effectiveDefense(penetration)` (min 1) from health, redraws health bar, flashes white. Calls `_die()` if HP ≤ 0. `CollisionManager` passes the hitting projectile's `penetration`. |
 | `effectiveDefense(penetration?)` | `defense` after penetration, floored at 0 — excess penetration never becomes bonus damage. |
+
+### Module exports
+
+| Export | Description |
+|--------|-------------|
+| `formatCompactNumber(value)` | Compresses a number to its largest place value with one truncated decimal digit: `1100 → "1.1K"`, `1050 → "1.0K"`, `2_500_000 → "2.5M"`, `940 → "940"`. Used for the `showEnemyHealthNumber` readout (`health/maxHealth`), which `drawHealthBar()` refreshes every frame. Truncated rather than rounded so the display never reads higher than the real value. |
 
 ### Internal methods (prefixed `_`)
 

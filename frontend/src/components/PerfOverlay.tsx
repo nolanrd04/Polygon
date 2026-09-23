@@ -66,7 +66,7 @@ const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/
  * to sit on top of the health bar. GameHUD scales itself 0.5 on mobile, so the
  * block it has to clear is half as tall there.
  */
-const TOP_OFFSET = isMobile ? 66 : 120
+const TOP_OFFSET = isMobile ? 75 : 120
 
 /** Green under half the frame budget, amber approaching it, red over. */
 function budgetColor(ms: number): string {

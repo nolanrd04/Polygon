@@ -88,5 +88,5 @@ Both `performDash()` and `activateShield()` return `boolean` because they are ca
 | `update()` | Called every frame by `MainScene`. Syncs position, updates dash state, updates spinner position, and ticks/cleans up all owned projectiles. |
 | `clearProjectiles()` | Destroys all active projectiles. Called at wave end via the `clear-projectiles` scene event. |
 | `getProjectiles()` | Returns the current projectile array. |
-| `addProjectile(p)` | Registers an externally-spawned projectile for update tracking. |
+| `addProjectile(p)` | Registers a projectile for update tracking. Called by `MainScene.spawnProjectile()` for every player-owned projectile — that is the **only** registration point. Code that calls `scene.spawnProjectile(...)` must not also add the projectile itself, or it lands in the list twice and gets `_update()`d twice per frame. |
 | `getProjectileGroup()` | Returns the Phaser Group used by `CollisionManager` for overlap detection. |

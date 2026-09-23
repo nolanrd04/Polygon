@@ -1,5 +1,6 @@
 import { Particle, SparkParticle } from '../particles'
 import { Enemy } from './Enemy'
+import { FIXED_STEP_MS } from '../../core/GameConfig'
 import { LightingSystem } from '../../systems/LightingSystem'
 import { LightingIntensityID } from '../../data/ID'
 
@@ -73,7 +74,7 @@ export class Pentagon extends Enemy {
       }
       if (!this.isTeleporting)
       {
-        this.teleportTimer -= this.scene.game.loop.delta
+        this.teleportTimer -= FIXED_STEP_MS
         if (this.teleportTimer <= 0)
         {
           this.isTeleporting = true

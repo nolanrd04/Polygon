@@ -10,7 +10,7 @@ import {
   type ArrowHeadRole,
 } from './ArrowHeadConfig'
 import { EnemyBullet } from '../../projectiles/enemy_projectiles/EnemyBullet'
-import { WORLD_WIDTH, WORLD_HEIGHT } from '../../../core/GameConfig'
+import { WORLD_WIDTH, WORLD_HEIGHT, FIXED_STEP_MS } from '../../../core/GameConfig'
 import { LightingIntensityID, SoundID } from '../../../data/ID'
 import { getDefaultVolume } from '../../../core/AudioRegistry'
 import type { Enemy } from '../Enemy'
@@ -108,8 +108,8 @@ export class ArrowHeadHead extends ArrowHeadPart {
     /* -------- SPAWNING -------- */
     const cfg = ArrowHeadConfig
     const now = this.scene.time.now
-    // Clamped so a frame hitch can't teleport the worm across the arena.
-    const dt = Math.min(this.scene.game.loop.delta, 50) / 1000
+    // Fixed logic step, so a frame hitch can't teleport the worm across the arena.
+    const dt = FIXED_STEP_MS / 1000
 
     if (this.spawnStartTime === 0) {
       this.spawnStartTime = now

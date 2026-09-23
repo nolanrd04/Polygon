@@ -8,7 +8,7 @@ import { LightingSystem } from '../systems/LightingSystem'
 import { PerfStats, recordPeaks } from '../core/PerfStats'
 import { EventBus } from '../core/EventBus'
 import { GameManager } from '../core/GameManager'
-import { WORLD_WIDTH, WORLD_HEIGHT, resolveCameraZoom } from '../core/GameConfig'
+import { WORLD_WIDTH, WORLD_HEIGHT, resolveCameraZoom, FIXED_STEP_MS, MAX_CATCHUP_STEPS } from '../core/GameConfig'
 import { AttackType } from '../data/attackTypes'
 import { Projectile } from '../entities/projectiles/Projectile'
 import { Particle } from '../entities/particles/Particle'
@@ -54,6 +54,9 @@ export class MainScene extends Phaser.Scene {
 
   private bundleGroup!: Phaser.GameObjects.Group
   private activeBundles: DroppedUpgradeBundle[] = []
+
+  /** Unspent real time owed to the fixed logic step. See FIXED_STEP_MS. */
+  private logicAccumulator: number = 0
 
   constructor() {
     super({ key: 'MainScene' })
@@ -226,19 +229,35 @@ export class MainScene extends Phaser.Scene {
         }
 
         const pickedIds: string[] = []
+        // Seeded with whatever is still unbought in this wave's upgrade offer:
+        // that offer was rolled back at wave completion, before the player
+        // walked over the bundles still on the ground, so a bundle handing out
+        // one of those ids would duplicate a pick the shop is about to sell —
+        // and on a one-stack upgrade it leaves a card in the modal that can
+        // never be bought. See WaveValidation.getPendingOfferIds; the online
+        // path applies the same exclusion server-side in
+        // wave_service.collect_upgrade_bundle. Grows with each pick so one
+        // bundle never rolls the same id twice either.
+        const exclude: string[] = waveValidation.getPendingOfferIds()
 
         // First slot is always a regular upgrade at the bundle's rarity — guarantees
         // at least one matching-tier item per bundle. Falls back to lower tiers only
         // if the pool at that tier is exhausted.
-        const firstId = this.pickRegularUpgrade(upgradeValue, pickedIds)
-        if (firstId) pickedIds.push(firstId)
+        const firstId = this.pickRegularUpgrade(upgradeValue, exclude)
+        if (firstId) {
+          pickedIds.push(firstId)
+          exclude.push(firstId)
+        }
 
         // Remaining slots (if any) are each 30%/70% curse or regular, no duplicates.
         for (let i = 1; i < count; i++) {
           const id = Math.random() < 0.3
-            ? this.pickCurse(rollItemRarity(), pickedIds)
-            : this.pickRegularUpgrade(rollItemRarity(), pickedIds)
-          if (id) pickedIds.push(id)
+            ? this.pickCurse(rollItemRarity(), exclude)
+            : this.pickRegularUpgrade(rollItemRarity(), exclude)
+          if (id) {
+            pickedIds.push(id)
+            exclude.push(id)
+          }
         }
 
         if (pickedIds.length === 0) return
@@ -596,13 +615,42 @@ export class MainScene extends Phaser.Scene {
   update(_time: number, delta: number): void {
 
     // DONT UPDATE IF PAUSED
-    if (GameManager.getState().isPaused) return
+    // Accumulator is dropped so unpausing does not fire a burst of catch-up ticks.
+    if (GameManager.getState().isPaused) {
+      this.logicAccumulator = 0
+      return
+    }
 
     // Perf sampling. Two performance.now() calls per frame is far below the
     // resolution of anything being measured, so this stays in for release
     // builds - the overlay that reads it is what is gated.
     const perfStart = performance.now()
 
+    // FIXED TIMESTEP: run whole 1/60s logic ticks, never a partial one, so the
+    // refresh rate decides only how often we RENDER. Clamping before the loop
+    // caps a slow frame at MAX_CATCHUP_STEPS ticks.
+    this.logicAccumulator = Math.min(this.logicAccumulator + delta, FIXED_STEP_MS * MAX_CATCHUP_STEPS)
+    while (this.logicAccumulator >= FIXED_STEP_MS) {
+      this.logicAccumulator -= FIXED_STEP_MS
+      this.stepLogic()
+    }
+
+    PerfStats.updateMs = performance.now() - perfStart
+    PerfStats.fps = this.game.loop.actualFps
+    PerfStats.lightGroups = LightingSystem.GroupCount
+    PerfStats.lights = LightingSystem.LightCount
+    PerfStats.lightsCulled = LightingSystem.CulledCount
+    PerfStats.lightWindow = LightingSystem.WindowTiles / LightingSystem.TotalTiles
+    PerfStats.enemies = this.enemyManager.getEnemies().length
+    PerfStats.projectiles = this.player.getProjectiles().length
+    recordPeaks()
+  }
+
+  /**
+   * One 1/60s slice of game logic. Everything here advances by FIXED_STEP_MS,
+   * never by the frame's real delta.
+   */
+  private stepLogic(): void {
     // UPDATE TOUCH CONTROLS
     if (this.touchControls) {
       this.touchControls.update()
@@ -623,8 +671,8 @@ export class MainScene extends Phaser.Scene {
       )
     }
 
-    // Per-frame upgrade hooks (regeneration, etc.)
-    UpgradeSystem.dispatchUpdatePlayer(this.player, delta)
+    // Per-tick upgrade hooks (regeneration, etc.)
+    UpgradeSystem.dispatchUpdatePlayer(this.player, FIXED_STEP_MS)
 
     // Handle movement input (skip if left joystick is active)
     if (!this.touchControls.isLeftJoystickActive()) {
@@ -678,7 +726,7 @@ export class MainScene extends Phaser.Scene {
     }
 
     // Advance visual particles (pooled; no physics or collision)
-    Particle.UpdateAll(delta)
+    Particle.UpdateAll(FIXED_STEP_MS)
 
     // Update managers
     this.enemyManager.update(this.player.x, this.player.y)
@@ -695,21 +743,13 @@ export class MainScene extends Phaser.Scene {
       this.debugGraphics.clear()
     }
 
-    // Flood and upload the light map. MUST come last: lights are immediate-mode,
-    // so every AddLight for this frame has to land before we propagate.
+    // Flood and upload the light map. MUST come last, and MUST stay inside the
+    // tick: lights are immediate-mode, so every AddLight of this tick has to land
+    // before we propagate, and a render-rate call would find the list empty on
+    // frames that ran no tick.
     const lightStart = performance.now()
     LightingSystem.UpdateAll()
     PerfStats.lightingMs = performance.now() - lightStart
-
-    PerfStats.updateMs = performance.now() - perfStart
-    PerfStats.fps = this.game.loop.actualFps
-    PerfStats.lightGroups = LightingSystem.GroupCount
-    PerfStats.lights = LightingSystem.LightCount
-    PerfStats.lightsCulled = LightingSystem.CulledCount
-    PerfStats.lightWindow = LightingSystem.WindowTiles / LightingSystem.TotalTiles
-    PerfStats.enemies = this.enemyManager.getEnemies().length
-    PerfStats.projectiles = this.player.getProjectiles().length
-    recordPeaks()
   }
 
   /**

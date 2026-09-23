@@ -30,6 +30,7 @@ import { ArrowHeadHead, ArrowHeadBody, ArrowHeadTail, ARROW_HEAD_IDS } from './A
 import type { Enemy } from './Enemy'
 import { SeekingSquare } from './SeekingSquare'
 import { SuspiciousSquare } from './SuspiciousSquare'
+import { SuperDiamond } from './SuperDiamond'
 
 export type EnemyType = {
   id: string
@@ -56,6 +57,7 @@ export const ENEMY_TYPES: EnemyType[] = [
   { id: 'super_octogon', class: SuperOctogon },
   { id: 'seeking_square', class: SeekingSquare },
   { id: 'suspicious_square', class: SuspiciousSquare },
+  { id: 'super_diamond', class: SuperDiamond },
   // { id: 'exploder', class: Exploder },
 
   // Arrow Head boss. The head is the only one a wave ever spawns directly -

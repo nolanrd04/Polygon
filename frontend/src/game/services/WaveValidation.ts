@@ -434,6 +434,15 @@ export class WaveValidationService {
       const newPoints = stats.points - cost
       GameManager.updatePlayerStats({ points: newPoints })
 
+      // Mark the offer entry bought, exactly as the backend's /select-upgrade
+      // does to game_save.offered_upgrades (first unpurchased instance only,
+      // so a stackable offered twice still has a second buyable card). Keeps
+      // getPendingOfferIds() meaning the same thing in both modes.
+      const offerEntry = this.offeredUpgrades.find(
+        (u: any) => u && typeof u === 'object' && u.id === upgradeId && u.purchased !== true
+      )
+      if (offerEntry) offerEntry.purchased = true
+
       console.log(`[WAVE VALIDATION] Local upgrade purchase: ${upgradeId}, cost: ${cost}, new points: ${newPoints}`)
       return { success: true, newPoints }
     }
@@ -497,7 +506,16 @@ export class WaveValidationService {
       const response = await axios.post('/api/waves/bundle-pickup', {
         wave: waveNumber,
         bundle_tier: bundleTier,
-        token: this.waveToken
+        token: this.waveToken,
+        // Whether the wave-select offer is still buyable, which the server
+        // can't work out for itself: /waves/start fires a wave early (at the
+        // *previous* wave's completion) and nothing is posted when the player
+        // actually presses Start Wave, so a between-waves pickup and a
+        // mid-wave one are the same request server-side. Gates the offer
+        // exclusion in collect_upgrade_bundle - see isOfferOpen. Only ever
+        // widens the loot pool by the <=3 ids the player could simply have
+        // bought, so a client lying about it gains nothing.
+        offer_open: this.isOfferOpen()
       }, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -517,6 +535,69 @@ export class WaveValidationService {
   getOfferedUpgrades(): any[] {
     console.log('WaveValidation.getOfferedUpgrades() called, returning:', this.offeredUpgrades)
     return this.offeredUpgrades
+  }
+
+  /**
+   * Whether the wave-select offer is still on the table — i.e. the player can
+   * still act on those three cards.
+   *
+   * True exactly between a wave completing and the next one starting:
+   * GameManager.completeWave() clears isWaveActive, WaveManager.startWave()
+   * sets it again once the player presses Start Wave. The scene keeps running
+   * behind the wave-complete screen and the modal, which is the whole reason
+   * the offer and a bundle roll can collide.
+   *
+   * Once the wave is underway the offer is dead - there's no mid-wave reroll
+   * and no way to buy from it - so it must stop constraining bundle rolls,
+   * even though the ids stay cached in offeredUpgrades until the next
+   * wave-completion roll replaces them. Otherwise every wave you started
+   * without clearing the shop (the normal case - you usually can't afford all
+   * three) would quietly hold those ids out of the loot pool for the whole
+   * wave, biasing bundles away from exactly the expensive upgrades you
+   * couldn't buy.
+   */
+  private isOfferOpen(): boolean {
+    return !GameManager.getState().isWaveActive
+  }
+
+  /**
+   * Ids in the current wave-select offer the player hasn't bought yet.
+   *
+   * Bundle rolls exclude these so loot can never hand out something the shop
+   * is about to sell. The offer is rolled at wave *completion*
+   * (GameManager.completeWave pre-loads the next wave), which is before the
+   * player has walked over the bundles still lying on the ground and before
+   * the modal is even opened - so without this, the two rolls each see the
+   * upgrade as unowned and can both pick it. On a one-stack upgrade
+   * (ricochet) that leaves a card in the modal that can never be bought.
+   *
+   * Empty once the wave is underway (see isOfferOpen) - the cached ids hang
+   * around until the next wave-completion roll, but they're no longer
+   * buyable, so they must stop constraining bundle rolls. Within the window,
+   * an id leaves the set as soon as it's bought, or wholesale when a reroll
+   * swaps the offer out (so a rerolled-away id is bundle-eligible again
+   * immediately, and can be re-offered later - nothing records what was
+   * rerolled past; there is no "decline").
+   *
+   * Entries are `{ id, purchased }` from the backend (or the offline roll),
+   * but /waves/start has historically also returned bare id strings - handle
+   * both, same as UpgradeModal's loader does.
+   *
+   * Mirrored server-side in wave_service.collect_upgrade_bundle, which gets
+   * the same window from the pickup request's offer_open flag.
+   */
+  getPendingOfferIds(): string[] {
+    if (!this.isOfferOpen()) return []
+
+    const ids: string[] = []
+    for (const entry of this.offeredUpgrades) {
+      if (typeof entry === 'string') {
+        ids.push(entry)
+      } else if (entry && typeof entry.id === 'string' && entry.purchased !== true) {
+        ids.push(entry.id)
+      }
+    }
+    return ids
   }
 
   /**
