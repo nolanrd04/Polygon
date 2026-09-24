@@ -118,20 +118,20 @@ Plan: MongoDB Atlas (free M0) for the DB + Render free web service for FastAPI (
 ### Environment config (no hardcoded links)
 Design: one variable per setting (`MONGODB_URL`, `API_TARGET`, ...), no `PRODUCTION` flag branching. Switch environments by swapping which values get loaded, not with if/else in code.
 - [x] Backend: single `.env` with LOCAL / CLOUD blocks toggled by commenting. The CLOUD block uses `MONGODB_DATABASE=polygon_game_dev` so local testing never writes into real player data.
-- [ ] Backend: update `.env.example` to match the LOCAL / CLOUD block layout
+- [x] Backend: update `.env.example` to match the LOCAL / CLOUD block layout
 - [x] Frontend: make the Vite dev proxy target env-driven in `vite.config.ts` (`env.API_TARGET || 'http://127.0.0.1:8000'`, via `loadEnv`) so `API_TARGET=https://<render-url> npm run dev` runs the local frontend against the cloud backend
-- [ ] Frontend: keep all API calls as relative `/api/...` paths. Never put the DB URL or secrets in `VITE_*` vars (they get baked into the public bundle).
+- [x] Frontend: keep all API calls as relative `/api/...` paths. Never put the DB URL or secrets in `VITE_*` vars (they get baked into the public bundle).
 
 ### Frontend → backend routing in production
-- [ ] Add `vercel.json` rewrite: `/api/:path*` → `https://<render-url>/api/:path*` (plus the SPA fallback `/(.*)` → `/index.html` if it isn't already configured). The browser only talks to the Vercel domain, so no CORS needed.
+- [x] Add `vercel.json` rewrite: `/api/:path*` → `https://<render-url>/api/:path*` (plus the SPA fallback `/(.*)` → `/index.html` if it isn't already configured). The browser only talks to the Vercel domain, so no CORS needed.
 - [ ] Alternative if the rewrite doesn't work out: set axios `baseURL` from `VITE_API_URL` in `frontend/src/config/axios.ts` and set `CORS_ORIGINS` to the Vercel domain
 
 ### Hosting setup
-- [ ] Create Atlas M0 cluster, DB user with password, network access rules. Separate databases for prod (`polygon_game`) and dev (`polygon_game_dev`). (Resolves Security #2.)
-- [ ] Create Render web service from the GitHub repo (root dir `backend/`)
-- [ ] Production start command (not `start.sh`, which uses `--reload`): `uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'`
-- [ ] Set env vars in the Render dashboard: fresh `SECRET_KEY` (don't reuse the dev one), `MONGODB_URL`, `MONGODB_DATABASE`, `CORS_ORIGINS`
-- [ ] HTTPS comes free from Render/Vercel (resolves most of Security #8)
+- [x] Create Atlas M0 cluster, DB user with password, network access rules. Separate databases for prod (`polygon_game`) and dev (`polygon_game_dev`). (Resolves Security #2.)
+- [x] Create Render web service from the GitHub repo (root dir `backend/`)
+- [x] Production start command (not `start.sh`, which uses `--reload`): `uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'`
+- [x] Set env vars in the Render dashboard: fresh `SECRET_KEY` (don't reuse the dev one), `MONGODB_URL`, `MONGODB_DATABASE`, `CORS_ORIGINS`
+- [x] HTTPS comes free from Render/Vercel (resolves most of Security #8)
 
 ### Things that break behind a hosted proxy
 - [ ] Rate limiting: slowapi keys by client IP. Behind Render's proxy (and Vercel's rewrite), every request looks like it comes from the proxy's IP, so all players would share one login limit (10/min) unless `--proxy-headers` is set. After deploying, check that the real client IP comes through the Vercel → Render chain.
@@ -147,7 +147,7 @@ Design: one variable per setting (`MONGODB_URL`, `API_TARGET`, ...), no `PRODUCT
 
 ## Critical
 1. [ DONE ] Hardcoded JWT Secret Key — `config.py` now requires `SECRET_KEY` from env, validates it's ≥32 chars, no insecure default. `.env` has a real generated secret.
-2. [ ] No MongoDB Authentication (backend/docker-compose.yml, backend/.env) — still `mongodb://localhost:27017` with no credentials. Will be resolved by moving to Atlas (see Backend deployment).
+2. [x] No MongoDB Authentication (backend/docker-compose.yml, backend/.env) — still `mongodb://localhost:27017` with no credentials. Will be resolved by moving to Atlas (see Backend deployment).
 3. [ DONE ] Debug Mode — `debug` flag in config.py is dead code (nothing reads `settings.debug`), and `FastAPI()` in main.py is never constructed with `debug=True`, so the verbose-error risk never applied. Flag can be deleted as cleanup.
 4. [ DONE ] No Rate Limiting — slowapi wired up (`app/core/limiter.py` + `main.py`): login 10/min, register 5/hour, check-username 20/min, all per-IP
 

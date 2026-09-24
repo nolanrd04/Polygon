@@ -74,6 +74,17 @@ async def shutdown():
     await close_mongo_connection()
 
 
+# TEMPORARY: shows how the client IP arrives through Vercel/Render proxies.
+# Remove once the rate-limit IP spoofing fix is chosen.
+@app.get("/api/debug/headers")
+async def debug_headers(request: Request):
+    shown = {"x-forwarded-for", "x-real-ip", "x-vercel-forwarded-for", "forwarded", "true-client-ip"}
+    return {
+        "client_host_seen_by_app": request.client.host if request.client else None,
+        "headers": {k: v for k, v in request.headers.items() if k in shown},
+    }
+
+
 @app.get("/")
 async def root():
     return {"message": "Polygon Game API", "version": settings.game_version}
