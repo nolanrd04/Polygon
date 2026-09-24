@@ -18,6 +18,26 @@ The instance also exposes `isAxiosError` from the Axios base so callers can type
 
 ---
 
+## Where `/api` requests go
+
+All API calls use relative paths (`/api/...`), so the browser sends them to whichever server served the page. That server forwards them to the backend:
+
+| Running as | Forwarded by | Config |
+|------------|--------------|--------|
+| `npm run dev` (localhost:3000) | Vite dev server proxy | `vite.config.ts` → `server.proxy` |
+| Deployed on Vercel | Vercel rewrite | root `vercel.json` → `rewrites` |
+
+**Switching the local dev backend.** The Vite proxy target is `API_TARGET` if set, otherwise `http://127.0.0.1:8000`. It's read with `loadEnv`, so it can come from `frontend/.env` (gitignored, template in `frontend/.env.example`) or from the shell, which takes priority:
+
+```bash
+npm run dev                                          # local backend
+API_TARGET=https://<render-url> npm run dev          # cloud backend (production database!)
+```
+
+`API_TARGET` has no `VITE_` prefix, so it stays in the dev server and is never embedded in the browser bundle. Never put secrets or database URLs in `VITE_*` variables.
+
+---
+
 ## Authentication
 
 Tokens are stored in `localStorage` under the key `token`. They are set by the auth pages after a successful login or registration response. The Axios interceptor picks them up automatically — no context or prop drilling required.

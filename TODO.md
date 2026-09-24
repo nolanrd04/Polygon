@@ -99,8 +99,8 @@ Requires: buckshot bullets, 2 longer shell upgrades
 Upgrades: increased pellet count, increased fire rate, increased close-quarters damage (show visibly with a 0 damage projectile around the player)
 
 ## MOBILE
-- [ ] Remove Fullscreen button
-- [ ] improve zoom
+- [x] Remove Fullscreen button
+- [x] improve zoom
 - [ ] add button layout customization
 
 # Systems
@@ -112,6 +112,34 @@ Upgrades: increased pellet count, increased fire rate, increased close-quarters 
 - [~] PlayerStats (lifetime totals) + GameSave (current run: wave, kills, points, time_survived, ordered upgrade_history, death_state) are live
 - [ ] GameSave is one-per-user and gets deleted on new game start — still no persistent per-game history collection (game id, full upgrade order, waves survived, enemies killed, points earned, total time spent, per completed run). Data GameSave already tracks would just need archiving into a new collection on death instead of being overwritten.
 
+## Backend deployment (frontend already on Vercel)
+Plan: MongoDB Atlas (free M0) for the DB + Render free web service for FastAPI (move to Google Cloud Run if cold starts become a problem). Other free/cheap options considered: Koyeb, Oracle Cloud Always Free VM, Fly.io/Railway (~$5/mo).
+
+### Environment config (no hardcoded links)
+Design: one variable per setting (`MONGODB_URL`, `API_TARGET`, ...), no `PRODUCTION` flag branching. Switch environments by swapping which values get loaded, not with if/else in code.
+- [x] Backend: single `.env` with LOCAL / CLOUD blocks toggled by commenting. The CLOUD block uses `MONGODB_DATABASE=polygon_game_dev` so local testing never writes into real player data.
+- [ ] Backend: update `.env.example` to match the LOCAL / CLOUD block layout
+- [x] Frontend: make the Vite dev proxy target env-driven in `vite.config.ts` (`env.API_TARGET || 'http://127.0.0.1:8000'`, via `loadEnv`) so `API_TARGET=https://<render-url> npm run dev` runs the local frontend against the cloud backend
+- [ ] Frontend: keep all API calls as relative `/api/...` paths. Never put the DB URL or secrets in `VITE_*` vars (they get baked into the public bundle).
+
+### Frontend → backend routing in production
+- [ ] Add `vercel.json` rewrite: `/api/:path*` → `https://<render-url>/api/:path*` (plus the SPA fallback `/(.*)` → `/index.html` if it isn't already configured). The browser only talks to the Vercel domain, so no CORS needed.
+- [ ] Alternative if the rewrite doesn't work out: set axios `baseURL` from `VITE_API_URL` in `frontend/src/config/axios.ts` and set `CORS_ORIGINS` to the Vercel domain
+
+### Hosting setup
+- [ ] Create Atlas M0 cluster, DB user with password, network access rules. Separate databases for prod (`polygon_game`) and dev (`polygon_game_dev`). (Resolves Security #2.)
+- [ ] Create Render web service from the GitHub repo (root dir `backend/`)
+- [ ] Production start command (not `start.sh`, which uses `--reload`): `uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'`
+- [ ] Set env vars in the Render dashboard: fresh `SECRET_KEY` (don't reuse the dev one), `MONGODB_URL`, `MONGODB_DATABASE`, `CORS_ORIGINS`
+- [ ] HTTPS comes free from Render/Vercel (resolves most of Security #8)
+
+### Things that break behind a hosted proxy
+- [ ] Rate limiting: slowapi keys by client IP. Behind Render's proxy (and Vercel's rewrite), every request looks like it comes from the proxy's IP, so all players would share one login limit (10/min) unless `--proxy-headers` is set. After deploying, check that the real client IP comes through the Vercel → Render chain.
+- [ ] Cold starts: the Render free tier sleeps after ~15 min idle, and the first request after that takes ~30-60s. Make sure the game doesn't soft-lock when `/api/waves/start` / `complete` / `select-upgrade` is slow or fails, and that a cold start can't eat the 30s wave-token window.
+
+### Docs
+- [ ] Write a deploy guide in `backend/documentation` (hosts, env vars, start command, how to switch local/cloud backend + DB) and note the frontend proxy/rewrite setup in `frontend/documentation`
+
 # Anti-cheat
 - Damage validation (`_validate_damage` in wave_service.py) currently assumes bullet attack type only. When flame/laser/spinner/zapper are implemented, each will need its own damage profile accounted for in `calculate_minimum_damage_required`.
 
@@ -119,7 +147,7 @@ Upgrades: increased pellet count, increased fire rate, increased close-quarters 
 
 ## Critical
 1. [ DONE ] Hardcoded JWT Secret Key — `config.py` now requires `SECRET_KEY` from env, validates it's ≥32 chars, no insecure default. `.env` has a real generated secret.
-2. [ ] No MongoDB Authentication (backend/docker-compose.yml, backend/.env) — still `mongodb://localhost:27017` with no credentials
+2. [ ] No MongoDB Authentication (backend/docker-compose.yml, backend/.env) — still `mongodb://localhost:27017` with no credentials. Will be resolved by moving to Atlas (see Backend deployment).
 3. [ DONE ] Debug Mode — `debug` flag in config.py is dead code (nothing reads `settings.debug`), and `FastAPI()` in main.py is never constructed with `debug=True`, so the verbose-error risk never applied. Flag can be deleted as cleanup.
 4. [ DONE ] No Rate Limiting — slowapi wired up (`app/core/limiter.py` + `main.py`): login 10/min, register 5/hour, check-username 20/min, all per-IP
 
@@ -127,6 +155,6 @@ Upgrades: increased pellet count, increased fire rate, increased close-quarters 
 5. [ INTENDED FOR NOW ] 24-hour JWT expiry (config.py:14) — still 1440 min, no refresh-token flow. Partial mitigation: logout now revokes tokens via `TokenBlacklistRepository`.
 6. [~] CORS — origins now restricted via `CORS_ORIGINS` env var (main.py:38, defaults to localhost:3000 only), no longer `*`. `allow_methods`/`allow_headers` are still `["*"]`.
 7. [ DONE ] Weak password policy — register now requires min 8 chars + at least one letter and one digit (`auth.py` `UserRegisterRequest.validate_password_strength`)
-8. [ ] No HTTPS enforcement — should redirect HTTP to HTTPS in production
+8. [ ] No HTTPS enforcement — should redirect HTTP to HTTPS in production. Render/Vercel provide TLS automatically (see Backend deployment).
 9. [ ] Missing security headers — no CSP, HSTS, X-Frame-Options, etc.
 10. [~] No true account lockout, but login is now rate-limited to 10/min per IP (slowapi) as partial brute-force mitigation

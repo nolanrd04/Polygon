@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import versionJson from './version.json'
 
@@ -11,18 +11,25 @@ import versionJson from './version.json'
 // read from one would vanish on a fresh clone or a build host.
 const version = versionJson.version
 
-export default defineConfig({
-  plugins: [react()],
-  define: {
-    __GAME_VERSION__: JSON.stringify(version)
-  },
-  server: {
-    port: 3000,
-    host: true,
-    proxy: {
-      '/api': {
-        target: 'http://127.0.0.1:8000',
-        changeOrigin: true
+export default defineConfig(({ mode }) => {
+  // '' prefix loads every var, not just VITE_*. API_TARGET is only used by
+  // the dev server here and never reaches the browser bundle. A shell var
+  // (API_TARGET=... npm run dev) overrides frontend/.env.
+  const env = loadEnv(mode, '.', '')
+
+  return {
+    plugins: [react()],
+    define: {
+      __GAME_VERSION__: JSON.stringify(version)
+    },
+    server: {
+      port: 3000,
+      host: true,
+      proxy: {
+        '/api': {
+          target: env.API_TARGET || 'http://127.0.0.1:8000',
+          changeOrigin: true
+        }
       }
     }
   }
