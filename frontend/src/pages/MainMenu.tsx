@@ -110,11 +110,11 @@ export default function MainMenu() {
       </h1>
       <p className="text-gray-400 mb-12 text-lg">Survive. Evolve. Dominate.</p>
 
-      <div className="mb-auto flex flex-col gap-4 w-64">
+      <div className="mb-auto flex flex-col gap-4 w-72">
         {/* Show backend connection status warning */}
         {!isBackendConnected && (
           <div className="px-4 py-3 bg-yellow-900/40 border-2 border-yellow-600 text-yellow-400 rounded text-center text-sm">
-           Server unavailable - online features disabled
+           Server unavailable - online features disabled. Server has to spin up after inactivity. Wait a few minutes and refresh.
           </div>
         )}
 
@@ -176,7 +176,7 @@ export default function MainMenu() {
               onClick={() => setShowLoadModal(true)}
               className="px-8 py-3 border-2 border-polygon-secondary text-polygon-secondary font-semibold rounded hover:bg-polygon-secondary hover:text-black transition-all"
             >
-              LOAD FROM SAVE
+              LOAD OFFLINE SAVE
             </button>
             <button
               disabled={!isBackendConnected}
@@ -214,7 +214,7 @@ export default function MainMenu() {
       </div>
 
       <div className="absolute bottom-8 text-gray-600 text-sm">
-        v{__GAME_VERSION__} - Early Development
+        v{__GAME_VERSION__} - Pre-release (EXPECT BUGS)
       </div>
 
       {showLoadModal && (

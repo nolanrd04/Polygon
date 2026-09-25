@@ -20,12 +20,16 @@ The instance also exposes `isAxiosError` from the Axios base so callers can type
 
 ## Where `/api` requests go
 
-All API calls use relative paths (`/api/...`), so the browser sends them to whichever server served the page. That server forwards them to the backend:
+Call sites always use paths starting with `/api/...`. Where they end up depends on the Axios `baseURL`, which is `VITE_API_URL` if set at build time:
 
-| Running as | Forwarded by | Config |
-|------------|--------------|--------|
-| `npm run dev` (localhost:3000) | Vite dev server proxy | `vite.config.ts` → `server.proxy` |
-| Deployed on Vercel | Vercel rewrite | root `vercel.json` → `rewrites` |
+| Running as | `VITE_API_URL` | Requests go to |
+|------------|----------------|----------------|
+| `npm run dev` (localhost:3000) | unset | `localhost:3000/api/...`, forwarded by the Vite dev proxy (`vite.config.ts` → `server.proxy`) |
+| Deployed on Vercel | the Render URL (set in Vercel project settings) | the backend directly, cross-origin |
+
+In production the browser talks to the backend directly, so the backend's `CORS_ORIGINS` must list the Vercel domain exactly (`https://...`, no trailing slash). Preview deployments have their own domains and are blocked unless added. `vercel.json` has no `/api` rewrite on purpose; its only rewrite is the SPA fallback to `index.html`, so routes like `/login` survive a refresh.
+
+`VITE_*` values are inlined into the bundle when Vite builds, so changing `VITE_API_URL` in Vercel only takes effect after a redeploy. See `backend/documentation/DEPLOYMENT.md` for the full hosting setup.
 
 **Switching the local dev backend.** The Vite proxy target is `API_TARGET` if set, otherwise `http://127.0.0.1:8000`. It's read with `loadEnv`, so it can come from `frontend/.env` (gitignored, template in `frontend/.env.example`) or from the shell, which takes priority:
 
@@ -34,7 +38,7 @@ npm run dev                                          # local backend
 API_TARGET=https://<render-url> npm run dev          # cloud backend (production database!)
 ```
 
-`API_TARGET` has no `VITE_` prefix, so it stays in the dev server and is never embedded in the browser bundle. Never put secrets or database URLs in `VITE_*` variables.
+`API_TARGET` has no `VITE_` prefix, so it stays in the dev server and is never embedded in the browser bundle. `VITE_API_URL` is public on purpose (the browser needs the address). Never put secrets or database URLs in `VITE_*` variables.
 
 ---
 

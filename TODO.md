@@ -124,7 +124,7 @@ Design: one variable per setting (`MONGODB_URL`, `API_TARGET`, ...), no `PRODUCT
 
 ### Frontend → backend routing in production
 - [x] Add `vercel.json` rewrite: `/api/:path*` → `https://<render-url>/api/:path*` (plus the SPA fallback `/(.*)` → `/index.html` if it isn't already configured). The browser only talks to the Vercel domain, so no CORS needed.
-- [ ] Alternative if the rewrite doesn't work out: set axios `baseURL` from `VITE_API_URL` in `frontend/src/config/axios.ts` and set `CORS_ORIGINS` to the Vercel domain
+- [x] (Adopted; the `/api` rewrite above was removed.) Alternative if the rewrite doesn't work out: set axios `baseURL` from `VITE_API_URL` in `frontend/src/config/axios.ts` and set `CORS_ORIGINS` to the Vercel domain
 
 ### Hosting setup
 - [x] Create Atlas M0 cluster, DB user with password, network access rules. Separate databases for prod (`polygon_game`) and dev (`polygon_game_dev`). (Resolves Security #2.)
@@ -134,11 +134,11 @@ Design: one variable per setting (`MONGODB_URL`, `API_TARGET`, ...), no `PRODUCT
 - [x] HTTPS comes free from Render/Vercel (resolves most of Security #8)
 
 ### Things that break behind a hosted proxy
-- [ ] Rate limiting: slowapi keys by client IP. Behind Render's proxy (and Vercel's rewrite), every request looks like it comes from the proxy's IP, so all players would share one login limit (10/min) unless `--proxy-headers` is set. After deploying, check that the real client IP comes through the Vercel → Render chain.
+- [x] (Resolved: browser calls Render directly, limiter keys on `True-Client-IP`, uvicorn runs with `--no-proxy-headers`.) Rate limiting: slowapi keys by client IP. Behind Render's proxy (and Vercel's rewrite), every request looks like it comes from the proxy's IP, so all players would share one login limit (10/min) unless `--proxy-headers` is set. After deploying, check that the real client IP comes through the Vercel → Render chain.
 - [ ] Cold starts: the Render free tier sleeps after ~15 min idle, and the first request after that takes ~30-60s. Make sure the game doesn't soft-lock when `/api/waves/start` / `complete` / `select-upgrade` is slow or fails, and that a cold start can't eat the 30s wave-token window.
 
 ### Docs
-- [ ] Write a deploy guide in `backend/documentation` (hosts, env vars, start command, how to switch local/cloud backend + DB) and note the frontend proxy/rewrite setup in `frontend/documentation`
+- [x] Write a deploy guide in `backend/documentation` (hosts, env vars, start command, how to switch local/cloud backend + DB) and note the frontend proxy/rewrite setup in `frontend/documentation`
 
 # Anti-cheat
 - Damage validation (`_validate_damage` in wave_service.py) currently assumes bullet attack type only. When flame/laser/spinner/zapper are implemented, each will need its own damage profile accounted for in `calculate_minimum_damage_required`.
@@ -157,4 +157,13 @@ Design: one variable per setting (`MONGODB_URL`, `API_TARGET`, ...), no `PRODUCT
 7. [ DONE ] Weak password policy — register now requires min 8 chars + at least one letter and one digit (`auth.py` `UserRegisterRequest.validate_password_strength`)
 8. [ ] No HTTPS enforcement — should redirect HTTP to HTTPS in production. Render/Vercel provide TLS automatically (see Backend deployment).
 9. [ ] Missing security headers — no CSP, HSTS, X-Frame-Options, etc.
-10. [~] No true account lockout, but login is now rate-limited to 10/min per IP (slowapi) as partial brute-force mitigation
+10. [~] No true account lockout, but failed logins are rate-limited as brute-force mitigation
+
+## Rate limiting & account abuse
+Shared networks with multiple users look identical to one attacker with an automation script, so IP limits are speed bumps; inactive-account cleanup caps the total damage.
+- [x] Limiter keys on `True-Client-IP` (set by Render's edge, unspoofable) with moving-window strategy
+- [x] IPv6 addresses grouped by /64 so rotating addresses count as one client
+- [x] Login: failed attempts are rate-limited so shared networks aren't blocked together
+- [x] Register and username-check limits loosened for shared networks
+- [x] Inactive-account cleanup: accounts that never play are removed after a grace period
+- [ ] FUTURE (not planned now): Cloudflare Turnstile on the register form. The only defense that tells many humans from one bot on the same IP. Add if automated sign-ups show up.
