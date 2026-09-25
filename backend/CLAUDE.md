@@ -38,7 +38,9 @@ app/models/     → Pydantic models (BaseMongoModel with auto timestamps, PyObje
 app/core/       → Config, database connection, security utils, game data definitions
 ```
 
-**Entry point:** `app/main.py` — sets up FastAPI app, CORS (localhost:3000), routers, MongoDB connection lifecycle, and index creation on startup.
+**Entry point:** `app/main.py` — sets up FastAPI app, CORS (from `CORS_ORIGINS`), rate limiting, routers, MongoDB connection lifecycle, index creation on startup, and the background inactive-account cleanup task (`app/services/account_cleanup_service.py`).
+
+**Deployment:** Render (backend) + Vercel (frontend) + MongoDB Atlas. See `documentation/DEPLOYMENT.md`.
 
 **API routes are prefixed:** `/api/auth`, `/api/users`, `/api/saves`, `/api/waves`
 
@@ -81,8 +83,10 @@ Enemy health calculations and spawn rules in `app/core/enemy_data.py`. Used by a
 
 ## Configuration
 
-Environment variables in `.env`:
+Environment variables in `.env` locally (template: `.env.example`), in the Render dashboard in production:
 - `MONGODB_URL` — MongoDB connection string (default: `mongodb://localhost:27017`)
 - `MONGODB_DATABASE` — database name (default: `polygon_game`)
+- `SECRET_KEY` — JWT signing key, required, ≥32 chars; different per environment
+- `CORS_ORIGINS` — comma-separated allowed frontend origins (default: `http://localhost:3000`)
 
-JWT and other settings in `app/core/config.py`. CORS allows `http://localhost:3000` (the frontend).
+Settings are defined in `app/core/config.py`.

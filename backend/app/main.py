@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,6 +14,7 @@ from app.core.database import connect_to_mongo, close_mongo_connection, get_data
 from app.repositories.user_repository import UserRepository
 from app.repositories.player_stats_repository import PlayerStatsRepository
 from app.repositories.token_blacklist_repository import TokenBlacklistRepository
+from app.services.account_cleanup_service import run_cleanup_forever
 
 app = FastAPI(
     title="Polygon Game API",
@@ -68,9 +71,13 @@ async def startup():
     await game_run_repo.create_indexes()
     await token_blacklist_repo.create_indexes()
 
+    # Background task so startup isn't delayed; kept on app.state so it isn't garbage-collected.
+    app.state.cleanup_task = asyncio.create_task(run_cleanup_forever(db))
+
 
 @app.on_event("shutdown")
 async def shutdown():
+    app.state.cleanup_task.cancel()
     await close_mongo_connection()
 
 

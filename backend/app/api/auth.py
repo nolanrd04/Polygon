@@ -3,7 +3,13 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field, field_validator
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.database import get_database
-from app.core.limiter import limiter
+from app.core.limiter import (
+    FAILED_LOGINS_PER_ACCOUNT,
+    FAILED_LOGINS_PER_IP,
+    client_ip,
+    failed_login_limiter,
+    limiter,
+)
 from app.core.security import decode_token, oauth2_scheme, get_current_user
 from app.repositories.token_blacklist_repository import TokenBlacklistRepository
 from app.services.auth_service import AuthService
@@ -48,7 +54,7 @@ class UsernameCheckResponse(BaseModel):
 
 
 @router.post("/register", response_model=UserResponse, status_code=201)
-@limiter.limit("5/hour")
+@limiter.limit("30/hour")  # loose for shared networks; inactive-account cleanup bounds abuse
 async def register(
     request: Request,
     user_data: UserRegisterRequest,
@@ -73,23 +79,37 @@ async def register(
 
 
 @router.post("/login", response_model=Token)
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")  # all attempts: caps bcrypt load from floods
 async def login(
     request: Request,
     login_data: UserLoginRequest,
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
     """Login with username and password"""
+    ip = client_ip(request)
+    account = login_data.username.strip().lower()  # lookup is case-insensitive
+    if not (
+        failed_login_limiter.test(FAILED_LOGINS_PER_ACCOUNT, ip, account)
+        and failed_login_limiter.test(FAILED_LOGINS_PER_IP, ip)
+    ):
+        raise HTTPException(status_code=429, detail="Too many failed login attempts. Try again in a few minutes.")
+
     auth_service = AuthService(db)
-    access_token = await auth_service.authenticate_user(
-        username=login_data.username,
-        password=login_data.password
-    )
+    try:
+        access_token = await auth_service.authenticate_user(
+            username=login_data.username,
+            password=login_data.password
+        )
+    except HTTPException as e:
+        if e.status_code == 401:
+            failed_login_limiter.hit(FAILED_LOGINS_PER_ACCOUNT, ip, account)
+            failed_login_limiter.hit(FAILED_LOGINS_PER_IP, ip)
+        raise
     return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.get("/check-username/{username}", response_model=UsernameCheckResponse)
-@limiter.limit("20/minute")
+@limiter.limit("60/minute")
 async def check_username_availability(
     request: Request,
     username: str,
