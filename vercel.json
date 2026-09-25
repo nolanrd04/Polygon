@@ -4,7 +4,6 @@
   "installCommand": "echo 'Skipping root install'",
   "framework": null,
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://polygon-wgb6.onrender.com/api/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
