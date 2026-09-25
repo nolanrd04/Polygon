@@ -1,7 +1,10 @@
 import axios, { AxiosInstance } from 'axios'
 
-// Create axios instance
-const axiosInstance = axios.create()
+// Production builds call the backend directly (VITE_API_URL, set in Vercel).
+// Unset in local dev, so '/api/...' stays relative and goes through the Vite proxy.
+const axiosInstance = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || undefined
+})
 
 // Add response interceptor to handle 401 errors
 axiosInstance.interceptors.response.use(
