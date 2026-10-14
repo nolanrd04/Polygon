@@ -46,10 +46,14 @@ Player overlaps bundle (Phaser overlap, registered in create())
       → skipped while no wave token is in play (between waves), or while
         bundle.canRequestPickup(token) is false (request in flight / already refused under this token)
       → bundle.beginPickup() hides it while the request is in flight (prevents double-pickup)
-      → POST /api/waves/bundle-pickup { wave, bundle_tier, token: waveToken, offer_open }
+      → POST /api/waves/bundle-pickup { wave, bundle_tier, token: waveToken, offer_open, frame }
       → backend rolls the bundle's contents itself (WaveService.collect_upgrade_bundle) —
-        the client-rolled tier/contents can't be trusted for what free upgrades to grant
-      → accepted: bundle.destroy(), pickup sound, response.upgrade_ids applied via applyUpgrade(id, true)
+        the client-rolled tier/contents can't be trusted for what free upgrades to grant.
+        Same slot split as offline; buff slots only grant debuffs, Mending and Toughness
+        online, and each granted buff goes on the token's bundle_buffs ledger
+      → accepted: bundle.destroy(), pickup sound, response.upgrade_ids applied via applyUpgrade(id, true),
+        response.buffs applied as given via player.AddBuff(buff, duration, { stats })
+        (held until wave-start if no wave is active, same as offline)
       → refused (grant cap spent, token closed): bundle.rejectPickup(token) shows it again;
         it retries once a new wave token is in play, so a refused bundle is never silently lost
 
@@ -61,7 +65,7 @@ Player overlaps bundle (Phaser overlap, registered in create())
       → slot 1: pickRegularUpgrade(upgradeValue, exclude)        // guaranteed matching-tier item
       → slots 2–N: 25% curse / 15% buff (50/50 buff/debuff) / 60% regular
           → pickCurse / pickBundleBuff / pickRegularUpgrade(rollItemRarity())
-      → applyUpgrade(id, true) for each picked id, player.AddBuff for each picked buff
+      → applyUpgrade(id, true) for each picked id, rollDrop + player.AddBuff for each picked buff
 
   → showBundlePickupText() for each (staggered 220 ms apart)
 
@@ -177,12 +181,12 @@ Rarity colors: `#aaaaaa / #44cc66 / #4488ff / #cc44ff / #ffaa00`
 3. **Seed the exclude list** — `waveValidation.getPendingOfferIds()`: every id still unbought in the wave-select offer, but only while that offer is open (between waves). Empty mid-wave. See *Bundles never roll what the shop is offering* below.
 4. **Slot 1 (`pickRegularUpgrade(upgradeValue, exclude)`)** — always a regular upgrade at the bundle's exact tier (with tier-by-tier fallback if the pool is exhausted). Guarantees every bundle has at least one non-curse item matching its tier.
 5. **Slots 2–N** — each independently rolled 25% curse / 15% buff / 60% regular: `pickCurse(rollItemRarity(), exclude)`, `pickBundleBuff(rollItemRarity(), debuff, pickedBuffs)` or `pickRegularUpgrade(rollItemRarity(), exclude)`. A buff slot is 50/50 positive or debuff. The exclude lists grow with each pick to prevent duplicates. A slot whose pool is empty is skipped.
-6. **Apply all** — `applyUpgrade(id, true)` for each picked id (`true` = skip cost, no `waveValidation.selectUpgrade()` call), then `player.AddBuff(buff, rollDropDuration(drop))` for each picked buff.
+6. **Apply all** — `applyUpgrade(id, true)` for each picked id (`true` = skip cost, no `waveValidation.selectUpgrade()` call), then `rollDrop(drop, ctx)` and `player.AddBuff(buff, duration, { stats })` for each picked buff (see [BUFFS.md](./BUFFS.md#bundle-drops) for custom rolls).
 7. **Show pickup text** — `showBundlePickupText()` called once per item, staggered 220 ms apart, upgrades first then buffs. Curses and debuffs appear in red; everything else in its rarity color.
 
 ### pickBundleBuff()
 
-Walks tiers downward from `maxRarity` over the `BUNDLE_BUFF_DROPS` whitelist (`buffs/bundleDrops.ts`), keeping entries whose def matches the tier and the requested `isDebuff`, and that can apply to the player. Offline only. See [BUFFS.md](./BUFFS.md#bundle-drops).
+Walks tiers downward from `maxRarity` over the `BUNDLE_BUFF_DROPS` whitelist (`buffs/bundleDrops.ts`), keeping entries whose def matches the tier and the requested `isDebuff`, and that can apply to the player. Offline only; the online port is `WaveService._pick_bundle_buff`, which also limits positive buffs to `ONLINE_SAFE_BUFFS`. See [BUFFS.md](./BUFFS.md#bundle-drops).
 
 ### pickRegularUpgrade()
 

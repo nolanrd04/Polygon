@@ -10,7 +10,7 @@ import random
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 
-from app.models.wave_token import WaveValidationToken
+from app.models.wave_token import WaveValidationToken, BundleBuffGrant
 from app.models.player_stats import PlayerStats
 from app.models.flagged_wave import FlaggedWave, FlagReason
 from app.models.game_save import GameSave, DeathFrozenState
@@ -19,6 +19,8 @@ from app.repositories.player_stats_repository import PlayerStatsRepository
 from app.repositories.game_save_repository import GameSaveRepository
 from app.repositories.game_run_repository import GameRunRepository
 from app.core.upgrade_data import UPGRADES, STARTING_UPGRADES, can_apply_upgrade, get_upgrade
+from app.core.buff_data import BUNDLE_BUFF_DROPS, DROP_DEFAULTS, LOGIC_HZ, get_buff, ms_to_ticks
+from app.core.buff_rolls import BuffRoll, BuffRollContext, roll_drop
 from app.core.enemy_data import calculate_minimum_damage_required, calculate_expected_health_spawned, validate_enemy_spawn, get_enemy_score_chance, get_split_children, get_enemy_bundle_drop_chance, get_enemy_bundle_drop_max, calculate_family_spawn_counts
 from app.core.projectile_data import (
     resolve_active_projectile,
@@ -815,16 +817,19 @@ class WaveService:
         wave_number: int,
         client_bundle_tier: int,
         token_string: str,
-        offer_open: bool = True
-    ) -> Tuple[bool, List[str], Optional[str]]:
+        offer_open: bool = True,
+        client_frame: int = 0
+    ) -> Tuple[bool, List[str], List[BuffRoll], Optional[str]]:
         """
         Roll and grant a mid-wave upgrade-bundle pickup.
 
         Mirrors MainScene.ts's client-side bundle roll (first slot is a
-        regular upgrade at the bundle's tier, remaining slots are 30% curse /
-        70% regular at a re-rolled tier <= the bundle's, 1-4 items, no
-        duplicate ids within one bundle) so the "at least one item matches
-        the bundle's own rarity" guarantee the client displayed still holds.
+        regular upgrade at the bundle's tier, remaining slots are 25% curse /
+        15% buff / 60% regular at a re-rolled tier <= the bundle's, 1-4
+        items, no duplicates within one bundle) so the "at least one item
+        matches the bundle's own rarity" guarantee the client displayed still
+        holds. A buff slot is 50/50 buff or debuff; see _pick_bundle_buff for
+        which buffs can be granted online.
         The bundle's tier is the client's own claim (it was rolled at drop
         time, before pickup), but clamped to the highest tier this wave's
         difficulty can actually drop - a client can't claim e.g. legendary on
@@ -850,10 +855,14 @@ class WaveService:
         kills/damage - so bundle pickups can't be used to farm permanent
         upgrades by repeatedly grabbing loot and quitting before the wave
         completes.
+
+        Granted buffs are recorded on the token's bundle_buffs ledger with
+        their window start (client_frame, bounded by _bound_grant_frame).
+        Buffs end with the wave, so they are never written to the save.
         """
         game_save = await self.game_save_repo.find_by_user_id(user_id)
         if not game_save:
-            return False, [], "No active game found"
+            return False, [], [], "No active game found"
 
         difficulty = get_difficulty(game_save.difficulty_id)
 
@@ -883,7 +892,7 @@ class WaveService:
             {"$inc": {"bundles_granted": 1}}
         )
         if not token_doc:
-            return False, [], "Bundle grant limit reached for this wave, or wave token invalid/expired"
+            return False, [], [], "Bundle grant limit reached for this wave, or wave token invalid/expired"
 
         token = WaveValidationToken.from_mongo(token_doc)
 
@@ -975,23 +984,81 @@ class WaveService:
                     return t
             return 0
 
+        picked_buffs: List[Dict[str, Any]] = []
         count = random.randint(1, 4)
         for _ in range(1, count):
-            tier = roll_item_tier()
-            is_curse = random.random() < 0.3
-            item = pick_from_pool(curse=is_curse, max_tier=tier)
+            roll = random.random()
+            if 0.25 <= roll < 0.4:
+                drop = self._pick_bundle_buff(roll_item_tier(), random.random() < 0.5, picked_buffs)
+                if drop:
+                    picked_buffs.append(drop)
+                continue
+            item = pick_from_pool(curse=roll < 0.25, max_tier=roll_item_tier())
             if item:
                 picked.append(item)
 
-        if not picked:
-            return True, [], None
+        roll_ctx: BuffRollContext = {
+            "wave": wave_number,
+            "difficulty_id": game_save.difficulty_id,
+            "upgrades": current_upgrades + picked,
+        }
+        rolled_buffs = [roll_drop(drop, roll_ctx, DROP_DEFAULTS) for drop in picked_buffs]
+        granted_frame = self._bound_grant_frame(client_frame, token.created_at)
+        grants = [
+            BundleBuffGrant(
+                id=rolled["buff"],
+                granted_frame=granted_frame,
+                duration_ticks=ms_to_ticks(rolled["duration"]),
+                stats=rolled["stats"],
+                queued=offer_open,
+            ).model_dump()
+            for rolled in rolled_buffs
+        ]
 
-        await self.wave_tokens_collection.update_one(
-            {"_id": token_doc["_id"]},
-            {"$push": {"bundle_upgrades": {"$each": picked}}}
-        )
+        push: Dict[str, Any] = {}
+        if picked:
+            push["bundle_upgrades"] = {"$each": picked}
+        if grants:
+            push["bundle_buffs"] = {"$each": grants}
+        if push:
+            await self.wave_tokens_collection.update_one({"_id": token_doc["_id"]}, {"$push": push})
 
-        return True, picked, None
+        return True, picked, rolled_buffs, None
+
+    # Positive buffs safe to grant online before buff-aware validation exists.
+    # Debuffs only weaken the player, so they're always allowed. Speed,
+    # fire-rate and damage buffs stay offline-only until buff system steps 2/3.
+    ONLINE_SAFE_BUFFS = {"mending", "toughness_1", "toughness_2"}
+
+    def _pick_bundle_buff(
+        self, max_tier: int, debuff: bool, exclude: List[Dict[str, Any]]
+    ) -> Optional[Dict[str, Any]]:
+        """Port of MainScene.pickBundleBuff, limited to online-grantable buffs. Falls back to lower tiers."""
+        for tier in range(max_tier, -1, -1):
+            rarity = self.BUNDLE_RARITY_ORDER[tier]
+            candidates = []
+            for drop in BUNDLE_BUFF_DROPS:
+                buff = get_buff(drop["buff"])
+                if not buff or bool(buff.get("isDebuff")) != debuff or buff.get("rarity") != rarity:
+                    continue
+                if "player" not in buff.get("appliesTo", []) or drop in exclude:
+                    continue
+                if not debuff and drop["buff"] not in self.ONLINE_SAFE_BUFFS:
+                    continue
+                candidates.append(drop)
+            if candidates:
+                return random.choice(candidates)
+        return None
+
+    def _bound_grant_frame(self, client_frame: int, token_created_at: datetime) -> int:
+        """
+        The client's frame, capped at the most ticks that can have passed
+        since the token was issued. The fixed-step loop never runs faster than
+        real time and the client resets its counter only after /waves/start
+        returns, so the cap holds; pauses only lower the real frame.
+        """
+        elapsed_s = max(0.0, (datetime.utcnow() - token_created_at).total_seconds())
+        return max(0, min(client_frame, int(elapsed_s * LOGIC_HZ) + LOGIC_HZ))
 
     def _calculate_max_damage_per_hit(self, current_upgrades: List[str]) -> Dict[str, float]:
         """

@@ -62,6 +62,8 @@ export interface BuffSlotState {
   msLeft: number
   /** The values this application uses, overrides included. */
   stats: BuffStatEffect[]
+  /** Held until the next wave starts (a between-wave bundle pickup). msLeft is its full duration. */
+  pending?: boolean
 }
 
 /** Anything that can carry buffs. Implemented by Player and Enemy. */

@@ -15,6 +15,23 @@ class RolledOffer(BaseModel):
     points_at_roll: Optional[int] = Field(default=None)
 
 
+class BundleBuffGrant(BaseModel):
+    """One server-rolled bundle buff (see WaveService.collect_upgrade_bundle)."""
+    id: str
+    # Ticks since this token was issued (the client's wave-validation frame
+    # counter, bounded server-side). The buff's window is
+    # [granted_frame, granted_frame + duration_ticks].
+    granted_frame: int = Field(..., ge=0)
+    duration_ticks: int = Field(..., ge=0)
+    # Picked up between waves (offer_open). The client holds the buff until
+    # the wave starts, so its window starts at the wave's start frame, not
+    # granted_frame (which is then only a lower bound). Step 2 needs that
+    # start frame from the completion payload to resolve it.
+    queued: bool = False
+    # Per-stat overrides the roll chose; empty means the def's own values.
+    stats: Dict[str, float] = Field(default_factory=dict)
+
+
 class WaveValidationToken(BaseMongoModel):
     """Token for validating wave completion submissions"""
 
@@ -54,6 +71,11 @@ class WaveValidationToken(BaseMongoModel):
     # which does complete it) drops them, the same as it drops in-progress
     # kills/damage.
     bundle_upgrades: List[str] = Field(default_factory=list)
+
+    # Buffs granted via bundle pickups on this token. Buffs never persist past
+    # the wave, so unlike bundle_upgrades nothing copies these to the save.
+    # Read by buff-aware validation (buff system step 2).
+    bundle_buffs: List[BundleBuffGrant] = Field(default_factory=list)
 
     # Reroll usage against this wave's offer (see WaveService.reroll_upgrades)
     # - incremented via $inc on the exact token string, same pattern as

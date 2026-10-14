@@ -35,7 +35,7 @@ function formatTime(ms: number): string {
 
 function BuffRow({ def, slot }: ActiveBuff) {
   return (
-    <li className={`rounded-md border ${def.isDebuff ? 'border-red-500/60' : 'border-green-500/60'} bg-black/50 p-3 flex items-center gap-3`}>
+    <li className={`rounded-md border ${def.isDebuff ? 'border-red-500/60' : 'border-green-500/60'} bg-black/50 p-3 flex items-center gap-3 ${slot.pending ? 'opacity-60' : ''}`}>
       <BuffChip def={def} size={40} />
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2 flex-wrap">
@@ -47,7 +47,10 @@ function BuffRow({ def, slot }: ActiveBuff) {
           <p className="text-polygon-warning text-xs mt-0.5">{slot.stats.map(formatStat).join(', ')}</p>
         )}
       </div>
-      <span className="text-white font-bold text-sm whitespace-nowrap">{formatTime(slot.msLeft)}</span>
+      <span className="text-white font-bold text-sm whitespace-nowrap text-right">
+        {formatTime(slot.msLeft)}
+        {slot.pending && <span className="block text-[10px] font-normal text-gray-400">next wave</span>}
+      </span>
     </li>
   )
 }
@@ -58,7 +61,7 @@ function BuffSection({ title, list }: { title: string; list: ActiveBuff[] }) {
     <section>
       <h3 className="text-xs font-bold text-gray-500 mb-2">{title}</h3>
       <ul className="flex flex-col gap-2">
-        {list.map(b => <BuffRow key={b.def.id} {...b} />)}
+        {list.map((b, i) => <BuffRow key={`${b.def.id}-${b.slot.pending ? `pending-${i}` : 'active'}`} {...b} />)}
       </ul>
     </section>
   )

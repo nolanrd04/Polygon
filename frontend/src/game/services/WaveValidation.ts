@@ -3,6 +3,7 @@ import { GameManager } from '../core/GameManager'
 import { getAllUpgrades, getUpgrade } from '../upgrades'
 import { UpgradeSystem } from '../systems/upgrades'
 import { NormalDifficulty } from '../systems/difficulty/Normal'
+import type { BundleBuffRoll } from '../buffs/bundleDrops'
 
 // Variant pity: on the wave-start offer for VARIANT_PITY_WAVE, a player who
 // owns none of their attack type's variants gets an offer made entirely of
@@ -489,7 +490,7 @@ export class WaveValidationService {
     return this.waveToken
   }
 
-  async collectBundle(waveNumber: number, bundleTier: number): Promise<{ success: boolean; upgradeIds?: string[] }> {
+  async collectBundle(waveNumber: number, bundleTier: number): Promise<{ success: boolean; upgradeIds?: string[]; buffs?: BundleBuffRoll[] }> {
     const token = localStorage.getItem('token')
     if (!token) return { success: false }
 
@@ -515,14 +516,17 @@ export class WaveValidationService {
         // exclusion in collect_upgrade_bundle - see isOfferOpen. Only ever
         // widens the loot pool by the <=3 ids the player could simply have
         // bought, so a client lying about it gains nothing.
-        offer_open: this.isOfferOpen()
+        offer_open: this.isOfferOpen(),
+        // Ticks since this token was issued, the same clock buff timers run
+        // on. The server starts any granted buff's window here.
+        frame: this.frameCount
       }, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
 
-      return { success: !!response.data.success, upgradeIds: response.data.upgrade_ids }
+      return { success: !!response.data.success, upgradeIds: response.data.upgrade_ids, buffs: response.data.buffs }
     } catch (error: any) {
       console.error('Bundle pickup failed:', error)
       return { success: false }

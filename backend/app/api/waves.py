@@ -117,11 +117,24 @@ class BundlePickupRequest(BaseModel):
     # grant lands on the token that will actually be submitted at
     # wave-complete, instead of an indeterminate one of possibly several.
     token: str = Field(...)
+    # The client's wave-validation frame counter at pickup: logic ticks since
+    # this token was issued, the clock buff timers run on. Starts the window
+    # of any buff this bundle grants. Bounded server-side so it can't claim a
+    # frame that hasn't happened yet. Defaults 0 for older clients.
+    frame: int = Field(default=0, ge=0)
+
+
+class BundleBuffRollOut(BaseModel):
+    """Mirrors the frontend's BundleBuffRoll: applied as AddBuff(buff, duration, { stats })."""
+    buff: str
+    duration: int  # ms
+    stats: Dict[str, float] = Field(default_factory=dict)
 
 
 class BundlePickupResponse(BaseModel):
     success: bool
     upgrade_ids: List[str] = Field(default_factory=list)
+    buffs: List[BundleBuffRollOut] = Field(default_factory=list)
     message: Optional[str] = None
 
 
@@ -346,12 +359,13 @@ async def bundle_pickup(
     drops the grant, same as it drops in-progress kills/damage.
     """
     wave_service = WaveService(db)
-    success, upgrade_ids, error = await wave_service.collect_upgrade_bundle(
+    success, upgrade_ids, buffs, error = await wave_service.collect_upgrade_bundle(
         user_id=current_user.id,
         wave_number=request.wave,
         client_bundle_tier=request.bundle_tier,
         token_string=request.token,
-        offer_open=request.offer_open
+        offer_open=request.offer_open,
+        client_frame=request.frame
     )
     if not success:
         raise HTTPException(
@@ -359,7 +373,11 @@ async def bundle_pickup(
             detail=error or "Could not grant bundle"
         )
 
-    return BundlePickupResponse(success=True, upgrade_ids=upgrade_ids)
+    return BundlePickupResponse(
+        success=True,
+        upgrade_ids=upgrade_ids,
+        buffs=[BundleBuffRollOut(**b) for b in buffs]
+    )
 
 
 @router.post("/reroll", response_model=RerollResponse)

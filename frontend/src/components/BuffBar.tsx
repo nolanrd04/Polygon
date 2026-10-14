@@ -19,7 +19,7 @@ export interface ActiveBuff {
   slot: BuffSlotState
 }
 
-/** Debuffs first, then highest rarity, then by name. Shared with ViewBuffs. */
+/** Active before pending, then debuffs first, then highest rarity, then by name. Shared with ViewBuffs. */
 export function sortBuffs(slots: BuffSlotState[]): ActiveBuff[] {
   const active: ActiveBuff[] = []
   for (const slot of slots) {
@@ -27,6 +27,7 @@ export function sortBuffs(slots: BuffSlotState[]): ActiveBuff[] {
     if (def) active.push({ def, slot })
   }
   return active.sort((a, b) =>
+    Number(!!a.slot.pending) - Number(!!b.slot.pending) ||
     Number(b.def.isDebuff) - Number(a.def.isDebuff) ||
     (RARITY_RANK[b.def.rarity] ?? 0) - (RARITY_RANK[a.def.rarity] ?? 0) ||
     a.def.name.localeCompare(b.def.name)
@@ -108,18 +109,20 @@ export default function BuffBar({ buffs, onOpen }: {
           className="flex items-start pointer-events-auto touch-manipulation select-none"
           style={{ gap: CHIP_GAP }}
         >
-          {shown.map(({ def, slot }) => (
-            <div key={def.id} className="relative group flex flex-col items-center">
-              <div className={slot.msLeft <= EXPIRING_MS ? 'animate-pulse' : undefined}>
+          {shown.map(({ def, slot }, i) => (
+            <div key={`${def.id}-${slot.pending ? `pending-${i}` : 'active'}`} className="relative group flex flex-col items-center">
+              <div className={slot.pending ? 'opacity-40' : slot.msLeft <= EXPIRING_MS ? 'animate-pulse' : undefined}>
                 <BuffChip def={def} size={CHIP_SIZE} />
               </div>
-              <span className="text-[10px] leading-none text-gray-200 mt-0.5">{chipTime(slot.msLeft)}</span>
+              <span className="text-[10px] leading-none text-gray-200 mt-0.5">{slot.pending ? 'next' : chipTime(slot.msLeft)}</span>
 
               {!IS_MOBILE && (
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-56 rounded border border-gray-600 bg-black/90 p-2 text-left pointer-events-none z-10">
                   <div className="font-bold text-sm" style={{ color: hexColor(def.color) }}>{def.name}</div>
                   <div className="text-xs text-gray-300">{def.description}</div>
-                  <div className="text-xs text-gray-500 mt-1">{Math.ceil(slot.msLeft / 1000)}s left</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {slot.pending ? `Starts next wave (${Math.ceil(slot.msLeft / 1000)}s)` : `${Math.ceil(slot.msLeft / 1000)}s left`}
+                  </div>
                 </div>
               )}
             </div>

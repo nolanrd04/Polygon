@@ -26,7 +26,7 @@ import { NormalDifficulty } from '../systems/difficulty/Normal'
 import { getAllUpgrades, getUpgrade, getUpgradeEntry } from '../upgrades'
 import { RarityID, UpgradeTypeID, BuffStatID, BuffHostID, type BuffID } from '../data/ID'
 import { getBuffEntry } from '../buffs'
-import { BUNDLE_BUFF_DROPS, rollDropDuration, type BundleBuffDrop } from '../buffs/bundleDrops'
+import { BUNDLE_BUFF_DROPS, rollDrop, type BundleBuffDrop, type BundleBuffRoll, type BundleBuffRollContext } from '../buffs/bundleDrops'
 import { awardPlayerKill } from '../systems/KillRewards'
 import { SETTINGS } from '../core/SettingsStorage'
 
@@ -56,6 +56,8 @@ export class MainScene extends Phaser.Scene {
   private screenUI!: ScreenSpaceLayer
 
   private bundleGroup!: Phaser.GameObjects.Group
+  /** Bundle buffs picked up between waves, applied on the next wave-start. */
+  private pendingBundleBuffs: BundleBuffRoll[] = []
   private activeBundles: DroppedUpgradeBundle[] = []
 
   /** Unspent real time owed to the fixed logic step. See FIXED_STEP_MS. */
@@ -182,6 +184,24 @@ export class MainScene extends Phaser.Scene {
             }
           })
         }
+        // Pickup text continues after the upgrades' (textOffset of them).
+        // Between waves the buff is held until the next wave starts, so it
+        // doesn't run out in the shop (see BUFFS.md → Bundle drops).
+        const applyRolledBuffs = (rolls: BundleBuffRoll[], textOffset: number) => {
+          const betweenWaves = !GameManager.getState().isWaveActive
+          rolls.forEach((rolled, i) => {
+            const def = getBuffEntry(rolled.buff)?.def
+            if (!def) return
+            if (betweenWaves) {
+              this.pendingBundleBuffs.push(rolled)
+            } else {
+              this.player.AddBuff(rolled.buff, rolled.duration, { stats: rolled.stats })
+            }
+            const delay = (textOffset + i) * 220
+            const label = betweenWaves ? `${def.name} (next wave)` : def.name
+            this.showBundlePickupText(x, y, label, rarityOrder.indexOf(def.rarity as RarityID), def.isDebuff, delay)
+          })
+        }
 
         // Online: the backend rolls the bundle's tier and contents itself
         // and grants them for free (see WaveValidation.collectBundle) - it
@@ -205,7 +225,9 @@ export class MainScene extends Phaser.Scene {
             }
             bundle.destroy()
             this.sound.play('select_upgrade', { volume: getDefaultVolume('select_upgrade') })
-            applyPickedUpgrades(result.upgradeIds ?? [])
+            const upgradeIds = result.upgradeIds ?? []
+            applyPickedUpgrades(upgradeIds)
+            applyRolledBuffs(result.buffs ?? [], upgradeIds.length)
           })
           return
         }
@@ -253,8 +275,8 @@ export class MainScene extends Phaser.Scene {
         }
 
         // Remaining slots (if any): 25% curse / 15% buff / 60% regular, no duplicates.
-        // A buff slot is 50/50 positive or debuff. Offline only until the backend
-        // has the buff catalog (buff plan phase 6).
+        // A buff slot is 50/50 positive or debuff. Mirrors collect_upgrade_bundle,
+        // which holds offensive buffs back online until their validation exists.
         const pickedBuffs: BundleBuffDrop[] = []
         for (let i = 1; i < count; i++) {
           const roll = Math.random()
@@ -273,12 +295,12 @@ export class MainScene extends Phaser.Scene {
         }
 
         applyPickedUpgrades(pickedIds)
-        pickedBuffs.forEach((drop, i) => {
-          const def = getBuffEntry(drop.buff)!.def
-          this.player.AddBuff(drop.buff, rollDropDuration(drop))
-          const delay = (pickedIds.length + i) * 220
-          this.showBundlePickupText(x, y, def.name, rarityOrder.indexOf(def.rarity as RarityID), def.isDebuff, delay)
-        })
+        const rollCtx: BundleBuffRollContext = {
+          wave: GameManager.getState().wave,
+          difficultyId: NormalDifficulty.id,
+          upgrades: [...GameManager.getState().appliedUpgrades],
+        }
+        applyRolledBuffs(pickedBuffs.map(drop => rollDrop(drop, rollCtx)), pickedIds.length)
       }
     )
     // -------- -------- -------- //
@@ -324,6 +346,12 @@ export class MainScene extends Phaser.Scene {
       this.upgradeMenuOpen = false
       this.input.activePointer.reset()
       this.waveManager.startNextWave()
+    })
+    EventBus.on('wave-start', () => {
+      for (const rolled of this.pendingBundleBuffs) {
+        this.player.AddBuff(rolled.buff, rolled.duration, { stats: rolled.stats })
+      }
+      this.pendingBundleBuffs = []
     })
     EventBus.on('upgrade-selected', (upgradeId) => {
       this.applyUpgrade(upgradeId)
@@ -382,6 +410,7 @@ export class MainScene extends Phaser.Scene {
     })
     EventBus.on('player-death', () => {
       this.player.buffs.clear()
+      this.pendingBundleBuffs = []
 
       // Display death message, 20px in from the real bottom-left of the viewport.
       // `this.scale.height`, not GAME_HEIGHT: under Scale.RESIZE the canvas is the
@@ -431,7 +460,16 @@ export class MainScene extends Phaser.Scene {
     })
 
     EventBus.on('request-buff-state', () => {
-      EventBus.emit('buff-state-update', this.player.buffs.snapshot())
+      const pending = this.pendingBundleBuffs.map(rolled => ({
+        id: rolled.buff,
+        msLeft: rolled.duration,
+        stats: (getBuffEntry(rolled.buff)?.def.stats ?? []).map(effect => ({
+          ...effect,
+          value: rolled.stats?.[effect.stat] ?? effect.value,
+        })),
+        pending: true,
+      }))
+      EventBus.emit('buff-state-update', [...this.player.buffs.snapshot(), ...pending])
     })
 
     // Mobile fires abilities by tapping their HUD card — there are no separate

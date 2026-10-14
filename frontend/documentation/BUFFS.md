@@ -282,8 +282,9 @@ Same rule as upgrades ([UPGRADES.md](UPGRADES.md#the-flag-pattern-allowed-coupli
 
 Only the player's buffs are shown; enemy buffs show through tint, particles and draw hooks.
 
-- **Data:** `GamePage` polls `request-buff-state` every 100 ms (with the ability poll). `MainScene` answers `buff-state-update` with `player.buffs.snapshot()`: `BuffSlotState[]` of `{ id, msLeft, stats }`, where `stats` are the values this application uses (overrides included). `hidden` buffs are skipped.
-- **Order** (`sortBuffs` in `BuffBar.tsx`, used by both views): debuffs first, then highest rarity, then name.
+- **Data:** `GamePage` polls `request-buff-state` every 100 ms (with the ability poll). `MainScene` answers `buff-state-update` with `player.buffs.snapshot()` plus the held between-wave bundle buffs: `BuffSlotState[]` of `{ id, msLeft, stats, pending? }`, where `stats` are the values this application uses (overrides included). `hidden` buffs are skipped. A `pending` slot hasn't started yet; its `msLeft` is the full duration it will get.
+- **Order** (`sortBuffs` in `BuffBar.tsx`, used by both views): active before pending, then debuffs first, then highest rarity, then name.
+- **Pending buffs** show dimmed, with "next" instead of a countdown on the bar, and "next wave" under the time in `ViewBuffs`.
 - **`BuffBar`** (`components/BuffBar.tsx`): a row of chips at bottom center. Each chip is the buff's icon in its `color` on a tinted square, outlined green (buff) or red (debuff), with the time left underneath; it pulses in the last 3 s. As many chips as fit the measured width are shown, the rest collapse into `+N`. Desktop: hover a chip for name, description and time.
   - Mobile placement comes from `buffBarBounds()` in `core/TouchLayout.ts`: under the joysticks on tall screens, between their touch areas on short ones. Desktop: the middle half of the screen.
   - Tapping the bar pauses the game and opens the pause menu on `ViewBuffs`. BACK returns to the pause menu.
@@ -292,13 +293,16 @@ Only the player's buffs are shown; enemy buffs show through tint, particles and 
 
 ## Bundle drops
 
-Upgrade bundles can roll buffs, **offline/sandbox only** for now (online bundles are rolled by the backend, which doesn't know about buffs until phase 6). Roll rules are in [UPGRADE_BUNDLE.md](UPGRADE_BUNDLE.md#step-by-step-offlinesandbox).
+Upgrade bundles can roll buffs. Roll rules are in [UPGRADE_BUNDLE.md](UPGRADE_BUNDLE.md#step-by-step-offlinesandbox).
 
+- **Who rolls:** offline/sandbox, `MainScene` rolls locally via `rollDrop`. Online, the server rolls the buff **and** its values (`collect_upgrade_bundle`) and the client applies exactly what `/waves/bundle-pickup` returns (`AddBuff(buff, duration, { stats })`). It never rolls locally
+- **Online-grantable buffs:** every debuff, plus Mending and Toughness 1/2 (`WaveService.ONLINE_SAFE_BUFFS`). Speed, fire-rate and damage buffs stay offline-only until buff-aware validation exists (buff plan steps 2/3), since today's checks would flag honest players who had them. A positive slot whose tier has no online-safe buff (e.g. common) grants nothing
 - **Whitelist:** `buffs/bundleDrops.ts` → `BUNDLE_BUFF_DROPS`. A buff only drops if it has an entry there. New buffs are **not** added automatically
-- **Duration:** each entry rolls uniformly between its `minDuration` and `maxDuration` (ms), defaulting to `DEFAULT_DROP_MIN_DURATION` / `DEFAULT_DROP_MAX_DURATION` (10–20 s). These are separate from the def's `maxDuration`, which is the stacking cap and still clips the result
+- **Duration:** each entry rolls uniformly between its `minDuration` and `maxDuration` (ms), defaulting to `DEFAULT_DROP_MIN_DURATION` / `DEFAULT_DROP_MAX_DURATION` (5–10 s). These are separate from the def's `maxDuration`, which is the stacking cap and still clips the result
+- **Custom rolls:** an entry can set `roll(drop, ctx)` returning `{ buff, duration, stats? }`, e.g. to scale a buff's duration or stats with the wave. There's no global scaling formula; each entry decides. `ctx` is `{ wave, difficultyId, upgrades }`, the only things the server also knows, so no live game state. Every `roll` must be hand-ported to `backend/app/core/buff_rolls.py` → `ROLLS` (keyed by BuffID), like `Normal.ts` → `difficulty/normal.py`. `sync-check.sh` fails on an entry with a `roll` but no port. A port that drifts only makes online and offline feel different. It can't cause a false flag, because validation reads the server's own rolled values
 - **Rarity:** the drop's def `rarity` is matched against the rolled tier, walking down tiers like `pickCurse`. Debuffs also need `Player` in `appliesTo`
-- A bundle picked up between waves (offline) applies its buff right away; it carries into the next wave, since buff timers only tick in `stepLogic`. Accepted by design
-- **Not designed yet:** wave scaling of bundle buffs (e.g. Burning Bullets strength vs wave), and per-entry stat adjustments. Those will go on the `BundleBuffDrop` entries, which is also what the backend sync will export
+- **Between waves:** a buff from a bundle picked up while no wave is active is **held** (`MainScene.pendingBundleBuffs`) and applied on `wave-start`, with "(next wave)" on its pickup text. `stepLogic`, and so every buff timer, keeps running through the wave-complete screen and the shop, so applying it right away would let it run out there (and DoT debuffs would hurt in the shop). Held buffs are dropped on death
+- **Server ledger:** each online grant is stored on the wave token's `bundle_buffs` as `{ id, granted_frame, duration_ticks, stats, queued }`. `granted_frame` is the client's wave-validation frame counter (ticks since the token was issued, not since the wave started; the counter keeps running through the shop), capped at the ticks that can have passed since token issue. `queued` marks a between-wave pickup (`offer_open`), whose window starts at the wave's start frame instead. Nothing reads the ledger yet; buff-aware validation (step 2) will, and will need the client to report the wave's start frame to resolve queued grants
 
 ## Debugging
 
@@ -306,8 +310,8 @@ DevTools → **BUFFS** tab: set a duration, click **PLAYER** or **ENEMIES** (eve
 
 ## Not yet implemented
 
-Tracked in the buff plan (phases 5b–6): buffs as **online** bundle rewards and backend wave validation support. A future buff sync script must drop the UI-only `icon` field, as `upgrade_defs_sync.py` does, and export `BUNDLE_BUFF_DROPS` for the backend roll. `Projectile.getOwner()` was deferred from phase 3; nothing needs it yet.
+Tracked in the buff plan (`handoffs/2026-10-09-buff-system-server-design.md`, steps 2–3): a `BuffTimeline` that makes movement, fire-rate and damage validation buff-aware, damage buckets per buff signature, and DoT tracking. `Projectile.getOwner()` was deferred from phase 3; nothing needs it yet.
 
 Until validation knows about buffs:
-- **damage-over-time damage is not reported as `damage-dealt`**, and `damage-dealt` reports the hit before enemy `DamageTaken` (Vulnerable) is applied;
-- the test buffs Haste, Wrath, Frenzy and Burning Bullets would get an online wave flagged (or under-report damage). Online, nothing grants a player buff in real play yet; offline bundles can (see Bundle drops).
+- **damage-over-time damage is not reported as `damage-dealt`**, and `damage-dealt` reports the hit before enemy `DamageTaken` (Vulnerable) is applied. DoT kills still count, so enough of them can trip the "damage suspiciously low" floor;
+- Haste, Frenzy, Wrath, Burning Bullets and Poison Tipped Rounds would get an online wave flagged, which is why the server doesn't grant them yet (see Bundle drops). DevTools can still apply them online.

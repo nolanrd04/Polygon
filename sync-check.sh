@@ -49,6 +49,16 @@ fi
 
 echo ""
 
+# Value-parity check: parses every BuffDef plus bundleDrops.ts's whitelist and
+# diffs against backend/app/core/data/buffs.json. Also fails on a bundle drop
+# whose custom `roll` has no port in backend/app/core/buff_rolls.py.
+# See scripts/buff_defs_sync.py for the parser/diff logic.
+if ! python3 "$REPO_ROOT/scripts/buff_defs_sync.py"; then
+    STATUS=1
+fi
+
+echo ""
+
 # Parity check: frontend/version.json (the source of truth, inlined into the
 # bundle by vite) against the backend's copy and against the one version still
 # written by hand, the newest UpdateNotesPage.tsx entry.
@@ -65,6 +75,7 @@ if [ "$STATUS" -ne 0 ]; then
     echo "       python3 scripts/projectile_defs_sync.py --write"
     echo "       python3 scripts/enemy_defs_sync.py --write"
     echo "       python3 scripts/difficulty_defs_sync.py --write"
+    echo "       python3 scripts/buff_defs_sync.py --write"
     echo "       python3 scripts/version_sync.py --write"
     echo "  2. If a mismatch is unintentional, fix the source (usually the frontend def)"
     echo "     and re-run this script."

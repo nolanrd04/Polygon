@@ -5,12 +5,36 @@
  */
 
 import { BuffID } from '../data/ID'
+import type { BuffStatOverrides } from './Buff'
+
+/**
+ * What a `roll` may read. Only things the server also knows, since every
+ * `roll` is hand-ported to backend/app/core/buff_rolls.py and the server
+ * rolls online. No live game state (HP, enemies, position).
+ */
+export interface BundleBuffRollContext {
+  wave: number
+  difficultyId: string
+  upgrades: string[]
+}
+
+/** One rolled grant, applied as `AddBuff(buff, duration, { stats })`. */
+export interface BundleBuffRoll {
+  buff: BuffID
+  duration: number
+  stats?: BuffStatOverrides
+}
 
 export interface BundleBuffDrop {
   buff: BuffID
   /** Rolled duration range in ms. Not the def's maxDuration (that's the stacking cap). */
   minDuration?: number
   maxDuration?: number
+  /**
+   * Custom roll, e.g. a duration or stats that scale with the wave. Must
+   * have a matching port in buff_rolls.py, or sync-check fails.
+   */
+  roll?: (drop: BundleBuffDrop, ctx: BundleBuffRollContext) => BundleBuffRoll
 }
 
 export const DEFAULT_DROP_MIN_DURATION = 5000
@@ -76,4 +100,9 @@ export function rollDropDuration(drop: BundleBuffDrop): number {
   const min = drop.minDuration ?? DEFAULT_DROP_MIN_DURATION
   const max = Math.max(min, drop.maxDuration ?? DEFAULT_DROP_MAX_DURATION)
   return Math.round(min + Math.random() * (max - min))
+}
+
+/** The entry's own `roll`, else the default duration roll with the def's stats. Offline only; online the server rolls. */
+export function rollDrop(drop: BundleBuffDrop, ctx: BundleBuffRollContext): BundleBuffRoll {
+  return drop.roll ? drop.roll(drop, ctx) : { buff: drop.buff, duration: rollDropDuration(drop) }
 }

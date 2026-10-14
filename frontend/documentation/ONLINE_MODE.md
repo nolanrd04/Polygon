@@ -63,6 +63,10 @@ The frontend uses `current_points` from the response — not a locally computed 
 
 When the player pays to reroll the upgrade pool, the backend deducts the reroll cost and generates a new set of three upgrades server-side. The response contains `{ success: true, offered_upgrades: [...], current_points: <number> }`. `WaveValidationService` updates its `offeredUpgrades` cache and returns the new pool to the caller.
 
+### `POST /api/waves/bundle-pickup`
+
+`WaveValidation.collectBundle()` sends `{ wave, bundle_tier, token, offer_open, frame }` when the player walks over an upgrade bundle. The backend rolls the contents (upgrades, curses and buffs) and returns `{ success, upgrade_ids, buffs }`, where each buff is `{ buff, duration (ms), stats }`. The client applies both exactly as given and never rolls a buff locally online; a buff picked up between waves is held until the wave starts. Granted upgrades sit on the wave token until the wave completes; granted buffs go on the token's `bundle_buffs` ledger for buff-aware validation, starting at `frame`, or at the wave's start for a between-wave (`queued`) pickup. Full flow: [UPGRADE_BUNDLE.md](UPGRADE_BUNDLE.md#architecture--call-chain), buff rules: [BUFFS.md](BUFFS.md#bundle-drops).
+
 ---
 
 ## Save system

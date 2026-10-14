@@ -1,0 +1,1117 @@
+{
+  "dropDefaults": {
+    "minDuration": 5000,
+    "maxDuration": 10000
+  },
+  "bundleDrops": [
+    {
+      "buff": "burning_bullets_1"
+    },
+    {
+      "buff": "burning_bullets_2"
+    },
+    {
+      "buff": "burning_bullets_3"
+    },
+    {
+      "buff": "burning_bullets_4"
+    },
+    {
+      "buff": "burning_bullets_5"
+    },
+    {
+      "buff": "poison_tipped_rounds_1"
+    },
+    {
+      "buff": "poison_tipped_rounds_2"
+    },
+    {
+      "buff": "poison_tipped_rounds_3"
+    },
+    {
+      "buff": "poison_tipped_rounds_4"
+    },
+    {
+      "buff": "poison_tipped_rounds_5"
+    },
+    {
+      "buff": "haste_1"
+    },
+    {
+      "buff": "haste_2"
+    },
+    {
+      "buff": "haste_3"
+    },
+    {
+      "buff": "wrath_1"
+    },
+    {
+      "buff": "wrath_2"
+    },
+    {
+      "buff": "wrath_3"
+    },
+    {
+      "buff": "wrath_4"
+    },
+    {
+      "buff": "wrath_5"
+    },
+    {
+      "buff": "toughness_1"
+    },
+    {
+      "buff": "toughness_2"
+    },
+    {
+      "buff": "frenzy"
+    },
+    {
+      "buff": "mending"
+    },
+    {
+      "buff": "chilled_1"
+    },
+    {
+      "buff": "chilled_2"
+    },
+    {
+      "buff": "chilled_3"
+    },
+    {
+      "buff": "chilled_4"
+    },
+    {
+      "buff": "chilled_5"
+    },
+    {
+      "buff": "on_fire_1"
+    },
+    {
+      "buff": "on_fire_2",
+      "minDuration": 6000,
+      "maxDuration": 12000
+    },
+    {
+      "buff": "on_fire_3",
+      "minDuration": 7000,
+      "maxDuration": 20000
+    },
+    {
+      "buff": "on_fire_4",
+      "minDuration": 9000,
+      "maxDuration": 30000
+    },
+    {
+      "buff": "on_fire_5",
+      "minDuration": 10000,
+      "maxDuration": 60000
+    },
+    {
+      "buff": "poison_1"
+    },
+    {
+      "buff": "poison_2",
+      "minDuration": 6000,
+      "maxDuration": 12000
+    },
+    {
+      "buff": "poison_3",
+      "minDuration": 7000,
+      "maxDuration": 20000
+    },
+    {
+      "buff": "poison_4",
+      "minDuration": 8000,
+      "maxDuration": 25000
+    },
+    {
+      "buff": "poison_5",
+      "minDuration": 10000,
+      "maxDuration": 60000
+    },
+    {
+      "buff": "slowness_1"
+    },
+    {
+      "buff": "slowness_2"
+    },
+    {
+      "buff": "slowness_3"
+    },
+    {
+      "buff": "slowness_4"
+    },
+    {
+      "buff": "slowness_5"
+    },
+    {
+      "buff": "vulnerable_1"
+    },
+    {
+      "buff": "vulnerable_2"
+    },
+    {
+      "buff": "vulnerable_3"
+    },
+    {
+      "buff": "weakness_1"
+    },
+    {
+      "buff": "weakness_2"
+    },
+    {
+      "buff": "weakness_3"
+    },
+    {
+      "buff": "weakness_4"
+    }
+  ],
+  "buffs": {
+    "burning_bullets_1": {
+      "id": "burning_bullets_1",
+      "name": "Burning Bullets 1",
+      "rarity": "common",
+      "description": "Bullets will set enemies on fire",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": true,
+      "maxDuration": 5000
+    },
+    "burning_bullets_2": {
+      "id": "burning_bullets_2",
+      "name": "Burning Bullets 2",
+      "rarity": "uncommon",
+      "description": "Bullets will set enemies on fire",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": true,
+      "maxDuration": 6000
+    },
+    "burning_bullets_3": {
+      "id": "burning_bullets_3",
+      "name": "Burning Bullets 3",
+      "rarity": "rare",
+      "description": "Bullets will set enemies on fire",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": true,
+      "maxDuration": 7000
+    },
+    "burning_bullets_4": {
+      "id": "burning_bullets_4",
+      "name": "Burning Bullets 4",
+      "rarity": "epic",
+      "description": "Bullets will set enemies on fire",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": true,
+      "maxDuration": 8000
+    },
+    "burning_bullets_5": {
+      "id": "burning_bullets_5",
+      "name": "Burning Bullets 5",
+      "rarity": "legendary",
+      "description": "Bullets will set enemies on fire",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": true,
+      "maxDuration": 10000
+    },
+    "chilled_1": {
+      "id": "chilled_1",
+      "name": "Chilled 1",
+      "description": "-10% movement speed, -15% fire rate, and -2.5% damage taken",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "common",
+      "stats": [
+        {
+          "stat": "moveSpeed",
+          "value": -0.1,
+          "isMultiplier": true
+        },
+        {
+          "stat": "fireRate",
+          "value": -0.15,
+          "isMultiplier": true
+        },
+        {
+          "stat": "damageTaken",
+          "value": -0.025,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "chilled_2": {
+      "id": "chilled_2",
+      "name": "Chilled 2",
+      "description": "-15% movement speed, -17.5% fire rate, and -3.5% damage taken",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "uncommon",
+      "stats": [
+        {
+          "stat": "moveSpeed",
+          "value": -0.15,
+          "isMultiplier": true
+        },
+        {
+          "stat": "fireRate",
+          "value": -0.175,
+          "isMultiplier": true
+        },
+        {
+          "stat": "damageTaken",
+          "value": -0.035,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "chilled_3": {
+      "id": "chilled_3",
+      "name": "Chilled 3",
+      "description": "-22% movement speed, -20% fire rate, and -4.5% damage taken",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "rare",
+      "stats": [
+        {
+          "stat": "moveSpeed",
+          "value": -0.22,
+          "isMultiplier": true
+        },
+        {
+          "stat": "fireRate",
+          "value": -0.2,
+          "isMultiplier": true
+        },
+        {
+          "stat": "damageTaken",
+          "value": -0.045,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "chilled_4": {
+      "id": "chilled_4",
+      "name": "Chilled 4",
+      "description": "-27% movement speed, -25% fire rate, and -5% damage taken",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "epic",
+      "stats": [
+        {
+          "stat": "moveSpeed",
+          "value": -0.27,
+          "isMultiplier": true
+        },
+        {
+          "stat": "fireRate",
+          "value": -0.25,
+          "isMultiplier": true
+        },
+        {
+          "stat": "damageTaken",
+          "value": -0.05,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "chilled_5": {
+      "id": "chilled_5",
+      "name": "Chilled 5",
+      "description": "-35% movement speed, -30% fire rate, and -6% damage taken",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "legendary",
+      "stats": [
+        {
+          "stat": "moveSpeed",
+          "value": -0.35,
+          "isMultiplier": true
+        },
+        {
+          "stat": "fireRate",
+          "value": -0.3,
+          "isMultiplier": true
+        },
+        {
+          "stat": "damageTaken",
+          "value": -0.06,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "frenzy": {
+      "id": "frenzy",
+      "name": "Frenzy",
+      "rarity": "uncommon",
+      "description": "+10% fire rate",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": false,
+      "stats": [
+        {
+          "stat": "fireRate",
+          "value": 0.1,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "haste_1": {
+      "id": "haste_1",
+      "name": "Haste 1",
+      "rarity": "common",
+      "description": "+5% move speed",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": false,
+      "stats": [
+        {
+          "stat": "moveSpeed",
+          "value": 0.05,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "haste_2": {
+      "id": "haste_2",
+      "name": "Haste 2",
+      "rarity": "uncommon",
+      "description": "+7.5% move speed",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": false,
+      "stats": [
+        {
+          "stat": "moveSpeed",
+          "value": 0.075,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "haste_3": {
+      "id": "haste_3",
+      "name": "Haste 3",
+      "rarity": "rare",
+      "description": "+10% move speed",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": false,
+      "stats": [
+        {
+          "stat": "moveSpeed",
+          "value": 0.1,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "mending": {
+      "id": "mending",
+      "name": "Mending",
+      "rarity": "uncommon",
+      "description": "Regenerate 1% max HP/sec. Stackable in time.",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": true
+    },
+    "on_fire_1": {
+      "id": "on_fire_1",
+      "name": "On Fire",
+      "rarity": "common",
+      "description": "Burns for 1 HP/sec",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": true,
+      "maxDuration": 60000,
+      "stats": [
+        {
+          "stat": "lifeRegen",
+          "value": -1,
+          "isMultiplier": false
+        }
+      ]
+    },
+    "on_fire_2": {
+      "id": "on_fire_2",
+      "name": "On Fire 2",
+      "rarity": "uncommon",
+      "description": "Burns for 2 HP/sec",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": true,
+      "maxDuration": 60000,
+      "stats": [
+        {
+          "stat": "lifeRegen",
+          "value": -2,
+          "isMultiplier": false
+        }
+      ]
+    },
+    "on_fire_3": {
+      "id": "on_fire_3",
+      "name": "On Fire 3",
+      "rarity": "rare",
+      "description": "Burns for 5 HP/sec",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": true,
+      "maxDuration": 60000,
+      "stats": [
+        {
+          "stat": "lifeRegen",
+          "value": -5,
+          "isMultiplier": false
+        }
+      ]
+    },
+    "on_fire_4": {
+      "id": "on_fire_4",
+      "name": "On Fire 4",
+      "rarity": "epic",
+      "description": "Burns for 8 HP/sec",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": true,
+      "maxDuration": 60000,
+      "stats": [
+        {
+          "stat": "lifeRegen",
+          "value": -8,
+          "isMultiplier": false
+        }
+      ]
+    },
+    "on_fire_5": {
+      "id": "on_fire_5",
+      "name": "On Fire 5",
+      "rarity": "legendary",
+      "description": "Burns for 10 HP/sec",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": true,
+      "maxDuration": 60000,
+      "stats": [
+        {
+          "stat": "lifeRegen",
+          "value": -10,
+          "isMultiplier": false
+        }
+      ]
+    },
+    "poison_1": {
+      "id": "poison_1",
+      "name": "Poison 1",
+      "description": "-10% move speed and -1 health per second",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "common",
+      "stats": [
+        {
+          "stat": "moveSpeed",
+          "value": -0.1,
+          "isMultiplier": true
+        },
+        {
+          "stat": "lifeRegen",
+          "value": -1,
+          "isMultiplier": false
+        }
+      ]
+    },
+    "poison_2": {
+      "id": "poison_2",
+      "name": "Poison 2",
+      "description": "-12.5% move speed and -2 health per second",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "uncommon",
+      "stats": [
+        {
+          "stat": "moveSpeed",
+          "value": -0.125,
+          "isMultiplier": true
+        },
+        {
+          "stat": "lifeRegen",
+          "value": -2,
+          "isMultiplier": false
+        }
+      ]
+    },
+    "poison_3": {
+      "id": "poison_3",
+      "name": "Poison 3",
+      "description": "-15% move speed and -3 health per second",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "rare",
+      "stats": [
+        {
+          "stat": "moveSpeed",
+          "value": -0.15,
+          "isMultiplier": true
+        },
+        {
+          "stat": "lifeRegen",
+          "value": -3,
+          "isMultiplier": false
+        }
+      ]
+    },
+    "poison_4": {
+      "id": "poison_4",
+      "name": "Poison 4",
+      "description": "-17.5% move speed and -4 health per second",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "epic",
+      "stats": [
+        {
+          "stat": "moveSpeed",
+          "value": -0.175,
+          "isMultiplier": true
+        },
+        {
+          "stat": "lifeRegen",
+          "value": -4,
+          "isMultiplier": false
+        }
+      ]
+    },
+    "poison_5": {
+      "id": "poison_5",
+      "name": "Poison 5",
+      "description": "-20% move speed and -5 health per second",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "legendary",
+      "stats": [
+        {
+          "stat": "moveSpeed",
+          "value": -0.2,
+          "isMultiplier": true
+        },
+        {
+          "stat": "lifeRegen",
+          "value": -5,
+          "isMultiplier": false
+        }
+      ]
+    },
+    "poison_tipped_rounds_1": {
+      "id": "poison_tipped_rounds_1",
+      "name": "Poison Tipped Rounds 1",
+      "rarity": "common",
+      "description": "Bullets will poison enemies",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": true,
+      "maxDuration": 5000
+    },
+    "poison_tipped_rounds_2": {
+      "id": "poison_tipped_rounds_2",
+      "name": "Poison Tipped Rounds 2",
+      "rarity": "uncommon",
+      "description": "Bullets will poison enemies",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": true,
+      "maxDuration": 6000
+    },
+    "poison_tipped_rounds_3": {
+      "id": "poison_tipped_rounds_3",
+      "name": "Poison Tipped Rounds 3",
+      "rarity": "rare",
+      "description": "Bullets will poison enemies",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": true,
+      "maxDuration": 7000
+    },
+    "poison_tipped_rounds_4": {
+      "id": "poison_tipped_rounds_4",
+      "name": "Poison Tipped Rounds 4",
+      "rarity": "epic",
+      "description": "Bullets will poison enemies",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": true,
+      "maxDuration": 8000
+    },
+    "poison_tipped_rounds_5": {
+      "id": "poison_tipped_rounds_5",
+      "name": "Poison Tipped Rounds 5",
+      "rarity": "legendary",
+      "description": "Bullets will poison enemies",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": true,
+      "maxDuration": 9000
+    },
+    "slowness_1": {
+      "id": "slowness_1",
+      "name": "Slowness 1",
+      "description": "-15% move speed",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "common",
+      "stats": [
+        {
+          "stat": "moveSpeed",
+          "value": -0.15,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "slowness_2": {
+      "id": "slowness_2",
+      "name": "Slowness 2",
+      "description": "-20% move speed",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "uncommon",
+      "stats": [
+        {
+          "stat": "moveSpeed",
+          "value": -0.2,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "slowness_3": {
+      "id": "slowness_3",
+      "name": "Slowness 3",
+      "description": "-25% move speed",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "rare",
+      "stats": [
+        {
+          "stat": "moveSpeed",
+          "value": -0.25,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "slowness_4": {
+      "id": "slowness_4",
+      "name": "Slowness 4",
+      "description": "-30% move speed",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "epic",
+      "stats": [
+        {
+          "stat": "moveSpeed",
+          "value": -0.3,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "slowness_5": {
+      "id": "slowness_5",
+      "name": "Slowness 5",
+      "description": "-35% move speed",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "legendary",
+      "stats": [
+        {
+          "stat": "moveSpeed",
+          "value": -0.35,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "toughness_1": {
+      "id": "toughness_1",
+      "name": "Toughness 1",
+      "rarity": "rare",
+      "description": "-10% damage taken",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": false,
+      "stats": [
+        {
+          "stat": "damageTaken",
+          "value": -0.1,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "toughness_2": {
+      "id": "toughness_2",
+      "name": "Toughness 2",
+      "rarity": "epic",
+      "description": "-15% damage taken",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": false,
+      "stats": [
+        {
+          "stat": "damageTaken",
+          "value": -0.15,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "vulnerable_1": {
+      "id": "vulnerable_1",
+      "name": "Vulnerable 1",
+      "description": "+5% damage taken",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "rare",
+      "stats": [
+        {
+          "stat": "damageTaken",
+          "value": 0.05,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "vulnerable_2": {
+      "id": "vulnerable_2",
+      "name": "Vulnerable 2",
+      "description": "+10% damage taken",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "epic",
+      "stats": [
+        {
+          "stat": "damageTaken",
+          "value": 0.1,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "vulnerable_3": {
+      "id": "vulnerable_3",
+      "name": "Vulnerable 3",
+      "description": "+15% damage taken",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "epic",
+      "stats": [
+        {
+          "stat": "damageTaken",
+          "value": 0.15,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "weakness_1": {
+      "id": "weakness_1",
+      "name": "Weakness 1",
+      "description": "-10% output damage (contact and projectiles)",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "uncommon",
+      "stats": [
+        {
+          "stat": "damage",
+          "value": -0.1,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "weakness_2": {
+      "id": "weakness_2",
+      "name": "Weakness 2",
+      "description": "-15% output damage (contact and projectiles)",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "rare",
+      "stats": [
+        {
+          "stat": "damage",
+          "value": -0.15,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "weakness_3": {
+      "id": "weakness_3",
+      "name": "Weakness 3",
+      "description": "-20% output damage (contact and projectiles)",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "epic",
+      "stats": [
+        {
+          "stat": "damage",
+          "value": -0.2,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "weakness_4": {
+      "id": "weakness_4",
+      "name": "Weakness 4",
+      "description": "-25% output damage (contact and projectiles)",
+      "appliesTo": [
+        "enemy",
+        "player"
+      ],
+      "isDebuff": true,
+      "stacking": false,
+      "rarity": "legendary",
+      "stats": [
+        {
+          "stat": "damage",
+          "value": -0.25,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "wrath_1": {
+      "id": "wrath_1",
+      "name": "Wrath 1",
+      "rarity": "common",
+      "description": "+5% damage",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": false,
+      "stats": [
+        {
+          "stat": "damage",
+          "value": 0.05,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "wrath_2": {
+      "id": "wrath_2",
+      "name": "Wrath 2",
+      "rarity": "uncommon",
+      "description": "+7.5% damage",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": false,
+      "stats": [
+        {
+          "stat": "damage",
+          "value": 0.075,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "wrath_3": {
+      "id": "wrath_3",
+      "name": "Wrath 3",
+      "rarity": "rare",
+      "description": "+10% damage",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": false,
+      "stats": [
+        {
+          "stat": "damage",
+          "value": 0.1,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "wrath_4": {
+      "id": "wrath_4",
+      "name": "Wrath 4",
+      "rarity": "epic",
+      "description": "+12.5% damage",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": false,
+      "stats": [
+        {
+          "stat": "damage",
+          "value": 0.125,
+          "isMultiplier": true
+        }
+      ]
+    },
+    "wrath_5": {
+      "id": "wrath_5",
+      "name": "Wrath 5",
+      "rarity": "epic",
+      "description": "+15% damage",
+      "appliesTo": [
+        "player",
+        "enemy"
+      ],
+      "isDebuff": false,
+      "stacking": false,
+      "stats": [
+        {
+          "stat": "damage",
+          "value": 0.15,
+          "isMultiplier": true
+        }
+      ]
+    }
+  }
+}
