@@ -1,7 +1,7 @@
 import { Upgrade, type UpgradeDef } from '../Upgrade'
 import type { Projectile } from '../../entities/projectiles/Projectile'
 import { HomingBullet } from '../../entities/projectiles/player_projectiles/Bullet'
-import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID } from '../../data/ID'
+import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID, IconID } from '../../data/ID'
 
 export const StrongerPierce1Def: UpgradeDef = {
   id: "stronger_pierce_1",
@@ -17,6 +17,7 @@ export const StrongerPierce1Def: UpgradeDef = {
   stackable: true,
   maxStacks: 5,
   dependentOn: [{ ids: ["homing_bullets"] }],
+  icon: IconID.PiercingSword,
 }
 
 export class StrongerPierce1 extends Upgrade {

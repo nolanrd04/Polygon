@@ -39,6 +39,9 @@ FIELD_MAP = {
     "specificAttackType": "attackType",
 }
 
+# Frontend-only fields, left out of upgrades.json.
+UI_ONLY_FIELDS = {"icon"}
+
 
 def _parse_enums() -> dict[str, dict[str, str]]:
     """Extract `export const enum Name { Member = 'value', ... }` blocks from ID.ts."""
@@ -116,7 +119,7 @@ def parse_frontend_defs() -> dict[str, dict]:
                 brace_start = text.index("{", def_match.end())
                 literal = _extract_object_literal(text, brace_start)
                 obj = json.loads(_literal_to_json(literal, enums))
-                mapped = {FIELD_MAP.get(k, k): v for k, v in obj.items()}
+                mapped = {FIELD_MAP.get(k, k): v for k, v in obj.items() if k not in UI_ONLY_FIELDS}
                 upgrade_id = mapped["id"]
                 if upgrade_id in defs:
                     raise ValueError(f"Duplicate upgrade id '{upgrade_id}' (in {ts_file})")

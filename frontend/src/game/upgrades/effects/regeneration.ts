@@ -2,6 +2,7 @@ import { Upgrade, type UpgradeDef } from '../Upgrade'
 import { GameManager } from '../../core/GameManager'
 import type { Player } from '../../entities/Player'
 import { RarityID, UpgradeTypeID } from '../../data/ID'
+import { IconID } from '../../data/ID'
 
 export const RegenerationDef: UpgradeDef = {
   id: "regeneration",
@@ -14,6 +15,7 @@ export const RegenerationDef: UpgradeDef = {
   effectValue: 1,
   stackable: true,
   maxStacks: 3,
+  icon: IconID.Mending
 }
 
 export class Regeneration extends Upgrade {

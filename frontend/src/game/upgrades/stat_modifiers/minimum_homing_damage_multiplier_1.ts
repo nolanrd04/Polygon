@@ -1,7 +1,7 @@
 import { Upgrade, type UpgradeDef } from '../Upgrade'
 import type { Projectile } from '../../entities/projectiles/Projectile'
 import { HomingBullet } from '../../entities/projectiles/player_projectiles/Bullet'
-import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID } from '../../data/ID'
+import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID, IconID } from '../../data/ID'
 
 export const MinimumHomingDamageMultiplier1Def: UpgradeDef = {
   id: "minimum_homing_damage_multiplier_1",
@@ -17,6 +17,7 @@ export const MinimumHomingDamageMultiplier1Def: UpgradeDef = {
   stackable: true,
   maxStacks: 5,
   dependentOn: [{ ids: ["homing_bullets"] }],
+  icon: IconID.ShieldPierce,
 }
 
 export class MinimumHomingDamageMultiplier1 extends Upgrade {

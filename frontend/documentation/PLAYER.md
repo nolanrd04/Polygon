@@ -72,7 +72,7 @@ Only the burst itself lives here. Dash cooldown, charge count and charge timers 
 
 | Method | Description |
 |--------|-------------|
-| `takeDamage(amount)` | No-ops if shielded. Otherwise passes damage through `UpgradeEffectSystem.onPlayerDamage()` (armor reduction), records it for wave validation, triggers a red flash, and calls `GameManager.takeDamage()`. |
+| `takeDamage(amount, source?)` | No-ops if shielded. Otherwise passes damage through upgrade `modifyPlayerHurt` (armor, fragility, thorns), then buff `modifyPlayerHurt`, then multiplies by buff `DamageTaken`, records it for wave validation, triggers a red flash, and calls `GameManager.takeDamage()`. |
 | `activateShield()` | Consumes one shield charge from `UpgradeEffectSystem`, sets `shielded = true`, renders the shield sprite, and schedules `deactivateShield()` after 3 seconds. Returns `false` (consuming nothing) if already shielded or out of charges. |
 | `performDash()` | Fires the dash burst using current velocity direction (or facing angle if stationary). Always returns `true` — `AbilitySystem` has already confirmed a charge is ready. |
 | `updateDash()` | Per-frame dash state, called from `update()`. Drives the physics body for the duration of the burst. |
@@ -80,6 +80,15 @@ Only the burst itself lives here. Dash cooldown, charge count and charge timers 
 **Abilities live in `AbilitySystem`, not here.** `Player` owns only the physics of the dash burst; charges, cooldowns, keybinds, ownership checks and HUD state are all in [ABILITY_SYSTEM.md](ABILITY_SYSTEM.md). The old `dash()`, `getDashCooldownProgress()`, `getDashQueueProgress()`, `getReadyDashCharges()` and `setMaxDashCharges(n)` no longer exist — the charge queue moved to `AbilitySystem.ChargeQueue` verbatim, and charge ceilings are now set through `ctx.abilities?.setCharges('dash_ability', n)`.
 
 Both `performDash()` and `activateShield()` return `boolean` because they are called from `DashAbility.onActivate` / `ShieldAbility.onActivate`, where `false` means "declined — spend nothing".
+
+### Buffs
+
+| Method | Description |
+|--------|-------------|
+| `AddBuff(id, ms, options?)` / `HasBuff(id)` / `ClearBuff(id)` / `GetBuffTime(id)` | Buff API over the player's `BuffContainer`. See [BUFFS.md](BUFFS.md). |
+| `_updateBuffs()` | Called first in `MainScene.stepLogic`: ticks buffs, then applies their life regen. Buff damage skips upgrade armor, the shield and the hurt flash, but is recorded as damage taken. |
+
+Buffs are cleared at wave end and on `player-death`. Buff stats read on the player: `MoveSpeed` in `move()`, `FireRate` in `shoot()` (cooldown ÷ factor), `DamageTaken` in `takeDamage()`, and `Damage` at projectile spawn (`MainScene.spawnProjectile`).
 
 ### Lifecycle
 

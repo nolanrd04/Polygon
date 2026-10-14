@@ -1,7 +1,7 @@
 import { Upgrade, type UpgradeDef } from '../Upgrade'
 import type { Projectile } from '../../entities/projectiles/Projectile'
 import { HomingBullet } from '../../entities/projectiles/player_projectiles/Bullet'
-import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID } from '../../data/ID'
+import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID, IconID } from '../../data/ID'
 
 export const HomingDistance1Def: UpgradeDef = {
   id: "homing_distance_1",
@@ -17,6 +17,7 @@ export const HomingDistance1Def: UpgradeDef = {
   stackable: true,
   maxStacks: 6,
   dependentOn: [{ ids: ["homing_bullets"] }],
+  icon: IconID.EyeTarget,
 }
 
 export class HomingDistance1 extends Upgrade {

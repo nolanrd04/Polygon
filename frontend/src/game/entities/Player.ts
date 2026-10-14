@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { GameManager } from '../core/GameManager'
-import { COLORS, WORLD_WIDTH, WORLD_HEIGHT } from '../core/GameConfig'
+import { COLORS, WORLD_WIDTH, WORLD_HEIGHT, FIXED_STEP_MS } from '../core/GameConfig'
 import { Projectile } from './projectiles/Projectile'
 import { Bullet, HomingBullet, ExplosiveBullet, BuckshotBullet } from './projectiles/player_projectiles/Bullet'
 import { Laser } from './projectiles/player_projectiles/Laser'
@@ -9,7 +9,10 @@ import { Flame } from './projectiles/player_projectiles/Flame'
 import { Spinner } from './projectiles/player_projectiles/Spinner'
 import { AttackType } from '../data/attackTypes'
 import { UpgradeSystem, UpgradeEffectSystem, UpgradeModifierSystem } from '../systems/upgrades'
-import { UpgradeTargetID, UpgradeStatID, LightingIntensityID } from '../data/ID'
+import { UpgradeTargetID, UpgradeStatID, LightingIntensityID, BuffHostID, BuffStatID, type BuffID } from '../data/ID'
+import type { AddBuffOptions, BuffHost } from '../buffs/Buff'
+import { BuffContainer } from '../buffs/BuffContainer'
+import { BuffStats } from '../buffs/BuffStats'
 import type { Enemy } from './enemies/Enemy'
 import { TextureGenerator } from '../utils/TextureGenerator'
 import { LightingSystem } from '../systems/LightingSystem'
@@ -19,7 +22,7 @@ import { getDefaultVolume } from '../core/AudioRegistry'
 /**
  * The player character - a polygon that can move and shoot projectiles.
  */
-export class Player extends Phaser.GameObjects.Container {
+export class Player extends Phaser.GameObjects.Container implements BuffHost {
   // ============================================================
   // STATS - Player attributes
   // ============================================================
@@ -84,6 +87,9 @@ export class Player extends Phaser.GameObjects.Container {
   /** The head indicator sprite (front vertex marker) */
   private headIndicator: Phaser.GameObjects.Sprite
 
+  /** Buff tint currently on the sprite. The texture holds the real color, so no tint is 0xffffff. */
+  private appliedTint: number = 0xffffff
+
   /** All active projectiles fired by this player */
   private projectiles: Projectile[] = []
 
@@ -113,6 +119,14 @@ export class Player extends Phaser.GameObjects.Container {
   private dashSpeed: number = 500
   private dashDuration: number = 200 // milliseconds
   private dashDirection: { x: number; y: number } = { x: 0, y: 0 }
+
+  // ============================================================
+  // BUFFS - see BUFFS.md
+  // ============================================================
+
+  readonly buffHostKind = BuffHostID.Player
+  readonly buffs: BuffContainer = new BuffContainer(this)
+  readonly buffStats: BuffStats = new BuffStats()
 
   // ============================================================
   // CONSTRUCTOR
@@ -203,7 +217,8 @@ export class Player extends Phaser.GameObjects.Container {
       const oldSprite = this.sprite
       this.sprite = this.scene.add.sprite(0, 0, polygonTexture)
       this.sprite.setScale(TextureGenerator.getDisplayScale())  // Scale down high-res texture
-      // Don't use setTint - texture already has correct colors
+      // Don't use setTint - texture already has correct colors (buff tint is carried over)
+      this.sprite.setTint(this.appliedTint)
       this.add(this.sprite)
       oldSprite.destroy()
 
@@ -243,7 +258,7 @@ export class Player extends Phaser.GameObjects.Container {
    */
   move(velocityX: number, velocityY: number): void {
     const stats = GameManager.getPlayerStats()
-    const speed = stats.speed
+    const speed = stats.speed * this.buffStats.apply(BuffStatID.MoveSpeed, 1)
 
     const magnitude = Math.hypot(velocityX, velocityY)
     if (magnitude > 0) {
@@ -281,7 +296,8 @@ export class Player extends Phaser.GameObjects.Container {
     const ProjectileClass = this.getActiveProjectileClass()
     const cooldownProbe = new ProjectileClass()
     cooldownProbe.SetDefaults()
-    if (now - this.lastFireTime < cooldownProbe.cooldown) return
+    const fireRate = this.buffStats.apply(BuffStatID.FireRate, 1)
+    if (now - this.lastFireTime < cooldownProbe.cooldown / Math.max(0.1, fireRate)) return
 
     this.lastFireTime = now
     this.firedSoundThisShot = false
@@ -485,7 +501,8 @@ export class Player extends Phaser.GameObjects.Container {
     // Let owned upgrades mutate the incoming damage (armor, fragility, thorns)
     const damage = { amount }
     UpgradeSystem.dispatchModifyPlayerHurt(damage, source)
-    const modifiedAmount = damage.amount
+    this.buffs.dispatchModifyPlayerHurt(this, damage, source)
+    const modifiedAmount = damage.amount * this.buffStats.apply(BuffStatID.DamageTaken, 1)
 
     GameManager.takeDamage(modifiedAmount)
 
@@ -510,6 +527,54 @@ export class Player extends Phaser.GameObjects.Container {
     })
 
     this.scene.sound.play('player_hurt', { volume: getDefaultVolume('player_hurt') })
+  }
+
+  // ============================================================
+  // BUFFS
+  // ============================================================
+
+  /**
+   * Apply a buff for `ms` milliseconds. False if refused (wrong host, unknown id).
+   * `options` override the def's stacking rule and stat values for this one application.
+   */
+  AddBuff(id: BuffID, ms: number, options?: AddBuffOptions): boolean {
+    return this.buffs.add(id, ms, options)
+  }
+
+  HasBuff(id: BuffID): boolean {
+    return this.buffs.has(id)
+  }
+
+  ClearBuff(id: BuffID): boolean {
+    return this.buffs.remove(id)
+  }
+
+  /** Remaining time in ms, 0 if not active. */
+  GetBuffTime(id: BuffID): number {
+    return this.buffs.getTimeLeft(id)
+  }
+
+  /**
+   * @internal Ticks buffs, then applies their life regen. Buff damage skips
+   * upgrade armor, the shield and the hurt flash/sound (it lands every tick),
+   * but still counts as damage taken for wave validation.
+   */
+  _updateBuffs(): void {
+    this.buffs.update()
+
+    const tint = this.buffs.tint(0xffffff)
+    if (tint !== this.appliedTint) {
+      this.sprite.setTint(tint)
+      this.appliedTint = tint
+    }
+
+    const perTick = this.buffStats.apply(BuffStatID.LifeRegen) * (FIXED_STEP_MS / 1000)
+    if (perTick > 0) {
+      GameManager.heal(perTick)
+    } else if (perTick < 0) {
+      GameManager.takeDamage(-perTick)
+      waveValidation.recordDamageTaken(-perTick)
+    }
   }
 
   /**
@@ -603,6 +668,8 @@ export class Player extends Phaser.GameObjects.Container {
         proj._update()
       }
     }
+
+    this.buffs.dispatchDrawPlayer(this)
   }
 
   /**

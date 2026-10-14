@@ -304,6 +304,12 @@ export abstract class ArrowHeadPart extends Enemy {
   // DAMAGE ROUTING (tModLoader's NPC.realLife)
   // ========================================================================
 
+  /** Buffs on any part land on the pool owner, so a burn ticks the worm once, not per segment. */
+  get buffTarget(): Enemy {
+    const owner = ArrowHeadConfig.chain.sharedHealth ? this.owner : null
+    return owner && !owner.isDestroyed ? owner : this
+  }
+
   takeDamage(amount: number, source?: any, penetration: number = 0): boolean {
     const owner = ArrowHeadConfig.chain.sharedHealth ? this.owner : null
 
@@ -325,7 +331,7 @@ export abstract class ArrowHeadPart extends Enemy {
     owner.suppressHitSound = true
     // Penetration was already spent on this part's armor, so the head takes the
     // hit at full armor and we add exactly that back.
-    const killed = owner.takeDamage(throughArmor + owner.defense, source)
+    const killed = owner.takeDamage(throughArmor + owner.effectiveDefense(), source)
     owner.suppressHitSound = false
 
     return killed

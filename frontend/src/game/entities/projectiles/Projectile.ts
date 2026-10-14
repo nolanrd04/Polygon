@@ -2,6 +2,8 @@ import Phaser from 'phaser'
 import { GameManager } from '../../core/GameManager'
 import { TextureGenerator } from '../../utils/TextureGenerator'
 import { Enemy } from '../enemies'
+import type { Player } from '../Player'
+import type { BuffID } from '../../data/ID'
 
 /**
  * Base class for all projectiles.
@@ -34,6 +36,7 @@ import { Enemy } from '../enemies'
  * - SetDefaults() - Define stats like damage, speed, size, pierce, color
  * - AI() - Define behavior each frame (optional, for homing/etc)
  * - OnHitNPC() - What happens when hitting an enemy (optional)
+ * - OnHitPlayer() - What happens when an enemy-owned projectile hits the player (optional)
  * - OnKill() - What happens when projectile is destroyed (optional)
  *
  * DYNAMIC PROPERTIES:
@@ -163,6 +166,12 @@ export abstract class Projectile {
   // 50 is medium
   // 100 is high
   knockback: number = 0
+
+  /**
+   * Buff ids stamped by the shooter's buffs at fire time (modifyProjectileSpawn).
+   * Each one's onProjectileHit runs when this lands, even if the buff has expired.
+   */
+  buffFlags: Set<BuffID> = new Set()
 
   // ============================================================
   // INTERNAL - Don't modify these directly
@@ -319,6 +328,12 @@ export abstract class Projectile {
   OnHitNPC(_enemy: Enemy): boolean {
     return true
   }
+
+  /**
+   * Called after an enemy-owned projectile's damage lands on the player.
+   * Use to apply debuffs, e.g. `player.AddBuff(BuffID.OnFire1, 3000)`.
+   */
+  OnHitPlayer(_player: Player): void {}
 
   /**
    * Called when this projectile collides with an obstacle.

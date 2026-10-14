@@ -37,6 +37,7 @@ Backend API  (see BACKEND_CONNECTION.md)
 | [PARTICLE.md](PARTICLE.md) | Particle system — pooled Terraria-style "dusts", shapes, spawn API |
 | [UPGRADES.md](UPGRADES.md) | The upgrade architecture — def/instance split, ledger, hooks, how to add one |
 | [CURSES.md](CURSES.md) | Curses (`curse: true` upgrades) and the current 15-curse list |
+| [BUFFS.md](BUFFS.md) | Timed buffs/debuffs on players and enemies — BuffDef, BuffContainer, BuffStats layer, tick order, how to add one |
 | [UPGRADE_BUNDLE.md](UPGRADE_BUNDLE.md) | DroppedUpgradeBundle — mid-combat pickup, roll logic, online vs. offline |
 | [SCENES.md](SCENES.md) | BootScene and MainScene |
 | [SERVICES.md](SERVICES.md) | SaveManager, WaveValidation, LocalSaveManager, SaveTypes |

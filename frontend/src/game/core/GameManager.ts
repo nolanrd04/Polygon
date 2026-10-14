@@ -135,8 +135,6 @@ class GameManagerClass {
     const currentHealth = this.state.playerStats.health
     const newHealth = Math.max(0, currentHealth - amount)
 
-    console.log(`[DEBUG] takeDamage: ${currentHealth} - ${amount} = ${newHealth}`)
-
     this.state.playerStats = {
       ...this.state.playerStats,
       health: newHealth

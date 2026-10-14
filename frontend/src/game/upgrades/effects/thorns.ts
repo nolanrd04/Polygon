@@ -1,6 +1,6 @@
 import { Upgrade, type UpgradeDef, type DamageRef } from '../Upgrade'
 import type { Enemy } from '../../entities/enemies/Enemy'
-import { RarityID, UpgradeTypeID } from '../../data/ID'
+import { IconID, RarityID, UpgradeTypeID } from '../../data/ID'
 
 export const ThornsDef: UpgradeDef = {
   id: "thorns",
@@ -13,6 +13,7 @@ export const ThornsDef: UpgradeDef = {
   effectValue: 0.1,
   stackable: true,
   maxStacks: 3,
+  icon: IconID.Reflect,
 }
 
 export class Thorns extends Upgrade {

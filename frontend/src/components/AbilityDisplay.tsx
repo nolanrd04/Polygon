@@ -204,7 +204,7 @@ function abilityCeiling(): number {
  * joysticks. `Phaser.Scale.RESIZE` sizes the canvas 1:1 with the viewport, so
  * this is the same coordinate space the canvas controls are laid out in.
  */
-function useViewport() {
+export function useViewport() {
   const [size, setSize] = useState(() => ({
     width: window.innerWidth,
     height: window.innerHeight,

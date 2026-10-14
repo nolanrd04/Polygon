@@ -36,6 +36,8 @@ export const Damage1Def: UpgradeDef = {
 export class Damage1 extends Upgrade {}
 ```
 
+Optional `icon: IconID.X` sets the icon on upgrade cards and in `ViewUpgrades` (generic upgrade icon if omitted). It's UI-only: `upgrade_defs_sync.py` leaves it out of `upgrades.json`. See **GameIcon** in [COMPONENTS.md](COMPONENTS.md).
+
 Think item template vs. item drop: the def describes the upgrade; the player owns instances. Because instances are constructed per purchase (and reconstructed on save load), per-run mutable state on an upgrade class — a shot counter, say — is safe by construction and can never bleed across runs.
 
 ## The Ledger

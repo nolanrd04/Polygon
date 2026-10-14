@@ -2,6 +2,8 @@ import { useMemo } from 'react'
 import { getAllUpgrades } from '../game/upgrades'
 import type { UpgradeDef } from '../game/upgrades/Upgrade'
 import { GameManager } from '../game/core/GameManager'
+import { IconID } from '../game/data/ID'
+import GameIcon from './GameIcon'
 
 interface ViewUpgradesProps {
   onBack: () => void
@@ -10,6 +12,7 @@ interface ViewUpgradesProps {
 interface UpgradeGroup {
   name: string
   rarity: UpgradeDef['rarity']
+  icon: UpgradeDef['icon']
   count: number
   totalLabel: string
   description: string
@@ -104,6 +107,7 @@ function buildGroups(applied: string[]): UpgradeGroup[] {
     groups.push({
       name: def.name,
       rarity: def.rarity,
+      icon: def.icon,
       count,
       totalLabel,
       description: def.description
@@ -151,7 +155,8 @@ export default function ViewUpgrades({ onBack }: ViewUpgradesProps) {
                 className={`rounded-md border ${rarityBorder[g.rarity]} bg-black/50 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1`}
               >
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <GameIcon icon={g.icon} fallback={IconID.Upgrade} className={`text-xl ${rarityText[g.rarity]}`} />
                     <span className={`font-bold text-base ${rarityText[g.rarity]}`}>{g.name}</span>
                     <span className={`text-[10px] uppercase ${rarityText[g.rarity]}`}>{g.rarity}</span>
                   </div>

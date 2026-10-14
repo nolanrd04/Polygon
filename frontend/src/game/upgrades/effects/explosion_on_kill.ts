@@ -2,7 +2,7 @@ import { Upgrade, type UpgradeDef } from '../Upgrade'
 import { BulletExplosion } from '../../entities/projectiles/player_projectiles/Bullet'
 import { getDefaultVolume } from '../../core/AudioRegistry'
 import type { Enemy } from '../../entities/enemies/Enemy'
-import { RarityID, UpgradeTypeID } from '../../data/ID'
+import { IconID, RarityID, UpgradeTypeID } from '../../data/ID'
 
 export const ExplosionOnKillDef: UpgradeDef = {
   id: "explosion_on_kill",
@@ -14,6 +14,7 @@ export const ExplosionOnKillDef: UpgradeDef = {
   effect: "explode_on_kill",
   effectValue: 10,
   stackable: false,
+  icon: IconID.Explosion,
 }
 
 export class ExplosionOnKill extends Upgrade {

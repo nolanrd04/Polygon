@@ -1,6 +1,6 @@
 import { Upgrade, type UpgradeDef, type UpgradeContext } from '../Upgrade'
 import { UpgradeModifierSystem } from '../../systems/upgrades/UpgradeModifierSystem'
-import { RarityID, UpgradeTypeID, UpgradeTargetID, UpgradeStatID } from '../../data/ID'
+import { RarityID, UpgradeTypeID, UpgradeTargetID, UpgradeStatID, IconID } from '../../data/ID'
 import { SparkParticle } from '../../../game/entities/particles/BasicParticles'
 import { Particle } from '../../../game/entities/particles/Particle'
 
@@ -19,6 +19,7 @@ export const HealAbilityDef: UpgradeDef = {
   stackable: false,
   // Every run starts with this one — it is never offered or bought.
   starting: true,
+  icon: IconID.Health,
   activation: {
     key: "X",
     label: "HEAL",

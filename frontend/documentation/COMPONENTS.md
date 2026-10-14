@@ -62,6 +62,34 @@ Each `AbilitySlotState` carries `{ id, label, keyLabel, theme, ready, max, progr
 
 The component renders nothing while `slots` is empty, so abilities appear only once owned. See [ABILITY_SYSTEM.md](ABILITY_SYSTEM.md).
 
+Also exports `useViewport()` (viewport size, updated on resize/orientation change), used by `BuffBar` too.
+
+---
+
+## BuffBar
+
+**File:** `BuffBar.tsx`
+
+The player's active buffs as a row of chips at bottom center, with as many as fit and the rest collapsed into `+N`. Tapping pauses the game and opens `ViewBuffs`. Desktop chips have a hover tooltip. Also exports `sortBuffs`, `BuffChip` and `hexColor` for `ViewBuffs`.
+
+**Props:** `{ buffs: BuffSlotState[], onOpen: () => void }`. `GamePage` polls `request-buff-state` alongside the ability poll. Layout, ordering and data flow: **HUD** in [BUFFS.md](BUFFS.md).
+
+---
+
+## ViewBuffs
+
+**File:** `ViewBuffs.tsx`
+
+Read-only panel of every active player buff, split into debuffs and buffs: icon chip, name, rarity, description, current stat values (per-application overrides included) and time left. Opened from `PauseMenu`. Props: `{ buffs, onBack }`.
+
+---
+
+## GameIcon
+
+**File:** `GameIcon.tsx`
+
+Draws an `IconID` (`data/ID.ts`) from its `ICONS` map, falling back to `fallback` when `icon` is unset. Used by upgrade cards, `ViewUpgrades`, `BuffBar`, `ViewBuffs` and the DevTools buff/upgrade lists. Defs store the `IconID` rather than a component so they stay JSON-serializable. The current icons are `react-icons/gi` placeholders (CC BY 3.0).
+
 ---
 
 ## UpgradeModal
@@ -98,8 +126,9 @@ Overlay shown when the game is paused (ESC key or mobile pause button). Provides
 - **Resume** – calls `GameManager.resume()`.
 - **Quit** – calls `SaveManager.saveOnQuit()` then navigates to `MainMenu`.
 - **Settings** shortcut.
+- **View Upgrades** / **View Buffs** – open `ViewUpgrades` / `ViewBuffs` in place of the menu.
 
-Props: `onResume`, `onQuit`.
+Props: `onResume`, `onQuit`, `buffs: BuffSlotState[]`, `initialView?: 'buffs'` (set when the `BuffBar` is tapped, so the menu opens on `ViewBuffs`; BACK returns to the menu).
 
 ---
 
@@ -142,4 +171,4 @@ Because `AbilitySystem` binds from the upgrade *registry* rather than from what 
 
 **File:** `ViewUpgrades.tsx`
 
-Read-only panel listing all upgrades the player currently has applied. Displays the upgrade name, description, rarity, and stack count. Opened from within `UpgradeModal`.
+Read-only panel listing all upgrades the player currently has applied. Displays the upgrade icon, name, description, rarity, and stack count. Opened from within `UpgradeModal`.

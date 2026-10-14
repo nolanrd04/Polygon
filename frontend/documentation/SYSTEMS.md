@@ -10,6 +10,7 @@ Systems live in `frontend/src/game/systems/`. They are classes instantiated once
 |--------|------|------|
 | [AbilitySystem](ABILITY_SYSTEM.md) | `AbilitySystem.ts` | Binds every ability's key, owns charge queues and cooldowns, dispatches `Upgrade.onActivate`, feeds the HUD and mobile buttons |
 | [CollisionManager](COLLISION_MANAGER.md) | `CollisionManager.ts` | Registers all Phaser overlap/collider callbacks; handles damage, knockback, pierce, and effects |
+| KillRewards | `KillRewards.ts` | `awardPlayerKill(enemy)` — everything a player-credited kill awards; shared by projectile hits and debuff kills ([BUFFS.md](BUFFS.md)) |
 | [EnemyManager](ENEMY_MANAGER.md) | `EnemyManager.ts` | Spawns, updates, and removes enemies; manages enemy projectiles; applies wave scaling |
 | [MapManager](MAP_MANAGER.md) | `MapManager.ts` | Generates the seeded obstacle layout and background grid |
 | [ProjectileManager](PROJECTILE_MANAGER.md) | `ProjectileManager.ts` | Legacy — mostly unused; Player now manages its own projectiles directly |
@@ -46,8 +47,7 @@ CollisionManager (event-driven, registered in create())
     ├── player projectile ↔ enemy → handleProjectileEnemyCollision()
     │       → UpgradeEffectSystem.onProjectileHit() (lifesteal, etc.)
     │       → enemy.takeDamage()
-    │       → GameManager.addKill() / addPoints()
-    │       → UpgradeEffectSystem.onEnemyKill() (explode-on-kill, etc.)
+    │       → awardPlayerKill() (KillRewards.ts: kill, points, on-kill hooks, bundles)
     │       → projectile._recordHit() (pierce management)
     │       → enemy.applyKnockback()
     │

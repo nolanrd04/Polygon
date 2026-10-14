@@ -5,6 +5,10 @@ import type { UpgradeDef } from '../game/upgrades/Upgrade'
 import { EventBus } from '../game/core/EventBus'
 import { ATTACK_INFO, type AttackType } from '../game/data/attackTypes'
 import { IS_MOBILE } from '../game/core/Device'
+import { getAllBuffs } from '../game/buffs'
+import { BuffHostID, IconID } from '../game/data/ID'
+import { BuffChip } from './BuffBar'
+import GameIcon from './GameIcon'
 
 interface DevToolsProps {
   onToggleCollisionBoxes: () => void
@@ -13,7 +17,8 @@ interface DevToolsProps {
 
 export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }: DevToolsProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<'stat' | 'effect' | 'variant' | 'visual' | 'ability' | 'enemies'>('stat')
+  const [selectedCategory, setSelectedCategory] = useState<'stat' | 'effect' | 'variant' | 'visual' | 'ability' | 'enemies' | 'buffs'>('stat')
+  const [buffSeconds, setBuffSeconds] = useState('10')
   const [selectedAttack, setSelectedAttack] = useState<AttackType>('bullet')
   const [waveInput, setWaveInput] = useState('1')
   const [refreshKey, setRefreshKey] = useState(0)
@@ -48,7 +53,7 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
   const handleApplyUpgrade = (upgrade: UpgradeDef) => {
     // Emit dev-only event that bypasses point cost
     EventBus.emit('dev-apply-upgrade', upgrade.id)
-    console.log('✅ Applied (FREE):', upgrade.name)
+    console.log('Applied (FREE):', upgrade.name)
 
     // Force re-render to show updated stack count
     setTimeout(() => setRefreshKey(prev => prev + 1), 100)
@@ -57,7 +62,7 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
   const handleRemoveUpgrade = (upgrade: UpgradeDef, e: React.MouseEvent) => {
     e.preventDefault() // Prevent context menu
     EventBus.emit('dev-remove-upgrade' as any, upgrade.id)
-    console.log('❌ Removed:', upgrade.name)
+    console.log('Removed:', upgrade.name)
 
     // Force re-render to show updated stack count
     setTimeout(() => setRefreshKey(prev => prev + 1), 100)
@@ -65,7 +70,7 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
 
   const handleReset = () => {
     UpgradeSystem.reset()
-    console.log('🔄 Reset all upgrades')
+    console.log('Reset all upgrades')
     setRefreshKey(prev => prev + 1)
   }
 
@@ -73,10 +78,26 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
     const wave = parseInt(waveInput)
     if (!isNaN(wave) && wave >= 1) {
       EventBus.emit('set-wave' as any, wave)
-      console.log(`🌊 Set wave to ${wave}`)
+      console.log(`Set wave to ${wave}`)
     } else {
-      console.warn('❌ Invalid wave number')
+      console.warn('Invalid wave number')
     }
+  }
+
+  const handleApplyBuff = (buffId: string, target: 'player' | 'enemies') => {
+    const seconds = parseFloat(buffSeconds)
+    if (isNaN(seconds) || seconds <= 0) {
+      console.warn('Invalid buff duration')
+      return
+    }
+    EventBus.emit('dev-apply-buff', { buffId, target, ms: seconds * 1000 })
+    console.log(`Applied ${buffId} to ${target} for ${seconds}s`)
+  }
+
+  const handleClearBuff = (buffId: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    EventBus.emit('dev-clear-buff', buffId)
+    console.log(`Cleared ${buffId}`)
   }
 
   const handleSpawnEnemy = (enemyType: string) => {
@@ -167,7 +188,7 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
 
       {/* Category Tabs */}
       <div className="flex border-b border-gray-700">
-        {(['stat', 'effect', 'variant', 'visual', 'ability', 'enemies'] as const).map(cat => (
+        {(['stat', 'effect', 'variant', 'visual', 'ability', 'enemies', 'buffs'] as const).map(cat => (
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
@@ -183,7 +204,7 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
       </div>
 
       {/* Attack Type Filter */}
-      {selectedCategory !== 'enemies' && (
+      {selectedCategory !== 'enemies' && selectedCategory !== 'buffs' && (
         <div className="flex border-b border-gray-700 flex-wrap gap-1 p-2">
           {(Object.keys(ATTACK_INFO) as AttackType[]).map(attack => (
             <button
@@ -203,7 +224,55 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
-        {selectedCategory === 'enemies' ? (
+        {selectedCategory === 'buffs' ? (
+          // Buff List: click a target to apply, right-click the row to clear everywhere
+          <>
+            <div className="flex items-center gap-2 pb-1">
+              <span className="text-gray-400 text-xs font-mono">Duration (s)</span>
+              <input
+                type="number"
+                min="0.1"
+                step="0.5"
+                value={buffSeconds}
+                onChange={(e) => setBuffSeconds(e.target.value)}
+                className="w-20 px-2 py-1 bg-gray-800 text-white rounded font-mono text-xs border border-gray-600 focus:border-purple-500 focus:outline-none"
+              />
+            </div>
+            {getAllBuffs().map((buff) => (
+              <div
+                key={buff.id}
+                onContextMenu={(e) => handleClearBuff(buff.id, e)}
+                className={`w-full p-2 rounded text-xs bg-gray-800 border ${buff.isDebuff ? 'border-red-700' : 'border-green-700'}`}
+              >
+                <div className="flex justify-between items-start gap-2">
+                  <BuffChip def={buff} size={28} />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-white">{buff.name}</div>
+                    <div className="text-gray-400 text-xs">{buff.description}</div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    {buff.appliesTo.includes(BuffHostID.Player) && (
+                      <button
+                        onClick={() => handleApplyBuff(buff.id, 'player')}
+                        className="px-2 py-0.5 bg-cyan-700 hover:bg-cyan-600 text-white rounded text-[10px] font-mono"
+                      >
+                        PLAYER
+                      </button>
+                    )}
+                    {buff.appliesTo.includes(BuffHostID.Enemy) && (
+                      <button
+                        onClick={() => handleApplyBuff(buff.id, 'enemies')}
+                        className="px-2 py-0.5 bg-red-700 hover:bg-red-600 text-white rounded text-[10px] font-mono"
+                      >
+                        ENEMIES
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </>
+        ) : selectedCategory === 'enemies' ? (
           // Enemy Spawn List
           enemyTypes.map((enemy) => (
             <button
@@ -245,8 +314,9 @@ export default function DevTools({ onToggleCollisionBoxes, showCollisionBoxes }:
                       : 'bg-gray-800 hover:bg-gray-700 border border-gray-600'
                   }`}
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
+                  <div className="flex justify-between items-start gap-2">
+                    <GameIcon icon={upgrade.icon} fallback={IconID.Upgrade} className="text-2xl text-gray-300 shrink-0" />
+                    <div className="flex-1 min-w-0">
                       <div className="font-bold text-white">{upgrade.name}</div>
                       <div className="text-gray-400 text-xs">{upgrade.description}</div>
                     </div>

@@ -2,7 +2,7 @@ import { Upgrade, type UpgradeDef } from '../Upgrade'
 import { GameManager } from '../../core/GameManager'
 import type { Projectile } from '../../entities/projectiles/Projectile'
 import type { Enemy } from '../../entities/enemies/Enemy'
-import { RarityID, UpgradeTypeID } from '../../data/ID'
+import { IconID, RarityID, UpgradeTypeID } from '../../data/ID'
 
 export const Vampirism1Def: UpgradeDef = {
   id: "vampirism_1",
@@ -15,6 +15,7 @@ export const Vampirism1Def: UpgradeDef = {
   effectValue: 0.05,
   stackable: true,
   maxStacks: 5,
+  icon: IconID.Vampire,
 }
 
 export class Vampirism1 extends Upgrade {

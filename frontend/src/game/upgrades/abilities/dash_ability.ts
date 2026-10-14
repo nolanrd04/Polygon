@@ -1,5 +1,5 @@
 import { Upgrade, type UpgradeDef, type UpgradeContext } from '../Upgrade'
-import { RarityID, UpgradeTypeID, UpgradeStatID } from '../../data/ID'
+import { RarityID, UpgradeTypeID, UpgradeStatID, IconID } from '../../data/ID'
 
 export const DashAbilityDef: UpgradeDef = {
   id: "dash_ability",
@@ -10,6 +10,7 @@ export const DashAbilityDef: UpgradeDef = {
   cost: 10,
   effect: "dash",
   stackable: false,
+  icon: IconID.Dash,
   activation: {
     key: "SPACE",
     keyLabel: "SPC",

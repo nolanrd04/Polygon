@@ -10,6 +10,18 @@ interface UpdateNote {
 // Add new updates at the top of this array
 const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: 'v0.3.0',
+    date: '2026-10-xx',
+    title: 'New buffs and debuffs.',
+    changes: [
+      'Added loads of new buffs and debuffs. Buffs are temporary effects that can be applied to players or enemies. Buffs currently only come from upgrade bundles.',
+      'Added a plan for two new attack types.',
+      'Super square\'s projectiles now poison the player.',
+      'Added icons for buffs and upgrades.',
+      'Added HUD for buffs and debuffs.',
+    ]
+  },
+  {
     version: 'v0.2.9',
     date: '2026-09-16',
     title: 'Balancing, visual changes, new enemy, and waves 28-30 added.',

@@ -79,6 +79,7 @@ Returns the Phaser group used by `CollisionManager` for player-projectile overla
 | Method | Description |
 |--------|-------------|
 | `getEnemies()` | Returns all non-destroyed enemies |
+| `getEnemyById(id)` | A live enemy by id, or `undefined`. Used to find a projectile's owner (`ownerId`) for fire-time buff damage |
 | `getGroup()` | Returns `enemyGroup` (Phaser group) |
 | `getActiveCount()` | Count of non-destroyed enemies (used by `WaveManager.isWaveComplete()`) |
 | `getWaveMultiplier()` | Current scaling multiplier |

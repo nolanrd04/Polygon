@@ -1,5 +1,5 @@
 import { Upgrade, type UpgradeDef, type ExplosionSpec } from '../Upgrade'
-import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID } from '../../data/ID'
+import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID, IconID } from '../../data/ID'
 
 export const ExplosionRadiusDef: UpgradeDef = {
   id: "explosion_radius",
@@ -15,6 +15,7 @@ export const ExplosionRadiusDef: UpgradeDef = {
   stackable: true,
   maxStacks: 5,
   dependentOn: [{ ids: ["explosive_bullets", "explosion_on_kill"] }],
+  icon: IconID.RadialBalance
 }
 
 export class ExplosionRadius extends Upgrade {

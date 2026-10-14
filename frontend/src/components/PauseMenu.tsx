@@ -1,21 +1,31 @@
 import { useState } from 'react'
 import SaveGameModal from './SaveGameModal'
 import ViewUpgrades from './ViewUpgrades'
+import ViewBuffs from './ViewBuffs'
+import type { BuffSlotState } from '../game/buffs/Buff'
 
 interface PauseMenuProps {
   onResume: () => void
   onQuit: () => void
+  buffs: BuffSlotState[]
+  /** 'buffs' when opened by tapping the BuffBar. BACK still lands on the menu. */
+  initialView?: 'buffs'
 }
 
-export default function PauseMenu({ onResume, onQuit }: PauseMenuProps) {
+export default function PauseMenu({ onResume, onQuit, buffs, initialView }: PauseMenuProps) {
   // export saves
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [showUpgrades, setShowUpgrades] = useState(false)
+  const [showBuffs, setShowBuffs] = useState(initialView === 'buffs')
   const isSandbox = !localStorage.getItem('token')
   //
 
   if (showUpgrades) {
     return <ViewUpgrades onBack={() => setShowUpgrades(false)} />
+  }
+
+  if (showBuffs) {
+    return <ViewBuffs buffs={buffs} onBack={() => setShowBuffs(false)} />
   }
 
   return (
@@ -35,6 +45,13 @@ export default function PauseMenu({ onResume, onQuit }: PauseMenuProps) {
           className="px-8 py-3 border-2 border-polygon-secondary text-polygon-secondary font-semibold rounded hover:bg-polygon-secondary hover:text-black transition-all"
         >
           VIEW UPGRADES
+        </button>
+
+        <button
+          onClick={() => setShowBuffs(true)}
+          className="px-8 py-3 border-2 border-polygon-secondary text-polygon-secondary font-semibold rounded hover:bg-polygon-secondary hover:text-black transition-all"
+        >
+          VIEW BUFFS{buffs.length > 0 ? ` (${buffs.length})` : ''}
         </button>
 
         {isSandbox && (

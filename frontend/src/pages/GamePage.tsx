@@ -9,7 +9,9 @@ import PauseMenu from '../components/PauseMenu'
 import DevTools from '../components/DevTools'
 import PerfOverlay from '../components/PerfOverlay'
 import AbilityDisplay from '../components/AbilityDisplay'
+import BuffBar from '../components/BuffBar'
 import type { AbilitySlotState } from '../game/systems/AbilitySystem'
+import type { BuffSlotState } from '../game/buffs/Buff'
 import { EventBus } from '../game/core/EventBus'
 import { SaveManager } from '../game/services/SaveManager'
 import { GameManager } from '../game/core/GameManager'
@@ -30,6 +32,9 @@ export default function GamePage() {
   // Every registered ability, owned or not — the mobile pads sit in fixed slots,
   // so their layout depends on the full count rather than on what is owned yet.
   const [abilityBindingCount, setAbilityBindingCount] = useState(0)
+  const [buffs, setBuffs] = useState<BuffSlotState[]>([])
+  // Set when the BuffBar is tapped, so the pause menu opens straight on ViewBuffs
+  const [pauseView, setPauseView] = useState<'buffs' | undefined>(undefined)
   const [loadError, setLoadError] = useState<string | null>(null)
 
   // Store last known game state in ref to survive game destruction
@@ -166,7 +171,10 @@ export default function GamePage() {
     })
 
     EventBus.on('game-pause', () => setIsPaused(true))
-    EventBus.on('game-resume', () => setIsPaused(false))
+    EventBus.on('game-resume', () => {
+      setIsPaused(false)
+      setPauseView(undefined)
+    })
 
     // On death, submit the final (partial) wave for validation - this is
     // what actually credits its kills/points and freezes death_state
@@ -194,9 +202,12 @@ export default function GamePage() {
       setAbilityBindingCount(state.bindingCount)
     })
 
-    // Poll for ability state (for cooldowns, which change constantly)
+    EventBus.on('buff-state-update', setBuffs)
+
+    // Poll for ability and buff state (cooldowns and timers change constantly)
     const abilityInterval = setInterval(() => {
       EventBus.emit('request-ability-state')
+      EventBus.emit('request-buff-state')
     }, 100) // Update 10 times per second
 
     // Removed upgrade-applied listener - now handled by Start Wave button
@@ -274,8 +285,18 @@ export default function GamePage() {
 
       <AbilityDisplay slots={abilitySlots} bindingCount={abilityBindingCount} />
 
+      <BuffBar
+        buffs={buffs}
+        onOpen={() => {
+          setPauseView('buffs')
+          GameManager.pause()
+        }}
+      />
+
       {isPaused && (
         <PauseMenu
+          buffs={buffs}
+          initialView={pauseView}
           onResume={() => GameManager.resume()}
           onQuit={() => {
             // Nothing to save here - see the beforeunload comment above.

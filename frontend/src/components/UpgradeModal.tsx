@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { getAllUpgrades } from '../game/upgrades'
 import type { UpgradeDef } from '../game/upgrades/Upgrade'
-import { RarityID } from '../game/data/ID'
+import { RarityID, IconID } from '../game/data/ID'
+import GameIcon from './GameIcon'
 import { GameManager } from '../game/core/GameManager'
 import { EventBus } from '../game/core/EventBus'
 import { waveValidation } from '../game/services/WaveValidation'
@@ -227,7 +228,8 @@ export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModal
                 !isDisabled && !isPurchased ? 'hover:scale-105 cursor-pointer' : 'opacity-50 cursor-not-allowed'
               } transition-all flex flex-col text-left ${isMobile ? 'flex-1 min-w-0 p-2' : 'w-64 p-6'}`}
             >
-              <div className={`font-bold uppercase ${rarityTextColors[upgrade.rarity]} ${isMobile ? 'text-[10px]' : 'text-sm'}`}>
+              <div className={`flex items-center gap-1 font-bold uppercase ${rarityTextColors[upgrade.rarity]} ${isMobile ? 'text-[10px]' : 'text-sm'}`}>
+                <GameIcon icon={upgrade.icon} fallback={IconID.Upgrade} className={isMobile ? 'text-sm' : 'text-2xl'} />
                 {upgrade.rarity}
               </div>
               <h3 className={`font-bold text-white ${isMobile ? 'text-xs mt-1 mb-1' : 'text-xl mt-2 mb-2'}`}>

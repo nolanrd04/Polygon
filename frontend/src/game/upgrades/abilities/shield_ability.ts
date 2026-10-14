@@ -1,5 +1,5 @@
 import { Upgrade, type UpgradeDef, type UpgradeContext } from '../Upgrade'
-import { RarityID, UpgradeTypeID } from '../../data/ID'
+import { IconID, RarityID, UpgradeTypeID } from '../../data/ID'
 
 export const ShieldAbilityDef: UpgradeDef = {
   id: "shield_ability",
@@ -12,6 +12,7 @@ export const ShieldAbilityDef: UpgradeDef = {
   effect: "shield",
   stackable: true,
   maxStacks: 5,
+  icon: IconID.EnergyShield,
   // No cooldown: charges are the consumable `shield` effect counter, spent in
   // Player.activateShield() and refilled only by buying another stack.
   activation: {

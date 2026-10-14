@@ -36,16 +36,19 @@
 
 ## Curses
 - [ BASE CLASS IMPLEMENTED ] Similar to upgrades but give a negative effect
-- [ ] Poison: temporarily slows the player and deals damage per second over time. Time and damage dependent on rarity.
+- [x] Poison: temporarily slows the player and deals damage per second over time. Time and damage dependent on rarity.
 - [ ] Frozen (DEFERRED): Disables all movement and attacking for 3 seconds. Damage taken reduced by 99%.
-- [ ] Coldness: temporarily slows the player over time. Slowness amount and time dependent on rarity.
-- [ ] Burning: does damage over time. Damage and time dependent on rarity.
+- [x] Coldness: temporarily slows the player over time. Slowness amount and time dependent on rarity.
+- [x] Burning: does damage over time. Damage and time dependent on rarity.
 - [ ] Bleeding: prevent healing for a time. Time dependent on rarity.
 
+## Pylons
+- [ ] Destructible environment objects that grant buffs/debuffs to nearby enemies/players
+
 ## Upgrades/Bundles
-- [ DONE ] Make enemies drop upgrade bundles
-- [ DONE ] Upgrade bundles give random upgrades of the rarity with a chance to give a curse
-- [ ] New "buffs" which are temporary upgrades to the player
+- [x] Make enemies drop upgrade bundles
+- [x] Upgrade bundles give random upgrades of the rarity with a chance to give a curse
+- [x] New "buffs" which are temporary upgrades to the player
 - [ ] "Largenes": reduces damage taken but reduced movement speed and increases size. All values dependent on rarity. Cannot roll from bundles.
 - [ ] "Lightweight: reduced size and increases speed but increases the damage taken. All values dependent on rarity. Cannot roll from bundles.
 - [x] Healing refactor: add a keybind to restore health instantly. Add upgrades below:
@@ -141,6 +144,8 @@ Design: one variable per setting (`MONGODB_URL`, `API_TARGET`, ...), no `PRODUCT
 - [x] Write a deploy guide in `backend/documentation` (hosts, env vars, start command, how to switch local/cloud backend + DB) and note the frontend proxy/rewrite setup in `frontend/documentation`
 
 # Anti-cheat
+- [ ] Movement validation: tighten how small speed overages are treated for players with dash upgrades, so sustained overage always has to be explained by dash charges. Measure honest sample noise first.
+- [ ] Buff-aware validation: movement, fire rate and damage checks account for server-granted buffs (buff system phase 6).
 - Damage validation (`_validate_damage` in wave_service.py) currently assumes bullet attack type only. When flame/laser/spinner/zapper are implemented, each will need its own damage profile accounted for in `calculate_minimum_damage_required`.
 
 # Security

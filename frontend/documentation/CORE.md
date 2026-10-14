@@ -183,6 +183,7 @@ Geometry of the mobile touch layout, in screen pixels. Import-free, like `Device
 |--------|-------------|
 | `TOUCH_LAYOUT` | Joystick radius/padding, pause button size, ability pad size and spacing |
 | `abilityPadPosition(index, viewWidth, viewHeight, ceiling, padCount)` | Top-left corner and size of the ability pad at `index` |
+| `buffBarBounds(viewWidth, viewHeight)` | Left/right inset and bottom offset of the mobile `BuffBar`: full width under the joysticks on tall screens, between their touch areas (radius + 20) on short ones |
 
 **Why it is shared.** The mobile layout spans two rendering layers: the joysticks and pause button are Phaser objects on the canvas (`TouchControlManager`), while the ability pads are DOM buttons (`AbilityDisplay.tsx`) that must land in the slots the on-canvas ability buttons used to occupy — above the joysticks, clear of the pause button. Two copies of these numbers would drift apart the first time one was tuned, so `TouchControlManager`'s private constants read from this object rather than restating it.
 

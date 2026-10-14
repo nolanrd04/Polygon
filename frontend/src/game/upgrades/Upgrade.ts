@@ -1,7 +1,7 @@
 import type { GameManager } from '../core/GameManager'
 import { UpgradeModifierSystem } from '../systems/upgrades/UpgradeModifierSystem'
 import { UpgradeEffectSystem } from '../systems/upgrades/UpgradeEffectSystem'
-import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID } from '../data/ID'
+import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID, IconID } from '../data/ID'
 import type { Projectile } from '../entities/projectiles/Projectile'
 import type { Enemy } from '../entities/enemies/Enemy'
 import type { Player } from '../entities/Player'
@@ -27,6 +27,8 @@ export interface UpgradeDef {
   rarity: RarityID
   upgradeType: UpgradeTypeID
   cost: number
+  // UI only, not synced to the backend. Omit for the generic upgrade icon.
+  icon?: IconID
 
   // For stat_modifier type
   targetClass?: UpgradeTargetID

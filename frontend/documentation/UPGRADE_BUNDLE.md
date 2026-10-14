@@ -59,8 +59,9 @@ Player overlaps bundle (Phaser overlap, registered in create())
       → seed exclude with waveValidation.getPendingOfferIds() (the unbought
         wave-select offer — the online path excludes the same ids server-side)
       → slot 1: pickRegularUpgrade(upgradeValue, exclude)        // guaranteed matching-tier item
-      → slots 2–N: 30% curse / 70% regular → pickCurse(rollItemRarity()) or pickRegularUpgrade(rollItemRarity())
-      → applyUpgrade(id, true) for each picked id
+      → slots 2–N: 25% curse / 15% buff (50/50 buff/debuff) / 60% regular
+          → pickCurse / pickBundleBuff / pickRegularUpgrade(rollItemRarity())
+      → applyUpgrade(id, true) for each picked id, player.AddBuff for each picked buff
 
   → showBundlePickupText() for each (staggered 220 ms apart)
 
@@ -175,9 +176,13 @@ Rarity colors: `#aaaaaa / #44cc66 / #4488ff / #cc44ff / #ffaa00`
    - *Example:* rare bundle (tier 2) on wave 25 with weights `[0.22, 0.36, 0.30, 0.09, 0.03]`. Eligible sum = 0.88. Roll lands on common ~25%, uncommon ~41%, rare ~34%.
 3. **Seed the exclude list** — `waveValidation.getPendingOfferIds()`: every id still unbought in the wave-select offer, but only while that offer is open (between waves). Empty mid-wave. See *Bundles never roll what the shop is offering* below.
 4. **Slot 1 (`pickRegularUpgrade(upgradeValue, exclude)`)** — always a regular upgrade at the bundle's exact tier (with tier-by-tier fallback if the pool is exhausted). Guarantees every bundle has at least one non-curse item matching its tier.
-5. **Slots 2–N** — each independently rolled 30% curse / 70% regular: `pickCurse(rollItemRarity(), exclude)` or `pickRegularUpgrade(rollItemRarity(), exclude)`. The exclude list grows with each pick to prevent duplicates.
-6. **Apply all** — `applyUpgrade(id, true)` for each picked id (`true` = skip cost, no `waveValidation.selectUpgrade()` call).
-7. **Show pickup text** — `showBundlePickupText()` called once per item, staggered 220 ms apart. Curses appear in red; regular items in their rarity color.
+5. **Slots 2–N** — each independently rolled 25% curse / 15% buff / 60% regular: `pickCurse(rollItemRarity(), exclude)`, `pickBundleBuff(rollItemRarity(), debuff, pickedBuffs)` or `pickRegularUpgrade(rollItemRarity(), exclude)`. A buff slot is 50/50 positive or debuff. The exclude lists grow with each pick to prevent duplicates. A slot whose pool is empty is skipped.
+6. **Apply all** — `applyUpgrade(id, true)` for each picked id (`true` = skip cost, no `waveValidation.selectUpgrade()` call), then `player.AddBuff(buff, rollDropDuration(drop))` for each picked buff.
+7. **Show pickup text** — `showBundlePickupText()` called once per item, staggered 220 ms apart, upgrades first then buffs. Curses and debuffs appear in red; everything else in its rarity color.
+
+### pickBundleBuff()
+
+Walks tiers downward from `maxRarity` over the `BUNDLE_BUFF_DROPS` whitelist (`buffs/bundleDrops.ts`), keeping entries whose def matches the tier and the requested `isDebuff`, and that can apply to the player. Offline only. See [BUFFS.md](./BUFFS.md#bundle-drops).
 
 ### pickRegularUpgrade()
 

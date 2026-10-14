@@ -13,7 +13,7 @@ An abstract base class for all projectiles. Handles spawning, physics movement, 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `damage` | `number` | 10 | Damage per hit |
-| `damageMultiplier` | `number` | 1 | Multiplied against `damage` at collision time (e.g. 0.5 for reduced-damage hits) |
+| `damageMultiplier` | `number` | 1 | Multiplied against `damage` at collision time (e.g. 0.5 for reduced-damage hits). `MainScene.spawnProjectile` also multiplies in the owner's buff `Damage` at fire time, so set it in `SetDefaults()` (before spawn) and never copy it to child projectiles — see [BUFFS.md](BUFFS.md#outgoing-damage) |
 | `penetration` | `number` | 0 | Armor penetration — how much of the enemy's `defense` this hit ignores. The enemy's armor is floored at 0, so excess penetration is wasted rather than becoming bonus damage. E.g. `BuckshotPellet` sets 15, so Dodecahedron's 25 defense only subtracts 10 |
 | `speed` | `number` | 400 | Travel speed (px/s) |
 | `size` | `number` | 5 | Radius in pixels; drives both the hitbox and sprite scale |
@@ -36,6 +36,7 @@ An abstract base class for all projectiles. Handles spawning, physics movement, 
 | `rotation` | Current angle in radians |
 | `owner` | `'player'` or `'enemy'` |
 | `ownerId` | ID of the entity that spawned this projectile |
+| `buffFlags` | `Set<BuffID>` stamped by the shooter's buffs at spawn (`modifyProjectileSpawn`). Each id's `onProjectileHit` runs when this lands — see [BUFFS.md](BUFFS.md#projectile-stamps) |
 | `doOldPositionTracking` | Opt-in flag for trail rendering |
 | `oldPositionX[]` / `oldPositionY[]` | Ring buffer of past positions |
 
@@ -56,7 +57,8 @@ An abstract base class for all projectiles. Handles spawning, physics movement, 
 | Hook | Description |
 |------|-------------|
 | `AI()` | Called every frame. Override to change velocity for homing or curved behavior. Default: no-op (straight line). |
-| `OnHitNPC(enemy)` | Called when hitting an enemy. Return `false` to suppress default collision damage (e.g. `ExplosiveBullet` handles its own AOE). |
+| `OnHitNPC(enemy)` | Called when hitting an enemy. Return `false` to suppress default collision damage. |
+| `OnHitPlayer(player)` | Called after an enemy-owned projectile's damage lands on the player. Default no-op. Override to apply a debuff from one specific projectile class, e.g. `player.AddBuff(BuffID.OnFire1, 3000)`. |
 | `OnObstacleCollide(obstacle?)` | `(): boolean`, default `true`. Called when hitting a map obstacle, before `CollisionManager` decides what happens next. Return `true` to let the default pierce/destroy handling run afterward; return `false` to take full ownership of the collision (e.g. ricochet — see below). |
 | `OnKill()` | Called when the projectile is destroyed for any reason. Override for death effects (explosions, particles). |
 
@@ -98,7 +100,7 @@ The default projectile. Small, fast, green-tinted circles. Multishot and pierce 
 | `Bullet` | Default straight-line shot |
 | `HeavyBullet` | Larger, slower, higher damage, more knockback |
 | `HomingBullet` | In `AI()`, steers toward the nearest enemy using a lerp on velocity |
-| `ExplosiveBullet` | `OnHitNPC` returns `false`; instead emits `enemy-explode` for AOE damage handled by `MainScene` |
+| `ExplosiveBullet` | Deals its normal direct hit, and on hit / obstacle / death spawns a `BulletExplosion` (stationary AOE projectile, `damageSource: 'explosion'`) through `spawnProjectile`, so the blast damages through `CollisionManager` like any shot |
 
 `Bullet`, `ExplosiveBullet`, and `BuckshotPellet` each override `OnObstacleCollide()` to check `UpgradeEffectSystem.hasEffect(UpgradeEffectID.Ricochet)` and call `this.ricochet(obstacle)` when owned — see [UPGRADES.md § Effect upgrades that need per-class behavior](UPGRADES.md#effect-upgrades-that-need-per-class-behavior) for why this check lives here instead of in `CollisionManager`. `HomingBullet` is incompatible with the upgrade and never checks it.
 

@@ -1,5 +1,5 @@
 import { Upgrade, type UpgradeDef } from '../Upgrade'
-import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID } from '../../data/ID'
+import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID, IconID } from '../../data/ID'
 
 export const Tenacity3Def: UpgradeDef = {
   id: "tenacity_3",
@@ -14,6 +14,7 @@ export const Tenacity3Def: UpgradeDef = {
   specificAttackType: "bullet",
   stackable: true,
   maxStacks: 1,
+  icon: IconID.Hourglass,
 }
 
 export class Tenacity3 extends Upgrade {}

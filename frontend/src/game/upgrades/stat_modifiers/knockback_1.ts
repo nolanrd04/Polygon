@@ -1,5 +1,5 @@
 import { Upgrade, type UpgradeDef } from '../Upgrade'
-import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID } from '../../data/ID'
+import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID, IconID } from '../../data/ID'
 
 export const Knockback1Def: UpgradeDef = {
   id: "knockback_1",
@@ -15,6 +15,7 @@ export const Knockback1Def: UpgradeDef = {
   stackable: true,
   maxStacks: 5,
   incompatibleWith: ["homing_bullets"],
+  icon: IconID.Knockback
 }
 
 export class Knockback1 extends Upgrade {}

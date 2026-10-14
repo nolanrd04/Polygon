@@ -1,5 +1,10 @@
 import Phaser from 'phaser'
-import { DEV_SETTINGS } from '../../core/GameConfig'
+import { DEV_SETTINGS, FIXED_STEP_MS } from '../../core/GameConfig'
+import { BuffHostID, BuffStatID, type BuffID } from '../../data/ID'
+import type { AddBuffOptions, BuffHost } from '../../buffs/Buff'
+import type { Player } from '../Player'
+import { BuffContainer } from '../../buffs/BuffContainer'
+import { BuffStats } from '../../buffs/BuffStats'
 import { TextureGenerator } from '../../utils/TextureGenerator'
 import { EventBus } from '../../core/EventBus'
 import { getDefaultVolume } from '../../core/AudioRegistry'
@@ -67,6 +72,7 @@ export function formatCompactNumber(value: number): string {
  * - AI() - Define behavior each frame (optional, default moves toward player)
  * - PreAI() - Run before AI, return false to skip AI (optional)
  * - OnHit() - What happens when taking damage (optional)
+ * - OnHitPlayer() - What happens when contact damage lands on the player (optional)
  * - OnDeath() - What happens when killed (optional)
  *
  * DYNAMIC COLOR CHANGES:
@@ -83,7 +89,7 @@ export function formatCompactNumber(value: number): string {
  * }
  * ```
  */
-export abstract class Enemy {
+export abstract class Enemy implements BuffHost {
   // ============ STATS (set these in SetDefaults) ============
   health: number = 50
   maxHealth: number = 50
@@ -127,6 +133,12 @@ export abstract class Enemy {
   collideWithEnemies: boolean = true
   barWidth: number = 20  // Health bar width
   barHeight: number = 4  // Health bar height
+  buffImmune: BuffID[] = []  // Buffs this enemy ignores (e.g. a boss immune to slows)
+
+  // ============ BUFFS (see BUFFS.md) ============
+  readonly buffHostKind = BuffHostID.Enemy
+  readonly buffs: BuffContainer = new BuffContainer(this)
+  readonly buffStats: BuffStats = new BuffStats()
 
   // ============ RUNTIME STATE ============
   protected scene!: Phaser.Scene
@@ -249,9 +261,10 @@ export abstract class Enemy {
   Draw(): void {
     // Default implementation: Update sprite tint if changed
     // Sprite is already created in _spawn, just update it here
-    if (this.color !== this._previousColor) {
-      this.sprite.setTint(this.color)
-      this._previousColor = this.color
+    const tint = this.displayColor()
+    if (tint !== this._previousColor) {
+      this.sprite.setTint(tint)
+      this._previousColor = tint
     }
 
     // Do NOT add outline sprite here - only Super variants get the extra outline
@@ -354,6 +367,12 @@ export abstract class Enemy {
   }
 
   /**
+   * Called after this enemy's contact damage lands on the player.
+   * Use to apply debuffs, e.g. `player.AddBuff(BuffID.OnFire1, 3000)`.
+   */
+  OnHitPlayer(_player: Player): void {}
+
+  /**
    * Called when this enemy dies.
    * Use for death effects, drops, splitting, etc.
    */
@@ -452,7 +471,7 @@ export abstract class Enemy {
    * so penetration beyond `defense` is wasted rather than turning into damage.
    */
   effectiveDefense(penetration: number = 0): number {
-    return Math.max(0, this.defense - penetration)
+    return Math.max(0, this.buffStat(BuffStatID.Defense, this.defense) - penetration)
   }
 
   /*this.velocityX = velocityX * knockbackMultiplier
@@ -465,21 +484,25 @@ export abstract class Enemy {
    *   is floored at 0, so excess penetration never becomes bonus damage.
    */
   takeDamage(amount: number, source?: any, penetration: number = 0): boolean {
+    if (this._isDestroyed) return false
     if (!this.OnHit(amount, source)) {
       return false
     }
 
-    const effectiveAmount = Math.max(1, amount - this.effectiveDefense(penetration))
+    const damage = { amount }
+    this.buffTarget.buffs.dispatchModifyEnemyHurt(this, damage)
+    const afterArmor = damage.amount - this.effectiveDefense(penetration)
+    const effectiveAmount = Math.max(1, afterArmor * this.buffStat(BuffStatID.DamageTaken, 1))
     this.health -= effectiveAmount
     this.drawHealthBar()
 
     // Flash white using sprite tint
-    const originalColor = this.color
     this.sprite.setTint(0xffffff)
     this.scene.time.delayedCall(50, () => {
       if (!this._isDestroyed) {
-        this.sprite.setTint(originalColor)
-        this._previousColor = originalColor // Update tracking
+        const tint = this.displayColor()
+        this.sprite.setTint(tint)
+        this._previousColor = tint // Update tracking
       }
     })
 
@@ -490,7 +513,78 @@ export abstract class Enemy {
     return false
   }
 
+  // ============ BUFFS ============
+
+  /**
+   * The enemy buffs actually land on. Multi-part enemies with a shared health
+   * pool redirect to the pool's owner (see ArrowHeadPart).
+   */
+  get buffTarget(): Enemy {
+    return this
+  }
+
+  /**
+   * Apply a buff for `ms` milliseconds. False if refused (wrong host, immune, unknown id).
+   * `options` override the def's stacking rule and stat values for this one application.
+   */
+  AddBuff(id: BuffID, ms: number, options?: AddBuffOptions): boolean {
+    return this.buffTarget.buffs.add(id, ms, options)
+  }
+
+  HasBuff(id: BuffID): boolean {
+    return this.buffTarget.buffs.has(id)
+  }
+
+  ClearBuff(id: BuffID): boolean {
+    return this.buffTarget.buffs.remove(id)
+  }
+
+  /** Remaining time in ms, 0 if not active. */
+  GetBuffTime(id: BuffID): number {
+    return this.buffTarget.buffs.getTimeLeft(id)
+  }
+
+  /** `color` with active buff tints blended in. Never written back to `color`. */
+  displayColor(): number {
+    return this.buffTarget.buffs.tint(this.color)
+  }
+
+  /** A stat after buffs, read from `buffTarget` so worm segments use the head's buffs. */
+  buffStat(stat: BuffStatID, base: number): number {
+    return this.buffTarget.buffStats.apply(stat, base)
+  }
+
+  /**
+   * Damage from a debuff. Skips armor, OnHit and the hit flash/sound, which
+   * would otherwise fire every tick.
+   */
+  protected takeBuffDamage(amount: number): boolean {
+    this.health -= amount
+    if (this.health <= 0) {
+      this._die()
+      return true
+    }
+    return false
+  }
+
   // ============ INTERNAL METHODS ============
+
+  /**
+   * @internal Ticks this enemy's buffs, then applies their life regen.
+   * Returns true if buff damage killed it, so the caller can award the kill.
+   */
+  _updateBuffs(): boolean {
+    if (this._isDestroyed) return false
+    this.buffs.update()
+
+    const perTick = this.buffStats.apply(BuffStatID.LifeRegen) * (FIXED_STEP_MS / 1000)
+    if (perTick > 0) {
+      this.health = Math.min(this.maxHealth, this.health + perTick)
+    } else if (perTick < 0) {
+      return this.takeBuffDamage(-perTick)
+    }
+    return false
+  }
 
   /** @internal */
   _spawn(scene: Phaser.Scene, x: number, y: number, id: number): Phaser.GameObjects.Container {
@@ -621,7 +715,9 @@ export abstract class Enemy {
       this.AI(playerX, playerY)
     }
 
-    this.body.setVelocity(this.velocityX, this.velocityY)
+    // Buff speed scales only the body, so AI that writes this.speed/velocity as state is unaffected
+    const speedFactor = this.buffStat(BuffStatID.MoveSpeed, 1)
+    this.body.setVelocity(this.velocityX * speedFactor, this.velocityY * speedFactor)
     this.container.rotation = this.rotation
 
     // ============ RENDER FRAME (PreDraw/Draw/PostDraw) ============
@@ -646,12 +742,15 @@ export abstract class Enemy {
 
     // PostDraw: Effects on top (trails, particles, etc.)
     this.PostDraw()
+
+    this.buffTarget.buffs.dispatchDrawEnemy(this)
   }
 
 
   private _die(): void {
     if (this._isDestroyed) return
     this._isDestroyed = true
+    this.buffs.clear()
 
     // Emit event for wave validation tracking. Use the registry id
     // (e.g. 'super_triangle'), not the class name - this.constructor.name
@@ -685,6 +784,7 @@ export abstract class Enemy {
   _destroy(): void {
     if (this._isDestroyed) return
     this._isDestroyed = true
+    this.buffs.clear()
 
     // The bar and text live on the scene, not in the container, so destroying
     // the container alone leaves them on screen forever (_die does the same).

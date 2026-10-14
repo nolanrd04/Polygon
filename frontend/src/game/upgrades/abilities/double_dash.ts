@@ -1,5 +1,5 @@
 import { Upgrade, type UpgradeDef, type UpgradeContext } from '../Upgrade'
-import { RarityID, UpgradeTypeID } from '../../data/ID'
+import { IconID, RarityID, UpgradeTypeID } from '../../data/ID'
 
 export const DoubleDashDef: UpgradeDef = {
   id: "double_dash",
@@ -11,6 +11,7 @@ export const DoubleDashDef: UpgradeDef = {
   effect: "double_dash",
   stackable: false,
   dependentOn: [{ ids: ["dash_ability"] }],
+  icon: IconID.Dash,
 }
 
 export class DoubleDash extends Upgrade {

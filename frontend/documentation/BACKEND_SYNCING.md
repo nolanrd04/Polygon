@@ -81,7 +81,8 @@ The def half maps 1:1 onto the live backend catalog entry in
 `backend/app/core/data/upgrades.json` — that JSON is what the backend actually
 serves and validates against today, and it is **code-generated from these
 defs** (`python3 scripts/upgrade_defs_sync.py --write`). Never hand-edit it;
-edit the frontend def and regenerate.
+edit the frontend def and regenerate. UI-only fields (`UI_ONLY_FIELDS` in the
+script, currently `icon`) are left out.
 
 **Backend (live path):** `backend/app/core/upgrade_data.py` + `backend/app/core/data/upgrades.json`
 

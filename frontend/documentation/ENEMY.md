@@ -29,6 +29,7 @@ An abstract base class all enemy types extend. Handles physics spawning, sprite 
 | `hitboxSize` | `number` | 1.0 | Collision radius as a fraction of `radius × scale` |
 | `knockbackResistance` | `number` | 0 | 0 = full knockback, 1 = immune |
 | `barWidth` / `barHeight` | `number` | 20 / 4 | Health bar dimensions |
+| `buffImmune` | `BuffID[]` | `[]` | Buffs `AddBuff` refuses on this enemy (see [BUFFS.md](BUFFS.md)) |
 
 ### Runtime state fields
 
@@ -52,7 +53,7 @@ An abstract base class all enemy types extend. Handles physics spawning, sprite 
 | Hook | Signature | Default |
 |------|-----------|---------|
 | `PreDraw()` | `(): boolean` | Returns `true` (proceed) |
-| `Draw()` | `(): void` | Updates sprite tint when `color` changes |
+| `Draw()` | `(): void` | Updates sprite tint when `displayColor()` (`color` + buff tints, see BUFFS.md) changes |
 | `PostDraw()` | `(): void` | Empty (override for trails, outlines) |
 
 ### AI hooks
@@ -62,6 +63,7 @@ An abstract base class all enemy types extend. Handles physics spawning, sprite 
 | `PreAI()` | Return `false` to skip AI this tick |
 | `AI(playerX, playerY)` | Custom per-tick behaviour. Default is empty — base movement toward player is always applied via `moveTowards()`. |
 | `OnHit(damage, source)` | Called when taking damage. Return `false` to cancel the hit. Default plays hit sound. |
+| `OnHitPlayer(player)` | Called after this enemy's contact damage lands on the player. Default no-op. Override to apply a debuff, e.g. `player.AddBuff(BuffID.OnFire1, 3000)`. Its projectiles use `Projectile.OnHitPlayer` instead. |
 | `OnDeath()` | Called when HP reaches 0. Default plays death sound. Override for drops, splits, explosions. |
 
 `AI()` runs on the fixed 60 Hz logic tick, not per rendered frame — see [CORE.md](CORE.md#fixed-logic-timestep). A tick counter is therefore a valid clock (`240 ticks = 4 s`), and anything expressed in real units should scale by `FIXED_STEP_MS`, never by `scene.game.loop.delta`.
@@ -74,8 +76,11 @@ An abstract base class all enemy types extend. Handles physics spawning, sprite 
 |--------|-------------|
 | `moveTowards(tx, ty)` | Lerp velocity toward a target (smoothing factor 0.15). Also lerps rotation. |
 | `applyKnockback(vx, vy)` | Sets velocity directly, reduced by `knockbackResistance`. Suppresses AI for 100 ms. |
-| `takeDamage(amount, source?, penetration?)` | Calls `OnHit`, subtracts `amount - effectiveDefense(penetration)` (min 1) from health, redraws health bar, flashes white. Calls `_die()` if HP ≤ 0. `CollisionManager` passes the hitting projectile's `penetration`. |
-| `effectiveDefense(penetration?)` | `defense` after penetration, floored at 0 — excess penetration never becomes bonus damage. |
+| `takeDamage(amount, source?, penetration?)` | Calls `OnHit`, runs buff `modifyEnemyHurt`, subtracts `(amount - effectiveDefense(penetration)) × buff DamageTaken` (min 1) from health, redraws health bar, flashes white. Calls `_die()` if HP ≤ 0. `CollisionManager` passes the hitting projectile's `penetration`. |
+| `effectiveDefense(penetration?)` | `defense` plus buff `Defense`, after penetration, floored at 0 — excess penetration never becomes bonus damage. |
+| `buffStat(stat, base)` | A stat after buffs, read from `buffTarget`. Every enemy-side buff read goes through this. |
+| `AddBuff(id, ms, options?)` / `HasBuff(id)` / `ClearBuff(id)` / `GetBuffTime(id)` | Buff API, routed through `buffTarget` (overridden by `ArrowHeadPart` to the shared-health owner). See [BUFFS.md](BUFFS.md). |
+| `takeBuffDamage(amount)` *(protected)* | Debuff damage: ignores defense, skips `OnHit` and the hit flash/sound. Calls `_die()` at 0 HP. |
 
 ### Module exports
 
@@ -89,8 +94,9 @@ An abstract base class all enemy types extend. Handles physics spawning, sprite 
 |--------|-------------|
 | `_spawn(scene, x, y, id)` | Creates the container, sprite, optional health bar/text, and physics body. Called by `EnemyManager`. |
 | `_update(playerX, playerY)` | Per-frame tick: syncs position, runs history tracking, calls `PreAI/AI`, sets body velocity, calls render pipeline. |
-| `_die()` | Emits `enemy-killed`, calls `OnDeath`, destroys health bar, plays fade-out tween. |
-| `_destroy()` | Forcefully removes without death effects (used by `EnemyManager.clear()`). |
+| `_updateBuffs()` | Called by `MainScene.stepLogic` before enemy AI: ticks buffs and applies their life regen. Returns `true` if buff damage killed the enemy, so the scene can award the kill. |
+| `_die()` | Clears buffs, emits `enemy-killed`, calls `OnDeath`, destroys health bar, plays fade-out tween. |
+| `_destroy()` | Clears buffs and forcefully removes without death effects (used by `EnemyManager.clear()`). |
 
 ---
 

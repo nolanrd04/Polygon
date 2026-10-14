@@ -2,11 +2,11 @@ import Phaser from 'phaser'
 import { Player } from '../entities/Player'
 import { Enemy } from '../entities/enemies/Enemy'
 import { EnemyManager } from './EnemyManager'
-import { GameManager } from '../core/GameManager'
 import { UpgradeSystem, UpgradeModifierSystem } from './upgrades'
 import { EventBus } from '../core/EventBus'
-import { UpgradeTargetID, UpgradeStatID } from '../data/ID'
-import { waveValidation } from '../services/WaveValidation'
+import { UpgradeTargetID, UpgradeStatID, BuffStatID } from '../data/ID'
+import { awardPlayerKill } from './KillRewards'
+import { dispatchProjectileHit } from '../buffs'
 
 export class CollisionManager {
   private scene: Phaser.Scene
@@ -121,6 +121,7 @@ export class CollisionManager {
       // Let owned upgrades mutate the hit before it lands
       const damage = { amount: baseDamage * projectile.damageMultiplier }
       UpgradeSystem.dispatchModifyHitEnemy(projectile, enemy, damage)
+      this.player.buffs.dispatchModifyHitEnemy(projectile, enemy, damage)
       const finalDamage = Math.ceil(damage.amount)
 
       console.log(`Collision damage: base=${baseDamage}, final=${finalDamage}, penetration=${projectile.penetration}`)
@@ -131,26 +132,14 @@ export class CollisionManager {
 
       // React to the landed hit (lifesteal, etc.)
       UpgradeSystem.dispatchOnHitEnemy(projectile, enemy, finalDamage)
+      this.player.buffs.dispatchOnHitEnemy(projectile, enemy, finalDamage)
+      if (!killed) dispatchProjectileHit(projectile, enemy)
     } else {
       console.log('Collision damage skipped (projectile OnHitNPC returned false)')
     }
 
     if (killed) {
-      // Award kill counter (blocked internally if player is dead)
-      GameManager.addKill()
-
-      // Award 1 point based on scoreChance (0 to 1)
-      // NOTE: Points continue after death for testing/fun
-      if (Math.random() < enemy.scoreChance) {
-        GameManager.addPoints(1)
-        waveValidation.recordPointsEarned(1)
-      }
-
-      // On-kill upgrade hooks (explode on kill, etc.)
-      UpgradeSystem.dispatchOnEnemyKilled(enemy)
-
-      // Let the enemy decide how many bundles drop and their rarities
-      enemy.DropBundles()
+      awardPlayerKill(enemy)
     }
 
     // Record hit (handles pierce logic and may destroy projectile)
@@ -192,8 +181,10 @@ export class CollisionManager {
 
     // Damage player
     console.log(`Enemy projectile hitting player with damage: ${projectile.damage}`)
-    this.player.takeDamage(Math.ceil(projectile.damage))
+    this.player.takeDamage(Math.ceil(projectile.damage * projectile.damageMultiplier))
     this.lastProjectileDamageByProjectileId.set(projectile.id, now)
+    projectile.OnHitPlayer(this.player)
+    dispatchProjectileHit(projectile, this.player)
 
     // Only destroy if pierce count is met (use player as enemy ID 0)
     projectile._recordHit(0)
@@ -228,9 +219,10 @@ export class CollisionManager {
 
     // Damage player (round up to nearest whole number). The enemy is passed
     // as the hit source so upgrade hooks like Thorns can react to it.
-    const damageAmount = Math.ceil(enemy.damage)
+    const damageAmount = Math.ceil(enemy.buffStat(BuffStatID.Damage, enemy.damage))
     this.player.takeDamage(damageAmount, enemy)
     enemy.lastHitPlayerTime = now
+    enemy.OnHitPlayer(this.player)
 
     // Push player away
     const angle = Phaser.Math.Angle.Between(

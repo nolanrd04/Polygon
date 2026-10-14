@@ -1,5 +1,5 @@
 import { Upgrade, type UpgradeDef, type ExplosionSpec } from '../Upgrade'
-import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID } from '../../data/ID'
+import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID, IconID } from '../../data/ID'
 
 export const ExplosionDamagePercent2Def: UpgradeDef = {
   id: "explosion_damage_percent_2",
@@ -16,6 +16,7 @@ export const ExplosionDamagePercent2Def: UpgradeDef = {
   stackable: true,
   maxStacks: 3,
   dependentOn: [{ ids: ["explosive_bullets", "explosion_on_kill"] }],
+  icon: IconID.RocketThruster
 }
 
 export class ExplosionDamagePercent2 extends Upgrade {

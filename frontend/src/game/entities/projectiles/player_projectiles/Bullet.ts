@@ -1,7 +1,7 @@
 import { Projectile } from '../Projectile'
 import { COLORS } from '../../../core/GameConfig'
 import { UpgradeSystem, UpgradeModifierSystem, UpgradeEffectSystem } from '../../../systems/upgrades'
-import { UpgradeTargetID, UpgradeStatID, SoundID, UpgradeEffectID, LightingIntensityID } from '../../../data/ID'
+import { UpgradeTargetID, UpgradeStatID, SoundID, UpgradeEffectID, LightingIntensityID, BuffID } from '../../../data/ID'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
 import { LightingSystem } from '../../../systems/LightingSystem'
 import { getDefaultVolume } from '../../../core/AudioRegistry'
@@ -93,6 +93,11 @@ export class Bullet extends Projectile {
         scale: 0.5,
         radius: 1.5
       })
+    }
+
+    if (this.particleTimer % 5 === 0 && hasBurningBullets(this))
+    {
+      spawnBurningTrail(this)
     }
 
     // Streak trail: one every 4th frame, aimed along the bullet's heading
@@ -255,6 +260,8 @@ export class HomingBullet extends Projectile {
         streak.SetStreak(12, 1)
       }
     }
+
+    if (this.particleTimer % 5 === 0 && hasBurningBullets(this)) spawnBurningTrail(this)
 
     this.particleTimer++
   }
@@ -592,7 +599,7 @@ export class BuckshotBullet extends Projectile
 
 export class BuckshotPellet extends Projectile
 {
-  // private particleTimer: number = 0
+  private particleTimer: number = 0
   SetDefaults(): void {
     this.damage = 3
     this.speed = 400
@@ -621,6 +628,10 @@ export class BuckshotPellet extends Projectile
     //     radius: 2
     //   })
     // }
+
+    if (this.particleTimer % 5 === 0 && hasBurningBullets(this)) spawnBurningTrail(this)
+
+    this.particleTimer++
   }
 
   OnHitNPC(_enemy: Enemy): boolean {
@@ -671,4 +682,28 @@ export class BuckshotPellet extends Projectile
   PostDraw(): void {
     LightingSystem.AddLight(this.positionX, this.positionY, this.color, LightingIntensityID.Projectile * this.size / 3)
   }
+}
+
+const BURNING_BULLETS: readonly BuffID[] = [
+  BuffID.BurningBullets1,
+  BuffID.BurningBullets2,
+  BuffID.BurningBullets3,
+  BuffID.BurningBullets4,
+  BuffID.BurningBullets5,
+]
+
+/** True if any Burning Bullets tier was active when this projectile was fired. */
+function hasBurningBullets(projectile: Projectile): boolean {
+  return BURNING_BULLETS.some(id => projectile.buffFlags.has(id))
+}
+
+function spawnBurningTrail(projectile: Projectile): void {
+  Particle.NewParticle(SparkParticle,
+    projectile.positionX + Phaser.Math.Between(-7, 7),
+    projectile.positionY + Phaser.Math.Between(-7, 7), 0, 0, {
+      timeLeft: 300,
+      color: 0xeb6434,
+      rotation: projectile.rotation,
+      radius: 2,
+    })
 }

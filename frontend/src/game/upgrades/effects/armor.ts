@@ -1,5 +1,5 @@
 import { Upgrade, type UpgradeDef, type DamageRef } from '../Upgrade'
-import { RarityID, UpgradeTypeID } from '../../data/ID'
+import { IconID, RarityID, UpgradeTypeID } from '../../data/ID'
 
 export const ArmorDef: UpgradeDef = {
   id: "armor",
@@ -12,6 +12,7 @@ export const ArmorDef: UpgradeDef = {
   effectValue: 0.025,
   stackable: true,
   maxStacks: 7,
+  icon: IconID.Shield,
 }
 
 export class Armor extends Upgrade {

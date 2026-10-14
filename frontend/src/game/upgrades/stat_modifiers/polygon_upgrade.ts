@@ -1,5 +1,5 @@
 import { Upgrade, type UpgradeDef } from '../Upgrade'
-import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID } from '../../data/ID'
+import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID, IconID } from '../../data/ID'
 
 export const PolygonUpgradeDef: UpgradeDef = {
   id: "polygon_upgrade",
@@ -13,6 +13,7 @@ export const PolygonUpgradeDef: UpgradeDef = {
   value: 1,
   stackable: true,
   maxStacks: 9,
+  icon: IconID.Infinity,
 }
 
 export class PolygonUpgrade extends Upgrade {}

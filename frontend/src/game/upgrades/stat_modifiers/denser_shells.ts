@@ -1,7 +1,7 @@
 import { Upgrade, type UpgradeDef } from '../Upgrade'
 import type { Projectile } from '../../entities/projectiles/Projectile'
 import { BuckshotBullet } from '../../entities/projectiles/player_projectiles/Bullet'
-import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID, AttackTypeID, UpgradeVariantID } from '../../data/ID'
+import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID, AttackTypeID, UpgradeVariantID, IconID } from '../../data/ID'
 
 export const DenserShellsDef: UpgradeDef = {
   id: "denser_shells",
@@ -18,6 +18,7 @@ export const DenserShellsDef: UpgradeDef = {
   stackable: true,
   maxStacks: 2,
   dependentOn: [{ ids: [UpgradeVariantID.BuckshotBullets] }],
+  icon: IconID.ShotgunRounds
 }
 
 export class DenserShells extends Upgrade {

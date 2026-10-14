@@ -36,9 +36,9 @@ Immediately calls `setupCollisions()` which registers six physics relationships:
 1. Extracts the `Projectile` and `Enemy` instances from the container data store.
 2. Checks `projectile._canHitEnemy(enemy.id)` — skips if the hit cooldown hasn't elapsed.
 3. Calls `UpgradeEffectSystem.onProjectileHit(projectile, enemy)` to trigger effects (e.g. lifesteal).
-4. Calls `projectile.OnHitNPC(enemy)` — if it returns `false`, damage is suppressed (used by `ExplosiveBullet`).
-5. If damage is applied: runs through `UpgradeModifierSystem` for final damage value, calls `enemy.takeDamage(finalDamage, undefined, projectile.penetration)` so the projectile's armor penetration applies to this hit, emits `damage-dealt`.
-6. If the enemy dies: calls `GameManager.addKill()`, awards points via `GameManager.addPoints()` (probabilistic based on `enemy.scoreChance`), calls `UpgradeEffectSystem.onEnemyKill(enemy)`.
+4. Calls `projectile.OnHitNPC(enemy)` — if it returns `false`, damage is suppressed. No shipped projectile currently returns `false`.
+5. If damage is applied: `damage × damageMultiplier`, then `UpgradeSystem.dispatchModifyHitEnemy` followed by the player's buff `modifyHitEnemy` (and later `onHitEnemy`, upgrades then buffs), calls `enemy.takeDamage(finalDamage, undefined, projectile.penetration)` so the projectile's armor penetration applies to this hit, emits `damage-dealt`. If the enemy survived, `dispatchProjectileHit(projectile, enemy)` runs the `onProjectileHit` of every buff stamped on the projectile at fire time (see [BUFFS.md](BUFFS.md#projectile-stamps)).
+6. If the enemy dies: calls `awardPlayerKill(enemy)` (`systems/KillRewards.ts`) — `GameManager.addKill()`, a point roll against `enemy.scoreChance`, `UpgradeSystem.dispatchOnEnemyKilled(enemy)`, and `enemy.DropBundles()`. Debuff kills go through the same function (see [BUFFS.md](BUFFS.md#damage-over-time)).
 7. Calls `projectile._recordHit(enemy.id)` — increments pierce count; destroys if exhausted.
 8. Applies knockback to the enemy if `projectile.knockback > 0` (also run through `UpgradeModifierSystem`).
 
@@ -48,16 +48,17 @@ Immediately calls `setupCollisions()` which registers six physics relationships:
 
 1. Extracts the `Projectile` from the container.
 2. Checks per-projectile cooldown via `lastProjectileDamageByProjectileId` map (`hitEnemyCooldown` ms).
-3. Calls `player.takeDamage(Math.ceil(projectile.damage))`.
-4. Calls `projectile._recordHit(0)` (player is treated as enemy ID 0 for pierce tracking).
-5. Pushes the player away at 150 px/s along the collision angle.
+3. Calls `player.takeDamage(Math.ceil(projectile.damage × projectile.damageMultiplier))`. The multiplier carries the owning enemy's buff `Damage`, stamped at spawn (see [BUFFS.md](BUFFS.md#outgoing-damage)).
+4. Calls `projectile.OnHitPlayer(player)`, then `dispatchProjectileHit(projectile, player)` for the projectile's buff stamps.
+5. Calls `projectile._recordHit(0)` (player is treated as enemy ID 0 for pierce tracking).
+6. Pushes the player away at 150 px/s along the collision angle.
 
 ### Player ↔ Enemy (melee)
 
 `handlePlayerEnemyCollision(_player, enemyContainer)`
 
 1. Checks `enemy.lastHitPlayerTime` — 500 ms per-enemy cooldown to prevent rapid ticking.
-2. Calls `player.takeDamage(Math.ceil(enemy.damage))`.
+2. Calls `player.takeDamage(Math.ceil(enemy.buffStat(Damage, enemy.damage)), enemy)` — the enemy's damage after its buffs (e.g. Weakened), then `enemy.OnHitPlayer(player)`.
 3. If the thorns effect is active, calls `enemy.takeDamage(damageAmount × thornsValue)`.
 4. Pushes the player away at 200 px/s.
 

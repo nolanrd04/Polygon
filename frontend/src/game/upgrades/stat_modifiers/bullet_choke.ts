@@ -2,6 +2,7 @@ import { Upgrade, type UpgradeDef } from '../Upgrade'
 import type { Projectile } from '../../entities/projectiles/Projectile'
 import { BuckshotBullet } from '../../entities/projectiles/player_projectiles/Bullet'
 import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID, AttackTypeID, UpgradeVariantID } from '../../data/ID'
+import { IconID } from '../../data/ID'
 
 export const BulletChokeDef: UpgradeDef = {
   id: "bullet_choke",
@@ -18,6 +19,7 @@ export const BulletChokeDef: UpgradeDef = {
   stackable: true,
   maxStacks: 5,
   dependentOn: [{ ids: [UpgradeVariantID.BuckshotBullets] }],
+  icon: IconID.Cannon
 }
 
 export class BulletChoke extends Upgrade {

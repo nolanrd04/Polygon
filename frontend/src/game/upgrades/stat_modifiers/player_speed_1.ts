@@ -1,5 +1,5 @@
 import { Upgrade, type UpgradeDef } from '../Upgrade'
-import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID } from '../../data/ID'
+import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID, IconID } from '../../data/ID'
 
 export const PlayerSpeed1Def: UpgradeDef = {
   id: "player_speed_1",
@@ -13,6 +13,7 @@ export const PlayerSpeed1Def: UpgradeDef = {
   value: 10,
   stackable: true,
   maxStacks: 10,
+  icon: IconID.Haste
 }
 
 export class PlayerSpeed1 extends Upgrade {}

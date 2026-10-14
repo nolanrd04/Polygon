@@ -24,7 +24,10 @@ import { DroppedUpgradeBundle } from '../entities/upgrades/DroppedUpgradeBundle'
 import type { RarityWeights } from '../systems/difficulty/Difficulty'
 import { NormalDifficulty } from '../systems/difficulty/Normal'
 import { getAllUpgrades, getUpgrade, getUpgradeEntry } from '../upgrades'
-import { RarityID, UpgradeTypeID } from '../data/ID'
+import { RarityID, UpgradeTypeID, BuffStatID, BuffHostID, type BuffID } from '../data/ID'
+import { getBuffEntry } from '../buffs'
+import { BUNDLE_BUFF_DROPS, rollDropDuration, type BundleBuffDrop } from '../buffs/bundleDrops'
+import { awardPlayerKill } from '../systems/KillRewards'
 import { SETTINGS } from '../core/SettingsStorage'
 
 /**
@@ -249,9 +252,18 @@ export class MainScene extends Phaser.Scene {
           exclude.push(firstId)
         }
 
-        // Remaining slots (if any) are each 30%/70% curse or regular, no duplicates.
+        // Remaining slots (if any): 25% curse / 15% buff / 60% regular, no duplicates.
+        // A buff slot is 50/50 positive or debuff. Offline only until the backend
+        // has the buff catalog (buff plan phase 6).
+        const pickedBuffs: BundleBuffDrop[] = []
         for (let i = 1; i < count; i++) {
-          const id = Math.random() < 0.3
+          const roll = Math.random()
+          if (roll >= 0.25 && roll < 0.4) {
+            const drop = this.pickBundleBuff(rollItemRarity(), Math.random() < 0.5, pickedBuffs)
+            if (drop) pickedBuffs.push(drop)
+            continue
+          }
+          const id = roll < 0.25
             ? this.pickCurse(rollItemRarity(), exclude)
             : this.pickRegularUpgrade(rollItemRarity(), exclude)
           if (id) {
@@ -260,9 +272,13 @@ export class MainScene extends Phaser.Scene {
           }
         }
 
-        if (pickedIds.length === 0) return
-
         applyPickedUpgrades(pickedIds)
+        pickedBuffs.forEach((drop, i) => {
+          const def = getBuffEntry(drop.buff)!.def
+          this.player.AddBuff(drop.buff, rollDropDuration(drop))
+          const delay = (pickedIds.length + i) * 220
+          this.showBundlePickupText(x, y, def.name, rarityOrder.indexOf(def.rarity as RarityID), def.isDebuff, delay)
+        })
       }
     )
     // -------- -------- -------- //
@@ -324,6 +340,17 @@ export class MainScene extends Phaser.Scene {
     EventBus.on('dev-remove-upgrade' as any, (upgradeId: string) => {
       UpgradeSystem.removeOne(upgradeId)
     })
+    EventBus.on('dev-apply-buff', ({ buffId, target, ms }) => {
+      if (target === 'player') {
+        this.player.AddBuff(buffId as BuffID, ms)
+      } else {
+        for (const enemy of this.enemyManager.getEnemies()) enemy.AddBuff(buffId as BuffID, ms)
+      }
+    })
+    EventBus.on('dev-clear-buff', (buffId) => {
+      this.player.ClearBuff(buffId as BuffID)
+      for (const enemy of this.enemyManager.getEnemies()) enemy.ClearBuff(buffId as BuffID)
+    })
     EventBus.on('evolution-milestone', () => {
       this.applyUpgrade('polygon_upgrade', true) // Apply Evolution upgrade for free
     })
@@ -354,6 +381,8 @@ export class MainScene extends Phaser.Scene {
       this.events.emit('explosion-damage', data)
     })
     EventBus.on('player-death', () => {
+      this.player.buffs.clear()
+
       // Display death message, 20px in from the real bottom-left of the viewport.
       // `this.scale.height`, not GAME_HEIGHT: under Scale.RESIZE the canvas is the
       // device viewport, so the old 720 constant floated the text mid-screen on
@@ -399,6 +428,10 @@ export class MainScene extends Phaser.Scene {
         slots: AbilitySystem.getSlots(),
         bindingCount: AbilitySystem.getBindings().length,
       })
+    })
+
+    EventBus.on('request-buff-state', () => {
+      EventBus.emit('buff-state-update', this.player.buffs.snapshot())
     })
 
     // Mobile fires abilities by tapping their HUD card — there are no separate
@@ -671,6 +704,12 @@ export class MainScene extends Phaser.Scene {
       )
     }
 
+    // Buffs tick before anything this step reads their BuffStats
+    this.player._updateBuffs()
+    for (const enemy of this.enemyManager.getEnemies()) {
+      if (enemy._updateBuffs()) awardPlayerKill(enemy)
+    }
+
     // Per-tick upgrade hooks (regeneration, etc.)
     UpgradeSystem.dispatchUpdatePlayer(this.player, FIXED_STEP_MS)
 
@@ -733,6 +772,7 @@ export class MainScene extends Phaser.Scene {
 
     // Check wave completion
     if (this.waveManager.isWaveComplete()) {
+      this.player.buffs.clear() // buffs never outlive their wave
       this.waveManager.completeWave()
     }
 
@@ -775,6 +815,17 @@ export class MainScene extends Phaser.Scene {
     // Let owned upgrades modify the projectile before it spawns
     if (owner === 'player') {
       UpgradeSystem.dispatchModifyProjectileSpawn(projectile)
+    }
+
+    // Owner's buffs, fixed at fire time. Damage goes on damageMultiplier, not
+    // damage: child projectiles copy their parent's damage but never its
+    // multiplier, so every projectile is buffed exactly once.
+    const shooter = owner === 'player'
+      ? this.player
+      : this.enemyManager.getEnemyById(ownerId)?.buffTarget
+    if (shooter) {
+      projectile.damageMultiplier *= shooter.buffStats.apply(BuffStatID.Damage, 1)
+      shooter.buffs.dispatchModifyProjectileSpawn(projectile)
     }
 
     // Spawn the projectile
@@ -915,6 +966,23 @@ export class MainScene extends Phaser.Scene {
       )
       if (candidates.length > 0) {
         return candidates[Math.floor(Math.random() * candidates.length)].id
+      }
+    }
+    return null
+  }
+
+  /** Picks a random whitelisted bundle buff (or debuff) at or below maxRarity (0–4). Falls back to lower tiers. */
+  private pickBundleBuff(maxRarity: number, debuff: boolean, exclude: BundleBuffDrop[]): BundleBuffDrop | null {
+    const rarityOrder: RarityID[] = [RarityID.Common, RarityID.Uncommon, RarityID.Rare, RarityID.Epic, RarityID.Legendary]
+    for (let tier = maxRarity; tier >= 0; tier--) {
+      const candidates = BUNDLE_BUFF_DROPS.filter(drop => {
+        const def = getBuffEntry(drop.buff)?.def
+        if (!def || def.isDebuff !== debuff || def.rarity !== rarityOrder[tier]) return false
+        if (!def.appliesTo.includes(BuffHostID.Player)) return false
+        return !exclude.includes(drop)
+      })
+      if (candidates.length > 0) {
+        return candidates[Math.floor(Math.random() * candidates.length)]
       }
     }
     return null

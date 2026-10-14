@@ -1,4 +1,5 @@
 import type { AbilitySlotState } from '../systems/AbilitySystem'
+import type { BuffSlotState } from '../buffs/Buff'
 
 // Define all event types and their payloads
 export interface PlayerStatsPayload {
@@ -27,6 +28,8 @@ export interface GameEvents {
   'enemy-split': { x: number; y: number; config: unknown; velocityAngle: number }
   'enemy-shoot': { x: number; y: number; targetX: number; targetY: number; damage: number; speed: number; color: number }
   'dev-apply-upgrade': string  // Dev-only: apply upgrade without cost
+  'dev-apply-buff': { buffId: string; target: 'player' | 'enemies'; ms: number }  // Dev-only
+  'dev-clear-buff': string  // Dev-only: clear a buff from the player and every enemy
   'evolution-milestone': number  // Emitted every 6 waves with the current wave number
   'enemy-killed': { type: string; x: number; y: number }  // Wave validation tracking
   'damage-dealt': { amount: number; source: 'primary' | 'explosion' }  // Wave validation tracking
@@ -37,6 +40,8 @@ export interface GameEvents {
   // before the player owns them all.
   'ability-state-update': { slots: AbilitySlotState[]; bindingCount: number }
   'activate-ability': string  // HUD ability card tapped (mobile); id of the ability to fire
+  'request-buff-state': void  // HUD polls; MainScene answers with the player's active buffs
+  'buff-state-update': BuffSlotState[]
 }
 
 type EventCallback<T = void> = T extends void ? () => void : (data: T) => void

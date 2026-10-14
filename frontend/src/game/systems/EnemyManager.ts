@@ -224,6 +224,11 @@ export class EnemyManager {
     return this.enemies.filter(e => !e.isDestroyed)
   }
 
+  /** A live enemy by id (e.g. a projectile's ownerId), or undefined if it's gone. */
+  getEnemyById(id: number): Enemy | undefined {
+    return this.enemies.find(e => e.id === id && !e.isDestroyed)
+  }
+
   /**
    * Get the Phaser group for collision detection.
    */

@@ -1,5 +1,5 @@
 import { Upgrade, type UpgradeDef } from '../Upgrade'
-import { RarityID, UpgradeTypeID } from '../../data/ID'
+import { IconID, RarityID, UpgradeTypeID } from '../../data/ID'
 
 // Ricochet bounce logic is handled in the projectile classes this upgrade
 // applies to, not here - each checks
@@ -19,6 +19,7 @@ export const RicochetDef: UpgradeDef = {
   maxStacks: 1,
   dependentOn: [{ ids: ["bullet_pierce_1"] }],
   // incompatibleWith: ["homing_bullets"],
+  icon: IconID.Ricochet,
 }
 
 export class Ricochet extends Upgrade {}

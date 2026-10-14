@@ -46,7 +46,34 @@ export const TOUCH_LAYOUT = {
   abilityShortSpacing: 50,
   /** Horizontal gap between pads, on short screens. */
   abilityShortGap: 20,
+
+  /** Gap between the buff bar and the screen's bottom edge. */
+  buffBarBottomPad: 8,
+  /** Side gutter for the buff bar on tall screens, where it runs under the joysticks. */
+  buffBarSidePad: 16,
+  /** Extra gap past a joystick's touch area (radius + 20) on short screens. */
+  buffBarJoystickGap: 8,
 } as const
+
+/**
+ * Horizontal span and bottom offset of the mobile buff bar, in screen pixels.
+ *
+ * Tall screens: the joysticks sit high enough that the bar fits underneath
+ * them, across the full width. Short screens: it sits between the joysticks,
+ * clear of their touch areas, so a tap on the bar never misses a stick.
+ */
+export function buffBarBounds(viewWidth: number, viewHeight: number): {
+  left: number
+  right: number
+  bottom: number
+} {
+  const L = TOUCH_LAYOUT
+  if (viewHeight > L.tallScreenMinHeight) {
+    return { left: L.buffBarSidePad, right: L.buffBarSidePad, bottom: L.buffBarBottomPad }
+  }
+  const side = Math.min(viewWidth / 2, L.joystickPadX + L.joystickRadius + 20 + L.buffBarJoystickGap)
+  return { left: side, right: side, bottom: L.buffBarBottomPad }
+}
 
 /**
  * Where pad pair 0 sits and how far apart the pairs are, on tall screens.

@@ -1,5 +1,5 @@
 import { Upgrade, type UpgradeDef } from '../Upgrade'
-import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID } from '../../data/ID'
+import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID, IconID } from '../../data/ID'
 
 export const HealCooldown1Def: UpgradeDef = {
   id: "heal_cooldown_1",
@@ -15,6 +15,7 @@ export const HealCooldown1Def: UpgradeDef = {
   stackable: true,
   maxStacks: 5,
   dependentOn: [{ ids: ["heal_ability"] }],
+  icon: IconID.HeartWings,
 }
 
 export class HealCooldown1 extends Upgrade {}

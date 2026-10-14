@@ -2,7 +2,9 @@ import { Projectile } from '../Projectile'
 import { TextureGenerator } from '../../../utils/TextureGenerator'
 import { Particle, SmokeParticle, SparkParticle } from '../../particles'
 import { LightingSystem } from '../../../../game/systems/LightingSystem'
-import { LightingIntensityID } from '../../../data/ID'
+import { LightingIntensityID, BuffID, BuffStatID } from '../../../data/ID'
+import { Player } from '../..'
+import { Poison5Def } from '../../../../game/buffs/debuffs/poison5'
 
 export class AcidExplosion extends Projectile {
   private expansionTime: number = 0
@@ -156,5 +158,11 @@ export class AcidExplosion extends Projectile {
       this.color,
       LightingIntensityID.Explosion * (this.maxRadius / 20) * expansion * this.sprite.alpha
     )
+  }
+
+  OnHitPlayer(_player: Player): void {
+    const baseDmg = -Poison5Def.stats![1].value
+    const poisonTick = Math.max(baseDmg, this.damage * 0.05)
+    _player.AddBuff(BuffID.Poison5, Phaser.Math.Between(5, 10) * 1000, { stacking: false, stats: {[BuffStatID.LifeRegen]: -poisonTick} })
   }
 }

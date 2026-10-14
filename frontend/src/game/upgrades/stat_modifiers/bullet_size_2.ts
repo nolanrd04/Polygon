@@ -1,5 +1,5 @@
 import { Upgrade, type UpgradeDef } from '../Upgrade'
-import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID } from '../../data/ID'
+import { UpgradeTargetID, UpgradeStatID, RarityID, UpgradeTypeID, IconID } from '../../data/ID'
 
 export const BulletSize2Def: UpgradeDef = {
   id: "bullet_size_2",
@@ -15,6 +15,7 @@ export const BulletSize2Def: UpgradeDef = {
   specificAttackType: "bullet",
   stackable: true,
   maxStacks: 2,
+  icon: IconID.HeavyBullets
 }
 
 export class BulletSize2 extends Upgrade {}
