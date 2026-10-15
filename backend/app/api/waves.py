@@ -55,6 +55,13 @@ class WaveCompleteRequest(BaseModel):
     upgrades_used: List[str]
     points_earned: int = Field(default=0, ge=0)
     shots_fired: List[float] = Field(default_factory=list)
+    # Frame of each shots_fired entry (same order). Gaps are checked in ms,
+    # since the fire cooldown runs on scene time; the frame only places the
+    # shot on the buff timeline.
+    shot_frames: List[int] = Field(default_factory=list)
+    # Frame the wave actually started on (Start Wave pressed). Queued bundle
+    # buffs start here. Bounded server-side, see BuffTimeline.from_grants.
+    wave_start_frame: Optional[int] = Field(default=None, ge=0)
     is_death: bool = Field(default=False)
 
 
@@ -209,7 +216,9 @@ async def complete_wave(
         "enemy_deaths": [e.model_dump() for e in request.enemy_deaths],
         "upgrades_used": request.upgrades_used,
         "points_earned": request.points_earned,
-        "shots_fired": request.shots_fired
+        "shots_fired": request.shots_fired,
+        "shot_frames": request.shot_frames,
+        "wave_start_frame": request.wave_start_frame
     }
 
     is_valid, errors, current_points = await wave_service.complete_wave(

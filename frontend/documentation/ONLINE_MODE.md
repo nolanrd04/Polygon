@@ -37,9 +37,12 @@ All recording methods guard against post-death calls — if `GameManager.getPlay
 Called by `WaveValidationService.completeWave()` after `WaveManager` signals the wave is done. The payload includes the wave token plus all accumulated telemetry:
 
 ```
-token, wave, kills, total_damage, current_health,
-damage_taken, frame_samples, enemy_deaths, upgrades_used
+token, wave, kills, total_damage, hits, current_health,
+damage_taken, frame_samples, enemy_deaths, upgrades_used,
+points_earned, shots_fired, shot_frames, wave_start_frame, is_death
 ```
+
+`shot_frames` and `wave_start_frame` place shots and held bundle buffs on the server's buff timeline (see [BUFFS.md](BUFFS.md#bundle-drops)).
 
 The backend validates the telemetry against what it expects for the given wave, upgrade set, and seed. On success the token is cleared from `WaveValidationService` and the game proceeds to the between-wave upgrade screen.
 

@@ -37,6 +37,8 @@ export class WaveManager {
       this.startNormalWave()
     }
 
+    // Same frame MainScene applies held bundle buffs on (GameManager.startWave's wave-start).
+    waveValidation.markWaveStart()
     GameManager.startWave()
     EventBus.emit('wave-start', this.currentWave)
   }

@@ -49,6 +49,10 @@ export class WaveValidationService {
   private damageTaken: number = 0
   private pointsEarnedThisWave: number = 0
   private shotsFired: number[] = []  // ms since wave start, one per cooldown-gated Player.shoot() call
+  private shotFrames: number[] = []  // frame of each shotsFired entry, places it on the server's buff timeline
+  // Frame the player pressed Start Wave on. The counter starts at token issue
+  // (the previous wave's completion), so the shop phase comes first.
+  private waveStartFrame: number | null = null
   private offeredUpgrades: any[] = []
   // Which wave the cached sandbox offer above was rolled for. Sandbox mode has
   // no backend to re-roll against, so the offer is cached to keep repeat
@@ -163,6 +167,8 @@ export class WaveValidationService {
       this.damageTaken = 0
       this.pointsEarnedThisWave = 0
       this.shotsFired = []
+      this.shotFrames = []
+      this.waveStartFrame = null
 
       // Roll a fresh offer whenever this is a wave we haven't rolled for yet.
       if (this.offeredUpgrades.length === 0 || this.offeredUpgradesWave !== waveNumber) {
@@ -203,6 +209,8 @@ export class WaveValidationService {
       this.damageTaken = 0
       this.pointsEarnedThisWave = 0
       this.shotsFired = []
+      this.shotFrames = []
+      this.waveStartFrame = null
 
       console.log(`Wave ${waveNumber} started. Token expires in ${response.data.expires_in}s`)
       console.log('Stored offeredUpgrades:', this.offeredUpgrades)
@@ -312,6 +320,7 @@ export class WaveValidationService {
     }
 
     this.shotsFired.push(Date.now() - this.waveStartTime)
+    this.shotFrames.push(this.frameCount)
 
     // Bound payload size for very long waves. Thinning (rather than
     // dropping the tail) only ever widens the gaps the backend sees between
@@ -319,6 +328,7 @@ export class WaveValidationService {
     // MORE lenient, never flag a false positive.
     if (this.shotsFired.length > 3000) {
       this.shotsFired = this.shotsFired.filter((_, i) => i % 2 === 0)
+      this.shotFrames = this.shotFrames.filter((_, i) => i % 2 === 0)
     }
   }
 
@@ -327,6 +337,11 @@ export class WaveValidationService {
    */
   incrementFrame() {
     this.frameCount++
+  }
+
+  /** The player pressed Start Wave. Queued bundle buffs start on this frame. */
+  markWaveStart() {
+    this.waveStartFrame = this.frameCount
   }
 
   /**
@@ -377,6 +392,8 @@ export class WaveValidationService {
         upgrades_used: appliedUpgrades,
         points_earned: this.pointsEarnedThisWave,
         shots_fired: this.shotsFired,
+        shot_frames: this.shotFrames,
+        wave_start_frame: this.waveStartFrame,
         is_death: isDeath
       }, {
         headers: {
@@ -409,6 +426,7 @@ export class WaveValidationService {
       this.waveToken = null
       this.pointsEarnedThisWave = 0
       this.shotsFired = []
+      this.shotFrames = []
     }
   }
 

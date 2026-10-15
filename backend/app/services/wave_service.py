@@ -21,6 +21,7 @@ from app.repositories.game_run_repository import GameRunRepository
 from app.core.upgrade_data import UPGRADES, STARTING_UPGRADES, can_apply_upgrade, get_upgrade
 from app.core.buff_data import BUNDLE_BUFF_DROPS, DROP_DEFAULTS, LOGIC_HZ, get_buff, ms_to_ticks
 from app.core.buff_rolls import BuffRoll, BuffRollContext, roll_drop
+from app.services.buff_timeline import BuffTimeline
 from app.core.enemy_data import calculate_minimum_damage_required, calculate_expected_health_spawned, validate_enemy_spawn, get_enemy_score_chance, get_split_children, get_enemy_bundle_drop_chance, get_enemy_bundle_drop_max, calculate_family_spawn_counts
 from app.core.projectile_data import (
     resolve_active_projectile,
@@ -296,6 +297,18 @@ class WaveService:
         authorized_upgrades_used = [u for u in upgrades_used if u in valid_upgrades]
         wave_data["upgrades_used"] = authorized_upgrades_used
 
+        # Buffs this token granted, placed on the wave's frame clock. The
+        # validators below read their stat bonuses from it.
+        frame_samples = wave_data.get("frame_samples", [])
+        last_frame = max((s.get("frame", 0) for s in frame_samples), default=0)
+        buff_timeline, wave_start_frame, buff_flags = BuffTimeline.from_grants(
+            [g.model_dump() for g in token.bundle_buffs],
+            wave_data.get("wave_start_frame"),
+            last_frame,
+        )
+        wave_data["wave_start_frame"] = wave_start_frame
+        flags.extend(buff_flags)
+
         # 2. Validate fire rate - each shots_fired entry must be spaced by at
         # least the weapon's cooldown. This gates the hit-count ceiling below
         # (shot_count is only trustworthy once this passes) and is itself
@@ -304,7 +317,9 @@ class WaveService:
         shots_fired = wave_data.get("shots_fired", [])
         attack_type = game_save.current_attack_type if game_save else "bullet"
         active_projectile = resolve_active_projectile(attack_type, authorized_upgrades_used)
-        fire_rate_flags = self._validate_fire_rate(shots_fired, active_projectile)
+        fire_rate_flags = self._validate_fire_rate(
+            shots_fired, wave_data.get("shot_frames", []), active_projectile, buff_timeline
+        )
         print(f"Fire rate validation flags: {len(fire_rate_flags)}")
         flags.extend(fire_rate_flags)
 
@@ -328,9 +343,10 @@ class WaveService:
         dash_stats = self._calculate_dash_stats_from_upgrades(authorized_upgrades_used)
         print(f"DEBUG - Validating movement with speed: {actual_player_stats.get('speed', 200)} (from {len(authorized_upgrades_used)} upgrades), dash={dash_stats}")
         movement_flags = self._validate_movement(
-            wave_data.get("frame_samples", []),
+            frame_samples,
             actual_player_stats.get("speed", 200),
-            dash_stats
+            dash_stats,
+            buff_timeline
         )
         print(f"Movement validation flags: {len(movement_flags)}")
         flags.extend(movement_flags)
@@ -1025,10 +1041,13 @@ class WaveService:
 
         return True, picked, rolled_buffs, None
 
-    # Positive buffs safe to grant online before buff-aware validation exists.
-    # Debuffs only weaken the player, so they're always allowed. Speed,
-    # fire-rate and damage buffs stay offline-only until buff system steps 2/3.
-    ONLINE_SAFE_BUFFS = {"mending", "toughness_1", "toughness_2"}
+    # Positive buffs the validators know how to credit (movement and fire rate
+    # read BuffTimeline). Debuffs only weaken the player, so they're always
+    # allowed. Damage and DoT buffs stay offline-only until buff system step 3.
+    ONLINE_SAFE_BUFFS = {
+        "mending", "toughness_1", "toughness_2",
+        "haste_1", "haste_2", "haste_3", "frenzy",
+    }
 
     def _pick_bundle_buff(
         self, max_tier: int, debuff: bool, exclude: List[Dict[str, Any]]
@@ -1158,7 +1177,13 @@ class WaveService:
 
         return int(sides * pellets * pierce)
 
-    def _validate_fire_rate(self, shots_fired: List[float], projectile: str) -> List[FlagReason]:
+    def _validate_fire_rate(
+        self,
+        shots_fired: List[float],
+        shot_frames: List[int],
+        projectile: str,
+        buff_timeline: BuffTimeline
+    ) -> List[FlagReason]:
         """
         Validate that consecutive weapon discharges respect the active
         projectile's fire cooldown (app/core/projectile_data.py - mirrors
@@ -1169,14 +1194,25 @@ class WaveService:
         passed its own cooldown check client-side (see Player.ts) - NOT one
         per hit (a single discharge can produce many hits at once, see
         _calculate_max_hits_per_shot).
+        shot_frames places each shot on the buff timeline: a granted fire-rate
+        buff divides the cooldown like Player.shoot does. Without matching
+        frames no buff is credited.
         """
         flags = []
         cooldown_ms = get_fire_cooldown_ms(projectile)
-        min_gap_ms = cooldown_ms * (1 - self.FIRE_RATE_TOLERANCE)
+        base_min_gap_ms = cooldown_ms * (1 - self.FIRE_RATE_TOLERANCE)
 
-        ordered = sorted(shots_fired)
+        frames: List[Optional[int]] = (
+            list(shot_frames) if len(shot_frames) == len(shots_fired) else [None] * len(shots_fired)
+        )
+        ordered = sorted(zip(shots_fired, frames), key=lambda s: s[0])
         for i in range(1, len(ordered)):
-            gap = ordered[i] - ordered[i - 1]
+            (prev_ms, prev_frame), (curr_ms, curr_frame) = ordered[i - 1], ordered[i]
+            gap = curr_ms - prev_ms
+            min_gap_ms = base_min_gap_ms
+            if prev_frame is not None and curr_frame is not None:
+                fire_rate = buff_timeline.apply("fireRate", 1.0, min(prev_frame, curr_frame), max(prev_frame, curr_frame))
+                min_gap_ms = base_min_gap_ms / max(0.1, fire_rate)
             if gap < min_gap_ms:
                 deviation = ((min_gap_ms - gap) / min_gap_ms) * 100
                 flags.append(FlagReason(
@@ -1289,8 +1325,9 @@ class WaveService:
     def _validate_movement(
         self,
         frame_samples: List[Dict[str, Any]],
-        player_speed: float,
-        dash_stats: Dict[str, float]
+        base_player_speed: float,
+        dash_stats: Dict[str, float],
+        buff_timeline: BuffTimeline
     ) -> List[FlagReason]:
         """
         Validate player movement frame-by-frame, allowing for legitimate dash
@@ -1299,6 +1336,9 @@ class WaveService:
         _try_consume_dash_bursts) rather than checking each interval in
         isolation — an isolated per-interval check would let a cheater
         "reset" the charge assumption every interval.
+        Walk speed per interval includes any granted move-speed buff active
+        in it (Player.move); dash speed doesn't read buffs. dt stays in ms,
+        since physics integrates on real time, not logic ticks.
         """
         flags = []
 
@@ -1314,6 +1354,10 @@ class WaveService:
         # Charges assumed fully ready at wave start (idle time between waves).
         slot_ready_times = [0.0] * max_dash_charges
         queue_tail_ms = 0.0
+        # Unused time of the last interval's burst(s). A burst near a sample
+        # boundary spills into the next interval, which must not cost a
+        # second charge.
+        carry_s = 0.0
 
         for i in range(1, len(frame_samples)):
             prev_frame = frame_samples[i - 1]
@@ -1334,7 +1378,12 @@ class WaveService:
             if time_delta <= 0:
                 continue
 
+            frame_a, frame_b = prev_frame.get("frame", 0), curr_frame.get("frame", 0)
+            player_speed = base_player_speed * buff_timeline.apply(
+                "moveSpeed", 1.0, min(frame_a, frame_b), max(frame_a, frame_b)
+            )
             base_max_distance = player_speed * time_delta * tolerance
+            prev_carry_s, carry_s = carry_s, 0.0
 
             if distance <= base_max_distance:
                 continue  # Explained by base movement alone, no dash needed.
@@ -1357,22 +1406,20 @@ class WaveService:
             dash_time_s = (distance / tolerance - player_speed * time_delta) / (max_dash_speed - player_speed)
             dash_time_s = max(0.0, min(time_delta, dash_time_s))
 
-            # A handful of ms of "dash time" (a couple % over the base
-            # tolerance) is ordinary position-sampling noise, not a real
-            # dash - a real dash can't be feathered shorter than
-            # dash_duration_ms. Without this floor, `max(1, ceil(...))` below
-            # would force a full dash-charge availability check to explain
-            # noise-level overage, and spuriously fail whenever the player's
-            # charge happens to be on cooldown from an earlier, unrelated,
-            # perfectly legitimate dash.
-            if dash_time_s < (dash_duration_ms / 1000.0) * 0.25:
+            # Honest sampling noise measured well under the tolerance above,
+            # so any overage past it is real dash time. Spill-over from the
+            # previous interval's burst pays first; the rest costs charges.
+            remaining_s = dash_time_s - prev_carry_s
+            if remaining_s <= 0:
                 continue
 
-            bursts_needed = max(1, math.ceil(dash_time_s / (dash_duration_ms / 1000.0)))
+            burst_s = dash_duration_ms / 1000.0
+            bursts_needed = math.ceil(remaining_s / burst_s)
+            dash_window_s = min(time_delta, bursts_needed * burst_s + prev_carry_s)
 
             max_dash_distance = tolerance * (
-                max_dash_speed * min(time_delta, bursts_needed * dash_duration_ms / 1000.0)
-                + player_speed * max(0.0, time_delta - bursts_needed * dash_duration_ms / 1000.0)
+                max_dash_speed * dash_window_s
+                + player_speed * (time_delta - dash_window_s)
             )
 
             ok, new_slots, new_tail = False, slot_ready_times, queue_tail_ms
@@ -1380,6 +1427,8 @@ class WaveService:
                 ok, new_slots, new_tail = self._try_consume_dash_bursts(
                     bursts_needed, t_start, t_end, slot_ready_times, queue_tail_ms, dash_cooldown_ms
                 )
+                if ok:
+                    carry_s = bursts_needed * burst_s - remaining_s
 
             if not ok:
                 deviation = ((distance - base_max_distance) / base_max_distance) * 100
