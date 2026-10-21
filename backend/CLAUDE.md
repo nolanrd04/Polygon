@@ -55,7 +55,7 @@ The core gameplay loop. Located primarily in `app/services/wave_service.py`:
 2. Client plays the wave, collecting frame samples
 3. Client calls `/api/waves/complete` with frame data → server validates:
    - Token validity (not expired, not reused)
-   - Movement speed (distance vs speed * time with 10% tolerance)
+   - Movement speed (distance vs speed * time with a small noise tolerance)
    - Damage dealt (within 20% of expected minimum)
    - Kill count (within 20% of wave's enemy count)
    - Upgrade legitimacy (only allowed upgrades used)

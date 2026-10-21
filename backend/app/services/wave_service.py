@@ -749,7 +749,7 @@ class WaveService:
     # bullet is currently selectable, and no upgrade currently changes fire
     # rate for any projectile.
     # Grace on the minimum gap between consecutive shots, for client clock/
-    # event-loop jitter - same spirit as the movement check's 10% tolerance.
+    # event-loop jitter - same spirit as the movement check's walk tolerance.
     FIRE_RATE_TOLERANCE = 0.15
 
     # A wave token's own expiry doesn't need to model wave-specific timing at
@@ -1345,7 +1345,8 @@ class WaveService:
         if len(frame_samples) < 2:
             return flags  # Not enough data
 
-        tolerance = 1.10
+        # Honest sampling/rounding noise was measured under 1% (2026-10-15).
+        tolerance = 1.02
         max_dash_speed = dash_stats["max_dash_speed"]
         dash_cooldown_ms = dash_stats["dash_cooldown_ms"]
         dash_duration_ms = dash_stats["dash_duration_ms"]
