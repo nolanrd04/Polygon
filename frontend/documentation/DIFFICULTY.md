@@ -66,10 +66,17 @@ Key progressions:
 - Wave 1–2: Triangles only.
 - Wave 3–4: Triangles + Squares.
 - Wave 5+: Super Triangles introduced.
+- Wave 7+: Pentagons introduced.
 - Wave 8+: Diamonds introduced.
 - Wave 11+: Hexagons introduced.
-- Wave 15+: Octagons introduced.
-- Wave 17+: Super Squares introduced.
+- Wave 13+: Octogons introduced.
+- Wave 15+: Super Squares introduced.
+- Wave 18+: Super Pentagons introduced.
+- Wave 22+: Super Hexagons introduced.
+- Wave 25+: Super Octogons introduced.
+- Wave 28+: Super Diamonds introduced.
+
+The table is mirrored in the backend's `difficulty_normal.json`, and each type's first wave must match its `min_wave` in `enemies.json` (or anti-cheat flags honest kills). A `type` that isn't a registered enemy id silently never spawns. Run `backend/scripts/check_enemy_data.py` after editing this table.
 
 ### Boss waves
 

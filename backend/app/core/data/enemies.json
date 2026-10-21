@@ -56,7 +56,8 @@
     "suspicious_square": 25,
     "arrow_head": 20,
     "arrow_head_body": 20,
-    "arrow_head_tail": 20
+    "arrow_head_tail": 20,
+    "super_diamond": 28
   },
   "score_chance": {
     "arrow_head": 1,

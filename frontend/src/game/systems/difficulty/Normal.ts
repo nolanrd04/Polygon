@@ -116,7 +116,7 @@ const SPAWN_WEIGHTS: Record<number, EnemySpawnWeight[]> = {
 
   28: [
     {type: 'triangle', weight: 5 }, {type: 'super_triangle', weight: 10}, {type: 'super_square', weight: 10}, {type: 'pentagon', weight: 5}, // 30
-    {type: 'diamond', weight: 15 }, {type: 'hexagon', weight: 10 }, {type: 'Octogon', weight: 10}, {type: 'super_hexagon', weight: 10}, // 45 + 30 = 75
+    {type: 'diamond', weight: 15 }, {type: 'hexagon', weight: 10 }, {type: 'octogon', weight: 10}, {type: 'super_hexagon', weight: 10}, // 45 + 30 = 75
     {type: 'super_octogon', weight: 5}, {type: 'super_diamond', weight: 10}, // 15 + 75 = 90
     {type: 'square', weight: 10}], // 10 + 90 = 100
 
