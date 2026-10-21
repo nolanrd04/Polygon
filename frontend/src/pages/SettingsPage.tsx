@@ -105,7 +105,7 @@ export default function SettingsPage() {
             way back to this page from inside the game. Applied on the next scene
             start, since LightingSystem reads it in MainScene.create(). */}
         {slider('brightness', 'Brightness', 5, 100)}
-
+        {/*}
         <div className="flex justify-between items-center py-2 border-t border-gray-700">
           <span className="text-gray-300">Fullscreen</span>
           <button
@@ -121,7 +121,7 @@ export default function SettingsPage() {
             />
           </button>
         </div>
-
+        */}
         <div className="flex justify-between items-center py-2 border-t border-gray-700">
           <span className="text-gray-300">Show FPS</span>
           <button
@@ -157,7 +157,7 @@ export default function SettingsPage() {
             </button>
           </div>
         )}
-
+        {/*
         <div className="flex justify-between items-center py-2 border-t border-gray-700">
           <span className="text-gray-300">Screen Shake</span>
           <button
@@ -173,7 +173,7 @@ export default function SettingsPage() {
             />
           </button>
         </div>
-
+        */}
         <div className="flex justify-between items-center py-2 border-t border-gray-700">
           <span className="text-gray-300">Enemy Health Bars</span>
           <button

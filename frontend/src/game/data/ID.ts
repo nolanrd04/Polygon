@@ -110,7 +110,8 @@ export const enum SoundID
   EnemyShoot2 = 'enemy_shoot_2',
   AcidBulletExplosion = 'acid_bullet_explosion',
   PlayerShieldUp = 'player_shield_up',
-  DetonationWarning = 'detonation_warning'
+  DetonationWarning = 'detonation_warning',
+  PlayerHeal = 'player_heal'
 }
 
 export const enum SoundtrackID

@@ -22,6 +22,8 @@ export const DashAbilityDef: UpgradeDef = {
     cooldown: 1500,
     cooldownStat: UpgradeStatID.DashCooldown,
   },
+  tier: 1,
+  upgradesTo: "double_dash",
 }
 
 export class DashAbility extends Upgrade {

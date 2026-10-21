@@ -1,5 +1,5 @@
 /** Available attack/projectile types */
-export type AttackType = 'bullet' | 'laser' | 'zapper' | 'flamer' | 'spinner'
+export type AttackType = 'bullet' | 'laser' | 'zapper' | 'flamer' | 'spinner' | 'healer' | 'controller'  | 'plagueBringer'
 
 /** Info about each attack type for the UI */
 export const ATTACK_INFO: Record<AttackType, {
@@ -8,7 +8,7 @@ export const ATTACK_INFO: Record<AttackType, {
 }> = {
   bullet: {
     name: 'Bullet',
-    description: 'Rapid-fire projectiles with upgrade potential for multishot and pierce.'
+    description: 'Rapid-fire projectiles with a variety of upgrade potential.'
   },
   laser: {
     name: 'Laser',
@@ -25,5 +25,17 @@ export const ATTACK_INFO: Record<AttackType, {
   spinner: {
     name: 'Spinner',
     description: 'Spin your polygon to damage all nearby enemies.'
+  },
+  healer: {
+    name: 'Healer',
+    description: 'Heal yourself and allies with special attacks.'
+  },
+  controller: {
+    name: 'Controller',
+    description: 'Control drones to attack enemies automatically.'
+  },
+  plagueBringer: {
+    name: 'Plague Bringer',
+    description: 'Spread disease to enemies, causing varying damage and debuffs over time.'
   }
 }

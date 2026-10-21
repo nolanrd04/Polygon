@@ -19,6 +19,8 @@ const UPDATE_NOTES: UpdateNote[] = [
       'Super square\'s projectiles now poison the player.',
       'Added icons for buffs and upgrades.',
       'Added HUD for buffs and debuffs.',
+      'Explosion on kill now depends on the explosive bullets upgrade.',
+      'Bullet pierce, dash count, and vampirism upgrades are a tier-based upgrade now requiring evolution upgrades to unlock higher tiers.',
     ]
   },
   {

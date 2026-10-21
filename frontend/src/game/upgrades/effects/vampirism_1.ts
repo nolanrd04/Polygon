@@ -6,7 +6,7 @@ import { IconID, RarityID, UpgradeTypeID } from '../../data/ID'
 
 export const Vampirism1Def: UpgradeDef = {
   id: "vampirism_1",
-  name: "Vampirism",
+  name: "Vampirism I",
   description: "5% chance to heal for 2% of damage dealt. Upgrade to increase chance.",
   rarity: RarityID.Rare,
   upgradeType: UpgradeTypeID.Effect,
@@ -16,6 +16,8 @@ export const Vampirism1Def: UpgradeDef = {
   stackable: true,
   maxStacks: 5,
   icon: IconID.Vampire,
+  tier: 1,
+  upgradesTo: "vamprism_2",
 }
 
 export class Vampirism1 extends Upgrade {

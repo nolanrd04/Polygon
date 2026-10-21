@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import axios from '../config/axios'
+import { useBackendConnection } from '../hooks/useBackendConnection'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
+  const isBackendConnected = useBackendConnection()
   const [username, setUsername] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -81,6 +83,11 @@ export default function RegisterPage() {
         {error && (
           <div className="bg-red-900/50 border border-red-500 text-red-300 px-4 py-2 rounded">
             {error}
+          </div>
+        )}
+        {!isBackendConnected && (
+          <div className="bg-yellow-900/40 border-2 border-yellow-600 text-yellow-400 px-4 py-2 rounded text-center text-sm">
+            Backend unavailable - login is disabled
           </div>
         )}
 

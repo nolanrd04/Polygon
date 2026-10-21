@@ -15,7 +15,7 @@ export const ExplosionDamage2Def: UpgradeDef = {
   specificAttackType: "bullet",
   stackable: true,
   maxStacks: 99999,
-  dependentOn: [{ ids: ["explosive_bullets", "explosion_on_kill"] }],
+  dependentOn: [{ ids: ["explosive_bullets"] }],
   icon: IconID.FireFlake
 }
 

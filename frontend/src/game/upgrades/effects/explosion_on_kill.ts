@@ -15,6 +15,7 @@ export const ExplosionOnKillDef: UpgradeDef = {
   effectValue: 10,
   stackable: false,
   icon: IconID.Explosion,
+  dependentOn: [{ ids: ["explosive_bullets"] }]
 }
 
 export class ExplosionOnKill extends Upgrade {

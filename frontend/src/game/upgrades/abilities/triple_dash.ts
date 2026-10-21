@@ -11,7 +11,11 @@ export const TripleDashDef: UpgradeDef = {
   cost: 40,
   effect: "triple_dash",
   stackable: false,
-  dependentOn: [{ ids: ["double_dash"] }],
+  tier: 3,
+  dependentOn: [
+    { ids: [{id: "double_dash", minStacks: 1}] },
+    { ids: [{id: "polygon_upgrade", minStacks: 4}] },
+  ],
   icon: IconID.Dash,
 }
 

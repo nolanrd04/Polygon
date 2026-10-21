@@ -26,6 +26,7 @@ export const AUDIO_REGISTRY: AudioDefinition[] = [
   { key: 'acid_bullet_explosion', path: 'assets/sounds/acid_bullet_explosion.mp3', defaultVolume: 1 },
   { key: 'player_shield_up', path: 'assets/sounds/player_shield_up.mp3', defaultVolume: 1 },
   { key: 'detonation_warning', path: 'assets/sounds/detonation_warning.mp3', defaultVolume: 1 },
+  { key: 'player_heal', path: 'assets/sounds/player_heal.mp3', defaultVolume: 1 },
 
   // Soundtrack (add your music file here)
   { key: 'background_music', path: 'assets/sounds/background_music.mp3', defaultVolume: 0.75, loop: true }

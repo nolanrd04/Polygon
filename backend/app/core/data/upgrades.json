@@ -142,7 +142,7 @@
   },
   "bullet_pierce_1": {
     "id": "bullet_pierce_1",
-    "name": "Piercing Shot",
+    "name": "Piercing Shot I",
     "description": "Bullets pierce +1 enemy",
     "rarity": "rare",
     "type": "stat_modifier",
@@ -152,7 +152,52 @@
     "value": 1,
     "attackType": "bullet",
     "stackable": true,
-    "maxStacks": 2
+    "maxStacks": 1,
+    "tier": 1,
+    "upgradesTo": "bullet_pierce_2",
+    "dependentOn": [
+      {
+        "ids": [
+          {
+            "id": "polygon_upgrade",
+            "minStacks": 1
+          }
+        ]
+      }
+    ]
+  },
+  "bullet_pierce_2": {
+    "id": "bullet_pierce_2",
+    "name": "Piercing Shot II",
+    "description": "Bullets pierce +1 enemies",
+    "rarity": "epic",
+    "type": "stat_modifier",
+    "cost": 20,
+    "target": "bullet",
+    "stat": "pierce",
+    "value": 1,
+    "attackType": "bullet",
+    "stackable": true,
+    "maxStacks": 1,
+    "tier": 2,
+    "dependentOn": [
+      {
+        "ids": [
+          {
+            "id": "polygon_upgrade",
+            "minStacks": 2
+          }
+        ]
+      },
+      {
+        "ids": [
+          {
+            "id": "bullet_pierce_1",
+            "minStacks": 1
+          }
+        ]
+      }
+    ]
   },
   "bullet_size_1": {
     "id": "bullet_size_1",
@@ -363,7 +408,9 @@
       "charges": 1,
       "cooldown": 1500,
       "cooldownStat": "dashCooldown"
-    }
+    },
+    "tier": 1,
+    "upgradesTo": "double_dash"
   },
   "dash_cooldown_1": {
     "id": "dash_cooldown_1",
@@ -480,13 +527,26 @@
     "cost": 20,
     "effect": "double_dash",
     "stackable": false,
+    "tier": 2,
     "dependentOn": [
       {
         "ids": [
-          "dash_ability"
+          {
+            "id": "dash_ability",
+            "minStacks": 1
+          }
+        ]
+      },
+      {
+        "ids": [
+          {
+            "id": "polygon_upgrade",
+            "minStacks": 2
+          }
         ]
       }
-    ]
+    ],
+    "upgradesTo": "triple_dash"
   },
   "explosion_damage_1": {
     "id": "explosion_damage_1",
@@ -505,8 +565,7 @@
     "dependentOn": [
       {
         "ids": [
-          "explosive_bullets",
-          "explosion_on_kill"
+          "explosive_bullets"
         ]
       }
     ]
@@ -528,8 +587,7 @@
     "dependentOn": [
       {
         "ids": [
-          "explosive_bullets",
-          "explosion_on_kill"
+          "explosive_bullets"
         ]
       }
     ]
@@ -551,8 +609,7 @@
     "dependentOn": [
       {
         "ids": [
-          "explosive_bullets",
-          "explosion_on_kill"
+          "explosive_bullets"
         ]
       }
     ]
@@ -574,8 +631,7 @@
     "dependentOn": [
       {
         "ids": [
-          "explosive_bullets",
-          "explosion_on_kill"
+          "explosive_bullets"
         ]
       }
     ]
@@ -597,8 +653,7 @@
     "dependentOn": [
       {
         "ids": [
-          "explosive_bullets",
-          "explosion_on_kill"
+          "explosive_bullets"
         ]
       }
     ]
@@ -612,7 +667,14 @@
     "cost": 20,
     "effect": "explode_on_kill",
     "effectValue": 10,
-    "stackable": false
+    "stackable": false,
+    "dependentOn": [
+      {
+        "ids": [
+          "explosive_bullets"
+        ]
+      }
+    ]
   },
   "explosion_radius": {
     "id": "explosion_radius",
@@ -630,8 +692,7 @@
     "dependentOn": [
       {
         "ids": [
-          "explosive_bullets",
-          "explosion_on_kill"
+          "explosive_bullets"
         ]
       }
     ]
@@ -1372,17 +1433,29 @@
     "cost": 40,
     "effect": "triple_dash",
     "stackable": false,
+    "tier": 3,
     "dependentOn": [
       {
         "ids": [
-          "double_dash"
+          {
+            "id": "double_dash",
+            "minStacks": 1
+          }
+        ]
+      },
+      {
+        "ids": [
+          {
+            "id": "polygon_upgrade",
+            "minStacks": 4
+          }
         ]
       }
     ]
   },
   "vampirism_1": {
     "id": "vampirism_1",
-    "name": "Vampirism",
+    "name": "Vampirism I",
     "description": "5% chance to heal for 2% of damage dealt. Upgrade to increase chance.",
     "rarity": "rare",
     "type": "effect",
@@ -1390,11 +1463,13 @@
     "effect": "lifesteal",
     "effectValue": 0.05,
     "stackable": true,
-    "maxStacks": 5
+    "maxStacks": 5,
+    "tier": 1,
+    "upgradesTo": "vamprism_2"
   },
   "vampirism_2": {
     "id": "vampirism_2",
-    "name": "Vampirism",
+    "name": "Vampirism II",
     "description": "5% chance to heal for 5% of damage dealt. Upgrade to increase chance.",
     "rarity": "epic",
     "type": "effect",
@@ -1402,11 +1477,31 @@
     "effect": "lifesteal",
     "effectValue": 0.05,
     "stackable": false,
-    "maxStacks": 3
+    "maxStacks": 3,
+    "tier": 2,
+    "upgradesTo": "vampirism_3",
+    "dependentOn": [
+      {
+        "ids": [
+          {
+            "id": "vampirism_1",
+            "minStacks": 3
+          }
+        ]
+      },
+      {
+        "ids": [
+          {
+            "id": "polygon_upgrade",
+            "minStacks": 2
+          }
+        ]
+      }
+    ]
   },
   "vampirism_3": {
     "id": "vampirism_3",
-    "name": "Vampirism",
+    "name": "Vampirism III",
     "description": "5% chance to heal for 15% of damage dealt. Upgrade to increase chance.",
     "rarity": "legendary",
     "type": "effect",
@@ -1414,6 +1509,25 @@
     "effect": "lifesteal",
     "effectValue": 0.05,
     "stackable": false,
-    "maxStacks": 2
+    "maxStacks": 2,
+    "tier": 3,
+    "dependentOn": [
+      {
+        "ids": [
+          {
+            "id": "vampirism_2",
+            "minStacks": 1
+          }
+        ]
+      },
+      {
+        "ids": [
+          {
+            "id": "polygon_upgrade",
+            "minStacks": 3
+          }
+        ]
+      }
+    ]
   }
 }

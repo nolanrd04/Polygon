@@ -1,8 +1,9 @@
 import { Upgrade, type UpgradeDef, type UpgradeContext } from '../Upgrade'
 import { UpgradeModifierSystem } from '../../systems/upgrades/UpgradeModifierSystem'
-import { RarityID, UpgradeTypeID, UpgradeTargetID, UpgradeStatID, IconID } from '../../data/ID'
+import { RarityID, UpgradeTypeID, UpgradeTargetID, UpgradeStatID, SoundID, IconID } from '../../data/ID'
 import { SparkParticle } from '../../../game/entities/particles/BasicParticles'
 import { Particle } from '../../../game/entities/particles/Particle'
+import { getDefaultVolume } from '../../../game/core/AudioRegistry'
 
 export const HealAbilityDef: UpgradeDef = {
   id: "heal_ability",
@@ -45,6 +46,15 @@ export class HealAbility extends Upgrade {
       this.def.effectValue!
     )
     ctx.gameManager.heal(stats.maxHealth * fraction)
+    const scene = ctx.scene ?? null
+    if (scene) {
+
+      if (scene.sound.isPlaying(SoundID.PlayerHeal))
+      {
+        scene.sound.stopByKey(SoundID.PlayerHeal)
+      }
+      scene.sound.play(SoundID.PlayerHeal, { volume: getDefaultVolume(SoundID.PlayerHeal) })
+    }
 
     if (ctx.player) {
       Particle.Burst(SparkParticle, ctx.player.x, ctx.player.y, Phaser.Math.Between(8, 12), {

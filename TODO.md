@@ -27,6 +27,9 @@
 - [ ] Spinner
 - [ ] Healer
 - [ ] Controller
+- [ ] Viral (bullets inflict plague debuffs. Inflicts a base damage then damage over time. upgrade the debuff effects, spread, duration, etc.)
+- [ ] Melee: player does contact damage. Need to focus on healing and life regen. Player can scale size, and get buffs that can absorb enemy health to buff the player further, temporarilly.
+- [ ] 
 
 ## Sounds
 - [ DONE ] Ability sound effects (dash, shield, etc)
@@ -57,12 +60,14 @@
 - [x] Healing refactor upgrade: Increase insta heal amount (percentage based)
 - [x] Healing refactor: change vampirism to heal per chance. upgrades increase chance but not value
 - [ ] Healing refactor: New upgrade: syphon. Syphon will heal a killed enemy for x amount on kill.
+- [ ] Radial healing: manual heal will apply healing to nearby allies in a radius. Radius upgradeable
+- [ ] Healing aura: manual heal spawns a ring of healing aura that heals allies inside of it over time. Upgradable
 
 ## Visuals
 - [x] Implement 'dusts' (see terraria)
 - [ ~ ] Ensure settings actually work
 - [ ] Add color customization for the player
-- [ DONE ] Lighting
+- [x] Lighting
 
 ## Bullet upgrades (future)
 ### tier 2 variant upgrade ideas
@@ -146,7 +151,14 @@ Design: one variable per setting (`MONGODB_URL`, `API_TARGET`, ...), no `PRODUCT
 # Anti-cheat
 - [ ] Movement validation: tighten how small speed overages are treated for players with dash upgrades, so sustained overage always has to be explained by dash charges. Measure honest sample noise first.
 - [ ] Buff-aware validation: movement, fire rate and damage checks account for server-granted buffs (buff system phase 6).
-- Damage validation (`_validate_damage` in wave_service.py) currently assumes bullet attack type only. When flame/laser/spinner/zapper are implemented, each will need its own damage profile accounted for in `calculate_minimum_damage_required`.
+- [ ] Damage validation (`_validate_damage` in wave_service.py) currently assumes bullet attack type only. When flame/laser/spinner/zapper are implemented, each will need its own damage profile accounted for in `calculate_minimum_damage_required`.
+- [ ] Track player health vs damage taken. Should even out to track when they should die
+- [ ] Track player healing. We need to know if the player should of died, but healing and damage happen over time so we cant just use an accumulator. We probably need methods for healing, which allows us to implement a bleeding debuff to stop healing.
+- [ ] For damage reduction buffs and upgrades, we need to account for that in the equation we decide for #2. Not sure how to do that yet.
+# Player progression
+
+- [ ] account-based player progression so the player can level up and unlock new attacks, difficulties, and upgrades.
+- [ ] An in-game currency for purchasing upgrades
 
 # Security
 

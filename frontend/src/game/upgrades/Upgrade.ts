@@ -71,6 +71,10 @@ export interface UpgradeDef {
 
   // Curse
   curse?: boolean
+
+  // TODO: purchase this item to unlock it in the pool. Need to add xp system first.
+  unlocked?: boolean
+  unlockCost?: number
 }
 
 /**

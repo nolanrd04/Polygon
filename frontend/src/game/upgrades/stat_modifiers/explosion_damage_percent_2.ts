@@ -15,7 +15,7 @@ export const ExplosionDamagePercent2Def: UpgradeDef = {
   specificAttackType: "bullet",
   stackable: true,
   maxStacks: 3,
-  dependentOn: [{ ids: ["explosive_bullets", "explosion_on_kill"] }],
+  dependentOn: [{ ids: ["explosive_bullets"] }],
   icon: IconID.RocketThruster
 }
 

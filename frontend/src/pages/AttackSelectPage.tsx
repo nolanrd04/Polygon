@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ATTACK_INFO, AttackType } from '../game/data/attackTypes'
-import { GiBullets, GiLaserBurst, GiLightningTrio, GiFlamethrower, GiBoltSaw } from 'react-icons/gi'
+import { GiBullets, GiLaserBurst, GiLightningTrio, GiSmallFire, GiBoltSaw, GiHealthPotion, GiConsoleController, GiBiohazard } from 'react-icons/gi'
 
 const ATTACK_ICONS: Record<AttackType, React.ReactNode> = {
   bullet: <GiBullets className="text-5xl" />,
   laser: <GiLaserBurst className="text-5xl" />,
   zapper: <GiLightningTrio className="text-5xl" />,
-  flamer: <GiFlamethrower className="text-5xl" />,
-  spinner: <GiBoltSaw className="text-5xl" />
+  flamer: <GiSmallFire className="text-5xl" />,
+  spinner: <GiBoltSaw className="text-5xl" />,
+  healer: <GiHealthPotion className="text-5xl" />,
+  controller: <GiConsoleController className="text-5xl" />,
+  plagueBringer: <GiBiohazard className="text-5xl" />
 }
 
 const ATTACK_COLORS: Record<AttackType, string> = {
@@ -16,6 +19,9 @@ const ATTACK_COLORS: Record<AttackType, string> = {
   laser: 'border-cyan-500 hover:bg-cyan-900/30 text-cyan-500',
   zapper: 'border-yellow-500 hover:bg-yellow-900/30 text-yellow-500',
   flamer: 'border-orange-500 hover:bg-orange-900/30 text-orange-500',
+  controller: 'border-blue-500 hover:bg-blue-900/30 text-blue-500',
+  healer: 'border-green-500 hover:bg-green-900/30 text-green-500',
+  plagueBringer: 'border-red-500 hover:bg-red-900/30 text-red-500',
   spinner: 'border-purple-500 hover:bg-purple-900/30 text-purple-500'
 }
 
@@ -24,7 +30,10 @@ const ATTACK_SELECTED_COLORS: Record<AttackType, string> = {
   laser: 'border-cyan-400 bg-cyan-900/50 text-cyan-400',
   zapper: 'border-yellow-400 bg-yellow-900/50 text-yellow-400',
   flamer: 'border-orange-400 bg-orange-900/50 text-orange-400',
-  spinner: 'border-purple-400 bg-purple-900/50 text-purple-400'
+  spinner: 'border-purple-400 bg-purple-900/50 text-purple-400',
+  healer: 'border-green-400 bg-green-900/50 text-green-400',
+  controller: 'border-blue-400 bg-blue-900/50 text-blue-400',
+  plagueBringer: 'border-red-400 bg-red-900/50 text-red-400'
 }
 
 export default function AttackSelectPage() {
