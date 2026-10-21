@@ -59,6 +59,16 @@ fi
 
 echo ""
 
+# Validity check: every enemy has the enemies.json sections anti-cheat needs
+# (min_wave is hand-maintained, see enemy_defs_sync.py), and every spawn-table
+# type on both sides is a registered enemy. Nothing to --write; fix the data.
+# See scripts/check_enemy_data.py.
+if ! python3 "$REPO_ROOT/scripts/check_enemy_data.py"; then
+    STATUS=1
+fi
+
+echo ""
+
 # Parity check: frontend/version.json (the source of truth, inlined into the
 # bundle by vite) against the backend's copy and against the one version still
 # written by hand, the newest UpdateNotesPage.tsx entry.

@@ -4,8 +4,8 @@ here doesn't error at runtime - validate_enemy_spawn fails closed, so an
 honest kill gets flagged as cheating instead. Run it after adding an enemy
 or editing a spawn table. No DB, no app imports.
 
-Usage (from backend/):
-  venv/bin/python scripts/check_enemy_data.py
+Usage (from the repo root; also run by sync-check.sh):
+  python3 scripts/check_enemy_data.py
 
 Checks:
   - every enemy in base_health has base_damage, min_wave and score_chance
@@ -23,9 +23,9 @@ import re
 import sys
 from pathlib import Path
 
-BACKEND = Path(__file__).resolve().parent.parent
-DATA = BACKEND / "app" / "core" / "data"
-FRONTEND_DIFFICULTY = BACKEND.parent / "frontend" / "src" / "game" / "systems" / "difficulty"
+REPO_ROOT = Path(__file__).resolve().parent.parent
+DATA = REPO_ROOT / "backend" / "app" / "core" / "data"
+FRONTEND_DIFFICULTY = REPO_ROOT / "frontend" / "src" / "game" / "systems" / "difficulty"
 
 REQUIRED_SECTIONS = ["base_damage", "min_wave", "score_chance"]
 OPTIONAL_SECTIONS = ["bundle_drop_chance", "bundle_drop_max", "splits_into", "spawn_families"]
@@ -78,7 +78,8 @@ def main():
 
     for error in errors:
         print(error)
-    print(f"{len(errors)} problem(s)" if errors else "Enemy data OK")
+    print(f"{len(errors)} enemy data problem(s)" if errors
+          else f"OK - {len(known)} enemies have complete data and every spawn-table type is known.")
     sys.exit(1 if errors else 0)
 
 

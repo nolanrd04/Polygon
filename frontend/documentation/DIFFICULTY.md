@@ -76,7 +76,7 @@ Key progressions:
 - Wave 25+: Super Octogons introduced.
 - Wave 28+: Super Diamonds introduced.
 
-The table is mirrored in the backend's `difficulty_normal.json`, and each type's first wave must match its `min_wave` in `enemies.json` (or anti-cheat flags honest kills). A `type` that isn't a registered enemy id silently never spawns. Run `backend/scripts/check_enemy_data.py` after editing this table.
+The table is mirrored in the backend's `difficulty_normal.json`, and each type's first wave must match its `min_wave` in `enemies.json` (or anti-cheat flags honest kills). A `type` that isn't a registered enemy id silently never spawns. `./sync-check.sh` checks both (via `scripts/check_enemy_data.py`) after editing this table.
 
 ### Boss waves
 
