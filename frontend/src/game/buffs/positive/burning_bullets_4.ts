@@ -14,6 +14,7 @@ export const BurningBullets4Def: BuffDef = {
   maxDuration: 8000,
   color: 0xff7a1a,
   icon: IconID.BurningBullets,
+  dotOnHit: { buff: BuffID.OnFire4, fraction: 0.05, duration: 8000 },
 }
 
 export class BurningBullets4 extends Buff {
@@ -21,10 +22,11 @@ export class BurningBullets4 extends Buff {
     projectile.buffFlags.add(this.id)
   }
 
-  // Non-stacking here: each hit tops the burn back up to 8 s instead of piling on.
-  onProjectileHit(_projectile: Projectile, target: BuffHost): void {
-    const baseDmg = -OnFire4Def.stats![0].value
-    const burnTick = Math.max(baseDmg, _projectile.damage * 0.05)
-    target.AddBuff(BuffID.OnFire4, 8000, { stacking: false, stats: {[BuffStatID.LifeRegen]: -burnTick} })
+  // Non-stacking here: each hit tops the burn back up to its full duration instead of piling on.
+  onProjectileHit(projectile: Projectile, target: BuffHost): void {
+    const { buff, fraction, duration } = BurningBullets4Def.dotOnHit!
+    const baseDmg = -OnFire4Def.stats!.find(e => e.stat === BuffStatID.LifeRegen)!.value
+    const burnTick = Math.max(baseDmg, projectile.damage * fraction)
+    target.AddBuff(buff, duration, { stacking: false, stats: {[BuffStatID.LifeRegen]: -burnTick} })
   }
 }

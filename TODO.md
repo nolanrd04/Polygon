@@ -18,14 +18,14 @@
 - [ DONE ] First boss phase 2: dashes → idle → fixed-direction rapid-fire bullet storm → dashes → random teleport 
 
 ## Attacks
-- [ ] Laser
--  [ ] Zapper
+- [ ] **Laser:** slower hitscan-based projectile
+-  [ ] **Zapper**: slower chain-damaging and high-veloctiy projectile
 - [ ] Zapper (**variant: lightning rod**: *still shoots out normal bolts but for each polygon side, the same number of nearest enemies get shocked by a chain reaction lightning bolt*; **-> lord of thunder**: *lightning bolts now have a 50% chance to spawn but attack 3x as fast, and one will periodically spawn on the player to attack enemies nearby.*; -> **mjolnir**: *a lightning-charged hammer now circles the player and zaps nearby enemies. Hammer colisions spawn multiple thunderbolts.*)
 
-- [ ] Flamer
+- [ ] Flamer: closer-range, wide-spread, debuff-inflicting projectiles
 
-- [ ] Spinner
-- [ ] Healer
+- [ ] Spinner: 
+- [ ] Healer: slower-firing projectiles with healing abilities
 - [ ] Controller
 - [ ] Viral (bullets inflict plague debuffs. Inflicts a base damage then damage over time. upgrade the debuff effects, spread, duration, etc.)
 - [ ] Melee: player does contact damage. Need to focus on healing and life regen. Player can scale size, and get buffs that can absorb enemy health to buff the player further, temporarilly.
@@ -45,8 +45,14 @@
 - [x] Burning: does damage over time. Damage and time dependent on rarity.
 - [ ] Bleeding: prevent healing for a time. Time dependent on rarity.
 
-## Pylons
-- [ ] Destructible environment objects that grant buffs/debuffs to nearby enemies/players
+## Map Building (large scope)
+- [ ] Pylon: Destructible environment objects that grant buffs/debuffs to nearby enemies/players
+- [ ] Farms that can generate points for the players. Upgradeable and placeable
+- [ ] Turrets to defend pylons/farms. Upgradeable and placeable
+- [ ] Constructable polygons for map control
+- [ ] A way to edit the map for building in between waves
+- [ ] IMPORTANT: maybe we just have ONLY pylons? Then we can upgrade individual pylons to have different abilities, like turret abilites, structure abilities, resource abilities, buff/debuff abilities, etc? this might be the way to go.
+- [ ] 
 
 ## Upgrades/Bundles
 - [x] Make enemies drop upgrade bundles
@@ -68,6 +74,11 @@
 - [ ~ ] Ensure settings actually work
 - [ ] Add color customization for the player
 - [x] Lighting
+
+## Score system
+- [ ] enemies drop different tiered orbs (common - legendary). Orbs completely replace the current score system
+- [ ] new shop for making purchases with orbs.
+- [ ] Purchases include rerolls, upgrades, buildables, and more
 
 ## Bullet upgrades (future)
 ### tier 2 variant upgrade ideas

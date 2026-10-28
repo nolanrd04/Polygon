@@ -37,7 +37,7 @@ All recording methods guard against post-death calls — if `GameManager.getPlay
 Called by `WaveValidationService.completeWave()` after `WaveManager` signals the wave is done. The payload includes the wave token plus all accumulated telemetry:
 
 ```
-token, wave, kills, total_damage, hits, current_health,
+token, wave, kills, total_damage, hits, dot_damage, current_health,
 damage_taken, frame_samples, enemy_deaths, upgrades_used,
 points_earned, shots_fired, shot_frames, wave_start_frame, is_death
 ```

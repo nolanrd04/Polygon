@@ -29,6 +29,12 @@ export interface FrameSample {
   }
 }
 
+/** Hits fired with one buff signature (Projectile.buffSignature). */
+export interface HitBucket {
+  primary: number
+  explosion: number
+}
+
 export interface EnemyDeath {
   type: string
   x: number
@@ -43,9 +49,10 @@ export class WaveValidationService {
   private frameSamples: FrameSample[] = []
   private enemyDeaths: EnemyDeath[] = []
   private totalKills: number = 0
-  private totalDamage: number = 0
-  private primaryHits: number = 0
-  private explosionHits: number = 0
+  private totalDamage: number = 0  // hit damage only; DoT is added when the wave is sent
+  private hits: Record<string, HitBucket> = {}
+  // Unrounded: one DoT tick is a fraction of a point, so rounding each would drop it.
+  private dotDamage: number = 0
   private damageTaken: number = 0
   private pointsEarnedThisWave: number = 0
   private shotsFired: number[] = []  // ms since wave start, one per cooldown-gated Player.shoot() call
@@ -162,8 +169,8 @@ export class WaveValidationService {
       this.enemyDeaths = []
       this.totalKills = 0
       this.totalDamage = 0
-      this.primaryHits = 0
-      this.explosionHits = 0
+      this.hits = {}
+      this.dotDamage = 0
       this.damageTaken = 0
       this.pointsEarnedThisWave = 0
       this.shotsFired = []
@@ -204,8 +211,8 @@ export class WaveValidationService {
       this.enemyDeaths = []
       this.totalKills = 0
       this.totalDamage = 0
-      this.primaryHits = 0
-      this.explosionHits = 0
+      this.hits = {}
+      this.dotDamage = 0
       this.damageTaken = 0
       this.pointsEarnedThisWave = 0
       this.shotsFired = []
@@ -269,18 +276,19 @@ export class WaveValidationService {
   /**
    * Record damage dealt
    */
-  recordDamage(damage: number, source: 'primary' | 'explosion') {
+  recordDamage(damage: number, source: 'primary' | 'explosion' | 'dot', signature: string) {
     // GUARD: Don't track wave stats after death
     if (GameManager.getPlayerStats().isDead) {
       return
     }
 
-    if (source === 'explosion') {
-      this.explosionHits++
-    } else {
-      this.primaryHits++
+    if (source === 'dot') {
+      this.dotDamage += damage
+      return
     }
 
+    const bucket = this.hits[signature] ??= { primary: 0, explosion: 0 }
+    bucket[source]++
     this.totalDamage += Math.round(damage)
   }
 
@@ -383,8 +391,9 @@ export class WaveValidationService {
         token: this.waveToken,
         wave: waveNumber,
         kills: this.totalKills,
-        total_damage: this.totalDamage,
-        hits: { primary: this.primaryHits, explosion: this.explosionHits },
+        total_damage: this.totalDamage + Math.round(this.dotDamage),
+        hits: this.hits,
+        dot_damage: Math.round(this.dotDamage),
         current_health: currentHealth,
         damage_taken: this.damageTaken,
         frame_samples: this.frameSamples,
@@ -705,8 +714,8 @@ export class WaveValidationService {
       enemyDeaths: this.enemyDeaths.length,
       totalKills: this.totalKills,
       totalDamage: this.totalDamage,
-      primaryHits: this.primaryHits,
-      explosionHits: this.explosionHits,
+      hits: this.hits,
+      dotDamage: this.dotDamage,
       damageTaken: this.damageTaken,
       hasToken: !!this.waveToken
     }

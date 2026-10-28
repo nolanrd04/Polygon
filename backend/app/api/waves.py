@@ -2,7 +2,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.core.database import get_database
 from app.core.security import get_current_user
@@ -46,8 +46,11 @@ class WaveCompleteRequest(BaseModel):
     token: str
     wave: int
     kills: int
-    total_damage: int
-    hits: HitCounts = Field(default_factory=HitCounts)
+    total_damage: int  # hits + DoT
+    # Hit counts keyed by the projectile's buff signature (sorted, comma-joined
+    # damage/DoT buff ids active at fire time; "" for none).
+    hits: Dict[str, HitCounts] = Field(default_factory=dict, max_length=64)
+    dot_damage: int = Field(default=0, ge=0)
     current_health: float
     damage_taken: int = Field(default=0, ge=0)
     frame_samples: List[FrameSample]
@@ -63,6 +66,14 @@ class WaveCompleteRequest(BaseModel):
     # buffs start here. Bounded server-side, see BuffTimeline.from_grants.
     wave_start_frame: Optional[int] = Field(default=None, ge=0)
     is_death: bool = Field(default=False)
+
+    @field_validator("hits", mode="before")
+    @classmethod
+    def _accept_unbucketed_hits(cls, value: Any) -> Any:
+        # A tab loaded before buff buckets shipped still sends {primary, explosion}.
+        if isinstance(value, dict) and value and all(isinstance(v, int) for v in value.values()):
+            return {"": value}
+        return value
 
 
 class WaveCompleteResponse(BaseModel):
@@ -195,8 +206,8 @@ async def complete_wave(
 
     This endpoint performs comprehensive anti-cheat validation:
     - Token validity (not expired, not reused)
-    - Player movement (frame-by-frame, 10% tolerance)
-    - Damage dealt vs enemy health requirements
+    - Player movement (frame-by-frame, small noise tolerance)
+    - Damage dealt vs enemy health requirements and per-buff-bucket hit ceilings
     - Kill counts vs expected spawns
     - Only allowed upgrades were used
 
@@ -209,7 +220,8 @@ async def complete_wave(
         "wave": request.wave,
         "kills": request.kills,
         "total_damage": request.total_damage,
-        "hits": request.hits.model_dump(),
+        "hits": {sig: h.model_dump() for sig, h in request.hits.items()},
+        "dot_damage": request.dot_damage,
         "current_health": request.current_health,
         "damage_taken": request.damage_taken,
         "frame_samples": [f.model_dump() for f in request.frame_samples],

@@ -14,6 +14,19 @@ export interface BuffStatEffect {
 }
 
 /**
+ * A DoT debuff a projectile hit applies (Burning Bullets, Poison Tipped
+ * Rounds). Each tick deals max(the debuff's own LifeRegen, fraction × the
+ * projectile's damage) per second, and a hit refreshes rather than adds.
+ * On the def so the backend's DoT ceiling reads the same numbers.
+ */
+export interface DotOnHit {
+  buff: BuffID
+  fraction: number
+  /** ms */
+  duration: number
+}
+
+/**
  * Declarative metadata for one buff. Must stay JSON-serializable (no
  * functions, no class references), like UpgradeDef, so the backend can read
  * the numbers for wave validation.
@@ -43,6 +56,8 @@ export interface BuffDef {
   tintStrength?: number
   /** Applied every tick by the default applyStats(), so pure stat buffs need no class body. */
   stats?: BuffStatEffect[]
+  /** Read by the buff's own onProjectileHit; see DotOnHit. */
+  dotOnHit?: DotOnHit
 }
 
 /** Per-stat values for one application. Only stats the def declares are used. */

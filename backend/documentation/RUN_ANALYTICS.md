@@ -70,7 +70,8 @@ GameRun (collection: game_runs)
 
 WaveSnapshot (embedded, one per completed wave)
   wave_number, wave_duration_seconds, game_version
-  damage_dealt, damage_taken, kills, shots_fired, hits_primary, hits_explosion
+  damage_dealt (hits + DoT), damage_dot, damage_taken, kills, shots_fired,
+  hits_primary, hits_explosion (summed over buff buckets)
   player_health_start, player_health_end, player_max_health,
   player_speed, player_polygon_sides, attack_type
   player_projectile_damage, player_explosion_damage

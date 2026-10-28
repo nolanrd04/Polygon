@@ -9,7 +9,7 @@ was issued), the same clock BuffContainer counts durations in.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, Iterable, List, Optional, Tuple
 
 from app.core.buff_data import LOGIC_HZ, get_buff, ms_to_ticks
 from app.models.flagged_wave import FlagReason
@@ -106,16 +106,43 @@ class BuffTimeline:
             windows.append(_Window(start_frame, start_frame + ticks, values))
         return None
 
-    def apply(self, stat: str, base: float, frame_from: int, frame_to: int) -> float:
+    def together(self, buff_ids: Iterable[str]) -> List[Tuple[int, int]]:
+        """
+        The frame ranges [start, end] where every listed buff was active at
+        once. Empty if any of them was never granted. Used to check a damage
+        bucket's signature, which the client stamps at fire time.
+        """
+        ranges: Optional[List[Tuple[int, int]]] = None
+        for buff_id in buff_ids:
+            windows = [(w.start, w.end) for w in self._windows.get(buff_id, [])]
+            if ranges is None:
+                ranges = windows
+                continue
+            ranges = [
+                (max(a_start, b_start), min(a_end, b_end))
+                for a_start, a_end in ranges
+                for b_start, b_end in windows
+                if max(a_start, b_start) <= min(a_end, b_end)
+            ]
+        return sorted(ranges or [])
+
+    def apply(
+        self, stat: str, base: float, frame_from: int, frame_to: int,
+        buff_ids: Optional[Iterable[str]] = None,
+    ) -> float:
         """
         The highest value `stat` reaches at any frame in [frame_from, frame_to],
         with the client's formula (base + Σadd) × (1 + Σmult). Only positive
         values count: a ceiling should never shrink because a debuff might
-        have been active.
+        have been active. `buff_ids` limits it to those buffs (a damage
+        bucket's signature); the server's windows run a little long, so an
+        unfiltered query could credit a buff the projectile never had.
         """
+        only = set(buff_ids) if buff_ids is not None else None
         overlapping = [
             (buff_id, w)
             for buff_id, windows in self._windows.items()
+            if only is None or buff_id in only
             for w in windows
             if w.values.get(stat, 0) > 0 and w.start <= frame_to and w.end >= frame_from
         ]

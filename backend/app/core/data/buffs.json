@@ -180,7 +180,12 @@
       ],
       "isDebuff": false,
       "stacking": true,
-      "maxDuration": 5000
+      "maxDuration": 5000,
+      "dotOnHit": {
+        "buff": "on_fire_1",
+        "fraction": 0.05,
+        "duration": 5000
+      }
     },
     "burning_bullets_2": {
       "id": "burning_bullets_2",
@@ -193,7 +198,12 @@
       ],
       "isDebuff": false,
       "stacking": true,
-      "maxDuration": 6000
+      "maxDuration": 6000,
+      "dotOnHit": {
+        "buff": "on_fire_2",
+        "fraction": 0.05,
+        "duration": 6000
+      }
     },
     "burning_bullets_3": {
       "id": "burning_bullets_3",
@@ -206,7 +216,12 @@
       ],
       "isDebuff": false,
       "stacking": true,
-      "maxDuration": 7000
+      "maxDuration": 7000,
+      "dotOnHit": {
+        "buff": "on_fire_3",
+        "fraction": 0.05,
+        "duration": 7000
+      }
     },
     "burning_bullets_4": {
       "id": "burning_bullets_4",
@@ -219,7 +234,12 @@
       ],
       "isDebuff": false,
       "stacking": true,
-      "maxDuration": 8000
+      "maxDuration": 8000,
+      "dotOnHit": {
+        "buff": "on_fire_4",
+        "fraction": 0.05,
+        "duration": 8000
+      }
     },
     "burning_bullets_5": {
       "id": "burning_bullets_5",
@@ -232,7 +252,12 @@
       ],
       "isDebuff": false,
       "stacking": true,
-      "maxDuration": 10000
+      "maxDuration": 10000,
+      "dotOnHit": {
+        "buff": "on_fire_5",
+        "fraction": 0.05,
+        "duration": 9000
+      }
     },
     "chilled_1": {
       "id": "chilled_1",
@@ -698,7 +723,12 @@
       ],
       "isDebuff": false,
       "stacking": true,
-      "maxDuration": 5000
+      "maxDuration": 5000,
+      "dotOnHit": {
+        "buff": "poison_1",
+        "fraction": 0.03,
+        "duration": 5000
+      }
     },
     "poison_tipped_rounds_2": {
       "id": "poison_tipped_rounds_2",
@@ -711,7 +741,12 @@
       ],
       "isDebuff": false,
       "stacking": true,
-      "maxDuration": 6000
+      "maxDuration": 6000,
+      "dotOnHit": {
+        "buff": "poison_2",
+        "fraction": 0.03,
+        "duration": 6000
+      }
     },
     "poison_tipped_rounds_3": {
       "id": "poison_tipped_rounds_3",
@@ -724,7 +759,12 @@
       ],
       "isDebuff": false,
       "stacking": true,
-      "maxDuration": 7000
+      "maxDuration": 7000,
+      "dotOnHit": {
+        "buff": "poison_3",
+        "fraction": 0.03,
+        "duration": 7000
+      }
     },
     "poison_tipped_rounds_4": {
       "id": "poison_tipped_rounds_4",
@@ -737,7 +777,12 @@
       ],
       "isDebuff": false,
       "stacking": true,
-      "maxDuration": 8000
+      "maxDuration": 8000,
+      "dotOnHit": {
+        "buff": "poison_4",
+        "fraction": 0.03,
+        "duration": 8000
+      }
     },
     "poison_tipped_rounds_5": {
       "id": "poison_tipped_rounds_5",
@@ -750,7 +795,12 @@
       ],
       "isDebuff": false,
       "stacking": true,
-      "maxDuration": 9000
+      "maxDuration": 9000,
+      "dotOnHit": {
+        "buff": "poison_5",
+        "fraction": 0.03,
+        "duration": 9000
+      }
     },
     "slowness_1": {
       "id": "slowness_1",

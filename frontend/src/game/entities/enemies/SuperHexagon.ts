@@ -73,6 +73,13 @@ export class SuperHexagon extends Enemy {
 
         const scene = this.scene as Phaser.Scene & { spawnProjectile: Function }
         scene.spawnProjectile(proj, this.x, this.y, _playerX, _playerY, 'enemy', this.id)
+
+        if (this.scene.sound.isPlaying(SoundID.EnemyShoot1))
+        {
+          this.scene.sound.stopByKey(SoundID.EnemyShoot1)
+        }
+          
+          this.scene.sound.play(SoundID.EnemyShoot1, { volume:  getDefaultVolume(SoundID.EnemyShoot1) })
       }
           // projectiles OLD
           /*
@@ -101,12 +108,6 @@ export class SuperHexagon extends Enemy {
           */
           // all sound calls should have this check to prevent "sound stacking"
           //
-          if (this.scene.sound.isPlaying(SoundID.EnemyShoot1))
-          {
-            this.scene.sound.stopByKey(SoundID.EnemyShoot1)
-          }
-          
-          this.scene.sound.play(SoundID.EnemyShoot1, { volume:  getDefaultVolume(SoundID.EnemyShoot1) })
           //
         }
   }

@@ -32,7 +32,8 @@ export interface GameEvents {
   'dev-clear-buff': string  // Dev-only: clear a buff from the player and every enemy
   'evolution-milestone': number  // Emitted every 6 waves with the current wave number
   'enemy-killed': { type: string; x: number; y: number }  // Wave validation tracking
-  'damage-dealt': { amount: number; source: 'primary' | 'explosion' }  // Wave validation tracking
+  // Wave validation tracking. `signature` is the projectile's buffSignature ('' for dot).
+  'damage-dealt': { amount: number; source: 'primary' | 'explosion' | 'dot'; signature: string }
   'upgrade-bundle': { x: number; y: number; bundleDropChance: number; forcedRarity?: number }
   'request-ability-state': void  // HUD polls; MainScene answers with the slots below
   // `bindingCount` is every registered ability, not just the owned ones: the

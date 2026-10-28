@@ -80,7 +80,7 @@ An abstract base class all enemy types extend. Handles physics spawning, sprite 
 | `effectiveDefense(penetration?)` | `defense` plus buff `Defense`, after penetration, floored at 0 — excess penetration never becomes bonus damage. |
 | `buffStat(stat, base)` | A stat after buffs, read from `buffTarget`. Every enemy-side buff read goes through this. |
 | `AddBuff(id, ms, options?)` / `HasBuff(id)` / `ClearBuff(id)` / `GetBuffTime(id)` | Buff API, routed through `buffTarget` (overridden by `ArrowHeadPart` to the shared-health owner). See [BUFFS.md](BUFFS.md). |
-| `takeBuffDamage(amount)` *(protected)* | Debuff damage: ignores defense, skips `OnHit` and the hit flash/sound. Calls `_die()` at 0 HP. |
+| `takeBuffDamage(amount)` *(protected)* | Debuff damage: ignores defense, skips `OnHit` and the hit flash/sound. Emits `damage-dealt` with `source: 'dot'`. Calls `_die()` at 0 HP. |
 
 ### Module exports
 

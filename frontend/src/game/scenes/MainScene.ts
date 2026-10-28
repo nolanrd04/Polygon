@@ -529,8 +529,8 @@ export class MainScene extends Phaser.Scene {
     })
 
     // WAVE VALIDATION: Track damage dealt
-    EventBus.on('damage-dealt', ({ amount, source }) => {
-      waveValidation.recordDamage(amount, source)
+    EventBus.on('damage-dealt', ({ amount, source, signature }) => {
+      waveValidation.recordDamage(amount, source, signature)
     })
 
     // -------- -------- -------- //
@@ -864,6 +864,13 @@ export class MainScene extends Phaser.Scene {
     if (shooter) {
       projectile.damageMultiplier *= shooter.buffStats.apply(BuffStatID.Damage, 1)
       shooter.buffs.dispatchModifyProjectileSpawn(projectile)
+    }
+    if (owner === 'player') {
+      projectile.buffSignature = this.player.buffs.getAll()
+        .filter(b => b.def.dotOnHit || b.statValue(BuffStatID.Damage) > 0)
+        .map(b => b.id)
+        .sort()
+        .join(',')
     }
 
     // Spawn the projectile

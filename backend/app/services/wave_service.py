@@ -331,8 +331,11 @@ class WaveService:
             token.wave_number,
             difficulty,
             wave_data.get("hits", {}),
+            wave_data.get("dot_damage", 0),
             authorized_upgrades_used,
-            len(shots_fired)
+            len(shots_fired),
+            wave_data.get("shot_frames", []),
+            buff_timeline
         )
         print(f"Damage validation flags: {len(damage_flags)}")
         flags.extend(damage_flags)
@@ -1041,12 +1044,18 @@ class WaveService:
 
         return True, picked, rolled_buffs, None
 
-    # Positive buffs the validators know how to credit (movement and fire rate
-    # read BuffTimeline). Debuffs only weaken the player, so they're always
-    # allowed. Damage and DoT buffs stay offline-only until buff system step 3.
+    # Positive buffs the validators know how to credit (movement, fire rate
+    # and damage read BuffTimeline). Debuffs only weaken the player, so they're
+    # always allowed. Kept as a safety net: a new offensive buff stays
+    # offline-only until its validation exists.
     ONLINE_SAFE_BUFFS = {
         "mending", "toughness_1", "toughness_2",
         "haste_1", "haste_2", "haste_3", "frenzy",
+        "wrath_1", "wrath_2", "wrath_3", "wrath_4", "wrath_5",
+        "burning_bullets_1", "burning_bullets_2", "burning_bullets_3",
+        "burning_bullets_4", "burning_bullets_5",
+        "poison_tipped_rounds_1", "poison_tipped_rounds_2", "poison_tipped_rounds_3",
+        "poison_tipped_rounds_4", "poison_tipped_rounds_5",
     }
 
     def _pick_bundle_buff(
@@ -1233,12 +1242,19 @@ class WaveService:
         enemy_deaths: List[Dict[str, Any]],
         wave: int,
         difficulty: Difficulty,
-        hits: Dict[str, int],
+        hits: Dict[str, Dict[str, int]],
+        dot_damage: int,
         upgrades_used: List[str],
-        shot_count: int
+        shot_count: int,
+        shot_frames: List[int],
+        buff_timeline: BuffTimeline
     ) -> List[FlagReason]:
         """
-        Validate damage dealt is reasonable.
+        Validate damage dealt is reasonable. reported_damage is hits + DoT.
+        `hits` is bucketed by the buff signature each projectile was fired
+        with (Projectile.buffSignature): each bucket's buffs must have been
+        granted and active together, and its hits are bounded by the shots
+        fired while they were. Shots without matching frames credit no buffs.
         NOTE: Currently assumes bullet attack type. When other attack types
         (flame, laser, spinner, zapper) are added, minimum-damage calculation
         will need to account for their damage profiles.
@@ -1271,19 +1287,90 @@ class WaveService:
         # explosion independently damages every enemy in its radius) — so the
         # ceiling is bounded by how many hits were reported and the max
         # per-hit damage the player's build could produce, not by enemy stats.
-        primary_hits = hits.get("primary", 0)
-        explosion_hits = hits.get("explosion", 0)
         max_damage_per_hit = self._calculate_max_damage_per_hit(upgrades_used)
-
+        max_primary = max_damage_per_hit["max_primary"]
+        max_explosion = max_damage_per_hit["max_explosion"]
+        max_hits_per_shot = self._calculate_max_hits_per_shot(upgrades_used)
         tolerance = 1.2  # Same overkill margin as the floor check above.
-        damage_ceiling = tolerance * (
-            primary_hits * max_damage_per_hit["max_primary"]
-            + explosion_hits * max_damage_per_hit["max_explosion"]
-        )
+        frames = shot_frames if len(shot_frames) == shot_count else []
 
-        if reported_damage > damage_ceiling:
+        def is_damage_buff(buff_id: str) -> bool:
+            # Same rule as the client's signature filter in MainScene.spawnProjectile.
+            buff = get_buff(buff_id)
+            if not buff or buff.get("isDebuff"):
+                return False
+            return "dotOnHit" in buff or any(
+                e["stat"] == "damage" and e["value"] > 0 for e in buff.get("stats", [])
+            )
+
+        def dot_per_hit(buff_ids: List[str], hit_damage: float) -> float:
+            # A hit refreshes its DoT to the full duration (non-stacking), so
+            # one hit adds at most tick × duration. See BurningBullets1.onProjectileHit.
+            total = 0.0
+            for buff_id in buff_ids:
+                dot = get_buff(buff_id).get("dotOnHit")
+                if not dot:
+                    continue
+                dot_def = get_buff(dot["buff"]) or {}
+                base = max(
+                    (-e["value"] for e in dot_def.get("stats", []) if e["stat"] == "lifeRegen"),
+                    default=0.0,
+                )
+                total += max(base, dot["fraction"] * hit_damage) * dot["duration"] / 1000.0
+            return total
+
+        damage_ceiling = 0.0
+        dot_ceiling = 0.0
+        primary_hits = 0
+        for signature, bucket in hits.items():
+            bucket_primary = bucket.get("primary", 0)
+            bucket_explosion = bucket.get("explosion", 0)
+            primary_hits += bucket_primary
+            buff_ids = sorted({b for b in signature.split(",") if b})
+
+            multiplier = 1.0
+            if buff_ids:
+                ranges = buff_timeline.together(buff_ids) if all(map(is_damage_buff, buff_ids)) else []
+                if not ranges:
+                    # Credited at base damage below, so the ceiling stays honest.
+                    flags.append(FlagReason(
+                        category="damage",
+                        severity="high",
+                        description="Hits reported with damage buffs that weren't granted together",
+                        actual=signature,
+                    ))
+                    buff_ids = []
+                else:
+                    multiplier = max(
+                        buff_timeline.apply("damage", 1.0, start, end, buff_ids) for start, end in ranges
+                    )
+                    shots_in_window = sum(
+                        1 for f in frames if any(start <= f <= end for start, end in ranges)
+                    )
+                    max_bucket_hits = int(shots_in_window * max_hits_per_shot * tolerance) + 5
+                    if bucket_primary > max_bucket_hits:
+                        deviation = (bucket_primary - max_bucket_hits) / max_bucket_hits * 100
+                        flags.append(FlagReason(
+                            category="damage",
+                            severity="critical" if deviation > 100 else "high",
+                            description="Buffed hit count exceeds the shots fired while those buffs were active",
+                            expected=max_bucket_hits,
+                            actual=bucket_primary,
+                            deviation_percent=deviation
+                        ))
+
+            damage_ceiling += tolerance * multiplier * (
+                bucket_primary * max_primary + bucket_explosion * max_explosion
+            )
+            dot_ceiling += (
+                bucket_primary * dot_per_hit(buff_ids, max_primary)
+                + bucket_explosion * dot_per_hit(buff_ids, max_explosion)
+            )
+
+        hit_damage = reported_damage - dot_damage
+        if hit_damage > damage_ceiling:
             deviation = (
-                ((reported_damage - damage_ceiling) / damage_ceiling) * 100
+                ((hit_damage - damage_ceiling) / damage_ceiling) * 100
                 if damage_ceiling > 0 else 100.0
             )
             flags.append(FlagReason(
@@ -1291,7 +1378,20 @@ class WaveService:
                 severity="critical" if deviation > 100 else "high",
                 description="Damage dealt exceeds what the reported hits could produce",
                 expected=damage_ceiling,
-                actual=reported_damage,
+                actual=hit_damage,
+                deviation_percent=deviation
+            ))
+
+        # +1: the client rounds its DoT total once, at the end.
+        dot_ceiling = tolerance * dot_ceiling + 1
+        if dot_damage > dot_ceiling:
+            deviation = (dot_damage - dot_ceiling) / dot_ceiling * 100
+            flags.append(FlagReason(
+                category="damage",
+                severity="critical" if deviation > 100 else "high",
+                description="Damage over time exceeds what the reported DoT hits could produce",
+                expected=dot_ceiling,
+                actual=dot_damage,
                 deviation_percent=deviation
             ))
 
@@ -1301,7 +1401,6 @@ class WaveService:
         # tripping that blocking check first) times the max enemies one
         # discharge could hit given the player's build, so a cheater can't
         # just inflate the `hits` field directly to raise their own ceiling.
-        max_hits_per_shot = self._calculate_max_hits_per_shot(upgrades_used)
         max_possible_primary_hits = int(
             shot_count * max_hits_per_shot * tolerance
         ) + 5  # small flat buffer for rounding/edge hits
@@ -1865,7 +1964,7 @@ class WaveService:
                 key=lambda s: ["low", "medium", "high", "critical"].index(s)
             )
 
-        hits = wave_data.get("hits", {})
+        buckets = wave_data.get("hits", {}).values()
         # Theoretical damage output, not realized damage - see WaveSnapshot's
         # player_projectile_damage/player_explosion_damage docstring. Reuses
         # the anti-cheat ceiling calc (_calculate_max_damage_per_hit) instead
@@ -1887,8 +1986,9 @@ class WaveService:
             damage_taken=wave_data.get("damage_taken", 0),
             kills=wave_data.get("kills", 0),
             shots_fired=len(wave_data.get("shots_fired", [])),
-            hits_primary=hits.get("primary", 0),
-            hits_explosion=hits.get("explosion", 0),
+            damage_dot=wave_data.get("dot_damage", 0),
+            hits_primary=sum(b.get("primary", 0) for b in buckets),
+            hits_explosion=sum(b.get("explosion", 0) for b in buckets),
             player_health_start=existing_save.current_health,
             player_health_end=wave_data.get("current_health", existing_save.current_health),
             player_max_health=derived_stats["max_health"],

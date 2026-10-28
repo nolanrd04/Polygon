@@ -37,6 +37,7 @@ An abstract base class for all projectiles. Handles spawning, physics movement, 
 | `owner` | `'player'` or `'enemy'` |
 | `ownerId` | ID of the entity that spawned this projectile |
 | `buffFlags` | `Set<BuffID>` stamped by the shooter's buffs at spawn (`modifyProjectileSpawn`). Each id's `onProjectileHit` runs when this lands — see [BUFFS.md](BUFFS.md#projectile-stamps) |
+| `buffSignature` | Player projectiles: the damage/DoT buffs active at spawn, set by `MainScene.spawnProjectile`. Wave validation buckets hits by it — see [BUFFS.md](BUFFS.md#buff-signature) |
 | `doOldPositionTracking` | Opt-in flag for trail rendering |
 | `oldPositionX[]` / `oldPositionY[]` | Ring buffer of past positions |
 

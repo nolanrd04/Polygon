@@ -127,8 +127,9 @@ export class CollisionManager {
       console.log(`Collision damage: base=${baseDamage}, final=${finalDamage}, penetration=${projectile.penetration}`)
       killed = enemy.takeDamage(finalDamage, undefined, projectile.penetration)
       // Emit damage event for wave validation, tagged with which hit produced
-      // it so the backend can bound primary and explosion damage separately.
-      EventBus.emit('damage-dealt', { amount: finalDamage, source: projectile.damageSource })
+      // it and the buffs it was fired with, so the backend can bound each
+      // hit type and buff bucket separately.
+      EventBus.emit('damage-dealt', { amount: finalDamage, source: projectile.damageSource, signature: projectile.buffSignature })
 
       // React to the landed hit (lifesteal, etc.)
       UpgradeSystem.dispatchOnHitEnemy(projectile, enemy, finalDamage)

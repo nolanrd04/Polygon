@@ -93,7 +93,7 @@ A typed publish/subscribe bus used to decouple systems. All event names and thei
 | `request-ability-state` | — | HUD polls for ability state (every 100 ms from `GamePage`) |
 | `ability-state-update` | `{ slots: AbilitySlotState[] }` | `MainScene`'s answer, from `AbilitySystem.getSlots()` |
 | `activate-ability` | `string` | Mobile: an ability pad was tapped. `MainScene` calls `AbilitySystem.activate(id)` |
-| `damage-dealt` | `number` | Damage dealt to an enemy (wave validation) |
+| `damage-dealt` | `{ amount, source: 'primary' \| 'explosion' \| 'dot', signature }` | Damage dealt to an enemy (wave validation). `signature` is the projectile's `buffSignature` (`''` for DoT), see [BUFFS.md](BUFFS.md#buff-signature) |
 
 ### API
 

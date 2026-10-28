@@ -14,6 +14,7 @@ export const PoisonTippedRounds3Def: BuffDef = {
   maxDuration: 7000,
   color: 0x51f542,
   icon: IconID.PoisonTippedRounds,
+  dotOnHit: { buff: BuffID.Poison3, fraction: 0.03, duration: 7000 },
 }
 
 export class PoisonTippedRounds3 extends Buff {
@@ -21,10 +22,11 @@ export class PoisonTippedRounds3 extends Buff {
     projectile.buffFlags.add(this.id)
   }
 
-  // Non-stacking here: each hit tops the poison back up to 5 s instead of piling on.
-  onProjectileHit(_projectile: Projectile, target: BuffHost): void {
-    const baseDmg = -Poison3Def.stats![0].value
-    const poisonTick = Math.max(baseDmg, _projectile.damage * 0.03)
-    target.AddBuff(BuffID.Poison3, 7000, { stacking: false, stats: {[BuffStatID.LifeRegen]: -poisonTick} })
+  // Non-stacking here: each hit tops the poison back up to its full duration instead of piling on.
+  onProjectileHit(projectile: Projectile, target: BuffHost): void {
+    const { buff, fraction, duration } = PoisonTippedRounds3Def.dotOnHit!
+    const baseDmg = -Poison3Def.stats!.find(e => e.stat === BuffStatID.LifeRegen)!.value
+    const poisonTick = Math.max(baseDmg, projectile.damage * fraction)
+    target.AddBuff(buff, duration, { stacking: false, stats: {[BuffStatID.LifeRegen]: -poisonTick} })
   }
 }

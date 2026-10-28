@@ -59,7 +59,8 @@ class WaveSnapshot(BaseModel):
     game_version: Optional[str] = Field(default=None)
 
     # Combat output
-    damage_dealt: int = Field(default=0, ge=0)
+    damage_dealt: int = Field(default=0, ge=0)  # hits + DoT
+    damage_dot: int = Field(default=0, ge=0)  # the DoT part of damage_dealt
     damage_taken: int = Field(default=0, ge=0)
     kills: int = Field(default=0, ge=0)
     shots_fired: int = Field(default=0, ge=0)

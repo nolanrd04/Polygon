@@ -128,11 +128,15 @@ A def's `stats` values are fixed, so On Fire 5's `-10` burns the same on wave 1 
 ```ts
 // burning_bullets_5.ts — burn scales with the hit, with the def's value as a floor
 onProjectileHit(projectile: Projectile, target: BuffHost): void {
-  const base = -OnFire5Def.stats![0].value              // 10 HP/s
-  const burn = Math.max(base, projectile.damage * 0.1) // HP/s
-  target.AddBuff(BuffID.OnFire5, 10000, { stacking: false, stats: { [BuffStatID.LifeRegen]: -burn } })
+  const { buff, fraction, duration } = BurningBullets5Def.dotOnHit!    // on_fire_5, 0.05, 9000
+  const base = -OnFire5Def.stats!.find(e => e.stat === BuffStatID.LifeRegen)!.value  // 10 HP/s
+  const burn = Math.max(base, projectile.damage * fraction)             // HP/s
+  target.AddBuff(buff, duration, { stacking: false, stats: { [BuffStatID.LifeRegen]: -burn } })
 }
 ```
+
+- **Numbers go in `dotOnHit`.** A buff whose hits apply a DoT declares `dotOnHit: { buff, fraction, duration }` on its def instead of literals in the hook, so `buff_defs_sync.py` copies them to the backend's DoT ceiling.
+- **Find the stat by id**, not `stats![0]`: Poison's first stat is `MoveSpeed`.
 
 - **Watch the sign.** Burns are negative `LifeRegen`, so `Math.max(-10, -25)` picks the *weaker* burn. Do the math in positive HP/s and negate when passing it.
 - **Only declared stats.** An override for a stat the def doesn't list in `stats` is ignored.
@@ -196,6 +200,7 @@ Health is the one field that is fine to change directly, because it's a resource
 Negative life regen deals damage every tick, so it deliberately skips the normal hit path:
 
 - **Enemies** (`takeBuffDamage`): ignores `defense`, skips `OnHit`, the hit sound and the white flash. A kill returns `true` from `_updateBuffs`, and `MainScene` awards it through `awardPlayerKill()` (`systems/KillRewards.ts`). That is the same function `CollisionManager` uses for bullet kills, so a burn kill gives kill count, points, on-kill upgrade hooks and bundles exactly like a bullet kill
+  - Each tick also emits `damage-dealt` with `source: 'dot'`, counted as player damage (every enemy DoT comes from the player's bullets today; revisit if enemies ever debuff enemies). `WaveValidation` sums DoT unrounded, since one tick is a fraction of a point, and sends it as `dot_damage` (also included in `total_damage`)
 - **Player**: skips upgrade armor (`modifyPlayerHurt`), the shield, and the hurt flash/sound, but is still recorded with `waveValidation.recordDamageTaken`
 
 **`LifeRegen` has no base value**, so an `isMultiplier: true` regen stat on its own does nothing (`(0 + flat) × (1 + m)`); it only scales flat regen from other buffs. For "% of max HP" regen, add a flat amount computed from the host each tick in `updatePlayer` / `updateEnemy`, as `mending.ts` does.
@@ -236,8 +241,9 @@ export class BurningBullets1 extends Buff {
     projectile.buffFlags.add(this.id)
   }
 
-  onProjectileHit(_projectile: Projectile, target: BuffHost): void {
-    target.AddBuff(BuffID.OnFire1, 5000, { stacking: false })
+  onProjectileHit(projectile: Projectile, target: BuffHost): void {
+    const { buff, duration } = BurningBullets1Def.dotOnHit!
+    target.AddBuff(buff, duration, { stacking: false })  // the real file also scales the burn, see above
   }
 }
 ```
@@ -248,6 +254,10 @@ export class BurningBullets1 extends Buff {
 - **Shared instance.** The shooter's own buff instance may be gone when the shot lands, so `onProjectileHit` runs on the registry's `shared` instance. Don't read `this` state or `timeLeft` there; read numbers from `this.def`.
 - **Hit only.** It fires on a damaging hit that didn't kill (player shots) or any hit on the player (enemy shots). It doesn't fire when `OnHitNPC` returned `false`. AOE that is a real projectile (`BulletExplosion`) is stamped and dispatches like any shot; `enemy-explode` damage (enemy self-detonation) is not a projectile and never dispatches.
 - Child projectiles (explosions, pellets) spawn through `spawnProjectile` too, so they're stamped by the shooter's buffs at their own spawn time.
+
+### Buff signature
+
+`spawnProjectile` also stamps player projectiles with `buffSignature`: the sorted, comma-joined ids of the player's active buffs that have `dotOnHit` or a positive `Damage` stat (e.g. `"burning_bullets_3,wrath_1"`, `""` for none). Wrath works through `buffStats`, not `buffFlags`, so it needs this separate stamp. `damage-dealt` carries it, and `WaveValidation` counts hits per signature (`hits: { [signature]: { primary, explosion } }`). The server checks each signature against the buffs it granted (see Bundle drops). A new damage or DoT buff is picked up by the same rule on both sides.
 
 For one specific projectile class applying a debuff, override `Projectile.OnHitPlayer(player)` / `OnHitNPC(enemy)` (or `Enemy.OnHitPlayer(player)` for melee) in that class instead.
 
@@ -296,7 +306,7 @@ Only the player's buffs are shown; enemy buffs show through tint, particles and 
 Upgrade bundles can roll buffs. Roll rules are in [UPGRADE_BUNDLE.md](UPGRADE_BUNDLE.md#step-by-step-offlinesandbox).
 
 - **Who rolls:** offline/sandbox, `MainScene` rolls locally via `rollDrop`. Online, the server rolls the buff **and** its values (`collect_upgrade_bundle`) and the client applies exactly what `/waves/bundle-pickup` returns (`AddBuff(buff, duration, { stats })`). It never rolls locally
-- **Online-grantable buffs:** every debuff, plus Mending, Toughness 1/2, Haste 1–3 and Frenzy (`WaveService.ONLINE_SAFE_BUFFS`). Damage and DoT buffs stay offline-only until damage validation is buff-aware (buff plan step 3), since today's checks would flag honest players who had them. A positive slot whose tier has no online-safe buff grants nothing
+- **Online-grantable buffs:** every debuff, plus the positive buffs in `WaveService.ONLINE_SAFE_BUFFS` (currently all of them). The list is a safety net: a new offensive buff stays offline-only until validation knows how to credit it, since otherwise it would flag honest players. A positive slot whose tier has no online-safe buff grants nothing
 - **Whitelist:** `buffs/bundleDrops.ts` → `BUNDLE_BUFF_DROPS`. A buff only drops if it has an entry there. New buffs are **not** added automatically
 - **Duration:** each entry rolls uniformly between its `minDuration` and `maxDuration` (ms), defaulting to `DEFAULT_DROP_MIN_DURATION` / `DEFAULT_DROP_MAX_DURATION` (5–10 s). These are separate from the def's `maxDuration`, which is the stacking cap and still clips the result
 - **Custom rolls:** an entry can set `roll(drop, ctx)` returning `{ buff, duration, stats? }`, e.g. to scale a buff's duration or stats with the wave. There's no global scaling formula; each entry decides. `ctx` is `{ wave, difficultyId, upgrades }`, the only things the server also knows, so no live game state. Every `roll` must be hand-ported to `backend/app/core/buff_rolls.py` → `ROLLS` (keyed by BuffID), like `Normal.ts` → `difficulty/normal.py`. `sync-check.sh` fails on an entry with a `roll` but no port. A port that drifts only makes online and offline feel different. It can't cause a false flag, because validation reads the server's own rolled values
@@ -304,6 +314,8 @@ Upgrade bundles can roll buffs. Roll rules are in [UPGRADE_BUNDLE.md](UPGRADE_BU
 - **Between waves:** a buff from a bundle picked up while no wave is active is **held** (`MainScene.pendingBundleBuffs`) and applied on `wave-start`, with "(next wave)" on its pickup text. `stepLogic`, and so every buff timer, keeps running through the wave-complete screen and the shop, so applying it right away would let it run out there (and DoT debuffs would hurt in the shop). Held buffs are dropped on death
 - **Server ledger:** each online grant is stored on the wave token's `bundle_buffs` as `{ id, granted_frame, duration_ticks, stats, queued }`. `granted_frame` is the client's wave-validation frame counter (ticks since the token was issued, not since the wave started; the counter keeps running through the shop), capped at the ticks that can have passed since token issue. `queued` marks a between-wave pickup (`offer_open`), whose window starts at the wave's start frame instead. The client reports that frame as `wave_start_frame` with `/waves/complete` (`WaveValidation.markWaveStart`, called from `WaveManager.startNextWave`), and the server bounds it
 - **Buff-aware validation:** `backend/app/services/buff_timeline.py` → `BuffTimeline` rebuilds each grant's window from the ledger with `BuffContainer.add`'s rules (stacking, `maxDuration`, larger-magnitude stats), and `apply(stat, base, frame_from, frame_to)` returns the highest value a stat reaches in a frame range, with `BuffStats.apply`'s formula. Only positive values count. A mid-wave grant's window ends a little later, because the client only applies it when the pickup response arrives. Movement asks for `moveSpeed` per sample interval, and fire rate asks for `fireRate` between two shots (`shot_frames`, sent alongside the ms `shots_fired`). Speed and gaps stay in ms, since physics and the fire cooldown run on real time; frames only place things on the timeline
+- **Damage buckets:** for each hit bucket, `together(signature ids)` gives the frame ranges where all its buffs were active at once. If there are none (a buff that was never granted, or two that never overlapped), the wave is flagged and those hits count at base damage. Otherwise the bucket's per-hit ceiling uses `apply("damage", 1, start, end, buff_ids=signature)`. The filter matters because the server's windows run a little long, so an unfiltered query could credit a buff the projectiles never had. The bucket's primary hits are bounded by the shots fired inside those ranges (`shot_frames`)
+- **DoT ceiling:** a DoT hit refreshes rather than adds, so each hit in a bucket adds at most `max(base tick, fraction × max hit damage) × duration` per `dotOnHit` buff in its signature. `dot_damage` is checked against the sum, and the hit ceiling is checked against `total_damage − dot_damage`. The "damage suspiciously low" floor uses the full total, so DoT kills are covered
 
 ## Debugging
 
@@ -311,8 +323,8 @@ DevTools → **BUFFS** tab: set a duration, click **PLAYER** or **ENEMIES** (eve
 
 ## Not yet implemented
 
-Tracked in the buff plan (`handoffs/2026-10-09-buff-system-server-design.md`, steps 2–3): buff-aware damage validation, damage buckets per buff signature, and DoT tracking. Movement and fire rate already read the `BuffTimeline`. `Projectile.getOwner()` was deferred from phase 3; nothing needs it yet.
+`Projectile.getOwner()` was deferred from phase 3; nothing needs it yet.
 
-Until validation knows about buffs:
-- **damage-over-time damage is not reported as `damage-dealt`**, and `damage-dealt` reports the hit before enemy `DamageTaken` (Vulnerable) is applied. DoT kills still count, so enough of them can trip the "damage suspiciously low" floor;
-- Wrath, Burning Bullets and Poison Tipped Rounds would get an online wave flagged, which is why the server doesn't grant them yet (see Bundle drops). Any buff applied through DevTools online isn't on the server's ledger, so a speed or fire-rate buff from there can flag too.
+Known limits:
+- `damage-dealt` reports the hit before enemy `DamageTaken` (Vulnerable) is applied. Nothing puts Vulnerable on enemies outside DevTools today.
+- Any buff applied through DevTools online isn't on the server's ledger, so a speed, fire-rate, damage or DoT buff from there can flag.

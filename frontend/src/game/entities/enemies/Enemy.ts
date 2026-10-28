@@ -556,10 +556,12 @@ export abstract class Enemy implements BuffHost {
 
   /**
    * Damage from a debuff. Skips armor, OnHit and the hit flash/sound, which
-   * would otherwise fire every tick.
+   * would otherwise fire every tick. Reported as player damage: every enemy
+   * DoT today comes from the player's bullets.
    */
   protected takeBuffDamage(amount: number): boolean {
     this.health -= amount
+    EventBus.emit('damage-dealt', { amount, source: 'dot', signature: '' })
     if (this.health <= 0) {
       this._die()
       return true

@@ -173,6 +173,13 @@ export abstract class Projectile {
    */
   buffFlags: Set<BuffID> = new Set()
 
+  /**
+   * Sorted, comma-joined ids of the player's damage and DoT buffs active at
+   * fire time. Wave validation buckets hits by it so the backend can check
+   * each bucket against the buffs it granted. Set by MainScene.spawnProjectile.
+   */
+  buffSignature: string = ''
+
   // ============================================================
   // INTERNAL - Don't modify these directly
   // ============================================================

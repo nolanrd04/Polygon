@@ -21,6 +21,7 @@ const UPDATE_NOTES: UpdateNote[] = [
       'Added HUD for buffs and debuffs.',
       'Explosion on kill now depends on the explosive bullets upgrade.',
       'Bullet pierce, dash count, and vampirism upgrades are a tier-based upgrade now requiring evolution upgrades to unlock higher tiers.',
+      'Fixed Super Hexagon sound playing issue.'
     ]
   },
   {
