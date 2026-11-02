@@ -47,7 +47,7 @@
 
 ## Map Building (large scope)
 - [ ] Pylon: Destructible environment objects that grant buffs/debuffs to nearby enemies/players
-- [ ] Farms that can generate points for the players. Upgradeable and placeable
+- [ ] Farms that can generate points for the players. Upgradeable and placeable (requires shop rework > points rework)
 - [ ] Turrets to defend pylons/farms. Upgradeable and placeable
 - [ ] Constructable polygons for map control
 - [ ] A way to edit the map for building in between waves
@@ -76,7 +76,178 @@
 - [x] Lighting
 
 ## Score system
+- [x] Intermission phase between waves: roam freely, open the shop on demand, start the next wave manually
+
+_______________
 - [ ] enemies drop different tiered orbs (common - legendary). Orbs completely replace the current score system
+
+### 1. Get Orb Values:
+#### a. Purchase Cost In Orbs:
+
+defined by me, not statistics
+
+| Upgrade | orbs  (of same upgrade rarity)| 
+|---|---|
+| Common | **100** |
+| Uncommon| 60 |
+| Rare| 20 |
+| Epic| 10 |
+| Legendary| 5 |
+
+#### b. Orb value from current upgrade prices:
+
+Scale: 1 current point = 50 common orbs (a common upgrade costs 2 points = 100 commons). Prices from `backend/app/core/data/upgrades.json`. `polygon_upgrade` is priced specially and left out. Free upgrades stay free.
+
+| Upgrade | Price ( current points) | × 50 = worth in common orbs | ÷ Orbs the upgrade costs | = 1 orb's value |
+|---|---|---|---|---|
+| Common | 2 | 100 | 100 | **1** |
+| Uncommon | 6 | 300 | 60 | **5** |
+| Rare | 10 | 500 | 20 | **25** |
+| Epic | 20 | 1,000 | 10 | **100** |
+| Legendary | 40 | 2,000 | 5 | **400** |
+
+Every value is whole and each tier is a clean multiple of the one below it (×5, ×5, ×4, ×4).
+
+### 2. Orb conversion
+
+#### a. No penalty (converting down)
+
+1 orb of the row's tier = this many orbs of the column's tier. Converting down is always fair, and with whole values it never needs rounding.
+
+| 1 orb of | Common | Uncommon | Rare | Epic |
+|---|---|---|---|---|
+| Uncommon | 5 | - | - | - |
+| Rare | 25 | 5 | - | - |
+| Epic | 100 | 20 | 4 | - |
+| Legendary | 400 | 80 | 16 | 4 |
+
+#### b. Converting up with a flat 20% penalty
+
+Penalized orb values in commons: 6, 30, 120, 480 (instead of 5, 25, 100, 400).
+
+Orbs of the row's tier needed to make 1 orb of the column's tier (no-penalty amount in brackets):
+
+| From | to Uncommon | to Rare | to Epic | to Legendary |
+|---|---|---|---|---|
+| Common | 6 (5) | 30 (25) | 120 (100) | 480 (400) |
+| Uncommon | - | 6 (5) | 24 (20) | 96 (80) |
+| Rare | - | - | 4.8 (4) | 19.2 (16) |
+| Epic | - | - | - | 4.8 (4) |
+
+#### c. Rounding against the player
+
+Round up once on the total cost, not per orb: 1 epic from rares costs ⌈4.8⌉ = 5, but 5 epics cost ⌈24⌉ = 24.
+
+Orbs of the row's tier needed to make 1 orb of the column's tier, rounded up (rounded cells show the 2b value in brackets):
+
+| From | to Uncommon | to Rare | to Epic | to Legendary |
+|---|---|---|---|---|
+| Common | 6 | 30 | 120 | 480 |
+| Uncommon | - | 6 | 24 | 96 |
+| Rare | - | - | 5 (4.8) | 20 (19.2) |
+| Epic | - | - | - | 5 (4.8) |
+
+Bulk cost for the rates that need rounding (exact total in brackets):
+
+| Orbs made | Rare → Epic / Epic → Legendary (×4.8) | Rare → Legendary (×19.2) |
+|---|---|---|
+| 1 | 5 (4.8) | 20 (19.2) |
+| 2 | 10 (9.6) | 39 (38.4) |
+| 3 | 15 (14.4) | 58 (57.6) |
+| 4 | 20 (19.2) | 77 (76.8) |
+| 5 | 24 | 96 |
+
+- Loops always lose orbs: 6 commons → 1 uncommon → 5 commons.
+- Converting in steps always costs more than converting directly: common → rare costs 36 in steps (6 × 6) vs 30 directly; rare → legendary costs 25 through epic (5 × 5) vs 20 directly.
+
+### 2. Game economy
+
+#### a. Current rarity pool. This comes from the upgrades rolled + upgrades rolled from bundles. It has nothing to do with upgrades the player picks
+
+Source: local `game_runs`, 27 runs, 426 wave snapshots, Normal, v0.1.0–0.3.1. Counts every shop slot shown (wave-start roll + rerolls) plus every bundle grant; the `polygon_upgrade` milestone is excluded. Rarities use the current `upgrades.json`. Bundles picked up between waves count toward the next wave, so boss drops from waves 10/20 land in 11/21. Waves 26+ have 5 or fewer runs.
+
+| Wave | Runs | Upgrades | Common | Uncommon | Rare | Epic | Legendary |
+|---|---|---|---|---|---|---|---|
+| 1 | 26 | 1035 | 53.0% | 31.8% | 14.9% | 0.3% | 0.0% |
+| 2 | 25 | 813 | 57.8% | 29.9% | 12.2% | 0.1% | 0.0% |
+| 3 | 24 | 690 | 56.7% | 30.3% | 12.8% | 0.3% | 0.0% |
+| 4 | 23 | 823 | 55.8% | 31.8% | 12.0% | 0.4% | 0.0% |
+| 5 | 20 | 572 | 53.0% | 30.8% | 12.2% | 4.0% | 0.0% |
+| 6 | 20 | 598 | 54.5% | 28.4% | 14.5% | 2.5% | 0.0% |
+| 7 | 20 | 537 | 54.7% | 28.7% | 13.2% | 3.4% | 0.0% |
+| 8 | 20 | 584 | 48.5% | 35.1% | 12.8% | 3.6% | 0.0% |
+| 9 | 20 | 765 | 51.8% | 29.7% | 15.7% | 2.9% | 0.0% |
+| 10 | 19 | 608 | 41.9% | 33.9% | 16.0% | 7.7% | 0.5% |
+| 11 | 15 | 875 | 45.3% | 32.7% | 14.6% | 5.7% | 1.7% |
+| 12 | 15 | 550 | 50.0% | 31.3% | 13.6% | 4.2% | 0.9% |
+| 13 | 14 | 653 | 46.2% | 35.2% | 14.1% | 3.5% | 0.9% |
+| 14 | 14 | 637 | 45.1% | 33.4% | 16.6% | 4.6% | 0.3% |
+| 15 | 14 | 633 | 39.3% | 37.4% | 16.4% | 5.5% | 1.3% |
+| 16 | 14 | 497 | 39.2% | 36.6% | 16.7% | 4.6% | 2.8% |
+| 17 | 13 | 627 | 43.5% | 34.1% | 16.3% | 4.8% | 1.3% |
+| 18 | 13 | 659 | 37.6% | 37.3% | 19.6% | 4.1% | 1.4% |
+| 19 | 12 | 590 | 39.5% | 35.4% | 17.6% | 6.8% | 0.7% |
+| 20 | 12 | 477 | 38.8% | 35.6% | 16.8% | 6.7% | 2.1% |
+| 21 | 12 | 610 | 41.6% | 33.9% | 16.1% | 6.4% | 2.0% |
+| 22 | 12 | 562 | 34.5% | 38.1% | 19.2% | 5.9% | 2.3% |
+| 23 | 11 | 435 | 46.0% | 30.8% | 17.0% | 4.4% | 1.8% |
+| 24 | 9 | 338 | 32.8% | 33.4% | 21.6% | 8.6% | 3.6% |
+| 25 | 8 | 350 | 32.0% | 35.7% | 24.0% | 6.6% | 1.7% |
+| 26 | 5 | 309 | 33.7% | 40.1% | 19.1% | 4.9% | 2.3% |
+| 27 | 5 | 247 | 30.4% | 40.9% | 20.6% | 6.5% | 1.6% |
+| 28 | 4 | 291 | 40.9% | 30.9% | 19.2% | 7.6% | 1.4% |
+| 29 | 3 | 130 | 27.7% | 40.0% | 19.2% | 10.0% | 3.1% |
+| 30 | 3 | 274 | 38.7% | 31.0% | 15.3% | 9.9% | 5.1% |
+| 31 | 1 | 25 | 40.0% | 44.0% | 8.0% | 8.0% | 0.0% |
+| **All** | 426 | 16794 | 45.8% | 33.3% | 15.7% | 4.2% | 1.0% |
+
+#### b. calculated rarity pool.
+
+we can just get the rarity weights using our current weights and calculate. We need to make sure we are adjusting to fit the orb values though, so where as common upgrades make up a calculated 62% of wave 1 upgrades, to get that we need 91% of the orbs to be common:
+
+Method (inputs are the tables in `frontend/src/game/systems/difficulty/Normal.ts`):
+1. **Shop slot split** = `RARITY_WEIGHTS_BY_WAVE[wave]`.
+2. **Bundle item split**: the bundle's tier T comes from `BUNDLE_RARITY_WEIGHTS_BY_WAVE[wave]`. The first item is always tier T. On top of that, a bundle averages 1.5 extra slots (1–4 items), 85% of which are upgrades/curses (15% are buffs). Each extra rolls from the shop weights with tiers above T removed and the rest rescaled to sum to 1.
+3. **Value split** = `0.54 × shop + 0.46 × bundle`. 0.54 is the share of shop slots across all runs in 2a (9,000 shop slots vs 7,794 bundle grants), and it's the only input that comes from run data.
+4. **Orb split**: divide each tier's value share by its orb value (1 / 5 / 25 / 100 / 400), then rescale so the tiers sum to 100%.
+
+Check: for wave 1 the calculated bundle item split is 76.0 / 18.7 / 4.8 / 0.4, and the runs show 77 / 14 / 7 / 2.
+
+| Wave | Value split C / U / R / E / L | Orbs Common | Uncommon | Rare | Epic | Legendary | Avg orb (commons) |
+|---|---|---|---|---|---|---|---|
+| 1 | 62.0 / 27.5 / 10.3 / 0.2 / 0.0 | 91.3% | 8.1% | 0.6% | 0.003% | 0% | 1.47 |
+| 2 | 61.7 / 27.8 / 10.3 / 0.2 / 0.0 | 91.2% | 8.2% | 0.6% | 0.003% | 0% | 1.48 |
+| 3 | 60.0 / 28.9 / 10.9 / 0.2 / 0.0 | 90.6% | 8.7% | 0.7% | 0.003% | 0% | 1.51 |
+| 4 | 57.2 / 30.7 / 11.7 / 0.4 / 0.0 | 89.6% | 9.6% | 0.7% | 0.006% | 0% | 1.57 |
+| 5 | 56.1 / 30.1 / 11.2 / 2.6 / 0.0 | 89.6% | 9.6% | 0.7% | 0.041% | 0% | 1.60 |
+| 6 | 53.9 / 31.0 / 12.6 / 2.6 / 0.0 | 88.9% | 10.2% | 0.8% | 0.043% | 0% | 1.65 |
+| 7 | 52.5 / 31.8 / 12.9 / 2.8 / 0.0 | 88.4% | 10.7% | 0.9% | 0.047% | 0% | 1.68 |
+| 8 | 51.5 / 32.9 / 12.9 / 2.8 / 0.0 | 87.9% | 11.2% | 0.9% | 0.048% | 0% | 1.71 |
+| 9 | 49.5 / 33.2 / 13.8 / 3.6 / 0.0 | 87.3% | 11.7% | 1.0% | 0.063% | 0% | 1.76 |
+| 10 | 48.2 / 33.7 / 14.0 / 3.6 / 0.5 | 86.8% | 12.1% | 1.0% | 0.064% | 0.002% | 1.80 |
+| 11 | 45.4 / 35.6 / 14.7 / 3.6 / 0.7 | 85.4% | 13.4% | 1.1% | 0.067% | 0.004% | 1.88 |
+| 12 | 43.3 / 36.6 / 15.8 / 3.6 / 0.7 | 84.4% | 14.3% | 1.2% | 0.070% | 0.004% | 1.95 |
+| 13 | 42.2 / 37.4 / 15.8 / 3.8 / 0.7 | 83.8% | 14.9% | 1.3% | 0.075% | 0.004% | 1.99 |
+| 14 | 40.5 / 37.7 / 16.7 / 4.3 / 0.7 | 83.1% | 15.5% | 1.4% | 0.089% | 0.004% | 2.05 |
+| 15 | 39.0 / 38.9 / 16.8 / 4.4 / 0.9 | 82.1% | 16.4% | 1.4% | 0.092% | 0.005% | 2.10 |
+| 16 | 38.8 / 37.8 / 17.6 / 4.4 / 1.5 | 82.4% | 16.0% | 1.5% | 0.093% | 0.008% | 2.13 |
+| 17 | 38.4 / 37.2 / 17.7 / 5.1 / 1.5 | 82.4% | 16.0% | 1.5% | 0.1% | 0.008% | 2.14 |
+| 18 | 36.6 / 38.2 / 18.6 / 5.1 / 1.5 | 81.3% | 16.9% | 1.7% | 0.1% | 0.008% | 2.22 |
+| 19 | 35.5 / 38.4 / 19.3 / 5.4 / 1.5 | 80.7% | 17.4% | 1.8% | 0.1% | 0.008% | 2.27 |
+| 20 | 34.5 / 37.9 / 19.6 / 5.9 / 2.0 | 80.4% | 17.7% | 1.8% | 0.1% | 0.012% | 2.33 |
+| 21 | 34.2 / 37.6 / 20.2 / 5.9 / 2.0 | 80.3% | 17.7% | 1.9% | 0.1% | 0.012% | 2.35 |
+| 22 | 33.9 / 37.1 / 21.1 / 5.9 / 2.0 | 80.3% | 17.6% | 2.0% | 0.1% | 0.012% | 2.37 |
+| 23 | 32.8 / 36.6 / 21.8 / 6.7 / 2.0 | 79.9% | 17.8% | 2.1% | 0.2% | 0.012% | 2.43 |
+| 24 | 31.7 / 36.8 / 22.7 / 6.7 / 2.0 | 79.2% | 18.4% | 2.3% | 0.2% | 0.013% | 2.50 |
+| 25 | 31.4 / 36.2 / 23.5 / 6.9 / 2.0 | 79.2% | 18.3% | 2.4% | 0.2% | 0.013% | 2.52 |
+| 26 | 30.2 / 36.4 / 23.6 / 7.0 / 2.8 | 78.4% | 18.9% | 2.4% | 0.2% | 0.018% | 2.59 |
+| 27 | 29.2 / 36.0 / 24.5 / 7.5 / 2.8 | 77.9% | 19.2% | 2.6% | 0.2% | 0.019% | 2.67 |
+| 28 | 28.8 / 35.4 / 25.2 / 7.8 / 2.8 | 77.9% | 19.1% | 2.7% | 0.2% | 0.019% | 2.70 |
+| 29 | 28.5 / 34.8 / 25.6 / 8.3 / 2.8 | 77.9% | 19.0% | 2.8% | 0.2% | 0.019% | 2.73 |
+| 30 | 28.3 / 33.5 / 26.3 / 8.6 / 3.3 | 78.3% | 18.5% | 2.9% | 0.2% | 0.023% | 2.77 |
+
+
+-----
 - [ ] new shop for making purchases with orbs.
 - [ ] Purchases include rerolls, upgrades, buildables, and more
 

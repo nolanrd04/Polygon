@@ -96,15 +96,28 @@ Draws an `IconID` (`data/ID.ts`) from its `ICONS` map, falling back to `fallback
 
 **File:** `UpgradeModal.tsx`
 
-Post-wave upgrade selection screen. Fetches the offered upgrades for the current wave from `WaveValidationService.getOfferedUpgrades()`, displays three cards, and lets the player purchase one.
+The shop, opened on demand during the [intermission](WAVE_MANAGER.md#intermission) (desktop: `IntermissionBar` or Tab; mobile: the pause menu). Fetches the offered upgrades for the current wave from `WaveValidationService.getOfferedUpgrades()`, displays three cards, and lets the player purchase one.
 
 - Shows upgrade name, description, rarity badge, and cost.
 - Grays out upgrades the player cannot afford.
 - Includes a **Reroll** button (cost increases each reroll) that calls `waveValidation.rerollUpgrades()`.
-- **Start Wave** button emits `start-next-wave` via `EventBus`, advancing to the next wave.
+- **Close** (`onClose`) returns to the field without starting the wave.
+- **Start Wave** (`onStartWave`) starts the next wave.
 - Includes a **View Upgrades** button to open `ViewUpgrades`.
 
-Props: `onStartWave`, `playerPoints`, `selectedAttack`.
+The shop can be closed and reopened within one intermission, and it remounts each time. So purchased cards are seeded from the cached offer's `purchased` flags on load, not kept in component state alone. `WaveValidation.selectUpgrade` marks the entry bought in both online and offline mode (`markOfferPurchased`).
+
+Props: `onStartWave`, `onClose`, `playerPoints`, `selectedAttack`.
+
+---
+
+## IntermissionBar
+
+**File:** `IntermissionBar.tsx`
+
+Desktop only (`GamePage` doesn't mount it on mobile). Shown at the bottom centre, above the buff bar, during the intermission while the wave-complete screen is closed: "Wave N ready", a **Shop** button (Tab) and a **Start Wave** button (Enter). It stays mounted while the shop is open but renders nothing, so Tab also closes the shop. The keys are ignored while paused or while typing in an input. The buttons cancel `mousedown` so they never take focus. A focused button would be clicked by Space, the dash key.
+
+Props: `wave`, `shopOpen`, `onToggleShop`, `onStartWave`.
 
 ---
 
@@ -112,7 +125,7 @@ Props: `onStartWave`, `playerPoints`, `selectedAttack`.
 
 **File:** `WaveComplete.tsx`
 
-Splash screen shown briefly when a wave ends. Displays the wave number and points earned from the wave bonus. Automatically transitions to `UpgradeModal` when the player clicks continue.
+Splash screen shown briefly when a wave ends. Displays the wave number and points earned from the wave bonus. **Continue** closes it and leaves the player on the field in the intermission; the shop is opened separately.
 
 Props: `wave`, `score`, `isPrime`, `onContinue`.
 
@@ -124,11 +137,12 @@ Props: `wave`, `score`, `isPrime`, `onContinue`.
 
 Overlay shown when the game is paused (ESC key or mobile pause button). Provides:
 - **Resume** – calls `GameManager.resume()`.
+- **Shop** – only during the intermission while the shop is closed (`onOpenShop` set). Resumes and opens the shop. This is the mobile way into the shop.
 - **Quit** – calls `SaveManager.saveOnQuit()` then navigates to `MainMenu`.
 - **Settings** shortcut.
 - **View Upgrades** / **View Buffs** – open `ViewUpgrades` / `ViewBuffs` in place of the menu.
 
-Props: `onResume`, `onQuit`, `buffs: BuffSlotState[]`, `initialView?: 'buffs'` (set when the `BuffBar` is tapped, so the menu opens on `ViewBuffs`; BACK returns to the menu).
+Props: `onResume`, `onQuit`, `onOpenShop?`, `buffs: BuffSlotState[]`, `initialView?: 'buffs'` (set when the `BuffBar` is tapped, so the menu opens on `ViewBuffs`; BACK returns to the menu).
 
 ---
 

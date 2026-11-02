@@ -33,6 +33,8 @@ type Upgrade = UpgradeDef & { purchased?: boolean }
 
 interface UpgradeModalProps {
   onStartWave: () => void
+  /** Back to the intermission field without starting the wave. */
+  onClose: () => void
   playerPoints: number
   selectedAttack?: string // The attack type the player is using
 }
@@ -55,7 +57,7 @@ const rarityTextColors: Record<RarityID, string> = {
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
-export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModalProps) {
+export default function UpgradeModal({ onStartWave, onClose, playerPoints }: UpgradeModalProps) {
   const [options, setOptions] = useState<Upgrade[]>([])
   const [selectedIndices, setSelectedIndices] = useState<number[]>([])  // Track by index, not ID
   const [rerollCost] = useState(1)
@@ -101,6 +103,9 @@ export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModal
 
     console.log(`Loaded ${offeredUpgrades.length} upgrades from backend:`, offeredUpgrades)
     setOptions(offeredUpgrades)
+    // The shop can be closed and reopened mid-intermission, so earlier purchases
+    // come from the cached offer rather than this component's own state.
+    setSelectedIndices(offeredUpgrades.flatMap((u, i) => u.purchased ? [i] : []))
   }
 
   useEffect(() => {
@@ -261,6 +266,13 @@ export default function UpgradeModal({ onStartWave, playerPoints }: UpgradeModal
           className={`border border-gray-600 text-gray-400 rounded hover:border-polygon-warning hover:text-polygon-warning transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isMobile ? 'px-3 py-1.5 text-xs' : 'px-6 py-2'}`}
         >
           REROLL ({rerollCost} PTS)
+        </button>
+
+        <button
+          onClick={onClose}
+          className={`border border-gray-600 text-gray-400 rounded hover:border-white hover:text-white transition-all ${isMobile ? 'px-3 py-1.5 text-xs' : 'px-6 py-2'}`}
+        >
+          CLOSE
         </button>
 
         <button

@@ -44,7 +44,7 @@ points_earned, shots_fired, shot_frames, wave_start_frame, is_death
 
 `shot_frames` and `wave_start_frame` place shots and held bundle buffs on the server's buff timeline (see [BUFFS.md](BUFFS.md#bundle-drops)).
 
-The backend validates the telemetry against what it expects for the given wave, upgrade set, and seed. On success the token is cleared from `WaveValidationService` and the game proceeds to the between-wave upgrade screen.
+The backend validates the telemetry against what it expects for the given wave, upgrade set, and seed. On success the token is cleared from `WaveValidationService` and the game proceeds to the [intermission](WAVE_MANAGER.md#intermission). The next token is pre-loaded before the intermission starts. Its frame counter runs from then, and `wave_start_frame` marks when the player actually pressed Start Wave. Shots fired before that frame are not recorded, intermission movement samples are dropped at that frame (all but the last), and the server times the wave from it for run analytics.
 
 If the call fails (network error, expired token, validation rejection), `completeWave()` returns `{ success: false, errors: [...] }`. The game currently logs the errors but continues — validation failures do not block the player.
 

@@ -34,7 +34,7 @@ export default function WaveComplete({ wave, score, isPrime, onContinue }: WaveC
           onClick={onContinue}
           className="mt-4 px-12 py-4 bg-polygon-primary text-black font-bold text-xl rounded hover:bg-green-400 transition-all transform hover:scale-105"
         >
-          SELECT UPGRADES
+          CONTINUE
         </button>
       </div>
     </div>

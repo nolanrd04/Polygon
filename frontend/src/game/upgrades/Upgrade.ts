@@ -87,12 +87,10 @@ export interface UpgradeDef {
  * verbatim into backend/app/core/data/upgrades.json.
  */
 export interface AbilityActivation {
-  /** Phaser key name — bound as `keydown-<key>`, e.g. 'SPACE'. */
+  /** Default Phaser key name, e.g. 'SPACE'. The player can rebind it - see Keybinds.ts. */
   key: string
   /** Name on the HUD card and the mobile button. */
   label: string
-  /** Short glyph for the HUD key chip. Defaults to `key`. */
-  keyLabel?: string
   /** Mobile button fill (Phaser hex literal). */
   buttonColor: number
   /** HUD accent — a key into AbilityDisplay's THEMES table. */

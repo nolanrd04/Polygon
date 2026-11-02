@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Game } from 'phaser'
 import { gameConfig } from '../game/core/GameConfig'
 import UpgradeModal from '../components/UpgradeModal'
 import WaveComplete from '../components/WaveComplete'
+import IntermissionBar from '../components/IntermissionBar'
 import GameHUD from '../components/GameHUD'
 import PauseMenu from '../components/PauseMenu'
 import DevTools from '../components/DevTools'
@@ -15,6 +16,7 @@ import type { BuffSlotState } from '../game/buffs/Buff'
 import { EventBus } from '../game/core/EventBus'
 import { SaveManager } from '../game/services/SaveManager'
 import { GameManager } from '../game/core/GameManager'
+import { IS_MOBILE } from '../game/core/Device'
 import { waveValidation } from '../game/services/WaveValidation'
 
 export default function GamePage() {
@@ -24,6 +26,8 @@ export default function GamePage() {
   const [isPaused, setIsPaused] = useState(false)
   const [showUpgrades, setShowUpgrades] = useState(false)
   const [showWaveComplete, setShowWaveComplete] = useState(false)
+  // Between waves with the next wave's token loaded (see 'intermission-start')
+  const [intermission, setIntermission] = useState(false)
   const [waveData, setWaveData] = useState({ wave: 1, score: 0, isPrime: false })
   const [playerStats, setPlayerStats] = useState({ health: 100, maxHealth: 100, points: 0, kills: 0 })
   const [selectedAttack, setSelectedAttack] = useState('bullet')
@@ -155,9 +159,18 @@ export default function GamePage() {
     EventBus.on('wave-complete', (data) => {
       setWaveData(data)
       setShowWaveComplete(true)
+      // GameManager.completeWave emits this after pre-loading the next token
+      setIntermission(true)
       // Update ref with latest game state
       lastGameStateRef.current = GameManager.getState()
     })
+
+    EventBus.on('intermission-start', () => {
+      setIntermission(true)
+    })
+
+    // Mobile Play button (TouchControlManager). Only shown once the token is loaded.
+    EventBus.on('request-start-wave', () => handleStartWave())
 
     EventBus.on('show-upgrades', () => {
       setShowUpgrades(true)
@@ -242,15 +255,32 @@ export default function GamePage() {
     }
   }, [])
 
-  const handleStartWave = () => {
+  const handleStartWave = useCallback(() => {
+    // startNextWave sets isWaveActive synchronously, so a double press can't start two waves
+    if (GameManager.getState().isWaveActive) return
     setShowUpgrades(false)
+    setIntermission(false)
     EventBus.emit('start-next-wave')
+  }, [])
+
+  const handleToggleShop = useCallback(() => {
+    setShowUpgrades(!showUpgrades)
+    EventBus.emit(showUpgrades ? 'hide-upgrades' : 'show-upgrades')
+  }, [showUpgrades])
+
+  const handleCloseShop = () => {
+    setShowUpgrades(false)
+    EventBus.emit('hide-upgrades')
+  }
+
+  const handleOpenShopFromPause = () => {
+    GameManager.resume()
+    setShowUpgrades(true)
+    EventBus.emit('show-upgrades')
   }
 
   const handleWaveCompleteContinue = () => {
     setShowWaveComplete(false)
-    setShowUpgrades(true)
-    EventBus.emit('show-upgrades')
   }
 
   return (
@@ -297,6 +327,7 @@ export default function GamePage() {
         <PauseMenu
           buffs={buffs}
           initialView={pauseView}
+          onOpenShop={intermission && !showUpgrades ? handleOpenShopFromPause : undefined}
           onResume={() => GameManager.resume()}
           onQuit={() => {
             // Nothing to save here - see the beforeunload comment above.
@@ -314,9 +345,19 @@ export default function GamePage() {
         />
       )}
 
+      {!IS_MOBILE && intermission && !showWaveComplete && (
+        <IntermissionBar
+          wave={waveData.wave}
+          shopOpen={showUpgrades}
+          onToggleShop={handleToggleShop}
+          onStartWave={handleStartWave}
+        />
+      )}
+
       {showUpgrades && (
         <UpgradeModal
           onStartWave={handleStartWave}
+          onClose={handleCloseShop}
           playerPoints={playerStats.points}
           selectedAttack={selectedAttack}
         />

@@ -26,7 +26,10 @@ On mobile, the following controls are rendered as fixed-position Phaser game obj
 |---------|----------|---------|
 | Left joystick | Bottom-left | Movement |
 | Right joystick | Bottom-right | Aiming + shooting |
-| Pause button | Top-center | Emits `game-pause` |
+| Pause button | Top-center, just right of centre | Emits `game-pause` |
+| Play button | Top-center, just left of centre (mirror of pause) | Emits `request-start-wave`. Visible only in the [intermission](WAVE_MANAGER.md#intermission): shown on `intermission-start` / `wave-complete`, hidden on `start-next-wave` |
+
+The Play button uses the slot of the old (commented-out) fullscreen button, which `abilityPadPosition()` still keeps clear on short screens. Phaser doesn't send input to hidden objects, so hiding it is enough to disable it mid-wave. The shop has no on-canvas button; on mobile it is reached from the pause menu.
 
 Positions are recalculated on every `resize` event from `this.scene.scale`.
 
@@ -78,5 +81,5 @@ Re-pins the screen-space layer after a camera zoom change. The layer already han
 
 ## destroy()
 
-Removes all DOM event listeners, destroys all Phaser game objects, and tears down the screen-space layer. Called on scene shutdown.
+Removes all DOM event listeners and the Play button's `EventBus` listeners, destroys all Phaser game objects, and tears down the screen-space layer. Called on scene shutdown.
 

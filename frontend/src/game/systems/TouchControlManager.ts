@@ -36,6 +36,11 @@ export class TouchControlManager {
   // Pause and fullscreen buttons
   private pauseButton: Phaser.GameObjects.Rectangle | null = null
   private pauseSymbolLines: Phaser.GameObjects.Rectangle[] = []
+  // Start Wave, left of pause. Only shown in the intermission.
+  private playButton: Phaser.GameObjects.Rectangle | null = null
+  private playSymbol: Phaser.GameObjects.Triangle | null = null
+  private readonly showPlay = () => this.setPlayVisible(true)
+  private readonly hidePlay = () => this.setPlayVisible(false)
   // private fullscreenButton: Phaser.GameObjects.Rectangle | null = null
   // private fullscreenText: Phaser.GameObjects.Text | null = null
 
@@ -74,6 +79,7 @@ export class TouchControlManager {
 
     this.createJoysticks()
     this.createPauseButton()
+    this.createPlayButton()
     // this.createFullscreenButton()
     this.setupTouchHandlers()
 
@@ -115,6 +121,51 @@ export class TouchControlManager {
     const sz = TouchControlManager.PAUSE_BUTTON_SIZE
     // Pause: center-top, slightly right of center
     return { x: this.W / 2 + p / 2 + sz / 2, y: p + sz / 2 }
+  }
+
+  private playButtonPosition() {
+    const p = TouchControlManager.EDGE_PAD
+    const sz = TouchControlManager.PAUSE_BUTTON_SIZE
+    // Play: mirror of pause, slightly left of center (the old fullscreen slot,
+    // which abilityPadPosition() still keeps clear on short screens)
+    return { x: this.W / 2 - p / 2 - sz / 2, y: p + sz / 2 }
+  }
+
+  private createPlayButton(): void {
+    const { x, y } = this.playButtonPosition()
+    const sz = TouchControlManager.PAUSE_BUTTON_SIZE
+
+    this.playButton = this.scene.add
+      .rectangle(x, y, sz, sz, 0x226622, 0.92)
+      .setOrigin(0.5, 0.5)
+      .setInteractive()
+      .setDepth(500)
+      .setScrollFactor(0)
+
+    // Bounding box is centred on (x, y); nudged right so the triangle's mass sits centred
+    this.playSymbol = this.scene.add
+      .triangle(x + 2, y, 0, 0, 0, 24, 21, 12, 0xffffff)
+      .setOrigin(0.5, 0.5)
+      .setDepth(501)
+      .setScrollFactor(0)
+
+    this.uiLayer?.add(this.playButton, this.playSymbol)
+
+    // GamePage owns the decision (token loaded, not already started)
+    this.playButton.on('pointerdown', () => {
+      EventBus.emit('request-start-wave')
+    })
+
+    // Hidden until the next wave's token is loaded
+    this.setPlayVisible(false)
+    EventBus.on('intermission-start', this.showPlay)
+    EventBus.on('wave-complete', this.showPlay)
+    EventBus.on('start-next-wave', this.hidePlay)
+  }
+
+  private setPlayVisible(visible: boolean): void {
+    this.playButton?.setVisible(visible)
+    this.playSymbol?.setVisible(visible)
   }
 
   /*
@@ -190,6 +241,10 @@ export class TouchControlManager {
       this.pauseSymbolLines[i].setPosition(pause.x, pause.y - 11 + i * 11)
     }
 
+    const play = this.playButtonPosition()
+    this.playButton?.setPosition(play.x, play.y)
+    this.playSymbol?.setPosition(play.x + 2, play.y)
+
     // if (this.fullscreenButton) this.fullscreenButton.setPosition(fs.x, fs.y)
     // if (this.fullscreenText) this.fullscreenText.setPosition(fs.x, fs.y)
   }
@@ -263,6 +318,11 @@ export class TouchControlManager {
     for (const line of this.pauseSymbolLines) {
       line.destroy()
     }
+    EventBus.off('intermission-start', this.showPlay)
+    EventBus.off('wave-complete', this.showPlay)
+    EventBus.off('start-next-wave', this.hidePlay)
+    this.playButton?.destroy()
+    this.playSymbol?.destroy()
     // if (this.fullscreenButton) this.fullscreenButton.destroy()
     // if (this.fullscreenText) this.fullscreenText.destroy()
     this.uiLayer?.destroy()

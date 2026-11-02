@@ -50,7 +50,7 @@ Initialization order matters:
     - For loaded games: re-apply saved upgrades via `UpgradeSystem.applyUpgrade()` (with `isRestore = true` to skip cost deduction and sound).
     - **Both branches** then call `UpgradeSystem.grantStartingUpgrades()` and mirror the granted ids into `SaveManager`, so a save written before a `starting: true` ability existed picks it up on load.
     - Pre-load upgrades via `waveValidation.startWave()`.
-    - Emit `show-upgrades` to open the `UpgradeModal` before the first wave.
+    - Emit `intermission-start`: the session opens in the intermission, and the player starts wave 1 (or the loaded wave) themselves. See [WAVE_MANAGER.md](WAVE_MANAGER.md#intermission).
 
 `shutdown` calls `AbilitySystem.unbind()` (dropping its keyboard listeners), removes the `resize` handler, and destroys `screenUI`.
 
@@ -70,11 +70,11 @@ One fixed 1/60 s slice of game logic — see [CORE.md](CORE.md) for why the game
 
 1. Tick `TouchControlManager`.
 2. Increment wave-validation frame counter; sample player state every 30 frames (exactly twice a second now the tick is fixed).
-3. Tick `UpgradeSystem.dispatchUpdatePlayer(player, FIXED_STEP_MS)` for regeneration and other time-based effects.
+3. Work out `betweenWaves` (`!isWaveActive`) and call `AbilitySystem.setFrozen(betweenWaves)`. During a wave, tick player buffs and `UpgradeSystem.dispatchUpdatePlayer(player, FIXED_STEP_MS)` (regeneration and other time-based effects); both are skipped in the [intermission](WAVE_MANAGER.md#intermission). Enemy buffs always tick.
 4. Read keyboard input and call `player.move()`. Joystick input takes priority on mobile.
 5. On desktop, rotate player toward mouse and shoot if pointer is down.
 6. Tick `player.update()` (projectile management, spinner/flame tracking).
-7. Tick active `DroppedUpgradeBundle`s and `Particle.UpdateAll(FIXED_STEP_MS)`.
+7. Tick active `DroppedUpgradeBundle`s (`_update(!betweenWaves)`: they don't expire in the intermission) and `Particle.UpdateAll(FIXED_STEP_MS)`.
 8. Tick `enemyManager.update(playerX, playerY)`.
 9. Check `waveManager.isWaveComplete()` and call `waveManager.completeWave()` when true.
 10. Draw debug collision boxes if enabled.
@@ -93,7 +93,8 @@ Looks up the upgrade definition from the merged JSON arrays, verifies the player
 | Event | Handler |
 |-------|---------|
 | `game-pause` / `game-resume` | Pauses/resumes the Phaser scene |
-| `start-next-wave` | Resets `upgradeMenuOpen`, calls `waveManager.startNextWave()` |
+| `start-next-wave` | Resets `upgradeMenuOpen`, clears player projectiles (intermission shots), calls `waveManager.startNextWave()` |
+| `show-upgrades` / `hide-upgrades` | Sets / clears `upgradeMenuOpen` (blocks desktop shooting while the shop is open) |
 | `upgrade-selected` | Calls `applyUpgrade()` |
 | `upgrade-rerolled` | Plays reroll sound |
 | `dev-apply-upgrade` | Calls `applyUpgrade(id, true)` |

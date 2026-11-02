@@ -5,6 +5,7 @@ import { UpgradeModifierSystem } from './upgrades/UpgradeModifierSystem'
 import { UpgradeTargetID, type UpgradeStatID } from '../data/ID'
 import { UPGRADE_REGISTRY } from '../upgrades'
 import type { AbilityActivation, Upgrade } from '../upgrades/Upgrade'
+import { formatKeyLabel, getBoundKeys } from '../core/Keybinds'
 
 /**
  * Runtime for on-demand abilities — the single dispatch point between input
@@ -85,6 +86,15 @@ class ChargeQueue {
     const elapsed = now - this.rechargeStartTimes[nextIndex]
     return Math.min(1, elapsed / cooldown)
   }
+
+  /** Push every timestamp forward, so a recharge in flight resumes where it stopped. */
+  shift(ms: number): void {
+    for (let i = 0; i < this.max; i++) {
+      if (this.readyTimes[i] > 0) this.readyTimes[i] += ms
+      if (this.rechargeStartTimes[i] > 0) this.rechargeStartTimes[i] += ms
+    }
+    if (this.lastReadyTime > 0) this.lastReadyTime += ms
+  }
 }
 
 /** One ability's presentation state, consumed by the HUD. */
@@ -125,6 +135,8 @@ class AbilitySystemClass {
   private bindings: AbilityBinding[] = []
   private queues: Map<string, ChargeQueue> = new Map()
   private keyHandlers: { event: string; handler: () => void }[] = []
+  /** Scene time the intermission froze cooldowns at; null while a wave runs. */
+  private frozenAt: number | null = null
 
   /**
    * Bind every registered activation to its key. Called once per scene, after
@@ -146,15 +158,33 @@ class AbilitySystemClass {
       .sort((a, b) => a.activation.slot - b.activation.slot)
 
     this.resetCharges()
+    this.rebindKeys()
+  }
 
-    const keyboard = scene.input.keyboard
+  /**
+   * Re-read the player's keybinds and swap the key listeners over. Charges and
+   * cooldowns are untouched, so this is safe mid-run (settings in the pause menu).
+   */
+  rebindKeys(): void {
+    this.removeKeyHandlers()
+    const keyboard = this.scene?.input.keyboard
     if (!keyboard) return
     for (const binding of this.bindings) {
-      const event = `keydown-${binding.activation.key}`
-      const handler = () => this.activate(binding.id)
-      keyboard.on(event, handler)
-      this.keyHandlers.push({ event, handler })
+      for (const key of getBoundKeys(binding.id)) {
+        const event = `keydown-${key}`
+        const handler = () => this.activate(binding.id)
+        keyboard.on(event, handler)
+        this.keyHandlers.push({ event, handler })
+      }
     }
+  }
+
+  private removeKeyHandlers(): void {
+    const keyboard = this.scene?.input.keyboard
+    if (keyboard) {
+      for (const { event, handler } of this.keyHandlers) keyboard.off(event, handler)
+    }
+    this.keyHandlers = []
   }
 
   /**
@@ -163,14 +193,28 @@ class AbilitySystemClass {
    * otherwise leave the old handlers attached and fire each ability twice.
    */
   unbind(): void {
-    const keyboard = this.scene?.input.keyboard
-    if (keyboard) {
-      for (const { event, handler } of this.keyHandlers) keyboard.off(event, handler)
-    }
-    this.keyHandlers = []
+    this.removeKeyHandlers()
     this.scene = null
     this.bindings = []
     this.queues.clear()
+    this.frozenAt = null
+  }
+
+  /**
+   * Intermission: abilities can't fire and cooldowns stop. Called every tick,
+   * so only the transitions do anything. Unfreezing shifts the queues by the
+   * time spent frozen, which keeps recharge progress exactly where it was.
+   */
+  setFrozen(frozen: boolean): void {
+    if (!this.scene || frozen === (this.frozenAt !== null)) return
+    const now = this.scene.time.now
+    if (frozen) {
+      this.frozenAt = now
+      return
+    }
+    const elapsed = now - this.frozenAt!
+    for (const queue of this.queues.values()) queue.shift(elapsed)
+    this.frozenAt = null
   }
 
   /**
@@ -179,7 +223,7 @@ class AbilitySystemClass {
    * other condition belongs in the ability's own onActivate.
    */
   activate(abilityId: string): void {
-    if (!this.scene) return
+    if (!this.scene || this.frozenAt !== null) return
 
     const binding = this.findBinding(abilityId)
     const instance = binding && this.findOwned(abilityId)
@@ -210,7 +254,7 @@ class AbilitySystemClass {
 
   /** HUD state for each owned ability, in slot order. */
   getSlots(): AbilitySlotState[] {
-    const now = this.scene?.time.now ?? 0
+    const now = this.frozenAt ?? this.scene?.time.now ?? 0
     const slots: AbilitySlotState[] = []
 
     for (let index = 0; index < this.bindings.length; index++) {
@@ -224,7 +268,7 @@ class AbilitySystemClass {
         slots.push({
           id: binding.id,
           label: activation.label,
-          keyLabel: activation.keyLabel ?? activation.key,
+          keyLabel: formatKeyLabel(getBoundKeys(binding.id)[0] ?? null),
           theme: activation.theme,
           ready: queue?.readyCount(now) ?? 0,
           max: queue?.getMax() ?? 1,
@@ -238,7 +282,7 @@ class AbilitySystemClass {
         slots.push({
           id: binding.id,
           label: activation.label,
-          keyLabel: activation.keyLabel ?? activation.key,
+          keyLabel: formatKeyLabel(getBoundKeys(binding.id)[0] ?? null),
           theme: activation.theme,
           ready: charges,
           max: binding.maxStacks ?? charges,

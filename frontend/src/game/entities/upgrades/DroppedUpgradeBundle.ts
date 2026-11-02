@@ -40,6 +40,8 @@ export class DroppedUpgradeBundle {
   private color: number
   private size: number = 9
   private timeLeft: number = 30000 // frame ticks
+  /** Particle cadence clock; unlike timeLeft it keeps running while the bundle isn't ageing. */
+  private animTicks: number = 0
 
   protected scene!: Phaser.Scene
   protected container!: Phaser.GameObjects.Container
@@ -140,10 +142,12 @@ export class DroppedUpgradeBundle {
     this.container.setData('bundleInstance', this)
   }
 
-  _update(): void {
+  /** @param ageing false during the intermission: the bundle keeps animating but never expires. */
+  _update(ageing: boolean = true): void {
     if (this._isDestroyed) return
 
-    this.timeLeft--
+    this.animTicks++
+    if (ageing) this.timeLeft--
     if (this.timeLeft <= 0) {
       this.destroy()
       return
@@ -182,7 +186,7 @@ export class DroppedUpgradeBundle {
         break
     }
 
-    if (this.timeLeft % speed === 0) {
+    if (this.animTicks % speed === 0) {
       for (let i = 0; i < Phaser.Math.Between(1, this.upgradeValue + 3); i++) {
       Particle.NewParticle(SparkParticle, this.container.x + Phaser.Math.FloatBetween(-this.size, this.size), this.container.y + Phaser.Math.FloatBetween(-this.size, this.size), 0, 0, {
         color: this.color,

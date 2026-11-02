@@ -29,6 +29,7 @@ import { getBuffEntry } from '../buffs'
 import { BUNDLE_BUFF_DROPS, rollDrop, type BundleBuffDrop, type BundleBuffRoll, type BundleBuffRollContext } from '../buffs/bundleDrops'
 import { awardPlayerKill } from '../systems/KillRewards'
 import { SETTINGS } from '../core/SettingsStorage'
+import { MoveAction, getBoundKeys } from '../core/Keybinds'
 
 /**
  * Ambient light level the game is AUTHORED at - the look every light intensity
@@ -45,8 +46,8 @@ export class MainScene extends Phaser.Scene {
   collisionManager!: CollisionManager
   mapManager!: MapManager
 
-  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
-  private wasdKeys!: Record<string, Phaser.Input.Keyboard.Key>
+  /** Phaser keys per movement action, rebuilt by bindMoveKeys() whenever keybinds change. */
+  private moveKeys: Record<string, Phaser.Input.Keyboard.Key[]> = {}
   private debugGraphics!: Phaser.GameObjects.Graphics
   private showCollisionBoxes: boolean = false
   private upgradeMenuOpen: boolean = false
@@ -307,13 +308,12 @@ export class MainScene extends Phaser.Scene {
 
     // -------- CONTROLS -------- //
     // Set up input
-    this.cursors = this.input.keyboard!.createCursorKeys()
-    this.wasdKeys = {
-      W: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W),
-      A: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.A),
-      S: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S),
-      D: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D)
-    }
+    this.bindMoveKeys()
+    // Settings can be changed from the pause menu mid-run
+    EventBus.on('keybinds-changed', () => {
+      this.bindMoveKeys()
+      AbilitySystem.rebindKeys()
+    })
 
     // Pause on ESC - NOW HANDLED AT DOM LEVEL IN GamePage.tsx
     // (DOM handler works even when scene is paused, scene handler doesn't)
@@ -345,6 +345,8 @@ export class MainScene extends Phaser.Scene {
     EventBus.on('start-next-wave', () => {
       this.upgradeMenuOpen = false
       this.input.activePointer.reset()
+      // Intermission shots weren't recorded for validation, so none may land in the wave.
+      this.player.clearProjectiles()
       this.waveManager.startNextWave()
     })
     EventBus.on('wave-start', () => {
@@ -361,6 +363,10 @@ export class MainScene extends Phaser.Scene {
     })
     EventBus.on('show-upgrades', () => {
       this.upgradeMenuOpen = true
+    })
+    EventBus.on('hide-upgrades', () => {
+      this.upgradeMenuOpen = false
+      this.input.activePointer.reset()
     })
     EventBus.on('dev-apply-upgrade', (upgradeId) => {
       this.applyUpgrade(upgradeId, true) // Skip cost check for dev tools
@@ -657,8 +663,8 @@ export class MainScene extends Phaser.Scene {
         this.sound.play('background_music', { volume: getDefaultVolume('background_music'), loop: true })
       })
 
-      // Show upgrade modal
-      EventBus.emit('show-upgrades')
+      // The token above is loaded, so Start Wave is safe to offer
+      EventBus.emit('intermission-start')
     })
 
     // -------- -------- -------- //
@@ -676,6 +682,22 @@ export class MainScene extends Phaser.Scene {
    * than leaving each layer's own resize listener to it removes any dependence on
    * the order Phaser happens to fire those listeners in.
    */
+  /** Swap the movement keys over to the player's current keybinds. */
+  private bindMoveKeys(): void {
+    const keyboard = this.input.keyboard!
+    for (const keys of Object.values(this.moveKeys)) {
+      for (const key of keys) keyboard.removeKey(key)
+    }
+    this.moveKeys = {}
+    for (const action of Object.values(MoveAction)) {
+      this.moveKeys[action] = getBoundKeys(action).map(name => keyboard.addKey(name))
+    }
+  }
+
+  private isMoveDown(action: string): boolean {
+    return this.moveKeys[action]?.some(key => key.isDown) ?? false
+  }
+
   private applyCameraZoom(): void {
     this.cameras.main.setZoom(resolveCameraZoom(this.scale.width, this.scale.height))
 
@@ -742,29 +764,34 @@ export class MainScene extends Phaser.Scene {
       )
     }
 
+    // Intermission: the player can roam, shoot and collect bundles, but player
+    // time stands still (no regen, buff ticks, ability cooldowns, bundle expiry).
+    const betweenWaves = !GameManager.getState().isWaveActive
+    AbilitySystem.setFrozen(betweenWaves)
+
     // Buffs tick before anything this step reads their BuffStats
-    this.player._updateBuffs()
+    if (!betweenWaves) this.player._updateBuffs()
     for (const enemy of this.enemyManager.getEnemies()) {
       if (enemy._updateBuffs()) awardPlayerKill(enemy)
     }
 
     // Per-tick upgrade hooks (regeneration, etc.)
-    UpgradeSystem.dispatchUpdatePlayer(this.player, FIXED_STEP_MS)
+    if (!betweenWaves) UpgradeSystem.dispatchUpdatePlayer(this.player, FIXED_STEP_MS)
 
     // Handle movement input (skip if left joystick is active)
     if (!this.touchControls.isLeftJoystickActive()) {
       let velocityX = 0
       let velocityY = 0
 
-      if (this.cursors.left.isDown || this.wasdKeys.A.isDown) {
+      if (this.isMoveDown(MoveAction.Left)) {
         velocityX = -1
-      } else if (this.cursors.right.isDown || this.wasdKeys.D.isDown) {
+      } else if (this.isMoveDown(MoveAction.Right)) {
         velocityX = 1
       }
 
-      if (this.cursors.up.isDown || this.wasdKeys.W.isDown) {
+      if (this.isMoveDown(MoveAction.Up)) {
         velocityY = -1
-      } else if (this.cursors.down.isDown || this.wasdKeys.S.isDown) {
+      } else if (this.isMoveDown(MoveAction.Down)) {
         velocityY = 1
       }
 
@@ -798,7 +825,7 @@ export class MainScene extends Phaser.Scene {
       if (bundle.isDestroyed) {
         this.activeBundles.splice(i, 1)
       } else {
-        bundle._update()
+        bundle._update(!betweenWaves)
       }
     }
 

@@ -13,7 +13,6 @@ export const DashAbilityDef: UpgradeDef = {
   icon: IconID.Dash,
   activation: {
     key: "SPACE",
-    keyLabel: "SPC",
     label: "DASH",
     buttonColor: 0x44dd44,
     theme: "blue",

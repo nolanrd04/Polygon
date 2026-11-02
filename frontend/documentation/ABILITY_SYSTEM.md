@@ -87,8 +87,20 @@ MainScene shutdown  →  AbilitySystem.unbind()
 | `readyCount(now)` | Charges usable right now |
 | `spend(now, cooldown)` | Take one ready charge, queueing its recharge behind the last one out; `false` if none available |
 | `progress(now, cooldown)` | 0–1 progress of the charge next to return; 1 when none are out |
+| `shift(ms)` | Push every timestamp forward by `ms` (the intermission freeze, below) |
 
 Cooldown is resolved per spend through `UpgradeModifierSystem.applyModifiers(player, cooldownStat, base)`, so `dash_cooldown_*` / `heal_cooldown_*` upgrades apply without the queue knowing they exist.
+
+---
+
+## Intermission freeze
+
+Between waves ([WAVE_MANAGER.md](WAVE_MANAGER.md#intermission)) abilities can't be used and cooldowns stand still. `MainScene.stepLogic` calls `setFrozen(!isWaveActive)` every tick; only the transitions do anything:
+
+- **Freeze:** records `frozenAt = scene.time.now`. `activate()` returns early, and `getSlots()` reads `frozenAt` as "now", so the HUD's progress bars stop.
+- **Unfreeze:** shifts every queue by `now - frozenAt`, then clears `frozenAt`. A recharge that was 40% done at wave end resumes at 40%. A charge that was already ready stays ready, because its ready time was at or before `frozenAt`.
+
+Shifting the timestamps keeps `ChargeQueue` on the scene clock with its timing rules unchanged; the queue never learns about the intermission. The backend's dash-queue simulation starts each wave with full charges, so a player carrying a partial recharge into the wave is simply lenient there, never a false flag.
 
 ---
 
@@ -103,6 +115,7 @@ Cooldown is resolved per spend through `UpgradeModifierSystem.applyModifiers(pla
 | `getSlots()` | `MainScene` → HUD | `AbilitySlotState[]` for owned abilities only, in slot order |
 | `setCharges(id, n)` / `addCharges(id, delta)` | ability upgrades via `ctx.abilities` | Retune a charge ceiling |
 | `resetCharges()` | `UpgradeSystem.replay()` | Rebuild every queue at its def baseline |
+| `setFrozen(frozen)` | `MainScene.stepLogic` | Intermission freeze, see above |
 
 ### `AbilitySlotState`
 

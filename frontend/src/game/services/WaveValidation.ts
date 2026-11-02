@@ -58,7 +58,7 @@ export class WaveValidationService {
   private shotsFired: number[] = []  // ms since wave start, one per cooldown-gated Player.shoot() call
   private shotFrames: number[] = []  // frame of each shotsFired entry, places it on the server's buff timeline
   // Frame the player pressed Start Wave on. The counter starts at token issue
-  // (the previous wave's completion), so the shop phase comes first.
+  // (the previous wave's completion), so the intermission comes first.
   private waveStartFrame: number | null = null
   private offeredUpgrades: any[] = []
   // Which wave the cached sandbox offer above was rolled for. Sandbox mode has
@@ -326,6 +326,11 @@ export class WaveValidationService {
     if (GameManager.getPlayerStats().isDead) {
       return
     }
+    // Intermission shots can't hit anything (MainScene clears them on Start
+    // Wave), and would only skew fire-rate checks and run accuracy analytics.
+    if (this.waveStartFrame === null) {
+      return
+    }
 
     this.shotsFired.push(Date.now() - this.waveStartTime)
     this.shotFrames.push(this.frameCount)
@@ -347,9 +352,15 @@ export class WaveValidationService {
     this.frameCount++
   }
 
-  /** The player pressed Start Wave. Queued bundle buffs start on this frame. */
+  /**
+   * The player pressed Start Wave. Queued bundle buffs start on this frame.
+   * Intermission samples are dropped so they can't use up sampleFrame's cap
+   * and thin out the wave's own. The last one stays as the anchor for the
+   * first in-wave movement interval.
+   */
   markWaveStart() {
     this.waveStartFrame = this.frameCount
+    this.frameSamples = this.frameSamples.slice(-1)
   }
 
   /**
@@ -462,14 +473,7 @@ export class WaveValidationService {
       const newPoints = stats.points - cost
       GameManager.updatePlayerStats({ points: newPoints })
 
-      // Mark the offer entry bought, exactly as the backend's /select-upgrade
-      // does to game_save.offered_upgrades (first unpurchased instance only,
-      // so a stackable offered twice still has a second buyable card). Keeps
-      // getPendingOfferIds() meaning the same thing in both modes.
-      const offerEntry = this.offeredUpgrades.find(
-        (u: any) => u && typeof u === 'object' && u.id === upgradeId && u.purchased !== true
-      )
-      if (offerEntry) offerEntry.purchased = true
+      this.markOfferPurchased(upgradeId)
 
       console.log(`[WAVE VALIDATION] Local upgrade purchase: ${upgradeId}, cost: ${cost}, new points: ${newPoints}`)
       return { success: true, newPoints }
@@ -492,6 +496,7 @@ export class WaveValidationService {
 
       if (response.data.success) {
         console.log(`Upgrade ${upgradeId} applied and validated, new points: ${response.data.current_points}`)
+        this.markOfferPurchased(upgradeId)
         return {
           success: true,
           newPoints: response.data.current_points
@@ -503,6 +508,19 @@ export class WaveValidationService {
       console.error('Failed to select upgrade:', error)
       return {success: false}
     }
+  }
+
+  /**
+   * Mark the offer entry bought, exactly as the backend's /select-upgrade
+   * does to game_save.offered_upgrades (first unpurchased instance only,
+   * so a stackable offered twice still has a second buyable card). Keeps
+   * getPendingOfferIds() and a reopened shop in step with the server.
+   */
+  private markOfferPurchased(upgradeId: string): void {
+    const offerEntry = this.offeredUpgrades.find(
+      (u: any) => u && typeof u === 'object' && u.id === upgradeId && u.purchased !== true
+    )
+    if (offerEntry) offerEntry.purchased = true
   }
 
   /**

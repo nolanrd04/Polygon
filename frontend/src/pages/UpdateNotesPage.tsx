@@ -10,8 +10,18 @@ interface UpdateNote {
 // Add new updates at the top of this array
 const UPDATE_NOTES: UpdateNote[] = [
   {
-    version: 'v0.3.0',
+    version: 'v0.3.1',
     date: '2026-10-xx',
+    title: 'Quality of Life and Progression Improvements',
+    changes: [
+      'Added an intermission phase in between waves',
+      'Added a shop button and made it accessible during intermission and from the pause menu.',
+      'Added keybinds.'
+    ]
+  },
+  {
+    version: 'v0.3.0',
+    date: '2026-10-28',
     title: 'New buffs and debuffs.',
     changes: [
       'Added loads of new buffs and debuffs. Buffs are temporary effects that can be applied to players or enemies. Buffs currently only come from upgrade bundles.',

@@ -400,7 +400,6 @@
     "stackable": false,
     "activation": {
       "key": "SPACE",
-      "keyLabel": "SPC",
       "label": "DASH",
       "buttonColor": 4513092,
       "theme": "blue",

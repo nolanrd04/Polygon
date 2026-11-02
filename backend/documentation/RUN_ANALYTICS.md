@@ -101,7 +101,7 @@ Abandoned runs keep their snapshots and **count in analysis by default** (restar
 
 | Field(s) | Source |
 |----------|--------|
-| `wave_duration_seconds` | Server-computed in `complete_wave()` (token creation → submission) |
+| `wave_duration_seconds` | Server-computed in `complete_wave()`: active wave time, `(last sample frame − wave_start_frame) / LOGIC_HZ`, capped by wall clock since token creation. Excludes the intermission (the token is issued at the previous wave's completion). Snapshots from before 2026-10-29 used token creation → submission, so they include shop/intermission time and read slightly long. Filter by `game_version` when comparing pacing or `dps` across that change. Lifetime `PlayerStats.total_playtime_seconds` still uses the wall-clock token time |
 | `damage_dealt/taken`, `kills`, `shots_fired`, `hits_*` | Validated `wave_data` (post anti-cheat) |
 | `player_health_start` | `existing_save.current_health` — the value carried in from last wave's end (chains wave-to-wave) |
 | `player_max_health/speed/polygon_sides` | Server's own `derived_stats` from the authorized upgrade list, never client-reported |

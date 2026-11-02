@@ -75,7 +75,9 @@ A typed publish/subscribe bus used to decouple systems. All event names and thei
 |-------|---------|-------------|
 | `wave-start` | `number` | Wave number just started |
 | `wave-complete` | `{ wave, score, isPrime }` | Wave just ended |
-| `show-upgrades` | — | Request upgrade modal to open |
+| `intermission-start` | — | Session start: the first token is loaded, Start Wave is usable ([intermission](WAVE_MANAGER.md#intermission)) |
+| `show-upgrades` / `hide-upgrades` | — | Shop opened / closed |
+| `request-start-wave` | — | Mobile Play button pressed. `GamePage.handleStartWave` decides and emits `start-next-wave` |
 | `start-next-wave` | — | Player confirmed and wave should begin |
 | `player-stats-update` | `PlayerStatsPayload` | Any stat changed |
 | `player-death` | — | Player health reached zero |

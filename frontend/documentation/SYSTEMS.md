@@ -63,8 +63,10 @@ CollisionManager (event-driven, registered in create())
 
 EventBus (shared by all systems and React)
     ├── game-pause/resume → MainScene pauses/resumes
-    ├── wave-complete → React shows WaveComplete modal
-    ├── show-upgrades → React shows UpgradeModal
+    ├── wave-complete → React shows WaveComplete modal, then the intermission
+    ├── intermission-start → React shows intermission controls (session start)
+    ├── show-upgrades / hide-upgrades → shop opened / closed
+    ├── request-start-wave → GamePage.handleStartWave → start-next-wave
     ├── upgrade-selected → MainScene.applyUpgrade()
     ├── player-death → MainScene shows death text; GamePage saves death state
     ├── player-stats-update → GamePage updates HUD

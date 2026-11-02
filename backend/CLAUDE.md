@@ -51,7 +51,7 @@ JWT-based stateless auth. Passwords hashed with bcrypt. Protected endpoints use 
 
 ### Wave Validation & Anti-Cheat
 The core gameplay loop. Located primarily in `app/services/wave_service.py`:
-1. Client calls `/api/waves/start` → server generates a 30-second one-time token with expected player stats
+1. Client calls `/api/waves/start` → server generates a one-time token with expected player stats. The client calls it at the *previous* wave's completion, so the token is issued before the intermission (where the player roams and shops, with no time limit). Its lifetime (`WAVE_TOKEN_LIFETIME_SECONDS`) is long enough that the intermission can't expire it. The client reports `wave_start_frame` for when the player actually pressed Start Wave. It doesn't record shots fired before that frame, and drops all but the last intermission movement sample. The snapshot's `wave_duration_seconds` runs from that frame (capped by wall clock), while lifetime playtime uses the token's wall-clock age
 2. Client plays the wave, collecting frame samples
 3. Client calls `/api/waves/complete` with frame data → server validates:
    - Token validity (not expired, not reused)

@@ -246,7 +246,10 @@ class WaveService:
 
         print(f"Starting validations...", flush=True)
 
-        wave_duration_seconds = (now - token.created_at).total_seconds()
+        # Wall clock since token issue, which is the previous wave's completion,
+        # so it includes the intermission. Lifetime playtime counts it; the
+        # snapshot's wave duration (below) doesn't.
+        token_elapsed_seconds = (now - token.created_at).total_seconds()
 
         # Perform validations
         flags: List[FlagReason] = []
@@ -308,6 +311,13 @@ class WaveService:
         )
         wave_data["wave_start_frame"] = wave_start_frame
         flags.extend(buff_flags)
+
+        # Active wave time on the frame clock (Start Wave → last sample),
+        # capped by the wall clock so a client can't stretch it.
+        wave_duration_seconds = min(
+            token_elapsed_seconds,
+            max(0, last_frame - wave_start_frame) / LOGIC_HZ,
+        )
 
         # 2. Validate fire rate - each shots_fired entry must be spaced by at
         # least the weapon's cooldown. This gates the hit-count ceiling below
@@ -403,14 +413,14 @@ class WaveService:
             kills = wave_data.get("kills", 0)
             damage = wave_data.get("total_damage", 0)
             damage_taken = wave_data.get("damage_taken", 0)
-            print(f"Updating stats - Kills: {kills}, Damage: {damage}, Wave: {token.wave_number}, Duration: {wave_duration_seconds}s, Damage Taken: {damage_taken}")
+            print(f"Updating stats - Kills: {kills}, Damage: {damage}, Wave: {token.wave_number}, Duration: {wave_duration_seconds:.1f}s (token {token_elapsed_seconds:.1f}s), Damage Taken: {damage_taken}")
 
             await self._update_player_stats_after_wave(
                 user_id,
                 kills,
                 damage,
                 token.wave_number,
-                int(wave_duration_seconds),
+                int(token_elapsed_seconds),
                 damage_taken
             )
 

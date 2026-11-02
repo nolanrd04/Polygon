@@ -16,6 +16,9 @@ export interface GameEvents {
   'wave-complete': { wave: number; score: number; isPrime: boolean }
   'wave-start': number
   'show-upgrades': void
+  'hide-upgrades': void
+  'intermission-start': void  // the next wave's token is loaded and Start Wave is usable
+  'request-start-wave': void  // mobile Play button; GamePage decides and emits start-next-wave
   'player-stats-update': PlayerStatsPayload
   'player-death': void
   'game-pause': void
@@ -43,6 +46,7 @@ export interface GameEvents {
   'activate-ability': string  // HUD ability card tapped (mobile); id of the ability to fire
   'request-buff-state': void  // HUD polls; MainScene answers with the player's active buffs
   'buff-state-update': BuffSlotState[]
+  'keybinds-changed': void  // Keybinds.ts wrote new bindings; MainScene rebinds keys
 }
 
 type EventCallback<T = void> = T extends void ? () => void : (data: T) => void

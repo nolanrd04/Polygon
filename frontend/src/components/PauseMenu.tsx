@@ -2,6 +2,7 @@ import { useState } from 'react'
 import SaveGameModal from './SaveGameModal'
 import ViewUpgrades from './ViewUpgrades'
 import ViewBuffs from './ViewBuffs'
+import SettingsPanel from './SettingsPanel'
 import type { BuffSlotState } from '../game/buffs/Buff'
 
 interface PauseMenuProps {
@@ -10,13 +11,16 @@ interface PauseMenuProps {
   buffs: BuffSlotState[]
   /** 'buffs' when opened by tapping the BuffBar. BACK still lands on the menu. */
   initialView?: 'buffs'
+  /** Set only during the intermission: resumes and opens the shop. */
+  onOpenShop?: () => void
 }
 
-export default function PauseMenu({ onResume, onQuit, buffs, initialView }: PauseMenuProps) {
+export default function PauseMenu({ onResume, onQuit, buffs, initialView, onOpenShop }: PauseMenuProps) {
   // export saves
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [showUpgrades, setShowUpgrades] = useState(false)
   const [showBuffs, setShowBuffs] = useState(initialView === 'buffs')
+  const [showSettings, setShowSettings] = useState(false)
   const isSandbox = !localStorage.getItem('token')
   //
 
@@ -26,6 +30,16 @@ export default function PauseMenu({ onResume, onQuit, buffs, initialView }: Paus
 
   if (showBuffs) {
     return <ViewBuffs buffs={buffs} onBack={() => setShowBuffs(false)} />
+  }
+
+  if (showSettings) {
+    return (
+      <SettingsPanel
+        onBack={() => setShowSettings(false)}
+        backLabel="BACK"
+        className="absolute inset-0 bg-black/90 z-[110]"
+      />
+    )
   }
 
   return (
@@ -40,6 +54,15 @@ export default function PauseMenu({ onResume, onQuit, buffs, initialView }: Paus
           RESUME
         </button>
 
+        {onOpenShop && (
+          <button
+            onClick={onOpenShop}
+            className="px-8 py-3 border-2 border-polygon-warning text-polygon-warning font-semibold rounded hover:bg-polygon-warning hover:text-black transition-all"
+          >
+            SHOP
+          </button>
+        )}
+
         <button
           onClick={() => setShowUpgrades(true)}
           className="px-8 py-3 border-2 border-polygon-secondary text-polygon-secondary font-semibold rounded hover:bg-polygon-secondary hover:text-black transition-all"
@@ -52,6 +75,13 @@ export default function PauseMenu({ onResume, onQuit, buffs, initialView }: Paus
           className="px-8 py-3 border-2 border-polygon-secondary text-polygon-secondary font-semibold rounded hover:bg-polygon-secondary hover:text-black transition-all"
         >
           VIEW BUFFS{buffs.length > 0 ? ` (${buffs.length})` : ''}
+        </button>
+
+        <button
+          onClick={() => setShowSettings(true)}
+          className="px-8 py-3 border-2 border-polygon-secondary text-polygon-secondary font-semibold rounded hover:bg-polygon-secondary hover:text-black transition-all"
+        >
+          SETTINGS
         </button>
 
         {isSandbox && (
