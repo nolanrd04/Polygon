@@ -18,7 +18,7 @@ from app.models.game_run import GameRun, WaveSnapshot, OfferRoll, GAME_VERSION
 from app.repositories.player_stats_repository import PlayerStatsRepository
 from app.repositories.game_save_repository import GameSaveRepository
 from app.repositories.game_run_repository import GameRunRepository
-from app.core.upgrade_data import UPGRADES, STARTING_UPGRADES, can_apply_upgrade, get_upgrade
+from app.core.upgrade_data import UPGRADES, STARTING_UPGRADES, can_apply_upgrade, get_upgrade, roll_offer_discounts
 from app.core.buff_data import BUNDLE_BUFF_DROPS, DROP_DEFAULTS, LOGIC_HZ, get_buff, ms_to_ticks
 from app.core.buff_rolls import BuffRoll, BuffRollContext, roll_drop
 from app.services.buff_timeline import BuffTimeline
@@ -99,26 +99,26 @@ class WaveService:
             from app.models.game_save import OfferedUpgrade
             # Return full upgrade data WITH purchased status
             offered_upgrades = [
-                {**get_upgrade(u.id), "purchased": u.purchased}
+                {**get_upgrade(u.id), "purchased": u.purchased, "discounted": u.discounted}
                 for u in game_save.offered_upgrades
             ]
             # Store the OfferedUpgrade objects for later use
             offered_upgrade_objs = game_save.offered_upgrades
         else:
             # Roll new upgrades (first time starting this wave)
-            offered_upgrades = self._roll_upgrades(
+            offered_upgrades = roll_offer_discounts(self._roll_upgrades(
                 current_upgrades=current_upgrades,
                 attack_type=game_save.current_attack_type if game_save else "bullet",
                 wave_number=wave_number,
                 difficulty=difficulty,
                 allow_variant_pity=True
-            )
+            ), difficulty)
             print(f"Rolled new upgrades for wave {wave_number}: {[u['id'] for u in offered_upgrades]}")
 
             # Create OfferedUpgrade objects with purchased=False
             from app.models.game_save import OfferedUpgrade
             offered_upgrade_objs = [
-                OfferedUpgrade(id=u["id"], purchased=False)
+                OfferedUpgrade(id=u["id"], purchased=False, discounted=u["discounted"])
                 for u in offered_upgrades
             ]
 
@@ -481,12 +481,12 @@ class WaveService:
         difficulty = get_difficulty(difficulty_id)
 
         # Roll new upgrades
-        offered_upgrades = self._roll_upgrades(
+        offered_upgrades = roll_offer_discounts(self._roll_upgrades(
             current_upgrades=current_upgrades,
             attack_type=attack_type,
             wave_number=wave_number,
             difficulty=difficulty
-        )
+        ), difficulty)
         print(f"Rerolled upgrades for user {user_id}: {[u['id'] for u in offered_upgrades]}")
 
         # Record the reroll on the wave's own (still-open) validation token,
@@ -519,7 +519,7 @@ class WaveService:
         # Create OfferedUpgrade objects with purchased=False
         from app.models.game_save import OfferedUpgrade
         offered_upgrade_objs = [
-            OfferedUpgrade(id=u["id"], purchased=False)
+            OfferedUpgrade(id=u["id"], purchased=False, discounted=u["discounted"])
             for u in offered_upgrades
         ]
 
@@ -1964,7 +1964,8 @@ class WaveService:
             e for e in existing_save.upgrade_history if e.wave_number == wave_number
         ]
         points_spent = sum(
-            (get_upgrade(e.upgrade_id) or {}).get("cost", 0) for e in purchased_entries
+            e.cost_paid if e.cost_paid is not None else (get_upgrade(e.upgrade_id) or {}).get("cost", 0)
+            for e in purchased_entries
         )
 
         highest_flag_severity = None

@@ -18,6 +18,7 @@ import { SaveManager } from '../game/services/SaveManager'
 import { GameManager } from '../game/core/GameManager'
 import { IS_MOBILE } from '../game/core/Device'
 import { waveValidation } from '../game/services/WaveValidation'
+import { emptyFragments } from '../game/systems/FragmentBudget'
 
 export default function GamePage() {
   const navigate = useNavigate()
@@ -28,8 +29,8 @@ export default function GamePage() {
   const [showWaveComplete, setShowWaveComplete] = useState(false)
   // Between waves with the next wave's token loaded (see 'intermission-start')
   const [intermission, setIntermission] = useState(false)
-  const [waveData, setWaveData] = useState({ wave: 1, score: 0, isPrime: false })
-  const [playerStats, setPlayerStats] = useState({ health: 100, maxHealth: 100, points: 0, kills: 0 })
+  const [waveData, setWaveData] = useState({ wave: 1, bonus: emptyFragments() })
+  const [playerStats, setPlayerStats] = useState({ health: 100, maxHealth: 100, fragments: emptyFragments(), kills: 0 })
   const [selectedAttack, setSelectedAttack] = useState('bullet')
   const [showCollisionBoxes, setShowCollisionBoxes] = useState(false)
   const [abilitySlots, setAbilitySlots] = useState<AbilitySlotState[]>([])
@@ -74,7 +75,7 @@ export default function GamePage() {
         setPlayerStats({
           health: state.playerStats.health,
           maxHealth: state.playerStats.maxHealth,
-          points: state.playerStats.points,
+          fragments: state.playerStats.fragments,
           kills: state.playerStats.kills
         })
         lastGameStateRef.current = state
@@ -111,7 +112,7 @@ export default function GamePage() {
         setPlayerStats({
           health: savedData.playerState.currentHealth,
           maxHealth: savedData.playerState.currentMaxHealth,
-          points: savedData.points.currentPoints,
+          fragments: GameManager.getPlayerStats().fragments,
           kills: savedData.gameStats.currentKills
         })
 
@@ -140,7 +141,7 @@ export default function GamePage() {
           const initialState = GameManager.getState()
           if (initialState && initialState.wave && initialState.wave > 0) {
             lastGameStateRef.current = initialState
-            console.log('Initialized ref with initial game state, wave:', initialState.wave, 'points:', initialState.playerStats.points)
+            console.log('Initialized ref with initial game state, wave:', initialState.wave, 'fragments:', initialState.playerStats.fragments)
           }
         }
       }, 100)
@@ -190,7 +191,7 @@ export default function GamePage() {
     })
 
     // On death, submit the final (partial) wave for validation - this is
-    // what actually credits its kills/points and freezes death_state
+    // what actually credits its kills/fragments and freezes death_state
     // server-side now (online only; offline/sandbox stays fully local via
     // freezeDeathState below, already called synchronously from
     // GameManager.takeDamage() at the exact moment of death).
@@ -202,7 +203,7 @@ export default function GamePage() {
       deathSaveCompletedRef.current = true
 
       const state = GameManager.getState()
-      console.log('[DEATH] Event triggered - submitting final wave for validation. State:', { wave: state.wave, points: state.playerStats.points, kills: state.playerStats.kills })
+      console.log('[DEATH] Event triggered - submitting final wave for validation. State:', { wave: state.wave, fragments: state.playerStats.fragments, kills: state.playerStats.kills })
 
       waveValidation.completeWave(state.wave, true).then(result => {
         console.log('[DEATH] Wave-on-death submission result:', result)
@@ -308,7 +309,7 @@ export default function GamePage() {
       <GameHUD
         health={playerStats.health}
         maxHealth={playerStats.maxHealth}
-        points={playerStats.points}
+        fragments={playerStats.fragments}
         kills={playerStats.kills}
         wave={waveData.wave}
       />
@@ -339,8 +340,7 @@ export default function GamePage() {
       {showWaveComplete && (
         <WaveComplete
           wave={waveData.wave}
-          score={waveData.score}
-          isPrime={waveData.isPrime}
+          bonus={waveData.bonus}
           onContinue={handleWaveCompleteContinue}
         />
       )}
@@ -358,7 +358,7 @@ export default function GamePage() {
         <UpgradeModal
           onStartWave={handleStartWave}
           onClose={handleCloseShop}
-          playerPoints={playerStats.points}
+          fragments={playerStats.fragments}
           selectedAttack={selectedAttack}
         />
       )}

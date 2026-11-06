@@ -49,6 +49,13 @@ fi
 
 echo ""
 
+# Warn-only: the generated fragment value split vs the shop/bundle tables it's
+# built from. A stale split can be deliberate; backend parity for it is the
+# difficulty check above. See scripts/fragment_table_sync.py.
+python3 "$REPO_ROOT/scripts/fragment_table_sync.py"
+
+echo ""
+
 # Value-parity check: parses every BuffDef plus bundleDrops.ts's whitelist and
 # diffs against backend/app/core/data/buffs.json. Also fails on a bundle drop
 # whose custom `roll` has no port in backend/app/core/buff_rolls.py.

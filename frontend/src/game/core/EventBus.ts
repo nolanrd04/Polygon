@@ -1,19 +1,21 @@
 import type { AbilitySlotState } from '../systems/AbilitySystem'
 import type { BuffSlotState } from '../buffs/Buff'
+import type { FragmentCounts } from '../systems/FragmentBudget'
 
 // Define all event types and their payloads
 export interface PlayerStatsPayload {
   health: number
   maxHealth: number
   speed: number
-  points: number
+  fragments: FragmentCounts
   polygonSides: number
   unlockedAttacks: string[]
   kills: number
 }
 
 export interface GameEvents {
-  'wave-complete': { wave: number; score: number; isPrime: boolean }
+  'wave-complete': { wave: number; bonus: FragmentCounts }
+  'fragments-awarded': { x: number; y: number; counts: FragmentCounts }
   'wave-start': number
   'show-upgrades': void
   'hide-upgrades': void

@@ -5,6 +5,22 @@ import { EventBus } from '../core/EventBus'
 import { waveValidation } from '../services/WaveValidation'
 import type { Difficulty, EnemySpawnWeight, RarityWeights } from './difficulty/Difficulty'
 import { NormalDifficulty } from './difficulty/Normal'
+import { getEnemyRegistry } from '../entities/enemies'
+import {
+  FRAGMENT_TIERS,
+  distributeFragments,
+  emptyFragments,
+  rollWaveBudget,
+  type FragmentCounts,
+  type WaveFragmentBudget,
+} from './FragmentBudget'
+
+const EnemyRegistry = getEnemyRegistry()
+
+interface PlannedSpawn {
+  typeId: string
+  fragments: FragmentCounts
+}
 
 export class WaveManager {
   private scene: Phaser.Scene
@@ -14,6 +30,9 @@ export class WaveManager {
   private waveActive: boolean = false
   private enemiesSpawned: number = 0
   private totalEnemiesToSpawn: number = 0
+  private plannedSpawns: PlannedSpawn[] = []
+  private plannedBosses: PlannedSpawn[] = []
+  private fragmentBudget: WaveFragmentBudget | null = null
 
   constructor(scene: Phaser.Scene, enemyManager: EnemyManager, difficulty: Difficulty = NormalDifficulty) {
     this.scene = scene
@@ -30,11 +49,12 @@ export class WaveManager {
 
     this.enemyManager.setCurrentWave(this.currentWave - 1)
 
-    const bossSpawns = this.difficulty.getScheduledBossSpawns(this.currentWave)
-    if (bossSpawns) {
-      this.startBossWave(bossSpawns)
-    } else {
-      this.startNormalWave()
+    this.planWave()
+    this.enemiesSpawned = 0
+    this.totalEnemiesToSpawn = this.plannedSpawns.length
+    this.spawnEnemiesGradually()
+    if (this.plannedBosses.length > 0) {
+      this.spawnBossesDelayed()
     }
 
     // Same frame MainScene applies held bundle buffs on (GameManager.startWave's wave-start).
@@ -43,23 +63,38 @@ export class WaveManager {
     EventBus.emit('wave-start', this.currentWave)
   }
 
-  private startNormalWave(): void {
-    this.totalEnemiesToSpawn = this.difficulty.getEnemyCount(this.currentWave)
-    this.enemiesSpawned = 0
-    this.spawnEnemiesGradually()
+  /** Rolls the whole wave's enemy list and hands the fragment budget out across it. */
+  private planWave(): void {
+    const bossTypes = this.difficulty.getScheduledBossSpawns(this.currentWave) ?? []
+    const enemyCount = this.difficulty.getEnemyCount(this.currentWave)
+    // Boss waves halve the regular pool; the boss spawns in addition.
+    const regularCount = bossTypes.length > 0 ? Math.floor(enemyCount * 0.5) : enemyCount
+
+    const weights = this.difficulty.getSpawnWeights(this.currentWave)
+    const regularTypes = Array.from({ length: regularCount }, () => this.selectWeightedRandom(weights))
+
+    this.fragmentBudget = rollWaveBudget(this.difficulty, this.currentWave)
+    const drops = distributeFragments(
+      this.fragmentBudget.enemies,
+      [...regularTypes, ...bossTypes],
+      typeId => EnemyRegistry[typeId]?.fragmentWeight ?? 1
+    )
+
+    this.plannedSpawns = regularTypes.map((typeId, i) => ({ typeId, fragments: drops[i] }))
+    this.plannedBosses = bossTypes.map((typeId, i) => ({ typeId, fragments: drops[regularCount + i] }))
   }
 
-  private startBossWave(bossSpawns: string[]): void {
-    // Boss waves halve the regular pool; the boss spawns in addition.
-    this.totalEnemiesToSpawn = Math.floor(this.difficulty.getEnemyCount(this.currentWave) * 0.5)
-    this.enemiesSpawned = 0
+  private spawnPlanned(spawn: PlannedSpawn): void {
+    this.enemyManager.spawnEnemy(spawn.typeId, undefined, undefined, true, enemy => {
+      enemy.fragments = spawn.fragments
+    })
+  }
 
-    this.spawnEnemiesGradually()
-
+  private spawnBossesDelayed(): void {
     this.scene.time.delayedCall(2000, () => {
       console.log(`Spawning boss for wave ${this.currentWave}`)
-      for (const typeId of bossSpawns) {
-        this.enemyManager.spawnEnemy(typeId)
+      for (const boss of this.plannedBosses) {
+        this.spawnPlanned(boss)
       }
     })
   }
@@ -71,9 +106,7 @@ export class WaveManager {
       delay: spawnDelay,
       callback: () => {
         if (this.enemiesSpawned < this.totalEnemiesToSpawn) {
-          const weights = this.difficulty.getSpawnWeights(this.currentWave)
-          const typeId = this.selectWeightedRandom(weights)
-          this.enemyManager.spawnEnemy(typeId)
+          this.spawnPlanned(this.plannedSpawns[this.enemiesSpawned])
           this.enemiesSpawned++
         } else {
           spawnTimer.destroy()
@@ -108,6 +141,9 @@ export class WaveManager {
   async completeWave(): Promise<void> {
     this.waveActive = false
 
+    // Before waveValidation.completeWave, which resets the earned counts.
+    this.logFragmentCheck()
+
     const validationResult = await waveValidation.completeWave(this.currentWave)
     if (!validationResult.success) {
       console.warn('Wave validation failed:', validationResult.errors)
@@ -121,7 +157,7 @@ export class WaveManager {
       EventBus.emit('evolution-milestone', this.currentWave)
     }
 
-    await GameManager.completeWave()
+    await GameManager.completeWave(this.fragmentBudget?.bonus ?? emptyFragments())
 
     this.currentWave++
     GameManager.setWave(this.currentWave)
@@ -129,6 +165,19 @@ export class WaveManager {
 
     EventBus.emit('wave-start', this.currentWave)
     // Online persistence already happened above, inside waveValidation.completeWave().
+  }
+
+  /** Dev only: a full clear should pay out every fragment the enemies were given. */
+  private logFragmentCheck(): void {
+    if (!import.meta.env.DEV || !this.fragmentBudget || GameManager.getPlayerStats().isDead) return
+
+    const expected = this.fragmentBudget.enemies
+    const earned = waveValidation.getFragmentsEarned()
+    if (FRAGMENT_TIERS.every(tier => earned[tier] === expected[tier])) {
+      console.log(`[FRAGMENTS] Wave ${this.currentWave} paid out in full`, expected, 'bonus', this.fragmentBudget.bonus)
+    } else {
+      console.warn(`[FRAGMENTS] Wave ${this.currentWave} payout mismatch`, { expected, earned })
+    }
   }
 
   getCurrentWave(): number {

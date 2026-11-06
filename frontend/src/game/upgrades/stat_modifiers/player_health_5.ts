@@ -7,7 +7,7 @@ export const PlayerHealth5Def: UpgradeDef = {
   description: "+300 max health",
   rarity: RarityID.Legendary,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 40,
+  cost: 5,
   targetClass: UpgradeTargetID.Player,
   fieldInTargetClass: UpgradeStatID.MaxHealth,
   value: 300,

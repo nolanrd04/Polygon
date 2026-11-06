@@ -7,7 +7,7 @@ export const ShieldAbilityDef: UpgradeDef = {
   description: "Press E for temporary shield (consumable, stacks)",
   rarity: RarityID.Rare,
   upgradeType: UpgradeTypeID.Effect,
-  cost: 10,
+  cost: 20,
   value: 1,
   effect: "shield",
   stackable: true,

@@ -7,7 +7,7 @@ export const Tenacity3Def: UpgradeDef = {
   description: "Increased the bullet lifespan by 1 second",
   rarity: RarityID.Legendary,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 40,
+  cost: 5,
   targetClass: UpgradeTargetID.Bullet,
   fieldInTargetClass: UpgradeStatID.TimeLeft,
   value: 1000,

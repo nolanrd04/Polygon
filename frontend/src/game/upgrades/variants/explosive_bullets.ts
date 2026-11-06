@@ -7,7 +7,7 @@ export const ExplosiveBulletsDef: UpgradeDef = {
   description: "Bullets explode on impact dealing collision and area damage.",
   rarity: RarityID.Epic,
   upgradeType: UpgradeTypeID.Variant,
-  cost: 20,
+  cost: 10,
   targetClass: UpgradeTargetID.Bullet,
   variantClass: "ExplosiveBullet",
   replaces: ["homing_bullets", "buckshot_bullets"],

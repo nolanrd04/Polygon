@@ -9,7 +9,7 @@ export const HomingDistance1Def: UpgradeDef = {
   description: "+20 tracking distance for homing bullets",
   rarity: RarityID.Uncommon,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 6,
+  cost: 60,
   targetClass: UpgradeTargetID.Bullet,
   fieldInTargetClass: UpgradeStatID.TrackingDistance,
   value: 20,

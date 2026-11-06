@@ -1,6 +1,7 @@
 import { EventBus } from './EventBus'
 import { Projectile } from '../entities/projectiles/Projectile'
 import { SaveManager } from '../services/SaveManager'
+import { addFragmentCounts, emptyFragments, type FragmentCounts } from '../systems/FragmentBudget'
 
 /**
  * PlayerStats Interface
@@ -10,7 +11,7 @@ export interface PlayerStats {
   health: number // Current health points
   maxHealth: number // Maximum health capacity
   speed: number // Movement speed in pixels per second
-  points: number // Score/currency earned from killing enemies
+  fragments: FragmentCounts // Per-tier currency earned from killing enemies
   kills: number // Total enemies killed
   polygonSides: number // Number of sides on player's polygon shape (affects max unlocked attacks)
   unlockedAttacks: string[] // Attack types the player has unlocked
@@ -61,7 +62,7 @@ class GameManagerClass {
       health: BASE_PLAYER_STATS.maxHealth,
       maxHealth: BASE_PLAYER_STATS.maxHealth,
       speed: BASE_PLAYER_STATS.speed,
-      points: 0,
+      fragments: emptyFragments(),
       kills: 0,
       polygonSides: BASE_PLAYER_STATS.polygonSides,
       unlockedAttacks: ['bullet'],
@@ -114,14 +115,13 @@ class GameManagerClass {
   }
 
   /**
-   * Award points to the player (earned from killing enemies)
-   * Points are used as currency for upgrades
-   * NOTE: Points continue to accumulate after death for testing/fun
+   * Add fragments to the player's wallet
+   * NOTE: Fragments continue to accumulate after death for testing/fun
    */
-  addPoints(points: number): void {
+  addFragments(counts: FragmentCounts): void {
     this.state.playerStats = {
       ...this.state.playerStats,
-      points: this.state.playerStats.points + points
+      fragments: addFragmentCounts(this.state.playerStats.fragments, counts)
     }
     EventBus.emit('player-stats-update', this.state.playerStats)
   }
@@ -227,7 +227,7 @@ class GameManagerClass {
   /**
    * Reset the upgrade-derived player stats back to their per-run base values.
    * Called by UpgradeSystem.replay() before re-applying the ledger; health,
-   * points, kills, etc. are left untouched (replay clamps health itself).
+   * fragments, kills, etc. are left untouched (replay clamps health itself).
    */
   resetStatsToBase(): void {
     this.state.playerStats = {
@@ -248,23 +248,19 @@ class GameManagerClass {
 
   /**
    * Complete the current wave
-   * Calculates score (doubled for prime number waves), awards points, and shows completion screen
+   * Pays the wave's fragment bonus and shows completion screen
    * NOTE: If player is dead, wave completion is allowed but NOT saved
    */
-  async completeWave(): Promise<void> {
+  async completeWave(bonus: FragmentCounts): Promise<void> {
     this.state.isWaveActive = false
-    const baseBonus = 20
-    // const waveMultiplier = Math.exp((this.state.wave - 1) / 16)
-    // const score = Math.floor(baseBonus * waveMultiplier)
-    const score = Math.min(50, Math.floor(baseBonus + this.state.wave))
 
-    // Online: the backend computes and credits this same deterministic bonus
-    // server-side (see WaveValidation.completeWave's current_points sync),
-    // so adding it locally here too would double-count it. Offline/sandbox
-    // mode has no backend to sync from, so it must still be awarded locally.
+    // Online: the backend credits this bonus server-side (see
+    // WaveValidation.completeWave's wallet sync), so adding it locally here too
+    // would double-count it. Offline/sandbox mode has no backend to sync from,
+    // so it must still be awarded locally.
     const isOfflineMode = !localStorage.getItem('token')
     if (isOfflineMode) {
-      this.addPoints(score)
+      this.addFragments(bonus)
     }
 
     // Online wave-completion persistence already happened validated, inside
@@ -281,22 +277,9 @@ class GameManagerClass {
 
     EventBus.emit('wave-complete', {
       wave: this.state.wave,
-      score,
-      isPrime: false
+      bonus
     })
   }
-
-  /**
-   * Check if a number is prime
-   * Used to determine if current wave number qualifies for score bonus
-   */
-  // private _isPrimeNumber(num: number): boolean {
-  //   if (num < 2) return false
-  //   for (let i = 2; i <= Math.sqrt(num); i++) {
-  //     if (num % i === 0) return false
-  //   }
-  //   return true
-  // }
 
   /**
    * Apply an upgrade to the player
@@ -351,7 +334,7 @@ class GameManagerClass {
         health: BASE_PLAYER_STATS.maxHealth,
         maxHealth: BASE_PLAYER_STATS.maxHealth,
         speed: BASE_PLAYER_STATS.speed,
-        points: 0,
+        fragments: emptyFragments(),
         kills: 0,
         polygonSides: BASE_PLAYER_STATS.polygonSides,
         unlockedAttacks: ['bullet'],

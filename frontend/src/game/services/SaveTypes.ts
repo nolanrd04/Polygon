@@ -4,11 +4,13 @@
  * Five separate save categories with different lifecycle rules:
  *
  * 1. GameStats - Current run stats (waves, kills) - frozen on death
- * 2. Points - Currency for upgrades - persists after death
+ * 2. Fragments - Per-tier currency for upgrades - persists after death
  * 3. Upgrades - Ordered purchase history - persists after death
  * 4. DeathState - Frozen state at death - immutable once set
  * 5. PlayerState - Computed player stats (health, speed) - derived from upgrades
  */
+
+import type { FragmentCounts } from '../systems/FragmentBudget'
 
 // ============================================================================
 // CATEGORY 1: GAME STATISTICS (Current Run)
@@ -33,12 +35,11 @@ export interface GameStatsDataBackend {
 }
 
 // ============================================================================
-// CATEGORY 2: POINTS (Persistent Currency)
+// CATEGORY 2: FRAGMENTS (Persistent Currency)
 // ============================================================================
-// - Credited server-side: wave-completion bonus + clamped per-kill score, via
-//   wave_service.complete_wave() (normal completion and death)
-// - Debited server-side: /api/waves/select-upgrade, /api/waves/reroll
-// - Updated after death: YES (that final wave's score is still credited)
+// - The wallet is a FragmentCounts. Offline saves store it directly.
+// - Points types below are legacy: a save without a wallet converts its points
+//   on load (pointsToFragments). The backend still sends points until its port.
 // ============================================================================
 
 export interface PointsData {
@@ -91,7 +92,7 @@ export interface DeathFrozenState {
   wavesCompleted: number    // Wave number at death (completed, not reached)
   enemiesKilled: number     // Total kills at death
   timeSurvived: number      // Seconds played before death
-  pointsAtDeath: number     // Points at moment of death
+  fragmentsAtDeath: FragmentCounts  // Wallet at moment of death
 }
 
 export interface DeathFrozenStateBackend {
@@ -139,8 +140,11 @@ export interface FullGameSave {
   // Game statistics (frozen on death if deathState exists)
   gameStats: GameStatsData
 
-  // Points (always current)
-  points: PointsData
+  // Wallet (always current)
+  fragments?: FragmentCounts
+
+  // Old saves only, converted on load
+  points?: PointsData
 
   // Ordered upgrade history
   upgrades: UpgradesSaveData
@@ -158,6 +162,7 @@ export interface FullGameSave {
 
 export interface FullGameSaveBackend {
   game_stats: GameStatsDataBackend
+  fragments?: FragmentCounts
   points: PointsDataBackend
   upgrades: UpgradesSaveDataBackend
   player_state: PlayerStateDataBackend

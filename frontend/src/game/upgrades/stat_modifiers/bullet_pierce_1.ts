@@ -7,7 +7,7 @@ export const BulletPierce1Def: UpgradeDef = {
   description: "Bullets pierce +1 enemy",
   rarity: RarityID.Rare,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 10,
+  cost: 20,
   targetClass: UpgradeTargetID.Bullet,
   fieldInTargetClass: UpgradeStatID.Pierce,
   value: 1,

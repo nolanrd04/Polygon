@@ -10,7 +10,7 @@ export const ExplosionOnKillDef: UpgradeDef = {
   description: "Enemies explode on death",
   rarity: RarityID.Epic,
   upgradeType: UpgradeTypeID.Effect,
-  cost: 20,
+  cost: 10,
   effect: "explode_on_kill",
   effectValue: 10,
   stackable: false,

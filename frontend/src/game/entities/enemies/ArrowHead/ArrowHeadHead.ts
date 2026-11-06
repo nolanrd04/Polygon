@@ -38,6 +38,8 @@ import { LightingSystem } from '../../../../game/systems/LightingSystem'
  * than a chase. Charging drops the turn rate further, committing it to a line.
  */
 export class ArrowHeadHead extends ArrowHeadPart {
+  static fragmentWeight = 30
+
   readonly role: ArrowHeadRole = 'head'
 
   /** Current facing, in radians. Movement direction is decoupled from the player angle by the turn rate. */
@@ -74,7 +76,6 @@ export class ArrowHeadHead extends ArrowHeadPart {
     this.radius = cfg.radius
     this.hitboxSize = cfg.hitboxSize
     this.color = cfg.color
-    this.scoreChance = cfg.scoreChance
     this.bundleDropChance = cfg.bundleDropChance
     this.knockbackResistance = cfg.knockbackResistance
     this.barWidth = cfg.barWidth
@@ -347,8 +348,7 @@ export class ArrowHeadHead extends ArrowHeadPart {
         typeId,
         spawnX,
         spawnY,
-        false, // no score drop - the head carries the worm's rewards
-        false, // no bundle drop, same reason
+        false, // no bundle drop - the head carries the worm's rewards
         (enemy: Enemy) => (enemy as ArrowHeadPart).ConfigureAsSegment(this, i, chainLength)
       ) as ArrowHeadPart | null
 

@@ -57,7 +57,6 @@ export class ArrowHeadBody extends ArrowHeadPart {
     this.hitboxSize = cfg.segment.hitboxSize(t)
     this.color = cfg.head.color
     this.speed = 0
-    this.scoreChance = 0
     this.bundleDropChance = 0
     this.isBoss = true
 

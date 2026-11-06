@@ -7,7 +7,7 @@ export const DashSpeed2Def: UpgradeDef = {
   description: "+32% dash speed",
   rarity: RarityID.Epic,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 20,
+  cost: 10,
   targetClass: UpgradeTargetID.Player,
   fieldInTargetClass: UpgradeStatID.DashSpeed,
   value: 0.32,

@@ -11,6 +11,8 @@ import { LightingSystem } from '../../../game/systems/LightingSystem'
 
 
 export class Dodecahedron extends Enemy {
+  static fragmentWeight = 20
+
   private invincible: boolean = false
   // spawn animation variables
   private spawnImmunityDuration: number = 1000 // 1 second in milliseconds
@@ -70,7 +72,6 @@ export class Dodecahedron extends Enemy {
     this.sides = 12
     this.radius = 80
     this.color = this.defaultColor
-    this.scoreChance = 1
     this.speedCap = 1.5
     this.isBoss = true
     this.knockbackResistance = 1

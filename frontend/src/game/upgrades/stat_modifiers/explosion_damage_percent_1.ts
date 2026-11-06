@@ -7,7 +7,7 @@ export const ExplosionDamagePercent1Def: UpgradeDef = {
   description: "+3% explosion damage",
   rarity: RarityID.Epic,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 20,
+  cost: 10,
   targetClass: UpgradeTargetID.Bullet,
   fieldInTargetClass: UpgradeStatID.ExplosionDamage,
   value: 0.03,

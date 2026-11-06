@@ -304,6 +304,8 @@ export abstract class ArrowHeadPart extends Enemy {
   // DAMAGE ROUTING (tModLoader's NPC.realLife)
   // ========================================================================
 
+  private forwardedKillTo: Enemy | null = null
+
   /** Buffs on any part land on the pool owner, so a burn ticks the worm once, not per segment. */
   get buffTarget(): Enemy {
     const owner = ArrowHeadConfig.chain.sharedHealth ? this.owner : null
@@ -334,7 +336,13 @@ export abstract class ArrowHeadPart extends Enemy {
     const killed = owner.takeDamage(throughArmor + owner.effectiveDefense(), source)
     owner.suppressHitSound = false
 
+    if (killed) this.forwardedKillTo = owner
     return killed
+  }
+
+  /** The head's rewards, but only when this part's hit killed it. Not while dissolving, or they'd pay twice. */
+  get rewardTarget(): Enemy {
+    return this.forwardedKillTo ?? this
   }
 
   OnHit(damage: number, source: any): boolean {

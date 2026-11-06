@@ -7,7 +7,7 @@ export const HealCooldown2Def: UpgradeDef = {
   description: "-10% heal cooldown",
   rarity: RarityID.Epic,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 20,
+  cost: 10,
   targetClass: UpgradeTargetID.Player,
   fieldInTargetClass: UpgradeStatID.HealCooldown,
   value: -0.1,

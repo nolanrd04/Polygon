@@ -9,6 +9,8 @@ import { SparkParticle } from '../particles'
  * Square enemy - balanced stats.
  */
 export class Square extends Enemy {
+  static fragmentWeight = 1.25
+
   /** Fraction of max health regained per second while fleeing below 50%. */
   private static readonly HEAL_PER_SECOND = 0.3
 
@@ -20,7 +22,6 @@ export class Square extends Enemy {
     this.sides = 4
     this.radius = 20
     this.color = 0x33ff33
-    this.scoreChance = 0.4
     this.speedCap = 6.5
     this.knockbackResistance = 0.9
     this.bundleDropChance = 0.0 // use difficulty drop chance

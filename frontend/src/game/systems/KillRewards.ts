@@ -1,22 +1,25 @@
 import { GameManager } from '../core/GameManager'
+import { EventBus } from '../core/EventBus'
 import { UpgradeSystem } from './upgrades'
 import { waveValidation } from '../services/WaveValidation'
 import type { Enemy } from '../entities/enemies/Enemy'
 
 /**
  * Everything a player-credited kill awards. Shared by projectile hits
- * (CollisionManager) and debuff damage (MainScene's buff tick), so a burn
- * kill counts exactly like a bullet kill.
+ * (CollisionManager), debuff damage (MainScene's buff tick) and thorns, so
+ * every kill counts exactly like a bullet kill.
  */
-export function awardPlayerKill(enemy: Enemy): void {
+export function awardPlayerKill(killed: Enemy): void {
+  const enemy = killed.rewardTarget
+
   // Award kill counter (blocked internally if player is dead)
   GameManager.addKill()
 
-  // Award 1 point based on scoreChance (0 to 1)
-  // NOTE: Points continue after death for testing/fun
-  if (Math.random() < enemy.scoreChance) {
-    GameManager.addPoints(1)
-    waveValidation.recordPointsEarned(1)
+  // NOTE: Fragments continue after death for testing/fun
+  if (enemy.fragments) {
+    GameManager.addFragments(enemy.fragments)
+    waveValidation.recordFragmentsEarned(enemy.fragments)
+    EventBus.emit('fragments-awarded', { x: enemy.x, y: enemy.y, counts: enemy.fragments })
   }
 
   // On-kill upgrade hooks (explode on kill, etc.)

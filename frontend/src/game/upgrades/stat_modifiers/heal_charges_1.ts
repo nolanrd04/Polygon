@@ -7,7 +7,7 @@ export const HealCharges1Def: UpgradeDef = {
   description: "Store one more heal.",
   rarity: RarityID.Epic,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 20,
+  cost: 10,
   effect: "heal_charges",
   stackable: true,
   maxStacks: 9,

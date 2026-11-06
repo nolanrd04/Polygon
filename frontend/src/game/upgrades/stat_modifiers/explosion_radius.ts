@@ -7,7 +7,7 @@ export const ExplosionRadiusDef: UpgradeDef = {
   description: "+5 explosion radius",
   rarity: RarityID.Uncommon,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 6,
+  cost: 60,
   targetClass: UpgradeTargetID.Bullet,
   fieldInTargetClass: UpgradeStatID.ExplosionRadius,
   value: 5,

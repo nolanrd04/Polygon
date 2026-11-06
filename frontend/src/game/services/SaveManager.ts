@@ -5,11 +5,11 @@ import {
   UpgradesSaveData,
   DeathFrozenState,
   GameStatsData,
-  PointsData,
   PlayerStateData,
   FullGameSave,
   FullGameSaveBackend
 } from './SaveTypes'
+import { pointsToFragments, type FragmentCounts } from '../systems/FragmentBudget'
 
 /**
  * SaveManager - local session state + full-game load
@@ -130,7 +130,7 @@ class SaveManagerClass {
       wavesCompleted: gmDeathState?.wave ?? gameState.wave, // Use frozen wave or current-1
       enemiesKilled: gmDeathState?.kills ?? stats.kills, // Use frozen kills or current
       timeSurvived,
-      pointsAtDeath: stats.points
+      fragmentsAtDeath: stats.fragments
     }
 
     this.deathStateFrozen = true
@@ -172,12 +172,10 @@ class SaveManagerClass {
   }
 
   /**
-   * Get current points.
+   * Get the current fragment wallet.
    */
-  getCurrentPoints(): PointsData {
-    return {
-      currentPoints: GameManager.getPlayerStats().points
-    }
+  getCurrentFragments(): FragmentCounts {
+    return GameManager.getPlayerStats().fragments
   }
 
   /**
@@ -235,6 +233,7 @@ class SaveManagerClass {
           seed: data.game_stats.seed,
           timeSurvived: data.game_stats.time_survived
         },
+        fragments: data.fragments,
         points: {
           currentPoints: data.points.current_points
         },
@@ -257,7 +256,7 @@ class SaveManagerClass {
           wavesCompleted: data.death_state.waves_completed,
           enemiesKilled: data.death_state.enemies_killed,
           timeSurvived: data.death_state.time_survived,
-          pointsAtDeath: data.death_state.points_at_death
+          fragmentsAtDeath: pointsToFragments(data.death_state.points_at_death)
         } : null,
         canContinue: data.can_continue,
         lastSavedAt: data.last_saved_at
@@ -306,7 +305,8 @@ class SaveManagerClass {
       health: savedData.playerState.currentHealth,
       maxHealth: savedData.playerState.currentMaxHealth,
       speed: savedData.playerState.currentSpeed,
-      points: savedData.points.currentPoints,
+      // Old saves have points and no wallet.
+      fragments: savedData.fragments ?? pointsToFragments(savedData.points?.currentPoints ?? 0),
       polygonSides: savedData.playerState.currentPolygonSides,
       kills: savedData.gameStats.currentKills,
       unlockedAttacks: savedData.playerState.unlockedAttacks,

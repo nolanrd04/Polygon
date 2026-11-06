@@ -7,7 +7,7 @@ export const ExplosionDamage3Def: UpgradeDef = {
   description: "+25 explosion damage",
   rarity: RarityID.Legendary,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 40,
+  cost: 5,
   targetClass: UpgradeTargetID.Bullet,
   fieldInTargetClass: UpgradeStatID.ExplosionDamage,
   value: 25,

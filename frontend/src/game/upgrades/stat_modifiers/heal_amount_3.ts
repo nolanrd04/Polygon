@@ -7,7 +7,7 @@ export const HealAmount3Def: UpgradeDef = {
   description: "+10% heal amount",
   rarity: RarityID.Legendary,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 40,
+  cost: 5,
   targetClass: UpgradeTargetID.Player,
   fieldInTargetClass: UpgradeStatID.HealAmount,
   value: 0.1,

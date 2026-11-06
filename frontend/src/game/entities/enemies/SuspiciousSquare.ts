@@ -20,7 +20,6 @@ export class SuspiciousSquare extends Enemy {
     this.sides = 4
     this.radius = 20
     this.color = 0x4287f5
-    this.scoreChance = 0.0
     this.speedCap = 3.5
     this.knockbackResistance = 0.9
     this.bundleDropChance = 0.0 // use difficulty drop chance
@@ -63,7 +62,7 @@ export class SuspiciousSquare extends Enemy {
         if (growProgress >= 1) {
             // Transform into a super octogon
             const scene = this.scene as any
-            const minion = scene.enemyManager.spawnEnemy('super_octogon', this.x, this.y, false, false)
+            const minion = scene.enemyManager.spawnEnemy('super_octogon', this.x, this.y, false)
             minion.canSpawnMinions = false // prevent the spawned super octogon from spawning more suspicious squares
             this._destroy() // destroy the suspicious square
         }

@@ -10,6 +10,8 @@ import { LightingSystem } from '../../../game/systems/LightingSystem.ts'
  * The enemy itself fluctuates in opacity then when the shield is broken it shoots projectiles
  */
 export class SuperHexagon extends Enemy {
+  static fragmentWeight = 2
+
   private shielded: boolean = false
   private shieldHealth: number = 0
   private maxShieldHealth: number = 0
@@ -28,7 +30,6 @@ export class SuperHexagon extends Enemy {
     this.sides = 6
     this.radius = 23
     this.color = 0xff00ff
-    this.scoreChance = .25
     this.speedCap = 6.5
     this.knockbackResistance = 0.8
     this.bundleDropChance = 0.0 // use difficulty drop chances

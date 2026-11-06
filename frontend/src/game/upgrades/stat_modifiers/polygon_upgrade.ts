@@ -7,7 +7,7 @@ export const PolygonUpgradeDef: UpgradeDef = {
   description: "+1 polygon side",
   rarity: RarityID.Legendary,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 60,
+  cost: 8,
   targetClass: UpgradeTargetID.Player,
   fieldInTargetClass: UpgradeStatID.PolygonSides,
   value: 1,

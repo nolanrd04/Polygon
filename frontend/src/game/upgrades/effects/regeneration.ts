@@ -10,7 +10,7 @@ export const RegenerationDef: UpgradeDef = {
   description: "Regenerate 1 HP/sec",
   rarity: RarityID.Epic,
   upgradeType: UpgradeTypeID.Effect,
-  cost: 20,
+  cost: 10,
   effect: "regen",
   effectValue: 1,
   stackable: true,

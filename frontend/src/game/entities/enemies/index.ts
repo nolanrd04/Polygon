@@ -32,9 +32,14 @@ import { SeekingSquare } from './SeekingSquare'
 import { SuspiciousSquare } from './SuspiciousSquare'
 import { SuperDiamond } from './SuperDiamond'
 
+export type EnemyClass = {
+  new (): Enemy
+  fragmentWeight: number
+}
+
 export type EnemyType = {
   id: string
-  class: new () => Enemy
+  class: EnemyClass
 }
 
 /**
@@ -72,8 +77,8 @@ export const ENEMY_TYPES: EnemyType[] = [
 /**
  * Get the enemy registry as a map for quick lookups.
  */
-export function getEnemyRegistry(): Record<string, new () => Enemy> {
-  const registry: Record<string, new () => Enemy> = {}
+export function getEnemyRegistry(): Record<string, EnemyClass> {
+  const registry: Record<string, EnemyClass> = {}
   for (const enemy of ENEMY_TYPES) {
     registry[enemy.id] = enemy.class
   }

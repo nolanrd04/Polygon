@@ -4,6 +4,20 @@ import { getAllUpgrades, getUpgrade } from '../upgrades'
 import { UpgradeSystem } from '../systems/upgrades'
 import { NormalDifficulty } from '../systems/difficulty/Normal'
 import type { BundleBuffRoll } from '../buffs/bundleDrops'
+import type { RarityID } from '../data/ID'
+import {
+  REROLL_PRICE,
+  addFragmentCounts,
+  canAffordFragments,
+  convertFragments,
+  emptyFragments,
+  getRollPrice,
+  payFragments,
+  rollOfferDiscounts,
+  spendFragments,
+  type FragmentCounts,
+  type FragmentPrice,
+} from '../systems/FragmentBudget'
 
 // Variant pity: on the wave-start offer for VARIANT_PITY_WAVE, a player who
 // owns none of their attack type's variants gets an offer made entirely of
@@ -54,7 +68,7 @@ export class WaveValidationService {
   // Unrounded: one DoT tick is a fraction of a point, so rounding each would drop it.
   private dotDamage: number = 0
   private damageTaken: number = 0
-  private pointsEarnedThisWave: number = 0
+  private fragmentsEarnedThisWave: FragmentCounts = emptyFragments()
   private shotsFired: number[] = []  // ms since wave start, one per cooldown-gated Player.shoot() call
   private shotFrames: number[] = []  // frame of each shotsFired entry, places it on the server's buff timeline
   // Frame the player pressed Start Wave on. The counter starts at token issue
@@ -67,6 +81,9 @@ export class WaveValidationService {
   // MainScene's scene-start call and GameManager.completeWave's preload hit
   // it) - but it has to be re-rolled when the wave actually advances.
   private offeredUpgradesWave: number | null = null
+  // Shop toggle: may purchases convert other tiers to cover a price? Off by
+  // default so nobody spends fragments they meant to keep. Lasts the session.
+  autoConvert: boolean = false
 
   /**
    * Offline/sandbox upgrade roll — the local mirror of the backend's
@@ -100,7 +117,7 @@ export class WaveValidationService {
             const j = Math.floor(Math.random() * (i + 1))
             ;[forced[i], forced[j]] = [forced[j], forced[i]]
           }
-          return forced.slice(0, 3).map((u: any) => ({ id: u.id, purchased: false }))
+          return rollOfferDiscounts(forced.slice(0, 3).map((u: any) => ({ id: u.id, purchased: false })), NormalDifficulty)
         }
       }
     }
@@ -147,7 +164,7 @@ export class WaveValidationService {
       attemptCount++
     }
 
-    return selected.map((u: any) => ({ id: u.id, purchased: false }))
+    return rollOfferDiscounts(selected.map((u: any) => ({ id: u.id, purchased: false })), NormalDifficulty)
   }
 
   /**
@@ -172,7 +189,7 @@ export class WaveValidationService {
       this.hits = {}
       this.dotDamage = 0
       this.damageTaken = 0
-      this.pointsEarnedThisWave = 0
+      this.fragmentsEarnedThisWave = emptyFragments()
       this.shotsFired = []
       this.shotFrames = []
       this.waveStartFrame = null
@@ -214,7 +231,7 @@ export class WaveValidationService {
       this.hits = {}
       this.dotDamage = 0
       this.damageTaken = 0
-      this.pointsEarnedThisWave = 0
+      this.fragmentsEarnedThisWave = emptyFragments()
       this.shotsFired = []
       this.shotFrames = []
       this.waveStartFrame = null
@@ -305,15 +322,19 @@ export class WaveValidationService {
   }
 
   /**
-   * Record score earned from a kill (the per-kill scoreChance roll)
+   * Record the fragments a kill paid out
    */
-  recordPointsEarned(amount: number) {
+  recordFragmentsEarned(counts: FragmentCounts) {
     // GUARD: Don't track wave stats after death
     if (GameManager.getPlayerStats().isDead) {
       return
     }
 
-    this.pointsEarnedThisWave += amount
+    this.fragmentsEarnedThisWave = addFragmentCounts(this.fragmentsEarnedThisWave, counts)
+  }
+
+  getFragmentsEarned(): FragmentCounts {
+    return this.fragmentsEarnedThisWave
   }
 
   /**
@@ -367,7 +388,7 @@ export class WaveValidationService {
    * Complete wave (or submit the final partial wave on death) and submit to
    * backend for validation.
    */
-  async completeWave(waveNumber: number, isDeath: boolean = false): Promise<{ success: boolean; errors?: string[]; newPoints?: number }> {
+  async completeWave(waveNumber: number, isDeath: boolean = false): Promise<{ success: boolean; errors?: string[] }> {
     // Check for offline mode (no auth token)
     const token = localStorage.getItem('token')
     const isOfflineMode = !token
@@ -410,7 +431,7 @@ export class WaveValidationService {
         frame_samples: this.frameSamples,
         enemy_deaths: this.enemyDeaths,
         upgrades_used: appliedUpgrades,
-        points_earned: this.pointsEarnedThisWave,
+        fragments_earned: this.fragmentsEarnedThisWave,
         shots_fired: this.shotsFired,
         shot_frames: this.shotFrames,
         wave_start_frame: this.waveStartFrame,
@@ -421,19 +442,19 @@ export class WaveValidationService {
         }
       })
 
-      // Sync the authoritative total (wave bonus + clamped per-kill credit)
+      // Sync the authoritative wallet (wave bonus + clamped per-kill credit)
       // back to GameManager regardless of pass/fail - the server still
-      // credits points on non-critical validation failures.
-      if (response.data.current_points !== undefined && response.data.current_points !== null) {
-        GameManager.updatePlayerStats({ points: response.data.current_points })
+      // credits fragments on non-critical validation failures.
+      if (response.data.fragments) {
+        GameManager.updatePlayerStats({ fragments: response.data.fragments })
       }
 
       if (response.data.success) {
         console.log(`Wave ${waveNumber} completed and validated`)
-        return { success: true, newPoints: response.data.current_points }
+        return { success: true }
       } else {
         console.warn('Wave validation failed:', response.data.errors)
-        return { success: false, errors: response.data.errors, newPoints: response.data.current_points }
+        return { success: false, errors: response.data.errors }
       }
     } catch (error: any) {
       console.error('Failed to complete wave:', error)
@@ -444,7 +465,7 @@ export class WaveValidationService {
     } finally {
       // Reset for next wave
       this.waveToken = null
-      this.pointsEarnedThisWave = 0
+      this.fragmentsEarnedThisWave = emptyFragments()
       this.shotsFired = []
       this.shotFrames = []
     }
@@ -452,31 +473,27 @@ export class WaveValidationService {
 
   /**
    * Select an upgrade (validates with backend)
-   * Returns the new points value from backend (authoritative)
+   * Returns the new wallet from backend (authoritative)
    */
-  async selectUpgrade(upgradeId: string, waveNumber: number): Promise<{success: boolean, newPoints?: number}> {
+  async selectUpgrade(upgradeId: string, waveNumber: number): Promise<{success: boolean, fragments?: FragmentCounts}> {
     // Check for offline mode (no auth token)
     const token = localStorage.getItem('token')
     const isOfflineMode = !token
 
     // GUARD: Don't sync upgrades with backend after death or in offline mode
-    // Player can still apply upgrades locally for fun, but deduct points locally
+    // Player can still apply upgrades locally for fun, but deduct fragments locally
     if (GameManager.getPlayerStats().isDead || isOfflineMode) {
       console.log('[WAVE VALIDATION] Player is dead or offline - applying upgrade locally (sandbox mode)')
 
-      // Find the upgrade cost
       const upgrade = getUpgrade(upgradeId)
-      const cost = upgrade?.cost || 0
-
-      // Deduct points locally
       const stats = GameManager.getPlayerStats()
-      const newPoints = stats.points - cost
-      GameManager.updatePlayerStats({ points: newPoints })
+      const fragments = (upgrade && payFragments(stats.fragments, this.getOfferPrice(upgrade), this.autoConvert)) ?? stats.fragments
+      GameManager.updatePlayerStats({ fragments })
 
       this.markOfferPurchased(upgradeId)
 
-      console.log(`[WAVE VALIDATION] Local upgrade purchase: ${upgradeId}, cost: ${cost}, new points: ${newPoints}`)
-      return { success: true, newPoints }
+      console.log(`[WAVE VALIDATION] Local upgrade purchase: ${upgradeId}, new wallet:`, fragments)
+      return { success: true, fragments }
     }
 
     try {
@@ -495,11 +512,11 @@ export class WaveValidationService {
       })
 
       if (response.data.success) {
-        console.log(`Upgrade ${upgradeId} applied and validated, new points: ${response.data.current_points}`)
+        console.log(`Upgrade ${upgradeId} applied and validated, new wallet:`, response.data.fragments)
         this.markOfferPurchased(upgradeId)
         return {
           success: true,
-          newPoints: response.data.current_points
+          fragments: response.data.fragments
         }
       }
 
@@ -507,6 +524,47 @@ export class WaveValidationService {
     } catch (error: any) {
       console.error('Failed to select upgrade:', error)
       return {success: false}
+    }
+  }
+
+  /**
+   * What buying this upgrade from the current offer costs, discount included.
+   * Reads the same entry markOfferPurchased will mark.
+   */
+  getOfferPrice(upgrade: { id: string; rarity: RarityID; cost: number }): FragmentPrice {
+    const entry = this.offeredUpgrades.find(
+      (u: any) => u && typeof u === 'object' && u.id === upgrade.id && u.purchased !== true
+    )
+    return getRollPrice(upgrade, entry?.discounted === true, NormalDifficulty)
+  }
+
+  /**
+   * Convert fragments between tiers. Online, the server works out the cost
+   * and returns the authoritative wallet.
+   */
+  async convertFragments(from: RarityID, to: RarityID, amount: number): Promise<boolean> {
+    const token = localStorage.getItem('token')
+    const stats = GameManager.getPlayerStats()
+
+    if (stats.isDead || !token) {
+      const fragments = convertFragments(stats.fragments, from, to, amount)
+      if (!fragments) return false
+      GameManager.updatePlayerStats({ fragments })
+      return true
+    }
+
+    try {
+      const response = await axios.post('/api/waves/convert-fragments', { from_tier: from, to_tier: to, amount }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      if (!response.data.success) return false
+      GameManager.updatePlayerStats({ fragments: response.data.fragments })
+      return true
+    } catch (error: any) {
+      console.error('Failed to convert fragments:', error)
+      return false
     }
   }
 
@@ -652,21 +710,21 @@ export class WaveValidationService {
   /**
    * Reroll upgrades for the current wave
    */
-  async rerollUpgrades(wave: number, rerollCost: number): Promise<{ upgrades: any[], newPoints: number } | null> {
+  async rerollUpgrades(wave: number): Promise<{ upgrades: any[], fragments?: FragmentCounts } | null> {
     // After death OR if offline (no auth token), use sandbox mode
     const token = localStorage.getItem('token')
     const isOfflineMode = !token
 
     if (GameManager.getPlayerStats().isDead || isOfflineMode) {
       console.log('[WAVE VALIDATION] Player is dead - using local reroll (sandbox mode)')
-      // Deduct points locally
+      // Deduct fragments locally
       const stats = GameManager.getPlayerStats()
-      const newPoints = stats.points - rerollCost
-      if (newPoints < 0) {
-        console.log('[WAVE VALIDATION] Not enough points for reroll')
+      if (!canAffordFragments(stats.fragments, REROLL_PRICE)) {
+        console.log('[WAVE VALIDATION] Not enough fragments for reroll')
         return null
       }
-      GameManager.updatePlayerStats({ points: newPoints })
+      const fragments = spendFragments(stats.fragments, REROLL_PRICE)
+      GameManager.updatePlayerStats({ fragments })
 
       // A reroll never re-forces the variant pity offer — a player who doesn't
       // want the guaranteed variant paid to get out of it.
@@ -677,7 +735,7 @@ export class WaveValidationService {
       this.offeredUpgradesWave = wave
 
       console.log('[WAVE VALIDATION] Local reroll - new upgrades:', this.offeredUpgrades)
-      return { upgrades: this.offeredUpgrades, newPoints }
+      return { upgrades: this.offeredUpgrades, fragments }
     }
 
     try {
@@ -689,7 +747,6 @@ export class WaveValidationService {
 
       const response = await axios.post('/api/waves/reroll', {
         wave: wave,
-        reroll_cost: rerollCost,
         // Same reasoning as bundle-pickup: the exact token string tells the
         // backend which open wave token this reroll belongs to, so it's
         // recorded into that wave's run-analytics snapshot at /waves/complete.
@@ -704,12 +761,12 @@ export class WaveValidationService {
         // Update the offered upgrades with the new ones
         this.offeredUpgrades = response.data.offered_upgrades
         console.log('Rerolled upgrades:', this.offeredUpgrades)
-        console.log('New points after reroll:', response.data.current_points)
+        console.log('New wallet after reroll:', response.data.fragments)
 
-        // Return both upgrades and new points
+        // Return both upgrades and the new wallet
         return {
           upgrades: this.offeredUpgrades,
-          newPoints: response.data.current_points
+          fragments: response.data.fragments
         }
       }
 

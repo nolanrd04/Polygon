@@ -7,7 +7,7 @@ export const Armor2Def: UpgradeDef = {
   description: "Reduce incoming damage by 6%",
   rarity: RarityID.Epic,
   upgradeType: UpgradeTypeID.Effect,
-  cost: 20,
+  cost: 10,
   effect: "protection",
   effectValue: 0.06,
   stackable: true,

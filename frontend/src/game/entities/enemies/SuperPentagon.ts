@@ -7,6 +7,8 @@ import { LightingIntensityID } from '../../data/ID'
 import { Particle, SparkParticle } from '../particles'
 
 export class SuperPentagon extends Enemy {
+  static fragmentWeight = 2
+
   private teleportX: number = 0
   private teleportY: number = 0
   private hasTeleportLocation: boolean = false
@@ -27,7 +29,6 @@ export class SuperPentagon extends Enemy {
     this.sides = 5
     this.radius = 20
     this.color = 0xff8b1f
-    this.scoreChance = 0.15
     this.speedCap = 3
     this.knockbackResistance = 0.5
     this.bundleDropChance = 0.0 // use difficulty drop chance

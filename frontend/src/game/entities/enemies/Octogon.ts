@@ -6,6 +6,7 @@ import { LightingIntensityID } from '../../data/ID'
  * Octogon enemy - tanky enemy that splits on death.
  */
 export class Octogon extends Enemy {
+  static fragmentWeight = 2.5
 
 SetDefaults(): void {
     this.health = 1500
@@ -14,7 +15,6 @@ SetDefaults(): void {
     this.sides = 8
     this.radius = 35
     this.color = 0x4287f5
-    this.scoreChance = .27
     this.speedCap = 6.5
     this.knockbackResistance = 0.8
     this.bundleDropChance = 0.0 // use difficulty drop chance
@@ -22,8 +22,8 @@ SetDefaults(): void {
 
   OnDeath(): void {
     const scene = this.scene as any
-    scene.enemyManager.spawnEnemy('square', this.x, this.y, false, false)
-    scene.enemyManager.spawnEnemy('square', this.x, this.y, false, false)
+    scene.enemyManager.spawnEnemy('square', this.x, this.y, false)
+    scene.enemyManager.spawnEnemy('square', this.x, this.y, false)
   }
 
     

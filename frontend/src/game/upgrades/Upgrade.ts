@@ -26,6 +26,7 @@ export interface UpgradeDef {
   description: string
   rarity: RarityID
   upgradeType: UpgradeTypeID
+  // In fragments of this upgrade's own rarity. 0 = free.
   cost: number
   // UI only, not synced to the backend. Omit for the generic upgrade icon.
   icon?: IconID

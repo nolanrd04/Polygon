@@ -7,7 +7,7 @@ export const BuckshotBulletsDef: UpgradeDef = {
   description: "Fires smaller, less-powerful pellets in a spread pattern. Pellets ignore 15 defense.",
   rarity: RarityID.Epic,
   upgradeType: UpgradeTypeID.Variant,
-  cost: 20,
+  cost: 10,
   targetClass: UpgradeTargetID.Bullet,
   variantClass: "BuckshotBullet",
   replaces: ["homing_bullets", "explosive_bullets"],

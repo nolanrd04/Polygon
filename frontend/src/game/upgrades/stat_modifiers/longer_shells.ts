@@ -9,7 +9,7 @@ export const LongerShellsDef: UpgradeDef = {
   description: "+1 minimum buckshot pellets",
   rarity: RarityID.Legendary,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 40,
+  cost: 5,
   targetClass: UpgradeTargetID.Bullet,
   fieldInTargetClass: UpgradeStatID.MinimumPellets,
   value: 1,

@@ -7,7 +7,7 @@ export const PlayerSpeed1Def: UpgradeDef = {
   description: "+10 movement speed",
   rarity: RarityID.Uncommon,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 6,
+  cost: 60,
   targetClass: UpgradeTargetID.Player,
   fieldInTargetClass: UpgradeStatID.Speed,
   value: 10,

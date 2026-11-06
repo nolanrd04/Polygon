@@ -5,6 +5,8 @@ import { LightingSystem } from '../../../game/systems/LightingSystem'
 import { LightingIntensityID } from '../../../game/data/ID'
 
 export class SuperDiamond extends Enemy {
+    static fragmentWeight = 1.25
+
     private baseSpeed: number = 80
     private maxDashSpeed: number = 650
     private waitTime: number = 3000
@@ -24,7 +26,6 @@ export class SuperDiamond extends Enemy {
     this.sides = 4
     this.radius = 22
     this.color = 0xfcf003
-    this.scoreChance = .1
     this.speedCap = 6.5
     this.doOldPositionTracking = true
     this.doOldRotationTracking = true  // NEW: Track rotation for trails

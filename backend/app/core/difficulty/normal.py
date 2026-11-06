@@ -40,6 +40,8 @@ RARITY_WEIGHTS_BY_WAVE, FALLBACK_RARITY_WEIGHTS = _load_rarity_weights()
 class NormalDifficulty(Difficulty):
     id = "normal"
     label = "Normal"
+    roll_discount_chance = _DATA["roll_discount_chance"]
+    roll_discount_percent = _DATA["roll_discount_percent"]
 
     def get_enemy_count(self, wave: int) -> int:
         explicit = ENEMY_COUNTS.get(wave)

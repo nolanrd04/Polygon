@@ -18,6 +18,12 @@ export interface Difficulty {
   readonly id: string
   readonly label: string
 
+  /** Chance (0-1) that an upgrade in a rolled offer is discounted. */
+  readonly rollDiscountChance: number
+
+  /** Percent off a discounted upgrade in a rolled offer. */
+  readonly rollDiscountPercent: number
+
   getEnemyCount(wave: number): number
 
   getSpawnWeights(wave: number): EnemySpawnWeight[]
@@ -52,6 +58,12 @@ export interface Difficulty {
    * Separate from getRarityWeights so bundle drops can be tuned independently.
    */
   getBundleRarityWeights(wave: number): RarityWeights
+
+  /** Total fragment value (in commons) a wave pays out, enemies and bonus combined. */
+  getFragmentValue(wave: number): number
+
+  /** Each tier's share of that value (not its chance per fragment). Sums to 1. */
+  getFragmentValueSplit(wave: number): RarityWeights
 
   /**
    * Multiplier for enemy health scaling for the given wave.

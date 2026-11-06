@@ -1,11 +1,13 @@
+import type { FragmentCounts } from '../game/systems/FragmentBudget'
+import { FragmentRow } from './FragmentIcon'
+
 interface WaveCompleteProps {
   wave: number
-  score: number
-  isPrime: boolean
+  bonus: FragmentCounts
   onContinue: () => void
 }
 
-export default function WaveComplete({ wave, score, isPrime, onContinue }: WaveCompleteProps) {
+export default function WaveComplete({ wave, bonus, onContinue }: WaveCompleteProps) {
   return (
     <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-50">
       <div className="text-center">
@@ -13,15 +15,9 @@ export default function WaveComplete({ wave, score, isPrime, onContinue }: WaveC
           WAVE {wave-1} COMPLETE
         </h2>
 
-        {isPrime && (
-          <div className="text-polygon-warning text-lg mb-4 animate-pulse">
-            PRIME WAVE BONUS - DOUBLE SCORE!
-          </div>
-        )}
-
-        <div className="text-6xl font-bold text-white my-8">
-          +{score.toLocaleString()}
-          <span className="text-2xl text-polygon-warning ml-2">PTS</span>
+        <div className="my-8">
+          <div className="text-gray-400 text-sm mb-2">WAVE BONUS</div>
+          <FragmentRow counts={bonus} size={20} className="justify-center gap-4 text-2xl font-bold" />
         </div>
 
         {(wave) % 10 === 0 && (

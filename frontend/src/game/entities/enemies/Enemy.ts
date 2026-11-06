@@ -10,6 +10,7 @@ import { EventBus } from '../../core/EventBus'
 import { getDefaultVolume } from '../../core/AudioRegistry'
 import { Particle } from '../particles/Particle'
 import { PolygonParticle } from '../particles/PolygonParticle'
+import type { FragmentCounts } from '../../systems/FragmentBudget'
 
 /**
  * Compress a number down to its largest place value with a single decimal digit.
@@ -90,6 +91,9 @@ export function formatCompactNumber(value: number): string {
  * ```
  */
 export abstract class Enemy implements BuffHost {
+  /** Share of a wave's fragments vs other classes. Static: the spawn list is planned before enemies exist. */
+  static fragmentWeight: number = 1
+
   // ============ STATS (set these in SetDefaults) ============
   health: number = 50
   maxHealth: number = 50
@@ -99,7 +103,7 @@ export abstract class Enemy implements BuffHost {
   sides: number = 4
   radius: number = 20
   color: number = 0xff0000
-  scoreChance: number = 0.5  // Chance to drop score on death (0 to 1)
+  fragments: FragmentCounts | null = null  // Paid on a player kill. Only planned wave spawns hold any (see WaveManager)
   bundleDropChance: number = 0  // 0 = use difficulty default; override per enemy type
   canDropBundle: boolean = true  // false = never drop bundles, regardless of bundleDropChance
   bundleDropMin: number = 1  // Minimum bundles to drop on death
@@ -798,6 +802,11 @@ export abstract class Enemy implements BuffHost {
 
   get isDestroyed(): boolean {
     return this._isDestroyed
+  }
+
+  /** Who a kill's rewards come from. Parts of a multi-part enemy point at the part that actually died. */
+  get rewardTarget(): Enemy {
+    return this
   }
 
   get id(): number {

@@ -7,7 +7,7 @@ export const DashCooldown2Def: UpgradeDef = {
   description: "-15% dash cooldown",
   rarity: RarityID.Epic,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 20,
+  cost: 10,
   targetClass: UpgradeTargetID.Player,
   fieldInTargetClass: UpgradeStatID.DashCooldown,
   value: -0.15,

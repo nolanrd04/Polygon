@@ -9,7 +9,7 @@ export const MinimumHomingDamageMultiplier2Def: UpgradeDef = {
   description: "Increases the minimum possible damage of homing bullets by 3%",
   rarity: RarityID.Legendary,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 40,
+  cost: 5,
   targetClass: UpgradeTargetID.Bullet,
   fieldInTargetClass: UpgradeStatID.MinimumDamageMultiplier,
   value: 0.03,

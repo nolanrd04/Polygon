@@ -7,7 +7,7 @@ export const DoubleDashDef: UpgradeDef = {
   description: "Store 2 dashes.",
   rarity: RarityID.Epic,
   upgradeType: UpgradeTypeID.Ability,
-  cost: 20,
+  cost: 10,
   effect: "double_dash",
   stackable: false,
   tier: 2,

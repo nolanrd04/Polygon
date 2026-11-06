@@ -12,7 +12,7 @@ export const RicochetDef: UpgradeDef = {
   description: "Projectiles bounce off surfaces.",
   rarity: RarityID.Epic,
   upgradeType: UpgradeTypeID.Effect,
-  cost: 20,
+  cost: 10,
   effect: "ricochet",
   effectValue: 1,
   stackable: true,

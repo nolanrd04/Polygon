@@ -7,7 +7,7 @@ export const BulletSize1Def: UpgradeDef = {
   description: "+10% bullet size",
   rarity: RarityID.Uncommon,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 6,
+  cost: 60,
   targetClass: UpgradeTargetID.Bullet,
   fieldInTargetClass: UpgradeStatID.Size,
   value: 0.1,

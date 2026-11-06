@@ -10,7 +10,7 @@ export const BulletChokeDef: UpgradeDef = {
   description: "-2 buckshot bullet spread",
   rarity: RarityID.Epic,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 20,
+  cost: 10,
   targetClass: UpgradeTargetID.Bullet,
   fieldInTargetClass: UpgradeStatID.ChokeAngle,
   value: -2,

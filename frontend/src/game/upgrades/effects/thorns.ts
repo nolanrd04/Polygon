@@ -1,6 +1,7 @@
 import { Upgrade, type UpgradeDef, type DamageRef } from '../Upgrade'
 import type { Enemy } from '../../entities/enemies/Enemy'
 import { IconID, RarityID, UpgradeTypeID } from '../../data/ID'
+import { awardPlayerKill } from '../../systems/KillRewards'
 
 export const ThornsDef: UpgradeDef = {
   id: "thorns",
@@ -8,7 +9,7 @@ export const ThornsDef: UpgradeDef = {
   description: "Reflect 10% of damage taken",
   rarity: RarityID.Epic,
   upgradeType: UpgradeTypeID.Effect,
-  cost: 20,
+  cost: 10,
   effect: "thorns",
   effectValue: 0.1,
   stackable: true,
@@ -21,6 +22,6 @@ export class Thorns extends Upgrade {
 
   modifyPlayerHurt(damage: DamageRef, source?: Enemy): void {
     // Reflect only on direct enemy contact — projectile hits carry no source
-    if (source) source.takeDamage(damage.amount * this.def.effectValue!)
+    if (source?.takeDamage(damage.amount * this.def.effectValue!)) awardPlayerKill(source)
   }
 }

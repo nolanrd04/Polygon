@@ -8,6 +8,8 @@ import { TextureGenerator } from '../../utils/TextureGenerator'
  * Has a health-based shield that blocks damage until depleted.
  */
 export class Hexagon extends Enemy {
+  static fragmentWeight = 2
+
   private shielded: boolean = false
   private shieldHealth: number = 0
   private maxShieldHealth: number = 0
@@ -22,7 +24,6 @@ export class Hexagon extends Enemy {
     this.sides = 6
     this.radius = 30
     this.color = 0xff00ff
-    this.scoreChance = .25
     this.speedCap = 6.5
     this.knockbackResistance = 0.8
     this.bundleDropChance = 0.0 // use difficulty drop chance

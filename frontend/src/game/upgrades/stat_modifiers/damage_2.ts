@@ -7,7 +7,7 @@ export const Damage2Def: UpgradeDef = {
   description: "+0.8% damage.",
   rarity: RarityID.Uncommon,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 6,
+  cost: 60,
   targetClass: UpgradeTargetID.Attack,
   fieldInTargetClass: UpgradeStatID.Damage,
   value: 0.008,

@@ -5,6 +5,8 @@ import { LightingSystem } from '../../systems/LightingSystem'
 import { LightingIntensityID } from '../../data/ID'
 
 export class Pentagon extends Enemy {
+  static fragmentWeight = 1.5
+
   private teleportX: number = 0
   private teleportY: number = 0
   private hasTeleportLocation: boolean = false
@@ -24,7 +26,6 @@ export class Pentagon extends Enemy {
     this.sides = 5
     this.radius = 20
     this.color = 0xff8b1f
-    this.scoreChance = 0.3
     this.speedCap = 6.5
     this.knockbackResistance = 0.8
     this.bundleDropChance = 0.0 // use difficulty drop chance

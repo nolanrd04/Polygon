@@ -28,6 +28,8 @@ import { RarityID, UpgradeTypeID, BuffStatID, BuffHostID, type BuffID } from '..
 import { getBuffEntry } from '../buffs'
 import { BUNDLE_BUFF_DROPS, rollDrop, type BundleBuffDrop, type BundleBuffRoll, type BundleBuffRollContext } from '../buffs/bundleDrops'
 import { awardPlayerKill } from '../systems/KillRewards'
+import { FragmentPopups } from '../systems/FragmentPopups'
+import { planPayment, rollStartingFragments, totalFragments } from '../systems/FragmentBudget'
 import { SETTINGS } from '../core/SettingsStorage'
 import { MoveAction, getBoundKeys } from '../core/Keybinds'
 
@@ -52,6 +54,7 @@ export class MainScene extends Phaser.Scene {
   private showCollisionBoxes: boolean = false
   private upgradeMenuOpen: boolean = false
   private touchControls!: TouchControlManager
+  private fragmentPopups!: FragmentPopups
 
   /** Screen-pixel layer for scene-owned HUD text (currently the death message). */
   private screenUI!: ScreenSpaceLayer
@@ -150,6 +153,7 @@ export class MainScene extends Phaser.Scene {
     // Initialize managers
     this.enemyManager = new EnemyManager(this, NormalDifficulty)
     this.waveManager = new WaveManager(this, this.enemyManager, NormalDifficulty)
+    this.fragmentPopups = new FragmentPopups(this)
     this.collisionManager = new CollisionManager(
       this,
       this.player,
@@ -557,6 +561,7 @@ export class MainScene extends Phaser.Scene {
       }
       this.scale.off('resize', this.applyCameraZoom, this)
       this.screenUI?.destroy()
+      this.fragmentPopups?.destroy()
       AbilitySystem.unbind()
     })
 
@@ -569,7 +574,7 @@ export class MainScene extends Phaser.Scene {
 
       console.log('MainScene initializing - Current GameManager state:', {
         wave: currentState.wave,
-        points: currentState.playerStats.points,
+        fragments: currentState.playerStats.fragments,
         seed: currentState.seed
       })
 
@@ -582,28 +587,28 @@ export class MainScene extends Phaser.Scene {
       this.waveManager.setWave(waveNumber)
       console.log('Synced WaveManager to wave:', waveNumber)
 
-      // Check if this is a loaded game by checking if GameManager already has points
-      // SaveGameService restores points BEFORE MainScene runs, so if points > 0, it's a loaded game
+      // Check if this is a loaded game by checking if GameManager already has fragments
+      // SaveGameService restores the wallet BEFORE MainScene runs, so a non-empty wallet means a loaded game
       // Also check for wave > 1 or existing upgrades as fallback
-      const hasPoints = currentState.playerStats.points > 0
+      const hasFragments = totalFragments(currentState.playerStats.fragments) > 0
       const hasUpgrades = currentState.appliedUpgrades && currentState.appliedUpgrades.length > 0
       const hasProgressedWaves = currentState.wave > 1
-      const isLoadedGame = hasPoints || hasUpgrades || hasProgressedWaves
+      const isLoadedGame = hasFragments || hasUpgrades || hasProgressedWaves
 
-      // Only give starting points if this is a new game (no points yet)
-      // If loading a saved game, points are already restored by SaveManager
+      // Only give starting fragments if this is a new game (empty wallet)
+      // If loading a saved game, the wallet is already restored by SaveManager
       if (!isLoadedGame) {
-        console.log('New game detected - resetting GameManager and adding 70 starting points')
+        console.log('New game detected - resetting GameManager and rolling starting fragments')
         // CRITICAL: Reset GameManager state for new game
-        // This clears isDead flag, kills, points, etc. from previous sessions
+        // This clears isDead flag, kills, fragments, etc. from previous sessions
         GameManager.reset()
         // Clear the upgrade ledger too — the engine singletons outlive scene
         // restarts, so a second run in the same browser session would
         // otherwise inherit the previous run's upgrades
         UpgradeSystem.reset()
-        GameManager.addPoints(70)
+        GameManager.addFragments(rollStartingFragments(NormalDifficulty))
       } else {
-        console.log('Loaded game detected (points:', hasPoints, ', upgrades:', hasUpgrades, ', wave:', hasProgressedWaves, ') - keeping existing points:', currentState.playerStats.points)
+        console.log('Loaded game detected (fragments:', hasFragments, ', upgrades:', hasUpgrades, ', wave:', hasProgressedWaves, ') - keeping existing wallet:', currentState.playerStats.fragments)
 
         // CRITICAL: Restore SaveManager state for loaded games
         // Convert the flat upgrade list to UpgradeEntry format for SaveManager
@@ -1099,10 +1104,10 @@ export class MainScene extends Phaser.Scene {
 
     // Check if player can afford it (skip for dev tools)
     const stats = GameManager.getPlayerStats()
-    const cost = entry.def.cost || 0
+    const price = waveValidation.getOfferPrice(entry.def)
 
-    if (!skipCost && stats.points < cost) {
-      console.warn(`Not enough points for ${entry.def.name}. Need ${cost}, have ${stats.points}`)
+    if (!skipCost && !planPayment(stats.fragments, price, waveValidation.autoConvert)) {
+      console.warn(`Not enough ${price.tier} fragments for ${entry.def.name}. Need ${price.amount}, have ${stats.fragments[price.tier]}`)
       return false
     }
 
@@ -1126,7 +1131,7 @@ export class MainScene extends Phaser.Scene {
     // This maintains the order of purchase for correct stat reconstruction on load
     SaveManager.recordUpgradePurchase(upgradeId, GameManager.getState().wave)
 
-    // VALIDATE WITH BACKEND and sync points (skip for dev tools)
+    // VALIDATE WITH BACKEND and sync the wallet (skip for dev tools)
     if (!skipCost) {
       const currentWave = GameManager.getState().wave
       const result = await waveValidation.selectUpgrade(upgradeId, currentWave)
@@ -1136,13 +1141,12 @@ export class MainScene extends Phaser.Scene {
         return false
       }
 
-      // Sync points from backend (authoritative source)
-      if (result.newPoints !== undefined) {
-        console.log(`Syncing points from backend: ${stats.points} -> ${result.newPoints}`)
-        GameManager.updatePlayerStats({ points: result.newPoints })
+      // Sync the wallet from backend (authoritative source)
+      if (result.fragments) {
+        GameManager.updatePlayerStats({ fragments: result.fragments })
       }
     }
-    // When skipCost = true (dev tools), don't deduct points
+    // When skipCost = true (dev tools), don't deduct fragments
 
     return true
   }

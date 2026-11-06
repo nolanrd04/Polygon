@@ -13,7 +13,11 @@ Keep these data files in sync with the frontend whenever upgrade values change.
 
 from typing import Dict, List, Any
 import json
+import math
+import random
 from pathlib import Path
+
+from app.core.difficulty.base import Difficulty
 
 
 def _load_upgrades() -> Dict[str, Dict[str, Any]]:
@@ -35,6 +39,27 @@ STARTING_UPGRADES: List[str] = sorted(
 def get_upgrade(upgrade_id: str) -> Dict[str, Any] | None:
     """Get upgrade definition by ID"""
     return UPGRADES.get(upgrade_id)
+
+
+def get_roll_cost(upgrade: Dict[str, Any], discounted: bool, difficulty: Difficulty) -> int:
+    """What an upgrade costs when bought from a rolled offer."""
+    cost = upgrade.get("cost", 0)
+    if not discounted:
+        return cost
+    return math.ceil(cost * (100 - difficulty.roll_discount_percent) / 100)
+
+
+def roll_offer_discounts(offers: List[Dict[str, Any]], difficulty: Difficulty) -> List[Dict[str, Any]]:
+    """
+    Copies of the offered upgrades with their discount rolled. One roll per id:
+    a stackable can be offered twice and buying matches by id, so its cards
+    must share a price. Copies, because the offers are the shared UPGRADES defs.
+    """
+    rolls: Dict[str, bool] = {}
+    return [
+        {**offer, "discounted": rolls.setdefault(offer["id"], random.random() < difficulty.roll_discount_chance)}
+        for offer in offers
+    ]
 
 
 def get_upgrades_by_rarity(rarity: str) -> List[Dict[str, Any]]:

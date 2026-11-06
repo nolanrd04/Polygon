@@ -8,7 +8,7 @@ export const BulletSpeed1Def: UpgradeDef = {
   description: "+5% bullet speed",
   rarity: RarityID.Common,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 2,
+  cost: 100,
   targetClass: UpgradeTargetID.Bullet,
   fieldInTargetClass: UpgradeStatID.Speed,
   value: 0.05,

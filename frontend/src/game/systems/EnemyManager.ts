@@ -105,7 +105,6 @@ export class EnemyManager {
     typeId: string,
     x?: number,
     y?: number,
-    dropScore: boolean = true,
     dropBundle: boolean = true,
     configure?: (enemy: Enemy) => void
   ): Enemy | null {
@@ -125,16 +124,6 @@ export class EnemyManager {
     const enemy = new EnemyClass()
     enemy.typeId = typeId
     enemy.SetDefaults()
-
-    const originalScoreChance = enemy.scoreChance
-
-    if (!dropScore) {
-      enemy.scoreChance = 0
-    }
-
-    if (!dropScore && dropBundle) {
-      enemy.bundleDropChance = originalScoreChance
-    }
 
     if (!dropBundle) {
       enemy.canDropBundle = false

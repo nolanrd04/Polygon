@@ -8,6 +8,7 @@ class OfferedUpgrade(BaseModel):
     """Tracks an offered upgrade and whether it's been purchased"""
     id: str = Field(..., description="Upgrade ID")
     purchased: bool = Field(default=False, description="Whether player purchased this upgrade")
+    discounted: bool = Field(default=False, description="Whether this offer rolled the discount")
 
     @classmethod
     def from_string(cls, upgrade_id: str) -> "OfferedUpgrade":
@@ -20,6 +21,7 @@ class UpgradeEntry(BaseModel):
     upgrade_id: str = Field(..., description="Upgrade ID")
     purchased_at: int = Field(..., description="Timestamp of purchase (ms)")
     wave_number: int = Field(..., description="Wave when purchased")
+    cost_paid: int | None = Field(default=None, description="Price after any discount; None on older entries and free grants")
 
 
 class DeathFrozenState(BaseModel):

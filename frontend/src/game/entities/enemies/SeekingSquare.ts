@@ -35,7 +35,6 @@ export class SeekingSquare extends Enemy {
     this.sides = 4
     this.radius = 12
     this.color = 0x33ff33
-    this.scoreChance = 0
     this.speedCap = 1
     this.knockbackResistance = 0.9
     this.doOldPositionTracking = true

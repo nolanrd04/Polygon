@@ -5,6 +5,8 @@ import { LightingSystem } from '../../../game/systems/LightingSystem'
 import { LightingIntensityID } from '../../../game/data/ID'
 
 export class Diamond extends Enemy {
+    static fragmentWeight = 1.25
+
     private baseSpeed: number = 100
     private maxDashSpeed: number = 500
     private waitFrames: number = 240 // ~4 seconds at 60fps
@@ -20,7 +22,6 @@ export class Diamond extends Enemy {
     this.sides = 4
     this.radius = 22
     this.color = 0xfcf003
-    this.scoreChance = .1
     this.speedCap = 6.5
     this.doOldPositionTracking = true
     this.doOldRotationTracking = true  // NEW: Track rotation for trails

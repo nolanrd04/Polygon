@@ -1,6 +1,7 @@
 import { GameManager } from '../core/GameManager'
 import { SaveManager } from './SaveManager'
 import { FullGameSave } from './SaveTypes'
+import { totalFragments } from '../systems/FragmentBudget'
 
 /**
  * LocalSaveManager - Sandbox copy/paste save system
@@ -17,7 +18,7 @@ function buildFullSaveFromCurrentState(): FullGameSave {
   const deathState = SaveManager.getDeathState()
   return {
     gameStats: SaveManager.getCurrentGameStats(),
-    points: SaveManager.getCurrentPoints(),
+    fragments: SaveManager.getCurrentFragments(),
     upgrades: SaveManager.getUpgradeHistory(),
     playerState: SaveManager.getCurrentPlayerState(),
     deathState,
@@ -46,7 +47,7 @@ export function importLocalSave(raw: string): FullGameSave | null {
       !parsed ||
       typeof parsed !== 'object' ||
       !parsed.gameStats ||
-      !parsed.points ||
+      !(parsed.fragments || parsed.points) || // old saves have points, converted on restore
       !parsed.upgrades ||
       !parsed.playerState ||
       !Array.isArray(parsed.upgrades.purchaseHistory)
@@ -76,7 +77,7 @@ export function applyLocalSave(save: FullGameSave): void {
  */
 export function summarizeLocalSave(): string {
   const stats = SaveManager.getCurrentGameStats()
-  const points = SaveManager.getCurrentPoints()
+  const fragments = totalFragments(SaveManager.getCurrentFragments())
   const upgradeCount = SaveManager.getUpgradeHistory().purchaseHistory.length
-  return `Wave ${stats.currentWave} • ${upgradeCount} upgrade${upgradeCount === 1 ? '' : 's'} • ${points.currentPoints} points`
+  return `Wave ${stats.currentWave} • ${upgradeCount} upgrade${upgradeCount === 1 ? '' : 's'} • ${fragments} fragments`
 }

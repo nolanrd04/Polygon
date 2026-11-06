@@ -12,6 +12,12 @@ object/array literals in one file, so this parses those directly by name:
   SCHEDULED_BOSS_SPAWNS        -> scheduled_boss_spawns
   BUNDLE_RARITY_WEIGHTS_BY_WAVE -> bundle_rarity_weights
   FALLBACK_BUNDLE_RARITY_WEIGHTS -> fallback_bundle_rarity_weights
+  FRAGMENT_VALUE_BY_WAVE       -> fragment_value
+  FALLBACK_FRAGMENT_VALUE      -> fallback_fragment_value
+  FRAGMENT_VALUE_SPLIT_BY_WAVE -> fragment_value_split (generated, see fragment_table_sync.py)
+  FALLBACK_FRAGMENT_VALUE_SPLIT -> fallback_fragment_value_split
+  ROLL_DISCOUNT_CHANCE         -> roll_discount_chance
+  ROLL_DISCOUNT_PERCENT        -> roll_discount_percent
 
 SCHEDULED_BOSS_SPAWNS entries are usually string literals ('hexagon') but the
 arrow_head boss is referenced as `ARROW_HEAD_IDS.head` (a shared constant, not
@@ -57,7 +63,15 @@ SECTIONS = (
     "scheduled_boss_spawns",
     "bundle_rarity_weights",
     "fallback_bundle_rarity_weights",
+    "fragment_value",
+    "fallback_fragment_value",
+    "fragment_value_split",
+    "fallback_fragment_value_split",
+    "roll_discount_chance",
+    "roll_discount_percent",
 )
+
+SCALAR_SECTIONS = ("fallback_fragment_value", "roll_discount_chance", "roll_discount_percent")
 
 
 def _extract_balanced(text: str, start: int, open_ch: str, close_ch: str) -> str:
@@ -101,6 +115,19 @@ def _named_array(text: str, name: str) -> str:
     if not m:
         raise ValueError(f"{name} not found")
     return _extract_balanced(text, m.end() - 1, "[", "]")
+
+
+def _named_number(text: str, name: str) -> int | float:
+    """Value of `const NAME: number = 5000`. Whole numbers come back as ints."""
+    m = re.search(rf"const {name}\b[^=]*=\s*({NUMBER})", text)
+    if not m:
+        raise ValueError(f"{name} not found")
+    value = float(m.group(1))
+    return int(value) if value.is_integer() else value
+
+
+def _entry_count(value) -> int:
+    return len(value) if isinstance(value, (dict, list)) else 1
 
 
 def _wave_entries(object_text: str) -> list[tuple[int, str]]:
@@ -173,6 +200,14 @@ def parse_frontend() -> dict:
             wave: _kv_number_pairs(v) for wave, v in _wave_entries(_named_object(text, "BUNDLE_RARITY_WEIGHTS_BY_WAVE"))
         },
         "fallback_bundle_rarity_weights": _kv_number_pairs(_named_object(text, "FALLBACK_BUNDLE_RARITY_WEIGHTS")),
+        "fragment_value": {wave: int(float(v)) for wave, v in _wave_entries(_named_object(text, "FRAGMENT_VALUE_BY_WAVE"))},
+        "fallback_fragment_value": _named_number(text, "FALLBACK_FRAGMENT_VALUE"),
+        "fragment_value_split": {
+            wave: _kv_number_pairs(v) for wave, v in _wave_entries(_named_object(text, "FRAGMENT_VALUE_SPLIT_BY_WAVE"))
+        },
+        "fallback_fragment_value_split": _kv_number_pairs(_named_object(text, "FALLBACK_FRAGMENT_VALUE_SPLIT")),
+        "roll_discount_chance": _named_number(text, "ROLL_DISCOUNT_CHANCE"),
+        "roll_discount_percent": _named_number(text, "ROLL_DISCOUNT_PERCENT"),
     }
 
 
@@ -184,8 +219,10 @@ def _normalized(section: str, value, *, from_backend: bool):
     """Both sides down to plain, comparable Python values, keyed the same way."""
     if section == "fallback_spawn_weights":
         return {item["type"]: item["weight"] for item in value}
-    if section == "fallback_bundle_rarity_weights":
+    if section in ("fallback_bundle_rarity_weights", "fallback_fragment_value_split"):
         return value
+    if section in SCALAR_SECTIONS:
+        return {"value": value}
     # every other section is wave-keyed - JSON forces string keys on the
     # backend side, ints on the parsed frontend side.
     return {int(k): v for k, v in value.items()} if from_backend else value
@@ -260,7 +297,28 @@ def _render(frontend: dict) -> str:
         lines.append(f'    "{wave}": {_json(rarity[wave])}{comma}')
     lines.append("  },")
 
-    lines.append(f'  "fallback_bundle_rarity_weights": {_json(frontend["fallback_bundle_rarity_weights"])}')
+    lines.append(f'  "fallback_bundle_rarity_weights": {_json(frontend["fallback_bundle_rarity_weights"])},')
+
+    values = frontend["fragment_value"]
+    lines.append('  "fragment_value": {')
+    waves = sorted(values)
+    for row_start in range(0, len(waves), 5):
+        row = waves[row_start : row_start + 5]
+        entries = ", ".join(f'"{w}": {values[w]}' for w in row)
+        comma = "," if row_start + 5 < len(waves) else ""
+        lines.append(f"    {entries}{comma}")
+    lines.append("  },")
+    lines.append(f'  "fallback_fragment_value": {frontend["fallback_fragment_value"]},')
+
+    lines.append('  "fragment_value_split": {')
+    split = frontend["fragment_value_split"]
+    for i, wave in enumerate(sorted(split)):
+        comma = "," if i < len(split) - 1 else ""
+        lines.append(f'    "{wave}": {_json(split[wave])}{comma}')
+    lines.append("  },")
+    lines.append(f'  "fallback_fragment_value_split": {_json(frontend["fallback_fragment_value_split"])},')
+    lines.append(f'  "roll_discount_chance": {frontend["roll_discount_chance"]},')
+    lines.append(f'  "roll_discount_percent": {frontend["roll_discount_percent"]}')
     lines.append("}")
     return "\n".join(lines) + "\n"
 
@@ -270,7 +328,7 @@ def main() -> int:
 
     if "--write" in sys.argv:
         BACKEND_JSON.write_text(_render(frontend))
-        total = sum(len(frontend[s]) if isinstance(frontend[s], dict) else len(frontend[s]) for s in SECTIONS)
+        total = sum(_entry_count(frontend[s]) for s in SECTIONS)
         print(f"Wrote {len(SECTIONS)} table(s) ({total} entries) to {BACKEND_JSON.relative_to(REPO_ROOT)}")
         return 0
 
@@ -282,7 +340,7 @@ def main() -> int:
             print(f"  - {issue}")
         return 1
 
-    total = sum(len(frontend[s]) if isinstance(frontend[s], dict) else len(frontend[s]) for s in SECTIONS)
+    total = sum(_entry_count(frontend[s]) for s in SECTIONS)
     print(f"OK - {total} difficulty table entries match frontend defaults exactly.")
     return 0
 

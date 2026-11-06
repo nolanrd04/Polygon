@@ -22,6 +22,8 @@ RarityWeights = Dict[str, float]
 class Difficulty(ABC):
     id: str
     label: str
+    roll_discount_chance: float  # Chance (0-1) that an upgrade in a rolled offer is discounted
+    roll_discount_percent: int  # Percent off a discounted upgrade in a rolled offer
 
     @abstractmethod
     def get_enemy_count(self, wave: int) -> int: ...

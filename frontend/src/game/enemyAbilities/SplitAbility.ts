@@ -38,8 +38,7 @@ export class SplitAbility extends Ability {
       speed: this.enemy.speed,
       damage: this.enemy.damage,
       sides: this.enemy.sides,
-      color: this.enemy.color,
-      scoreChance: this.enemy.scoreChance
+      color: this.enemy.color
     }
 
     // Spawn children in a spread pattern

@@ -10,7 +10,7 @@ export const Vampirism3Def: UpgradeDef = {
   description: "5% chance to heal for 15% of damage dealt. Upgrade to increase chance.",
   rarity: RarityID.Legendary,
   upgradeType: UpgradeTypeID.Effect,
-  cost: 40,
+  cost: 5,
   effect: "lifesteal",
   effectValue: 0.05,
   stackable: false,

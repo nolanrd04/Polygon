@@ -192,7 +192,6 @@ export const ArrowHeadConfig = {
     /** Collision radius as a fraction of `radius`. A chevron doesn't fill its circle, so keep this under 1. */
     hitboxSize: 0.72,
     color: 0xff4d2e,
-    scoreChance: 1,
     bundleDropChance: 1,
     knockbackResistance: 1,
     barWidth: 70,

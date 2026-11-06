@@ -7,6 +7,8 @@ import { TextureGenerator } from '../../../game/utils/TextureGenerator'
 
 // Smaller square spawned by the super octogon that chases the player like a projectile. An enemy was used over a projectile so it can be killed.
 export class SuperOctogon extends Enemy {
+    static fragmentWeight = 2.5
+
     private hasOutline: boolean = false
     private projCooldown: number = 4000
     private lastProjTime: number = 0
@@ -32,7 +34,6 @@ export class SuperOctogon extends Enemy {
         this.sides = 8
         this.radius = 35
         this.color = 0x4287f5
-        this.scoreChance = .4
         this.speedCap = 2.5
         this.knockbackResistance = 0.99
         this.bundleDropChance = 0.0 // use difficulty drop chance
@@ -62,10 +63,10 @@ export class SuperOctogon extends Enemy {
             const spread = Phaser.Math.FloatBetween(-Math.PI / 4, Math.PI / 4)
             const direction = Phaser.Math.Angle.Between(this.x, this.y, _playerX, _playerY) + spread
 
-            // 6th arg is a configure callback that runs before _spawn, not a
+            // 5th arg is a configure callback that runs before _spawn, not a
             // number. Seeding heading here beats the null default in the
             // square's first moveTowards, so it launches along this angle.
-            const square = scene.enemyManager.spawnEnemy('seeking_square', this.x, this.y, false, false, (enemy: Enemy) => {
+            const square = scene.enemyManager.spawnEnemy('seeking_square', this.x, this.y, false, (enemy: Enemy) => {
                 (enemy as SeekingSquare).heading = direction
             }) as SeekingSquare | null
             if (square)
@@ -89,8 +90,8 @@ export class SuperOctogon extends Enemy {
         if (this.canSpawnMinions)
         {
             const scene = this.scene as any
-            scene.enemyManager.spawnEnemy('suspicious_square', this.x, this.y, false, false)
-            scene.enemyManager.spawnEnemy('suspicious_square', this.x, this.y, false, false)
+            scene.enemyManager.spawnEnemy('suspicious_square', this.x, this.y, false)
+            scene.enemyManager.spawnEnemy('suspicious_square', this.x, this.y, false)
         }
     }
     

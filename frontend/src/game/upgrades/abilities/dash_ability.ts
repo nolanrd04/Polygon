@@ -7,7 +7,7 @@ export const DashAbilityDef: UpgradeDef = {
   description: "Press SPACE to dash",
   rarity: RarityID.Rare,
   upgradeType: UpgradeTypeID.Ability,
-  cost: 10,
+  cost: 20,
   effect: "dash",
   stackable: false,
   icon: IconID.Dash,

@@ -7,7 +7,7 @@ export const Knockback3Def: UpgradeDef = {
   description: "+50% knockback",
   rarity: RarityID.Rare,
   upgradeType: UpgradeTypeID.StatModifier,
-  cost: 10,
+  cost: 20,
   targetClass: UpgradeTargetID.Attack,
   fieldInTargetClass: UpgradeStatID.Knockback,
   value: 0.5,

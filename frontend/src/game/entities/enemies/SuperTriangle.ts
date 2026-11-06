@@ -18,7 +18,6 @@ export class SuperTriangle extends Enemy {
     this.sides = 3
     this.radius = 15
     this.color = 0xff0000
-    this.scoreChance = 0.08
     this.speedCap = 6.5
     this.knockbackResistance = 0.8
     this.bundleDropChance = 0.0 // use difficulty drop chance

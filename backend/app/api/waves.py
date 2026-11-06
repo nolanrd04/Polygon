@@ -271,7 +271,8 @@ async def select_upgrade(
     - Stack limits not exceeded
     """
     from app.repositories.game_save_repository import GameSaveRepository
-    from app.core.upgrade_data import get_upgrade, can_apply_upgrade
+    from app.core.upgrade_data import get_upgrade, can_apply_upgrade, get_roll_cost
+    from app.core.difficulty import get_difficulty
 
     game_save_repo = GameSaveRepository(db)
 
@@ -319,15 +320,20 @@ async def select_upgrade(
     for i, u in enumerate(game_save.offered_upgrades):
         if i == upgrade_index:
             from app.models.game_save import OfferedUpgrade
-            updated_offered_upgrades.append(OfferedUpgrade(id=u.id, purchased=True))
+            updated_offered_upgrades.append(OfferedUpgrade(id=u.id, purchased=True, discounted=u.discounted))
         else:
             updated_offered_upgrades.append(u)
 
     # Add upgrade to current upgrades in game save
     updated_upgrades = game_save.current_upgrades + [request.upgrade_id]
 
-    # Deduct upgrade cost from points
-    upgrade_cost = upgrade.get('cost', 0)
+    # Deduct upgrade cost from points. The discount comes from the saved offer,
+    # never from the client.
+    upgrade_cost = get_roll_cost(
+        upgrade,
+        game_save.offered_upgrades[upgrade_index].discounted,
+        get_difficulty(game_save.difficulty_id)
+    )
     updated_points = max(0, game_save.current_points - upgrade_cost)
 
     # Server-timestamped append to the ordered purchase history, so it's
@@ -338,7 +344,8 @@ async def select_upgrade(
     updated_history = game_save.upgrade_history + [UpgradeEntry(
         upgrade_id=request.upgrade_id,
         purchased_at=int(datetime.utcnow().timestamp() * 1000),
-        wave_number=request.wave
+        wave_number=request.wave,
+        cost_paid=upgrade_cost
     )]
 
     await game_save_repo.update_by_id(
